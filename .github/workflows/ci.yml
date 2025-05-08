@@ -18,7 +18,7 @@ jobs:
     - name: Jira Login
       uses: atlassian/gajira-login@v3
       env:
-        JIRA_BASE_URL: https://fix-tech.atlassian.net/
+        JIRA_BASE_URL: https://fix-tech.atlassian.net
         JIRA_USER_EMAIL: trindde170428@fpt.edu.vn
         JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
 
