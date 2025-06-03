@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 
 import HomePage from '../pages/home/HomePage';
 import LogInPage from '../pages/authentication/LogInPage';
-import RegisterPage from '../pages/Authentication/RegisterPage';
+import RegisterPage from '../pages/authentication/RegisterPage';
 import ChooseRole from '../pages/authentication/ChooseRole';
 
 export default function AppRoutes() {
