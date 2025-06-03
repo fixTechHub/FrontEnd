@@ -1,18 +1,22 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-import HomePage from '../pages/HomePage';
-// import LoginPage from '../pages/LoginPage';
-// import DashboardPage from '../pages/DashboardPage';
-
-import Roles from '../constants/roles';
+import HomePage from '../pages/home/HomePage';
+import LogInPage from '../pages/authentication/LogInPage';
+import RegisterPage from '../pages/Authentication/RegisterPage';
+import ChooseRole from '../pages/authentication/ChooseRole';
 
 export default function AppRoutes() {
     return (
         <>
             <Routes>
-                {/* <Route path="/login" element={<LoginPage />} /> */}
+                {/* Route mặc định chuyển hướng */}
+                <Route path="*" element={<Navigate to="/login" replace />} />
+                
                 <Route path="/" element={<HomePage />} />
+
+                <Route path="/login" element={<LogInPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/choose-role" element={<ChooseRole />} />
 
                 {/* <Route
                     path="/dashboard"
@@ -23,8 +27,6 @@ export default function AppRoutes() {
                     }
                 /> */}
 
-                {/* Route mặc định chuyển hướng */}
-                {/* <Route path="*" element={<Navigate to="/login" replace />} /> */}
             </Routes>
         </>
     );
