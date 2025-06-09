@@ -22,7 +22,7 @@ function Banner() {
                                 </p>
                                 <div className="view-all">
                                     <a href="listing-grid.html" className="btn btn-view d-inline-flex align-items-center">
-                                        Xem dịch vụ{" "}
+                                        Đặt ngay{" "}
                                         <span>
                                             <i className="feather-arrow-right ms-2"></i>
                                         </span>
