@@ -2,8 +2,7 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZHRyaTE3IiwiYSI6ImNtYnE1ajRrZDAwODQya3B1bWFxeGQ0N3UifQ.BTrS_nLQlq3yG-HhWbsSXw';
-mapboxgl.accessToken = MAPBOX_TOKEN;
+mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
 const DEFAULT_CENTER = [108.2022, 16.0612]; // Đà Nẵng
 const DEFAULT_ZOOM = 12;
