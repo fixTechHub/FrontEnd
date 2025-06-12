@@ -18,7 +18,7 @@ export default function AppRoutes() {
                 <Route path="/login" element={<LogInPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/choose-role" element={<ChooseRole />} />
-
+                <Route path="/chat/:bookingId" element={<ChatPage />} />
                 <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
 
                 {/* <Route
