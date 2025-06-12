@@ -5,7 +5,7 @@ import { fetchBookingThunk } from '../features/bookings/bookingSlice';
 import { fetchMessagesThunk, addMessage } from '../features/messages/messageSlice';
 import { sendMessage, onReceiveMessage } from '../services/socketService';
 
-const MessagePage = () => {
+const ChatPage = () => {
   const { bookingId } = useParams();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
@@ -22,7 +22,6 @@ const MessagePage = () => {
     }
 
     const cleanup = onReceiveMessage((newMessage) => {
-      console.log('Comparing bookingId:', newMessage.bookingId.toString(), bookingId);
       if (newMessage.bookingId.toString() === bookingId) {
         dispatch(addMessage(newMessage));
       }
@@ -81,67 +80,115 @@ const MessagePage = () => {
   if (!booking) return <div>No booking found</div>;
 
   return (
-    <div className="flex flex-col h-screen max-w-2xl mx-auto p-4 bg-gray-100">
-      <h2 className="text-2xl font-bold mb-4">Chat for Booking #{booking.bookingCode}</h2>
-
-      <div className="flex-1 overflow-y-auto bg-white p-4 rounded-lg shadow">
-        {[...messages]
-          .sort((a, b) => {
-            const dateA = new Date(a.createdAt).setHours(0, 0, 0, 0);
-            const dateB = new Date(b.createdAt).setHours(0, 0, 0, 0);
-            return dateA - dateB;
-          })
-          .map((msg, index) => (
-            <div
-              key={msg._id || `${msg.fromUser}-${msg.createdAt}-${index}`}
-              className={`mb-4 ${msg.fromUser === user._id ? 'text-right' : 'text-left'}`}
-            >
-              <div
-                className={`inline-block p-2 rounded-lg ${
-                  msg.fromUser === user._id ? 'bg-blue-500 text-white' : 'bg-gray-200'
-                }`}
-              >
-                {msg.content && (msg.content.startsWith('data:image') || /\.(png|jpe?g|gif|webp)$/i.test(msg.content)) ? (
-                  <img
-                    src={msg.content}
-                    alt="uploaded"
-                    className="max-w-xs max-h-48 rounded-md border object-cover"
-                  />
-                ) : (
-                  <p>{msg.content}</p>
-                )}
-                <p className="text-xs opacity-75">
-                  {new Date(msg.createdAt).toLocaleTimeString()}
-                </p>
-              </div>
+    <div className="chat-cont-right">
+      {/* Chat Header */}
+      <div className="chat-header">
+        <a id="back_user_list" href="javascript:void(0)" className="back-user-list">
+          <i className="feather-chevron-left"></i>
+        </a>
+        <div className="notify-block d-flex">
+          <div className="media-img-wrap flex-shrink-0">
+            <div className="avatar avatar-online">
+              <img src={user?.avatar || "/assets/img/profiles/default-avatar.jpg"} alt="User Image" className="avatar-img rounded-circle" />
             </div>
-          ))}
-        <div ref={messagesEndRef} />
+          </div>
+         
+        </div>
+        <div className="chat-options">
+          <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#voice_call">
+            <i className="feather-phone"></i>
+          </a>
+          <a href="javascript:void(0)" data-bs-toggle="modal" data-bs-target="#video_call">
+            <i className="feather-video"></i>
+          </a>
+          <a href="javascript:void(0)">
+            <i className="feather-more-vertical"></i>
+          </a>
+        </div>
       </div>
 
-      <form onSubmit={handleSendMessage} className="mt-4 flex gap-2 items-center">
-        <input
-          type="text"
-          value={messageContent}
-          onChange={(e) => setMessageContent(e.target.value)}
-          placeholder="Type your message..."
-          className="flex-1 p-2 rounded border"
-        />
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setSelectedFile(e.target.files[0])}
-          className="text-sm"
-        />
-        <button
-          type="submit"
-          className="p-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        >
-          Send
-        </button>
-      </form>
+      {/* Chat Body */}
+      <div className="chat-body">
+        <div className="chat-scroll">
+          <ul className="list-unstyled">
+            {[...messages]
+              .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+              .map((msg, index) => {
+                const isSent = msg.fromUser === user._id;
+                const messageDate = new Date(msg.createdAt);
+                const timeString = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                return (
+                  <li key={msg._id || `${msg.fromUser}-${msg.createdAt}-${index}`} 
+                      className={`notify-block ${isSent ? 'sent' : 'received'} d-flex`}>
+                    {!isSent && (
+                      <div className="avatar flex-shrink-0">
+                        <img src={user?.avatar || "/assets/img/profiles/default-avatar.jpg"} 
+                             alt="User Image" 
+                             className="avatar-img rounded-circle" />
+                      </div>
+                    )}
+                    <div className="media-body flex-grow-1">
+                      <div className="msg-box">
+                        <div>
+                          {msg.content && (msg.content.startsWith('data:image') || /\.(png|jpe?g|gif|webp)$/i.test(msg.content)) ? (
+                            <div className="chat-msg-attachments">
+                              <div className="chat-attachment">
+                                <img src={msg.content} alt="Attachment" />
+                                <a href={msg.content} className="chat-attach-download" download>
+                                  <i className="fas fa-download"></i>
+                                </a>
+                              </div>
+                            </div>
+                          ) : (
+                            <p>{msg.content}</p>
+                          )}
+                          <ul className="chat-msg-info">
+                            <li>
+                              <div className="chat-time">
+                                <span>{timeString}</span>
+                              </div>
+                            </li>
+                            <li><a href="javascript:void(0)">Edit</a></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+          </ul>
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* Chat Footer */}
+      <div className="chat-footer">
+        <form onSubmit={handleSendMessage}>
+          <div className="input-group">
+            <div className="btn-file btn">
+              <i className="fa fa-paperclip"></i>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setSelectedFile(e.target.files[0])}
+              />
+            </div>
+            <input
+              type="text"
+              className="input-msg-send form-control rounded-pill"
+              placeholder="Type something"
+              value={messageContent}
+              onChange={(e) => setMessageContent(e.target.value)}
+            />
+            <button type="submit" className="btn msg-send-btn rounded-pill ms-2">
+              <i className="fa-solid fa-paper-plane"></i>
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default MessagePage;
+export default ChatPage;
