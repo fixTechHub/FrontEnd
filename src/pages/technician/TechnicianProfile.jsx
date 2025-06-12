@@ -3,25 +3,30 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
 import { useParams } from 'react-router-dom';
 import Header from '../../components/common/Header';
+import Rating from 'react-rating';
 
 function ViewTechnicianProfile() {
     const dispatch = useDispatch();
-    const { id } = useParams();
+    const { technicianId } = useParams();
 
     const { profile, loading, error } = useSelector(state => state.technician);
 
     useEffect(() => {
-        if (id) {
-            dispatch(fetchTechnicianProfile(id));
+        if (technicianId) {
+            console.log("Dispatching technicianId:", technicianId);
+            dispatch(fetchTechnicianProfile(technicianId));
         }
-    }, [dispatch, id]);
+    }, [dispatch, technicianId]);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
     if (!profile) return <p>No profile data.</p>;
 
-    const user = profile.userId ?? {};  // fallback nếu userId chưa có
-    const specialties = profile.specialtiesCategories ?? [];
+    const technician = profile.technician;
+    const certificates = profile.certificates;
+
+    const user = technician.userId ?? {};  // fallback nếu userId chưa có
+    const specialties = technician.specialtiesCategories ?? [];
 
     return (
         <>
@@ -35,7 +40,7 @@ function ViewTechnicianProfile() {
                     <div className="profile-info-grid">
                         <div className="profile-info-header">
                             <h5>Basic Information</h5>
-                            <p>Information about user</p>
+                            <p>Information about technician</p>
                         </div>
                         <div className="profile-inner">
                             <div className="profile-info-pic">
@@ -50,10 +55,7 @@ function ViewTechnicianProfile() {
                                         </a>
                                     </div>
                                 </div>
-                                <div className="profile-info-content">
-                                    <h6>Profile picture</h6>
-                                    <p>PNG, JPEG under 15 MB</p>
-                                </div>
+
                             </div>
                             <div >
                                 <div className="col-md-6">
@@ -81,13 +83,26 @@ function ViewTechnicianProfile() {
                                 </div>
                                 <div className="col-md-6">
                                     <div className="profile-form-group">
-                                        <label>Kinh nghiệm:  {profile?.experienceYears} năm</label>
+                                        <label>Kinh nghiệm:  {technician?.experienceYears} năm</label>
 
                                     </div>
                                 </div>
                                 <div className="col-md-6">
-                                    <div className="profile-form-group">
-                                        <label>Đánh giá trung bình: {profile?.ratingAverage}</label>
+                                    <div className="profile-form-group " style={{ display: 'flex' }}>
+                                        <div>
+                                            <label>Đánh giá:</label>
+                                        </div>
+
+                                        <div className="review-rating">
+                                            <Rating
+                                                initialRating={technician?.ratingAverage}
+                                                readonly
+                                                fullSymbol={<i className="fas fa-star filled"></i>}
+                                                emptySymbol={<i className="far fa-star"></i>}
+                                            />
+                                            <span>({technician?.ratingAverage})</span>
+                                        </div>
+
 
                                     </div>
                                 </div>
@@ -99,6 +114,23 @@ function ViewTechnicianProfile() {
                                                     <li key={spec._id}>{spec.categoryName}</li>
                                                 ))}
                                             </ul></label>
+                                    </div>
+                                </div>
+                                <div className="col-md-12">
+                                    <div className="profile-form-group">
+                                        <label>Chứng chỉ:</label>
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px' }}>
+                                            {certificates.map((cert) => (
+                                                <div key={cert._id} style={{ textAlign: 'center' }}>
+                                                    <img
+                                                        src={cert.fileUrl}
+                                                        alt="certificate"
+                                                        style={{ width: 150, height: 150, objectFit: 'cover', borderRadius: 10, border: '1px solid #ccc' }}
+                                                    />
+
+                                                </div>
+                                            ))}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

@@ -19,7 +19,7 @@ export default function AppRoutes() {
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/choose-role" element={<ChooseRole />} />
 
-                <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
+                <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
 
                 {/* <Route
                     path="/dashboard"
