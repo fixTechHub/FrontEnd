@@ -5,7 +5,7 @@ import LogInPage from '../pages/authentication/LogInPage';
 import RegisterPage from '../pages/authentication/RegisterPage';
 import ChooseRole from '../pages/authentication/ChooseRole';
 import ViewTechnicianProfile from '../pages/technician/TechnicianProfile';
-
+import CreateContractPage from '../pages/contracts/CreateContractPage';
 export default function AppRoutes() {
     return (
         <>
@@ -20,6 +20,7 @@ export default function AppRoutes() {
                 <Route path="/choose-role" element={<ChooseRole />} />
                 <Route path="/chat/:bookingId" element={<ChatPage />} />
                 <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
+                <Route path="/create-contract" element={<CreateContractPage />} />
 
                 {/* <Route
                     path="/dashboard"

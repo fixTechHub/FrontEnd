@@ -8,13 +8,6 @@ const apiClient = axios.create({
   },
 });
 
-// Optional: thêm interceptor để tự đính kèm token
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('accessToken');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+
 
 export default apiClient;

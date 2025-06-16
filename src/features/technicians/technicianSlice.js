@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getTechnicianProfile } from '../technicians/technicianAPI';
+import { getTechnicianProfile,getTechnicians } from '../technicians/technicianAPI';
 
 
 
@@ -10,6 +10,20 @@ export const fetchTechnicianProfile = createAsyncThunk(
     try {
       const technicianId = "60d0fe4f7f6a7d001c9a6f51";
       const data = await getTechnicianProfile(technicianId);
+      return data.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const fetchTechnicians = createAsyncThunk(
+  'technician/fetchProfile',
+  async (thunkAPI) => {
+    try {
+      const data = await getTechnicians();
       return data.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -40,7 +54,20 @@ const technicianSlice = createSlice({
       .addCase(fetchTechnicianProfile.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+
+      .addCase(fetchTechnicians.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnicians.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = action.payload;
+      })
+      .addCase(fetchTechnicians.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
   }
 });
 
