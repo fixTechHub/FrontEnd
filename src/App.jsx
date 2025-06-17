@@ -1,15 +1,26 @@
-import { Provider } from 'react-redux';
-import store from './app/store'; // Redux store
-import AppRoutes from './routes/index'; // Cấu hình router
+import { ToastContainer } from 'react-toastify';
+import AppRoutes from './routes';
+import AuthVerification from './features/auth/AuthVerification.js';
 import AppProvider from './app/AppProvider';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
-    <Provider store={store}>
       <AppProvider>
-        <AppRoutes />
+      <AuthVerification />
+      <AppRoutes />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
       </AppProvider>
-    </Provider>
   );
 }
 
