@@ -148,7 +148,7 @@ const authAPI = {
 
     updateUserProfile: async (userData) => {
         try {
-            const response = await apiClient.put('/users/profile', userData);
+            const response = await apiClient.patch('/users/profile', userData);
             return response.data.user || response.data;
         } catch (error) {
             throw handleError(error);
@@ -157,12 +157,21 @@ const authAPI = {
 
     updateAvatar: async (formData) => {
         try {
-            const response = await apiClient.put('/users/profile/avatar', formData, {
+            const response = await apiClient.patch('/users/profile/avatar', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
             });
             return response.data.user || response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    changePassword: async (passwordData) => {
+        try {
+            const response = await apiClient.put('/users/change-password', passwordData);
+            return response.data;
         } catch (error) {
             throw handleError(error);
         }

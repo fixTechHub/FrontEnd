@@ -175,6 +175,21 @@ export const updateAvatarThunk = createAsyncThunk(
   }
 );
 
+export const changePasswordThunk = createAsyncThunk(
+  'auth/changePassword',
+  async (passwordData, thunkAPI) => {
+    try {
+      const response = await authAPI.changePassword(passwordData);
+      toast.success('Đổi mật khẩu thành công');
+      return response;
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Không thể đổi mật khẩu';
+      toast.error(errorMessage);
+      return thunkAPI.rejectWithValue(errorMessage);
+    }
+  }
+);
+
 // Slice
 const authSlice = createSlice({
   name: 'auth',
@@ -371,6 +386,19 @@ const authSlice = createSlice({
         }
       })
       .addCase(updateAvatarThunk.rejected, (state, action) => {
+        state.updateLoading = false;
+        state.updateError = action.payload;
+      })
+      // Change Password
+      .addCase(changePasswordThunk.pending, (state) => {
+        state.updateLoading = true;
+        state.updateError = null;
+      })
+      .addCase(changePasswordThunk.fulfilled, (state) => {
+        state.updateLoading = false;
+        state.updateError = null;
+      })
+      .addCase(changePasswordThunk.rejected, (state, action) => {
         state.updateLoading = false;
         state.updateError = action.payload;
       });
