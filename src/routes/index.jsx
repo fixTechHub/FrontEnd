@@ -4,7 +4,8 @@ import HomePage from '../pages/home/HomePage';
 import LogInPage from '../pages/authentication/LogInPage';
 import RegisterPage from '../pages/authentication/RegisterPage';
 import ChooseRole from '../pages/authentication/ChooseRole';
-
+import CouponManagement from '../pages/CouponManagement';
+import CouponUsageManagement from '../pages/CouponUsageManagement';
 export default function AppRoutes() {
     return (
         <>
@@ -17,7 +18,8 @@ export default function AppRoutes() {
                 <Route path="/login" element={<LogInPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/choose-role" element={<ChooseRole />} />
-
+                <Route path="/coupons" element={<CouponManagement />} />
+                <Route path="/couponusages" element={<CouponUsageManagement />} />
                 {/* <Route
                     path="/dashboard"
                     element={
