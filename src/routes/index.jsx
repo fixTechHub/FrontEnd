@@ -21,7 +21,7 @@ export default function AppRoutes() {
                 <Route path="/choose-role" element={<ChooseRole />} />
                 <Route path="/booking" element={<BookingPage />} />
 
-                <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
+                <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
 
                 {/* <Route
                     path="/dashboard"
