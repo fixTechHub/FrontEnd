@@ -195,6 +195,67 @@ function Navbar() {
                         </ul>
                     </nav>
                 </div>
+
+                Categories if needed
+                {/* owl carousel item */}
+                <div className="listing-owl-item">
+                    <div className="listing-owl-group">
+                        <div className="listing-owl-img">
+                            <img src="/img/cars/mp-vehicle-01.svg" className="img-fluid" alt="Popular Cartypes" />
+                        </div>
+                        <h6>Crossover</h6>
+                        <p>35 Cars</p>
+                    </div>
+                </div>
+                {/* /owl carousel item */}
+
+                {/* owl carousel item */}
+                <div className="listing-owl-item">
+                    <div className="listing-owl-group">
+                        <div className="listing-owl-img">
+                            <img src="/img/cars/mp-vehicle-02.svg" className="img-fluid" alt="Popular Cartypes" />
+                        </div>
+                        <h6>Sports Coupe</h6>
+                        <p>45 Cars</p>
+                    </div>
+                </div>
+                {/* /owl carousel item */}
+
+                {/* owl carousel item */}
+                <div className="listing-owl-item">
+                    <div className="listing-owl-group">
+                        <div className="listing-owl-img">
+                            <img src="/img/cars/mp-vehicle-03.svg" className="img-fluid" alt="Popular Cartypes" />
+                        </div>
+                        <h6>Sedan</h6>
+                        <p>15 Cars</p>
+                    </div>
+                </div>
+                {/* /owl carousel item */}
+
+                {/* owl carousel item */}
+                <div className="listing-owl-item">
+                    <div className="listing-owl-group">
+                        <div className="listing-owl-img">
+                            <img src="/img/cars/mp-vehicle-04.svg" className="img-fluid" alt="Popular Cartypes" />
+                        </div>
+                        <h6>Pickup</h6>
+                        <p>17 Cars</p>
+                    </div>
+                </div>
+                {/* /owl carousel item */}
+
+                {/* owl carousel item */}
+                <div className="listing-owl-item">
+                    <div className="listing-owl-group">
+                        <div className="listing-owl-img">
+                            <img src="/img/cars/mp-vehicle-05.svg" className="img-fluid" alt="Popular Cartypes" />
+                        </div>
+                        <h6>Family MPV</h6>
+                        <p>24 Cars</p>
+                    </div>
+                </div>
+                {/* /owl carousel item */}
             </header>
         </>
     )

@@ -1,82 +1,245 @@
+import BreadcrumbBar from "../../components/common/BreadcrumbBar";
+import Header from "../../components/common/Header";
+import BookingWizard from "./BookingHeader";
+import Map from "../../components/map/Map";
+import { useSelector } from "react-redux";
+import { Spinner } from "react-bootstrap";
+import { useCallback, useState } from "react";
+import ServiceSelector from "./ServiceSelector";
+import { createBooking } from "../../features/bookings/bookingAPI";
+
 function BookingPage() {
+    const { categories, status: categoryStatus } = useSelector((state) => state.categories);
+    const { services, status: serviceStatus } = useSelector((state) => state.services);
+
+    // Địa chỉ khách nhập
+    const [addressInput, setAddressInput] = useState("");
+    // Địa chỉ từ map/geocode (gợi ý)
+    const [mapAddress, setMapAddress] = useState("");
+    // Tọa độ marker
+    const [geoJson, setGeoJson] = useState(null);
+
+    const [bookingData, setBookingData] = useState({
+        service: '',
+        description: '',
+        scheduleDate: '',
+        scheduleTime: '',
+        address: '',
+        geoJson: null,
+        images: []
+    });
+
+    const handleServiceChange = useCallback((service) => {
+        setBookingData(prev => ({ ...prev, service }));
+    }, []);
+
+    const handleAddressInput = (e) => {
+        setAddressInput(e.target.value);
+    };
+
+    const handleConfirmAddress = (e) => {
+        e.preventDefault();
+        // Truyền addressInput cho Map để geocode
+        setMapAddress(""); // reset gợi ý trước đó
+        setGeoJson(null); // reset geoJson trước đó
+
+        setTimeout(() => setMapAddress(addressInput), 0);
+    };
+
+    const handleLocationChange = useCallback((address, geo) => {
+        setMapAddress(address || ""); // chỉ cập nhật gợi ý, không ghi đè input
+        setGeoJson(geo);
+    }, []);
+
+    const handleUseMapAddress = () => {
+        setAddressInput(mapAddress);
+    };
+
+    const handleInputChange = (e) => {
+        const { name, value, files } = e.target;
+        if (name === "images") {
+            setBookingData(prev => ({
+                ...prev,
+                images: files
+            }));
+        } else {
+            setBookingData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!addressInput || !geoJson || !bookingData.service) {
+            alert('Vui lòng nhập địa chỉ, chọn vị trí trên bản đồ và chọn dịch vụ cần sửa chữa');
+            return;
+        }
+        const formData = new FormData();
+        formData.append('serviceId', bookingData.service?._id);
+        formData.append('address', addressInput); // địa chỉ khách nhập
+        formData.append('geoJson', JSON.stringify(geoJson)); // vị trí marker
+        formData.append('description', bookingData.description);
+        formData.append('schedule', `${bookingData.scheduleDate}T${bookingData.scheduleTime}`);
+        for (const file of bookingData.images) {
+            formData.append('images', file);
+        }
+
+        try {
+            console.log("Đang gửi FormData đến backend...", formData);
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+            
+            const res = await createBooking(formData);
+
+            console.log('--- RES BOOKING ---', res);
+        } catch (error) {
+            alert('Đặt lịch thất bại!');
+            console.error(error);
+        }
+    };
+
+    if (categoryStatus === 'loading' || serviceStatus === 'loading')
+        return (
+            <>
+                <Spinner animation="border" variant="warning" />
+                <h6>Đang tải dữ liệu</h6>
+            </>
+        );
+
     return (
         <>
-            <div className="section-search">
+            <Header />
+            <BreadcrumbBar title='Đặt Lịch Sửa Chữa' />
+            <div className="booking-new-module">
                 <div className="container">
-                    <div className="search-box-banner">
-                        <form action="https://dreamsrent.dreamstechnologies.com/html/template/listing-grid.html">
-                            <ul className="align-items-center">
-                                <li className="column-group-main">
-                                    <div className="input-block">
-                                        <label>Pickup Location</label>
-                                        <div className="group-img">
-                                            <input type="text" className="form-control" placeholder="Enter City, Airport, or Address" />
-                                            <span>
-                                                <i className="feather-map-pin"></i>
-                                            </span>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li className="column-group-main">
-                                    <div className="input-block">
-                                        <label>Pickup Date</label>
-                                    </div>
-                                    <div className="input-block-wrapp">
-                                        <div className="input-block date-widget">
-                                            <div className="group-img">
-                                                <input type="text" className="form-control datetimepicker" placeholder="04/11/2023" />
-                                                <span>
-                                                    <i className="feather-calendar"></i>
-                                                </span>
+                    <BookingWizard activeStep={1} />
+                    <form onSubmit={handleSubmit} className="booking-detail-info">
+                        <div className="row">
+                            <div className="col-lg-8">
+                                <div className="booking-information-main">
+                                    <div>
+                                        <div className="booking-information-card delivery-location">
+                                            <div className="booking-info-head">
+                                                <span><i className="bx bxs-map"></i></span>
+                                                <h5>Vị trí</h5>
                                             </div>
-                                        </div>
-                                        <div className="input-block time-widge">
-                                            <div className="group-img">
-                                                <input type="text" className="form-control timepicker" placeholder="11:00 AM" />
-                                                <span>
-                                                    <i className="feather-clock"></i>
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li className="column-group-main">
-                                    <div className="input-block">
-                                        <label>Return Date</label>
-                                    </div>
-                                    <div className="input-block-wrapp">
-                                        <div className="input-block date-widge">
-                                            <div className="group-img">
-                                                <input type="text" className="form-control datetimepicker" placeholder="04/11/2023" />
-                                                <span>
-                                                    <i className="feather-calendar"></i>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className="input-block time-widge">
-                                            <div className="group-img">
-                                                <input type="text" className="form-control timepicker" placeholder="11:00 AM" />
-                                                <span>
-                                                    <i className="feather-clock"></i>
-                                                </span>
+                                            <div className="booking-info-body">
+                                                <div className="form-custom">
+                                                    <div className="d-flex align-items-center">
+                                                        <input
+                                                            name="address"
+                                                            type="text"
+                                                            className="form-control mb-0"
+                                                            placeholder="Nhập vị trí của bạn (ví dụ: 105 Nguyễn Nhàn, Cẩm Lệ, Đà Nẵng)"
+                                                            value={addressInput}
+                                                            onChange={handleAddressInput}
+                                                        />
+                                                        <a
+                                                            className="btn btn-secondary location-btn"
+                                                            onClick={handleConfirmAddress}
+                                                        >
+                                                            <i className="bx bxs-map-alt me-2"></i>Tìm trên bản đồ
+                                                        </a>
+                                                    </div>
+
+                                                </div>
+                                                <div style={{ marginTop: 20 }}>
+                                                    <Map
+                                                        address={mapAddress || addressInput}
+                                                        onLocationChange={handleLocationChange}
+                                                    />
+                                                    {mapAddress && (
+                                                        <div style={{ marginTop: 14, fontSize: 15, color: '#888', textAlign: 'center' }}>
+                                                            Địa chỉ trên bản đồ: {mapAddress}
+                                                            <a className="btn btn-secondary"
+                                                                onClick={handleUseMapAddress}
+                                                                style={{ marginLeft: 8, fontSize: 14 }}
+                                                            >Dùng địa chỉ này</a>
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </li>
-                                <li className="column-group-last">
-                                    <div className="input-block">
-                                        <div className="search-btn">
-                                            <button className="btn search-button" type="submit">
-                                                <i className="fa fa-search" aria-hidden="true"></i>Search
-                                            </button>
-                                        </div>
+                                </div>
+                            </div>
+                            <div className="col-lg-4">
+                                <div className="input-block">
+                                    <label className="form-label">Dịch vụ</label>
+                                    <ServiceSelector
+                                        categories={categories}
+                                        services={services}
+                                        onServiceChange={handleServiceChange}
+                                        selectedServiceName={bookingData.service?.serviceName}
+                                    />
+                                </div>
+                                <div className="input-block">
+                                    <label className="form-label">Mô tả</label>
+                                    <div className="group-img">
+                                        <textarea
+                                            name="description"
+                                            className="form-control"
+                                            placeholder="Nhập mô tả tình trạng bạn gặp phải..."
+                                            value={bookingData.description}
+                                            onChange={handleInputChange}
+                                        />
                                     </div>
-                                </li>
-                            </ul>
-                        </form>
-                    </div>
+                                </div>
+                                <div className="input-block">
+                                    <label className="form-label">Chọn ngày</label>
+                                    <div className="group-img">
+                                        <input
+                                            name="scheduleDate"
+                                            type="date"
+                                            className="form-control"
+                                            placeholder="Choose Date"
+                                            value={bookingData.scheduleDate}
+                                            onChange={handleInputChange}
+                                        />
+                                        {/* <span className="input-cal-icon"><i className="bx bx-calendar"></i></span> */}
+                                    </div>
+                                </div>
+                                <div className="input-block">
+                                    <label className="form-label">Chọn thời gian</label>
+                                    <div className="group-img">
+                                        <input
+                                            name="scheduleTime"
+                                            type="time"
+                                            step="1"
+                                            className="form-control"
+                                            placeholder="Choose Time"
+                                            value={bookingData.scheduleTime}
+                                            onChange={handleInputChange}
+                                        />
+                                        {/* <span className="input-cal-icon"><i className="bx bx-time"></i></span> */}
+                                    </div>
+                                </div>
+                                <div className="input-block">
+                                    <label className="form-label">Tải lên hình ảnh</label>
+                                    <div className="group-img">
+                                        <input
+                                            name="images"
+                                            type="file"
+                                            className="form-control image-sign"
+                                            multiple
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                </div>
+                                <div style={{ position: 'relative', bottom: 0 }} className="booking-info-btns d-flex justify-content-end">
+                                    <button type="submit" className="btn btn-primary continue-book-btn">Đặt dịch vụ</button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </>
-    )
+    );
 }
+
+export default BookingPage;
+
