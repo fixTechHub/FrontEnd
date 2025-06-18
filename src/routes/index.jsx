@@ -4,6 +4,7 @@ import HomePage from '../pages/home/HomePage';
 import LogInPage from '../pages/authentication/LogInPage';
 import RegisterPage from '../pages/authentication/RegisterPage';
 import ChooseRole from '../pages/authentication/ChooseRole';
+import ViewTechnicianProfile from '../pages/technician/TechnicianProfile';
 
 export default function AppRoutes() {
     return (
@@ -17,6 +18,8 @@ export default function AppRoutes() {
                 <Route path="/login" element={<LogInPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/choose-role" element={<ChooseRole />} />
+
+                <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
 
                 {/* <Route
                     path="/dashboard"
