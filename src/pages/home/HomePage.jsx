@@ -1,6 +1,7 @@
 import Banner from "../../components/common/Banner";
 import Footer from "../../components/common/Footer";
 import Header from "../../components/common/Header";
+import Categories from "./Categories";
 
 function HomePage() {
     return (
@@ -9,6 +10,45 @@ function HomePage() {
                 <Header />
 
                 <Banner />
+
+                <Categories />
+
+                <section className="more-boats-info-sec">
+                    <div className="container-fluid">
+                        <div className="sec-bottom-info">
+                            <div className="row bottom-text-row">
+                                
+                                <div className="col-xl-3 col-lg-6">
+                                    <div className="bottom-ship-info-card">
+                                        <div className="hover-ship-info w-100">
+                                            <h4>2022 Sea Doo Pontoon for Exciting Adventure</h4>
+                                            <div className="address-info">
+                                                <span><i className="bx bx-map"></i>Heflin, AL</span>
+                                                <div className="rated-star">
+                                                    <i className="bx bxs-star filled"></i>
+                                                    <i className="bx bxs-star filled"></i>
+                                                    <i className="bx bxs-star filled"></i>
+                                                    <i className="bx bxs-star filled"></i>
+                                                    <i className="bx bxs-star"></i>
+                                                    <span>55 Reviews</span>
+                                                </div>
+                                            </div>
+                                            <ul className="ship-features">
+                                                <li>Cabins : 4</li>
+                                                <li>People : 8</li>
+                                                <li>Length : 4.6</li>
+                                            </ul>
+                                            <div className="ship-pricing">
+                                                <h5>From <span> $180 </span> /day</h5>
+                                                <a href="listing-details.html" className="btn btn-primary btn-buy">Book Now</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
                 <section className="section services">
                     <div className="service-right">
@@ -67,92 +107,6 @@ function HomePage() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
-
-                <section className="section popular-car-type">
-                    <div className="container">
-                        {/* Heading title */}
-                        <div className="section-heading" data-aos="fade-down">
-                            <h2>Most Popular Cartypes</h2>
-                            <p>Most popular worldwide Car Category due to their reliability, affordability, and features.</p>
-                        </div>
-                        {/* /Heading title */}
-                        <div className="row">
-                            <div className="popular-slider-group">
-                                <div className="owl-carousel popular-cartype-slider owl-theme">
-                                    {/* owl carousel item */}
-                                    <div className="listing-owl-item">
-                                        <div className="listing-owl-group">
-                                            <div className="listing-owl-img">
-                                                <img src="/img/cars/mp-vehicle-01.svg" className="img-fluid" alt="Popular Cartypes" />
-                                            </div>
-                                            <h6>Crossover</h6>
-                                            <p>35 Cars</p>
-                                        </div>
-                                    </div>
-                                    {/* /owl carousel item */}
-
-                                    {/* owl carousel item */}
-                                    <div className="listing-owl-item">
-                                        <div className="listing-owl-group">
-                                            <div className="listing-owl-img">
-                                                <img src="/img/cars/mp-vehicle-02.svg" className="img-fluid" alt="Popular Cartypes" />
-                                            </div>
-                                            <h6>Sports Coupe</h6>
-                                            <p>45 Cars</p>
-                                        </div>
-                                    </div>
-                                    {/* /owl carousel item */}
-
-                                    {/* owl carousel item */}
-                                    <div className="listing-owl-item">
-                                        <div className="listing-owl-group">
-                                            <div className="listing-owl-img">
-                                                <img src="/img/cars/mp-vehicle-03.svg" className="img-fluid" alt="Popular Cartypes" />
-                                            </div>
-                                            <h6>Sedan</h6>
-                                            <p>15 Cars</p>
-                                        </div>
-                                    </div>
-                                    {/* /owl carousel item */}
-
-                                    {/* owl carousel item */}
-                                    <div className="listing-owl-item">
-                                        <div className="listing-owl-group">
-                                            <div className="listing-owl-img">
-                                                <img src="/img/cars/mp-vehicle-04.svg" className="img-fluid" alt="Popular Cartypes" />
-                                            </div>
-                                            <h6>Pickup</h6>
-                                            <p>17 Cars</p>
-                                        </div>
-                                    </div>
-                                    {/* /owl carousel item */}
-
-                                    {/* owl carousel item */}
-                                    <div className="listing-owl-item">
-                                        <div className="listing-owl-group">
-                                            <div className="listing-owl-img">
-                                                <img src="/img/cars/mp-vehicle-05.svg" className="img-fluid" alt="Popular Cartypes" />
-                                            </div>
-                                            <h6>Family MPV</h6>
-                                            <p>24 Cars</p>
-                                        </div>
-                                    </div>
-                                    {/* /owl carousel item */}
-                                </div>
-                            </div>
-                        </div>
-                        {/* View More */}
-                        <div className="view-all text-center" data-aos="fade-down" data-aos-anchor-placement="top-bottom">
-                            <a href="listing-grid.html" className="btn btn-view d-inline-flex align-items-center">
-                                View all Cars
-                                <span>
-                                    <i className="feather-arrow-right ms-2"></i>
-                                </span>
-                            </a>
-                        </div>
-                        {/* View More */}
                     </div>
                 </section>
 

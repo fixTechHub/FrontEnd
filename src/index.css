@@ -1,3 +1,5 @@
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
 .font-14 {
     font-size: 14px;
 }
@@ -16,4 +18,15 @@
 
 .mb-20 {
     margin-bottom: 20px !important;
+}
+
+.booking-service {
+    border: 1px solid #676767;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.booking-service:hover {
+    background-color: #FFA633 !important;
 }
