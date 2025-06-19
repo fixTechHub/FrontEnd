@@ -1,3 +1,4 @@
+import { Spinner } from "react-bootstrap";
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutThunk } from '../../features/auth/authSlice';
@@ -6,6 +7,13 @@ import Swal from 'sweetalert2';
 function Header() {
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
+    const categories = useSelector((state) => state.categories.categories);
+    const services = useSelector((state) => state.services.services);
+    const categoryStatus = useSelector((state) => state.categories.status);
+    const serviceStatus = useSelector((state) => state.services.status);
+
+    // console.log('--- PUBLIC SERVICE ---', services);
+    // console.log('--- PUBLIC CATEGORY ---', categories);
 
     const handleLogout = async () => {
         const result = await Swal.fire({
@@ -33,6 +41,14 @@ function Header() {
             });
         }
     };
+
+    if (categoryStatus === 'loading' || serviceStatus === 'loading')
+        return (
+            <>
+                <Spinner animation="border" variant="warning" />
+                <h6>Đang tải dữ liệu</h6>
+            </>
+        )
 
     return (
         <>
@@ -64,15 +80,27 @@ function Header() {
                                 </a>
                             </div>
                             <ul className="main-nav">
-                                <li className="active">
-                                    <Link to="/">TRANG CHỦ</Link>
+                                <li className="has-submenu megamenu active">
+                                    <a href="/">TRANG CHỦ </a>
                                 </li>
 
                                 <li className="has-submenu">
                                     <a href="#">DANH MỤC <i className="fas fa-chevron-down"></i></a>
                                     <ul className="submenu">
-                                        <li><Link to="/services">Dịch vụ</Link></li>
-                                        <li><Link to="/products">Sản phẩm</Link></li>
+                                        {Array.isArray(categories) && categories.map((category) => (
+                                            <li className="has-submenu"
+                                                key={category._id}>
+                                                <a>{category.categoryName}</a>
+
+                                                <ul className="submenu">
+                                                    {Array.isArray(services) && services
+                                                        .filter(service => service.categoryId === category._id)
+                                                        .map((service) => (
+                                                            <li key={service._id}><a href="user-dashboard.html">{service.serviceName}</a></li>
+                                                        ))}
+                                                </ul>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </li>
 
