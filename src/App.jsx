@@ -1,9 +1,10 @@
-import { useDispatch } from 'react-redux';
-import AppRoutes from './routes/index'; // Cấu hình router
-import AppProvider from './app/AppProvider';
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import { checkAuthThunk } from './features/auth/authSlice'
 import { fetchAllPublicCategories } from './features/categories/categorySlice';
 import { fetchAllPublicServices } from './features/services/serviceSlice';
-import { useEffect } from 'react';
+import AppRoutes from './routes'
+import AppProvider from './app/AppProvider';
 
 function App() {
     const dispatch = useDispatch();
@@ -11,6 +12,7 @@ function App() {
     useEffect(() => {
         dispatch(fetchAllPublicCategories());
         dispatch(fetchAllPublicServices());
+        dispatch(checkAuthThunk());
     }, [dispatch]);
 
     return (
@@ -20,4 +22,4 @@ function App() {
     );
 }
 
-export default App;
+export default App
