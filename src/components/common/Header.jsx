@@ -21,13 +21,14 @@ function Header() {
 
         if (result.isConfirmed) {
             await dispatch(logoutThunk());
+            sessionStorage.removeItem('hasWelcomed');
             Swal.fire({
                 title: 'Đã đăng xuất',
                 text: 'Hẹn gặp lại bạn!',
                 icon: 'success',
-                timer: 1500,
+                timer: 2000,
                 showConfirmButton: false,
-                position: 'top-end',
+                position: 'bottom-end',
                 toast: true
             });
         }

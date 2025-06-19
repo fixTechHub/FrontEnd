@@ -1,10 +1,50 @@
         import Banner from "../../components/common/Banner";
         import Footer from "../../components/common/Footer";
         import Header from "../../components/common/Header";
-        import { useEffect } from "react";
+        import { useEffect, useRef, useState } from "react";
         import AOS from "aos";
+        import { useSelector } from 'react-redux';
+        import Swal from 'sweetalert2';
 
         function HomePage() {
+            const { user, isAuthenticated, verificationStatus } = useSelector(state => state.auth);
+            const hasWelcomed = useRef(false);
+            const [loading, setLoading] = useState(true);
+
+            useEffect(() => {
+                // Loading tối thiểu 1000ms
+                const timer = setTimeout(() => {
+                    setLoading(false);
+                }, 500);
+                return () => clearTimeout(timer);
+            }, []);
+
+            useEffect(() => {
+                if (
+                    !loading &&
+                    isAuthenticated &&
+                    verificationStatus?.step === 'COMPLETED' &&
+                    user &&
+                    !sessionStorage.getItem('hasWelcomed')
+                ) {
+                    Swal.fire({
+                        title: `Xin chào trở lại, ${user.fullName}!`,
+                        text: 'Chúc bạn một ngày tốt lành',
+                        icon: 'success',
+                        timer: 2000,
+                        timerProgressBar: true,
+                        showConfirmButton: false,
+                        position: 'bottom-end',
+                        toast: true,
+                        didOpen: (toast) => {
+                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                        }
+                    });
+                    sessionStorage.setItem('hasWelcomed', 'true');
+                }
+            }, [loading, isAuthenticated, verificationStatus, user]);
+
             useEffect(() => {
                 // Import jQuery và Owl Carousel động
                 const loadCarousel = async () => {
@@ -69,6 +109,15 @@
                     AOS.refresh();
                 };
             }, []); // Empty dependency array means this effect runs once on mount
+
+            if (loading) {
+                return (
+                    <div className="loading-wrapper">
+                        <div className="loading-spinner"></div>
+                        <p>Đang tải trang...</p>
+                    </div>
+                );
+            }
 
             return (
                 <>

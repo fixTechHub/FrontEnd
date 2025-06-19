@@ -1,27 +1,29 @@
-import { ToastContainer } from 'react-toastify';
-import AppRoutes from './routes';
-import AuthVerification from './features/auth/AuthVerification.js';
-import AppProvider from './app/AppProvider';
-import 'react-toastify/dist/ReactToastify.css';
+import { useEffect } from 'react'
+import { useDispatch } from 'react-redux'
+import { checkAuthThunk } from './features/auth/authSlice'
+import AppRoutes from './routes'
+import AppProvider from './app/AppProvider'
+
+const AppContent = () => {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    dispatch(checkAuthThunk())
+  }, [dispatch])
+
+  return (
+    <>
+      <AppRoutes />
+    </>
+  )
+}
 
 function App() {
   return (
-      <AppProvider>
-      <AuthVerification />
-      <AppRoutes />
-      <ToastContainer
-        position="top-right"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      </AppProvider>
-  );
+    <AppProvider>
+      <AppContent />
+    </AppProvider>
+  )
 }
 
-export default App;
+export default App

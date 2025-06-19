@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { checkAuthThunk } from '../features/auth/authSlice';
+import ProtectedRoute from './access/PrivateRoute';
 
 import HomePage from '../pages/home/HomePage';
 import LoginPage from '../pages/authentication/LogInPage';
@@ -14,23 +15,20 @@ import VerifyOTPPage from '../pages/authentication/VerifyOTPPage';
 import ViewTechnicianProfile from '../pages/technician/TechnicianProfile';
 import ProfilePage from '../pages/authentication/ProfilePage';
 
-const ProtectedRoute = ({ children, isAllowed, redirectPath = '/login' }) => {
-    if (!isAllowed) {
-        return <Navigate to={redirectPath} replace />;
-    }
-    return children;
-};
-
 export default function AppRoutes() {
     const dispatch = useDispatch();
-    const location = useLocation();
     const { user, loading } = useSelector((state) => state.auth);
     const [isAuthChecked, setIsAuthChecked] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {
-            await dispatch(checkAuthThunk());
-            setIsAuthChecked(true);
+            try {
+                await dispatch(checkAuthThunk()).unwrap();
+            } catch (error) {
+                console.error('Check auth error:', error);
+            } finally {
+                setIsAuthChecked(true);
+            }
         };
         checkAuth();
     }, [dispatch]);
@@ -47,30 +45,25 @@ export default function AppRoutes() {
     return (
         <Routes>
             {/* Public routes */}
-            <Route path="/" element={<HomePage />} />
             <Route 
-                path="/login" 
-                element={user ? <Navigate to="/" replace /> : <LoginPage />}
+                path="/" 
+                element={
+                    <ProtectedRoute isAllowed={true}>
+                        <HomePage />
+                    </ProtectedRoute>
+                } 
             />
-            <Route 
-                path="/register" 
-                element={user ? <Navigate to="/" replace /> : <RegisterPage />}
-            />
-            <Route 
-                path="/forgot-password" 
-                element={user ? <Navigate to="/" replace /> : <ForgotPasswordPage />}
-            />
-            <Route 
-                path="/reset-password" 
-                element={user ? <Navigate to="/" replace /> : <ResetPasswordPage />}
-            />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
             
-            {/* Protected routes */}
+            {/* Verification routes */}
             <Route
                 path="/choose-role"
                 element={
                     <ProtectedRoute 
-                        isAllowed={!!user && user?.role?.name === 'PENDING'}
+                        isAllowed={!!user && (!user.role || user.role.name === 'PENDING')}
                         redirectPath={user ? '/' : '/login'}
                     >
                         <ChooseRole />
@@ -82,7 +75,7 @@ export default function AppRoutes() {
                 element={
                     <ProtectedRoute 
                         isAllowed={!!user && user.email && !user.emailVerified}
-                        redirectPath={user ? (user.emailVerified ? '/' : '/choose-role') : '/login'}
+                        redirectPath={user ? '/' : '/login'}
                     >
                         <VerifyEmailPage />
                     </ProtectedRoute>
@@ -100,6 +93,7 @@ export default function AppRoutes() {
                 }
             />
 
+            {/* Protected routes */}
             <Route
                 path="/technician/profile/:id"
                 element={

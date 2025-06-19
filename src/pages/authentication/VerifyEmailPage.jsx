@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { verifyEmailThunk, resendEmailCodeThunk } from '../../features/auth/authSlice';
+import { verifyEmailThunk, resendEmailCodeThunk, logoutThunk, clearVerificationStatus } from '../../features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { FaEnvelope } from 'react-icons/fa';
 
@@ -13,7 +13,7 @@ function VerifyEmailPage() {
     const [codeExpiryTime, setCodeExpiryTime] = useState(300); // 5 phút cho mã xác thực
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, user } = useSelector((state) => state.auth);
+    const { loading, user, isAuthenticated } = useSelector((state) => state.auth);
 
     // Tạo timer cho thời gian chờ gửi lại
     const startResendTimer = useCallback(() => {
@@ -41,8 +41,18 @@ function VerifyEmailPage() {
         }, 1000);
     }, []);
 
+    // Xử lý khi component unmount hoặc user không còn authenticated
+    useEffect(() => {
+        return () => {
+            if (!isAuthenticated) {
+                dispatch(clearVerificationStatus());
+            }
+        };
+    }, [isAuthenticated, dispatch]);
+
     useEffect(() => {
         if (!user?.email) {
+            dispatch(clearVerificationStatus());
             navigate('/login');
             return;
         }
@@ -54,7 +64,7 @@ function VerifyEmailPage() {
         return () => {
             clearInterval(expiryTimer);
         };
-    }, [user, navigate, startExpiryTimer]);
+    }, [user, navigate, startExpiryTimer, dispatch]);
 
     const handleInputChange = (index, value) => {
         if (value.length > 1) value = value[0];
@@ -86,15 +96,26 @@ function VerifyEmailPage() {
                 return;
             }
 
-            const result = await dispatch(verifyEmailThunk(code)).unwrap();
+            await dispatch(verifyEmailThunk(code)).unwrap();
             toast.success('Xác thực email thành công! Vui lòng đăng nhập lại để tiếp tục.');
             
-            // Chuyển hướng về trang đăng nhập sau khi xác thực thành công
+            // Clear verification status và logout
+            dispatch(clearVerificationStatus());
+            await dispatch(logoutThunk());
             navigate('/login');
         } catch (error) {
             console.error('Verification error details:', error);
             toast.error(error.message || 'Xác thực thất bại');
         }
+    };
+
+    // Xử lý khi user muốn thoát
+    const handleBack = async () => {
+        // Đầu tiên điều hướng về home
+        navigate('/');
+        // Sau đó mới clear status và logout
+        dispatch(clearVerificationStatus());
+        await dispatch(logoutThunk());
     };
 
     const handleResendCode = async () => {
@@ -130,7 +151,10 @@ function VerifyEmailPage() {
     return (
         <div className="main-wrapper login-body">
             <header className="log-header">
-                <a href="/">
+                <a href="/" onClick={(e) => {
+                    e.preventDefault();
+                    handleBack();
+                }}>
                     <img className="img-fluid logo-dark" src="/img/logo.png" alt="Logo" />
                 </a>
             </header>
