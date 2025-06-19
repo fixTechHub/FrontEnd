@@ -5,6 +5,8 @@ import LogInPage from '../pages/authentication/LogInPage';
 import RegisterPage from '../pages/authentication/RegisterPage';
 import ChooseRole from '../pages/authentication/ChooseRole';
 import ViewTechnicianProfile from '../pages/technician/TechnicianProfile';
+import ViewEarningAndCommission from '../pages/technician/ViewEarningAndCommission';
+import TechnicianDashboard from '../pages/technician/TechnicianDashboard';
 
 export default function AppRoutes() {
     return (
@@ -12,7 +14,7 @@ export default function AppRoutes() {
             <Routes>
                 {/* Route mặc định chuyển hướng */}
                 <Route path="*" element={<Navigate to="/login" replace />} />
-                
+
                 <Route path="/" element={<HomePage />} />
 
                 <Route path="/login" element={<LogInPage />} />
@@ -20,6 +22,8 @@ export default function AppRoutes() {
                 <Route path="/choose-role" element={<ChooseRole />} />
 
                 <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
+                <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
+                <Route path="/technician/:technicianId" element={< TechnicianDashboard/>} />
 
                 {/* <Route
                     path="/dashboard"
