@@ -2,9 +2,9 @@ import apiClient from '../../services/apiClient';
 
 
 export const bookingAPI = {
-    getBookingById: async (bookingId) => {
+    getAcceptedBookingPrice: async (bookingId,technicianId) => {
         try {
-            const response = await apiClient.get(`/bookings/${bookingId}`);
+            const response = await apiClient.get(`/booking-price/acceptedBookingPrice/${bookingId}/${technicianId}`);
             return response;
         } catch (error) {
             console.error('Get booking error:', error);

@@ -20,7 +20,7 @@ export const fetchTechnicianProfile = createAsyncThunk(
 );
 
 export const fetchTechnicians = createAsyncThunk(
-  'technician/fetchProfile',
+  'technician/fetchList',
   async (thunkAPI) => {
     try {
       const data = await getTechnicians();
