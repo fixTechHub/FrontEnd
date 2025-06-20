@@ -9,7 +9,7 @@ const MessagePage = () => {
     const { bookingId } = useParams();
     const dispatch = useDispatch();
     const { user } = useSelector((state) => state.auth);
-    const { booking, loading: bookingLoading, error: bookingError } = useSelector((state) => state.bookings);
+    const { booking, loading: bookingLoading, error: bookingError } = useSelector((state) => state.booking);
     const { messages, loading: messagesLoading, error: messagesError } = useSelector((state) => state.messages);
     const [messageContent, setMessageContent] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
