@@ -283,6 +283,10 @@ function RegisterPage() {
                                     ) : 'ĐĂNG KÝ'}
                                 </button>
 
+                                <div className="text-center mb-4">
+                                    <p className="text-secondary mb-0">Hoặc</p>
+                                </div>
+
                                 <button
                                     type="button"
                                     onClick={handleGoogleLogin}

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { completeRegistrationThunk, logoutThunk } from '../../features/auth/authSlice';
+import { completeRegistrationThunk, logoutThunk, clearVerificationStatus } from '../../features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { FaUser, FaTools, FaCheck } from 'react-icons/fa';
 
@@ -10,7 +10,23 @@ function ChooseRole() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, user } = useSelector((state) => state.auth);
+    const { loading, user, isAuthenticated, verificationStatus } = useSelector((state) => state.auth);
+
+    // Theo dõi thay đổi của verificationStatus để redirect
+    useEffect(() => {
+        if (verificationStatus?.redirectTo && verificationStatus.redirectTo !== '/choose-role') {
+            navigate(verificationStatus.redirectTo);
+        }
+    }, [verificationStatus, navigate]);
+
+    // Xử lý khi component unmount hoặc user không còn authenticated
+    useEffect(() => {
+        return () => {
+            if (!isAuthenticated) {
+                dispatch(clearVerificationStatus());
+            }
+        };
+    }, [isAuthenticated, dispatch]);
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
@@ -24,25 +40,25 @@ function ChooseRole() {
 
         setIsSubmitting(true);
         try {
-            const result = await dispatch(completeRegistrationThunk(selectedRole)).unwrap();
+            await dispatch(completeRegistrationThunk(selectedRole)).unwrap();
             toast.success('Đã chọn vai trò thành công!');
             
-            // Nếu cần xác minh thêm, điều hướng đến bước tiếp theo
-            if (!user.emailVerified && user.email) {
-                navigate('/verify-email');
-            } else if (!user.phoneVerified && user.phone) {
-                navigate('/verify-otp');
-            } else {
-                // Nếu đã hoàn thành mọi bước, đăng xuất và yêu cầu đăng nhập lại
-                await dispatch(logoutThunk());
-                toast.info('Vui lòng đăng nhập lại để tiếp tục.');
-                navigate('/login');
-            }
+            // Không cần xử lý navigation ở đây nữa vì useEffect sẽ tự động redirect
+            // dựa trên verificationStatus mới từ completeRegistrationThunk
         } catch (error) {
             toast.error(error.message || 'Không thể chọn vai trò');
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Xử lý khi user muốn thoát
+    const handleBack = async () => {
+        // Đầu tiên điều hướng về home
+        navigate('/');
+        // Sau đó mới clear status và logout
+        dispatch(clearVerificationStatus());
+        await dispatch(logoutThunk());
     };
 
     const roleCards = [
@@ -73,7 +89,10 @@ function ChooseRole() {
     return (
             <div className="main-wrapper login-body">
                 <header className="log-header">
-                    <a href="/">
+                    <a href="/" onClick={(e) => {
+                        e.preventDefault();
+                        handleBack();
+                    }}>
                         <img className="img-fluid logo-dark" src="/img/logo.png" alt="Logo" />
                     </a>
                 </header>
@@ -167,7 +186,7 @@ function ChooseRole() {
                 </div>
             </footer>
 
-            <style jsx>{`
+            <style>{`
                 .role-card {
                     transition: all 0.3s ease;
                 }

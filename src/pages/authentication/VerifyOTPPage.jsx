@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
 import authAPI from '../../features/auth/authAPI';
+import { clearVerificationStatus, logoutThunk } from '../../features/auth/authSlice';
 import Swal from 'sweetalert2';
 import '../../styles/auth.css';
 import { FaMobileAlt } from 'react-icons/fa';
@@ -20,6 +21,7 @@ function VerifyOTPPage() {
     const [countdown, setCountdown] = useState(60);
     const navigate = useNavigate();
     const dispatch = useDispatch();
+    const { isAuthenticated } = useSelector((state) => state.auth);
 
     // Tạo timer cho thời gian chờ gửi lại
     const startResendTimer = () => {
@@ -59,6 +61,15 @@ function VerifyOTPPage() {
         }
         return () => clearInterval(timer);
     }, [resendDisabled, countdown]);
+
+    // Xử lý khi component unmount hoặc user không còn authenticated
+    useEffect(() => {
+        return () => {
+            if (!isAuthenticated) {
+                dispatch(clearVerificationStatus());
+            }
+        };
+    }, [isAuthenticated, dispatch]);
 
     const handleInputChange = (index, value) => {
         if (value.length > 1) value = value[0];
@@ -131,6 +142,9 @@ function VerifyOTPPage() {
                     showConfirmButton: false
                 });
 
+                // Clear verification status và logout
+                dispatch(clearVerificationStatus());
+                await dispatch(logoutThunk());
                 navigate('/login');
             }
         } catch (error) {
@@ -139,6 +153,15 @@ function VerifyOTPPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Xử lý khi user muốn thoát
+    const handleBack = async () => {
+        // Đầu tiên điều hướng về home
+        navigate('/');
+        // Sau đó mới clear status và logout
+        dispatch(clearVerificationStatus());
+        await dispatch(logoutThunk());
     };
 
     const handleResendOTP = async () => {
@@ -177,7 +200,10 @@ function VerifyOTPPage() {
     return (
         <div className="main-wrapper login-body">
             <header className="log-header">
-                <a href="/">
+                <a href="/" onClick={(e) => {
+                    e.preventDefault();
+                    handleBack();
+                }}>
                     <img className="img-fluid logo-dark" src="/img/logo.png" alt="Logo" />
                 </a>
             </header>

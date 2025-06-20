@@ -1,6 +1,7 @@
 import React from 'react';
 import { Provider } from 'react-redux';
 import store from './store';
+import ToastProvider from '../components/common/ToastProvider';
 
 // Import any additional providers/context you need
 // import { ThemeProvider } from '@mui/material/styles';
@@ -15,9 +16,13 @@ const AppProvider = ({ children }) => {
         <LocalizationProvider dateAdapter={AdapterDayjs}>
       */}
       {children}
+
       {/* 
         </LocalizationProvider>
       </ThemeProvider> */}
+
+      <ToastProvider />
+
     </Provider>
   );
 };

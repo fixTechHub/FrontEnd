@@ -9,7 +9,11 @@ const initialState = {
   isAuthenticated: false,
   loading: false,
   error: null,
-  verificationStatus: null,
+  verificationStatus: {
+    step: null,
+    redirectTo: null,
+    message: null
+  },
   profile: null,
   profileLoading: false,
   profileError: null,
@@ -44,8 +48,7 @@ export const googleLoginThunk = createAsyncThunk(
   'auth/googleLogin',
   async (accessToken, { rejectWithValue }) => {
     try {
-     const data = await authAPI.googleLogin(accessToken);
-      return data
+      return await authAPI.googleLogin(accessToken);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -120,9 +123,11 @@ export const resendOTPThunk = createAsyncThunk(
 
 export const logoutThunk = createAsyncThunk(
   'auth/logout',
-  async (_, { rejectWithValue }) => {
+  async (_, { dispatch }) => {
     try {
       await authAPI.logout();
+      // Clear verification status ngay sau khi logout
+      dispatch(clearVerificationStatus());
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -191,6 +196,41 @@ export const changePasswordThunk = createAsyncThunk(
   }
 );
 
+// Thêm helper function để xác định verification status
+const determineVerificationStatus = (user) => {
+  if (!user) return null;
+
+  if (!user.role || user.role.name === 'PENDING') {
+    return {
+      step: 'ROLE',
+      redirectTo: '/choose-role',
+      message: 'Vui lòng chọn vai trò của bạn'
+    };
+  }
+
+  if (!user.emailVerified && user.email) {
+    return {
+      step: 'EMAIL',
+      redirectTo: '/verify-email',
+      message: 'Vui lòng xác thực email của bạn'
+    };
+  }
+
+  if (!user.phoneVerified && user.phone) {
+    return {
+      step: 'PHONE',
+      redirectTo: '/verify-otp',
+      message: 'Vui lòng xác thực số điện thoại của bạn'
+    };
+  }
+
+  return {
+    step: 'COMPLETED',
+    redirectTo: null,
+    message: null
+  };
+};
+
 // Slice
 const authSlice = createSlice({
   name: 'auth',
@@ -199,11 +239,19 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    clearVerificationStatus: (state) => {
+      state.verificationStatus = {
+        step: null,
+        redirectTo: null,
+        message: null
+      };
+    },
     setVerificationStatus: (state, action) => {
       state.verificationStatus = action.payload;
     },
-    clearVerificationStatus: (state) => {
-      state.verificationStatus = null;
+    updateUserState: (state, action) => {
+      state.user = action.payload;
+      state.verificationStatus = determineVerificationStatus(action.payload);
     }
   },
   extraReducers: (builder) => {
@@ -218,10 +266,15 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.technician = action.payload.technician;
+        state.verificationStatus = determineVerificationStatus(action.payload.user);
       })
       .addCase(checkAuthThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.technician = null;
+        state.verificationStatus = null;
       })
       // Login
       .addCase(loginThunk.pending, (state) => {
@@ -229,11 +282,11 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(loginThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.technician = action.payload.technician;
-        state.verificationStatus = action.payload.verificationStatus;
+        state.isAuthenticated = true;
+        state.loading = false;
+        state.error = null;
+        state.verificationStatus = determineVerificationStatus(action.payload.user);
       })
       .addCase(loginThunk.rejected, (state, action) => {
         state.loading = false;
@@ -245,11 +298,11 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(googleLoginThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.isAuthenticated = true;
         state.user = action.payload.user;
-        state.technician = action.payload.technician;
-        state.verificationStatus = action.payload.verificationStatus;
+        state.isAuthenticated = true;
+        state.loading = false;
+        state.error = null;
+        state.verificationStatus = determineVerificationStatus(action.payload.user);
       })
       .addCase(googleLoginThunk.rejected, (state, action) => {
         state.loading = false;
@@ -261,9 +314,11 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(registerThunk.fulfilled, (state, action) => {
-        state.loading = false;
-        state.isAuthenticated = true;
         state.user = action.payload.user;
+        state.isAuthenticated = true;
+        state.loading = false;
+        state.error = null;
+        state.verificationStatus = determineVerificationStatus(action.payload.user);
       })
       .addCase(registerThunk.rejected, (state, action) => {
         state.loading = false;
@@ -277,6 +332,7 @@ const authSlice = createSlice({
       .addCase(completeRegistrationThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.verificationStatus = determineVerificationStatus(action.payload.user);
       })
       .addCase(completeRegistrationThunk.rejected, (state, action) => {
         state.loading = false;
@@ -290,6 +346,7 @@ const authSlice = createSlice({
       .addCase(verifyEmailThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.verificationStatus = determineVerificationStatus(action.payload.user);
       })
       .addCase(verifyEmailThunk.rejected, (state, action) => {
         state.loading = false;
@@ -303,6 +360,7 @@ const authSlice = createSlice({
       .addCase(verifyOTPThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.verificationStatus = determineVerificationStatus(action.payload.user);
       })
       .addCase(verifyOTPThunk.rejected, (state, action) => {
         state.loading = false;
@@ -314,15 +372,18 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(logoutThunk.fulfilled, (state) => {
-        state.loading = false;
-        state.isAuthenticated = false;
-        state.user = null;
-        state.technician = null;
-        state.verificationStatus = null;
+        return {
+          ...initialState
+        };
       })
       .addCase(logoutThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+        // Vẫn reset state ngay cả khi logout thất bại
+        state.user = null;
+        state.technician = null;
+        state.isAuthenticated = false;
+        state.verificationStatus = null;
       })
       // Profile cases
       .addCase(fetchUserProfileThunk.pending, (state) => {
@@ -406,5 +467,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { clearError, setVerificationStatus, clearVerificationStatus } = authSlice.actions;
+export const { clearError, clearVerificationStatus, setVerificationStatus, updateUserState } = authSlice.actions;
 export default authSlice.reducer;

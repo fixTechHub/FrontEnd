@@ -1,247 +1,290 @@
-import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
-import { loginThunk, googleLoginThunk } from '../../features/auth/authSlice';
-import { toast } from 'react-toastify';
-import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from 'react-icons/fa';
-import '../../styles/auth.css';
-import Swal from 'sweetalert2';
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { googleLoginThunk, authSuccess } from "../../features/auth/authSlice";
+import authAPI from "../../features/auth/authAPI";
+import { toast } from "react-toastify";
+import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
+import "../../styles/auth.css";
+import Swal from "sweetalert2";
+import store from "../../app/store";
 
 function LogInPage() {
-    const [formData, setFormData] = useState({
-        email: '',
-        password: ''
-    });
-    const [rememberMe, setRememberMe] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { loading } = useSelector((state) => state.auth);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { verificationStatus } = useSelector((state) => state.auth);
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }));
-    };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
-    const handleRememberMeChange = (e) => {
-        setRememberMe(e.target.checked);
-    };
+  const handleRememberMeChange = (e) => {
+    setRememberMe(e.target.checked);
+  };
 
-    const togglePasswordVisibility = () => {
-        setShowPassword(!showPassword);
-    };
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
 
-    const showWelcomeMessage = async (fullName) => {
-        return Swal.fire({
-            title: `Xin chào trở lại, ${fullName}!`,
-            text: 'Chúc bạn một ngày tốt lành',
-            icon: 'success',
-            timer: 2000,
-            timerProgressBar: true,
-            showConfirmButton: false,
-            position: 'top-end',
-            toast: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer)
-                toast.addEventListener('mouseleave', Swal.resumeTimer)
-            }
-        });
-    };
+  const handleServerError = (errorMessage) => {
+    const newErrors = {};
+    const lowerMessage = errorMessage.toLowerCase();
+    
+    if (lowerMessage.includes('password') || lowerMessage.includes('credentials') || lowerMessage.includes('không đúng') || lowerMessage.includes('user not found')) {
+        newErrors.form = 'Email hoặc mật khẩu không đúng.';
+    } else if (lowerMessage.includes('email') && lowerMessage.includes('not found')) {
+        newErrors.form = 'Tài khoản không tồn tại.';
+    } else {
+        newErrors.form = 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.';
+    }
+    setErrors(newErrors);
+  };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const result = await dispatch(loginThunk(formData)).unwrap();
-            
-            // Hiển thị thông báo chào mừng và đợi nó hoàn thành
-            await showWelcomeMessage(result.user.fullName);
-            
-            // Sau khi thông báo đã hiển thị, thực hiện chuyển hướng
-            if (result.verificationStatus) {
-                navigate(result.verificationStatus.redirectTo, { replace: true });
-            } else if (result.user.role.name === 'ADMIN') {
-                navigate('/admin/dashboard', { replace: true });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrors({});
+    setIsLoading(true);
+    try {
+      const result = await authAPI.login(formData);
+      dispatch(authSuccess(result));
+      
+      if (result.user.role.name === "ADMIN") {
+        navigate("/admin/dashboard", { replace: true });
+      } else if (!result.verificationStatus || !result.verificationStatus.redirectTo) {
+        navigate("/", { replace: true });
+      }
+      
+    } catch (error) {
+      const errorMessage = error.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+      handleServerError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    try {
+      const client = window.google.accounts.oauth2.initTokenClient({
+        client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+        scope: "email profile",
+        callback: async (response) => {
+          if (response.error) {
+            toast.error("Đăng nhập Google bị hủy.");
+            setIsLoading(false);
+            return;
+          }
+          try {
+            const result = await authAPI.googleLogin(response.access_token);
+            dispatch(authSuccess(result));
+
+            if (result.verificationStatus && result.verificationStatus.redirectTo) {
+              navigate(result.verificationStatus.redirectTo, { replace: true });
+            } else if (result.user.role.name === "ADMIN") {
+              navigate("/admin/dashboard", { replace: true });
             } else {
-                navigate('/', { replace: true });
+              navigate("/", { replace: true });
             }
-        } catch (error) {
-            console.error('Login error:', error);
-            toast.error(error.message);
-        }
-    };
-
-    const handleGoogleLogin = async () => {
-        try {
-            const client = window.google.accounts.oauth2.initTokenClient({
-                client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-                scope: 'email profile',
-                callback: async (response) => {
-                    if (response.error) return;
-                    
-            try {
-                        const result = await dispatch(googleLoginThunk(response.access_token)).unwrap();
-                        
-                        // Hiển thị thông báo chào mừng và đợi nó hoàn thành
-                        await showWelcomeMessage(result.user.fullName);
-                        
-                        // Sau khi thông báo đã hiển thị, thực hiện chuyển hướng
-                        if (result.user.role.name === 'PENDING') {
-                            navigate('/choose-role');
-                        } else if (result.user.email && !result.user.emailVerified) {
-                            navigate('/verify-email');
-                        } else if (result.user.phone && !result.user.phoneVerified) {
-                            navigate('/verify-otp');
-                        } else if (result.user.role.name === 'ADMIN') {
-                            navigate('/admin/dashboard');
-                        } else {
-                            navigate('/');
-                }
-            } catch (error) {
-                        console.error('Google login error:', error);
-                toast.error(error.message || 'Đăng nhập Google thất bại');
-            }
+          } catch (error) {
+            toast.error(error.message || "Đăng nhập Google thất bại");
+          } finally {
+            setIsLoading(false);
+          }
         },
-            });
-
-            client.requestAccessToken();
-        } catch (error) {
-            console.error('Google auth init error:', error);
-            toast.error('Không thể khởi tạo đăng nhập Google');
+        error_callback: () => {
+          toast.error("Đăng nhập Google bị đóng.");
+          setIsLoading(false);
         }
-    };
+      });
 
-    return (
-        <div className="main-wrapper login-body">
-            <header className="log-header">
-                <a href="/">
-                    <img className="img-fluid logo-dark" src="/img/logo.png" alt="Logo" />
-                </a>
-            </header>
+      client.requestAccessToken();
+    } catch (error) {
+      toast.error("Không thể khởi tạo đăng nhập Google");
+      setIsLoading(false);
+    }
+  };
 
-            <div className="login-wrapper">
-                <div className="loginbox">
-                    <div className="login-auth">
-                        <div className="login-auth-wrap">
-                            <h1 className="text-center mb-4 text-dark">Đăng Nhập</h1>
-                            <p className="text-center text-secondary mb-4">
-                                Vui lòng đăng nhập để tiếp tục sử dụng dịch vụ
-                            </p>
+  return (
+    <div className="main-wrapper login-body">
+      <header className="log-header">
+        <a href="/">
+          <img className="img-fluid logo-dark" src="/img/logo.png" alt="Logo" />
+        </a>
+      </header>
 
-                            <form onSubmit={handleSubmit} className="needs-validation">
-                                <div className="input-block mb-3">
-                                    <label className="form-label text-dark">
-                                        Email <span className="text-danger">*</span>
-                                    </label>
-                                    <div className="position-relative">
-                                        <span className="position-absolute top-50 translate-middle-y ps-3">
-                                            <FaEnvelope className="text-secondary" />
-                                        </span>
-                                    <input
-                                        type="email"
-                                            className="form-control ps-5 bg-white"
-                                        name="email"
-                                            value={formData.email}
-                                            onChange={handleInputChange}
-                                            placeholder="Nhập email của bạn"
-                                        required
-                                    />
-                                    </div>
-                                </div>
+      <div className="login-wrapper">
+        <div className="loginbox">
+          <div className="login-auth">
+            <div className="login-auth-wrap">
+              <h1 className="text-center mb-4 text-dark">Đăng Nhập</h1>
+              <p className="text-center text-secondary mb-4">
+                Vui lòng đăng nhập để tiếp tục sử dụng dịch vụ
+              </p>
 
-                                <div className="input-block mb-3">
-                                    <label className="form-label text-dark">
-                                        Mật khẩu <span className="text-danger">*</span>
-                                    </label>
-                                    <div className="position-relative">
-                                        <span className="position-absolute top-50 translate-middle-y ps-3" style={{ zIndex: 2 }}>
-                                            <FaLock className="text-secondary" />
-                                        </span>
-                                        <input
-                                            type={showPassword ? "text" : "password"}
-                                            className="form-control ps-5 pe-5 bg-white"
-                                            name="password"
-                                            value={formData.password}
-                                            onChange={handleInputChange}
-                                            placeholder="Nhập mật khẩu của bạn"
-                                            required
-                                        />
-                                        <button
-                                            type="button"
-                                            className="btn position-absolute end-0 top-50 translate-middle-y bg-transparent border-0 text-secondary pe-3"
-                                            onClick={togglePasswordVisibility}
-                                            style={{ zIndex: 2 }}
-                                        >
-                                            {showPassword ? <FaEyeSlash /> : <FaEye />}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div className="d-flex justify-content-between align-items-center mb-4">
-                                    <div className="form-check">
-                                        <input
-                                            type="checkbox"
-                                            className="form-check-input"
-                                            id="rememberMe"
-                                            checked={rememberMe}
-                                            onChange={handleRememberMeChange}
-                                        />
-                                        <label className="form-check-label text-secondary" htmlFor="rememberMe">
-                                            Ghi nhớ đăng nhập
-                                        </label>
-                                    </div>
-                                    <a href="/forgot-password" className="text-primary fw-medium">
-                                        Quên mật khẩu?
-                                    </a>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    className="btn btn-primary w-100 btn-size mb-4"
-                                    disabled={loading}
-                                >
-                                    {loading ? (
-                                        <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG XỬ LÝ...</>
-                                    ) : 'ĐĂNG NHẬP'}
-                                </button>
-
-                                <div className="text-center mb-4">
-                                    <p className="text-secondary mb-0">Hoặc đăng nhập với</p>
-                                </div>
-
-                                    <button
-                                        type="button"
-                                    onClick={handleGoogleLogin}
-                                    className="btn btn-outline-secondary w-100 mb-4"
-                                    disabled={loading}
-                                    >
-                                    <img src="/img/icons/google.svg" alt="Google" className="me-2" style={{ width: '20px' }} />
-                                    {loading ? 'Đang xử lý...' : 'Đăng nhập với Google'}
-                                    </button>
-
-                                <div className="text-center">
-                                    <span className="text-dark">Chưa có tài khoản?</span>{' '}
-                                    <a className="text-primary fw-bold" href="/register">Đăng ký</a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
+              <form onSubmit={handleSubmit} className="needs-validation">
+                {errors.form && 
+                  <div className="alert alert-danger" role="alert">
+                    {errors.form}
+                  </div>
+                }
+                <div className="input-block mb-3">
+                  <label className="form-label text-dark">
+                    Email <span className="text-danger">*</span>
+                  </label>
+                  <div className="position-relative">
+                    <span className="position-absolute top-50 translate-middle-y ps-3">
+                      <FaEnvelope className="text-secondary" />
+                    </span>
+                    <input
+                      type="email"
+                      className={`form-control ps-5 bg-white ${errors.form ? 'is-invalid' : ''}`}
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="Nhập email của bạn"
+                      required
+                    />
+                  </div>
                 </div>
+
+                <div className="input-block mb-3">
+                  <label className="form-label text-dark">
+                    Mật khẩu <span className="text-danger">*</span>
+                  </label>
+                  <div className="position-relative">
+                    <span
+                      className="position-absolute top-50 translate-middle-y ps-3"
+                      style={{ zIndex: 2 }}
+                    >
+                      <FaLock className="text-secondary" />
+                    </span>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      className={`form-control ps-5 pe-5 bg-white ${errors.form ? 'is-invalid' : ''}`}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder="Nhập mật khẩu của bạn"
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="btn position-absolute end-0 top-50 translate-middle-y bg-transparent border-0 text-secondary pe-3"
+                      onClick={togglePasswordVisibility}
+                      style={{ zIndex: 2 }}
+                    >
+                      {showPassword ? <FaEyeSlash /> : <FaEye />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="d-flex justify-content-between align-items-center mb-4">
+                  <div className="form-check">
+                    <input
+                      type="checkbox"
+                      className="form-check-input"
+                      id="rememberMe"
+                      checked={rememberMe}
+                      onChange={handleRememberMeChange}
+                    />
+                    <label
+                      className="form-check-label text-secondary"
+                      htmlFor="rememberMe"
+                    >
+                      Ghi nhớ đăng nhập
+                    </label>
+                  </div>
+                  <a href="/forgot-password" className="text-primary fw-medium">
+                    Quên mật khẩu?
+                  </a>
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary w-100 btn-size mb-4"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <span className="d-flex justify-content-center align-items-center">
+                      <span
+                        className="spinner-border spinner-custom-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      <span>ĐANG XỬ LÝ...</span>
+                    </span>
+                  ) : (
+                    "ĐĂNG NHẬP"
+                  )}
+                </button>
+
+                <div className="text-center mb-4">
+                  <p className="text-secondary mb-0">Hoặc</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  className="btn btn-outline-secondary w-100 mb-4"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                     <span className="d-flex justify-content-center align-items-center">
+                      <span
+                        className="spinner-border spinner-custom-sm me-2"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
+                      <span>Đang xử lý...</span>
+                    </span>
+                  ) : (
+                    <span className="d-flex justify-content-center align-items-center">
+                      <img
+                        src="/img/icons/google.svg"
+                        alt="Google"
+                        className="me-2"
+                        style={{ width: "20px" }}
+                      />
+                      <span>Đăng nhập với Google</span>
+                    </span>
+                  )}
+                </button>
+
+                <div className="text-center">
+                  <span className="text-dark">Chưa có tài khoản?</span>{" "}
+                  <a className="text-primary fw-bold" href="/register">
+                    Đăng ký
+                  </a>
+                </div>
+              </form>
             </div>
-
-            <footer className="log-footer">
-                <div className="container-fluid">
-                    <div className="copyright">
-                        <div className="copyright-text">
-                            <p>© 2024 FixTech. All Rights Reserved.</p>
-                        </div>
-                    </div>
-                </div>
-            </footer>
+          </div>
         </div>
-    );
+      </div>
+
+      <footer className="log-footer">
+        <div className="container-fluid">
+          <div className="copyright">
+            <div className="copyright-text">
+              <p>© 2024 FixTech. All Rights Reserved.</p>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }
 
 export default LogInPage;

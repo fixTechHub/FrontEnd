@@ -19,7 +19,7 @@ const getStatusBadgeClass = (status) => {
         case 'BLOCKED':
             return 'bg-danger';
         default:
-            return 'bg-info';  
+            return 'bg-info';
     }
 };
 
@@ -63,7 +63,7 @@ function ProfilePage() {
         confirmPassword: false
     });
     console.log(user.fullName);
-    
+
     useEffect(() => {
         dispatch(fetchUserProfileThunk());
     }, [dispatch]);
@@ -72,7 +72,7 @@ function ProfilePage() {
         if (user) {
             console.log('--- USER ---', user);
             
-            setFormData({   
+            setFormData({
                 fullName: user.fullName || '',
                 phone: user.phone || '',
                 street: user.address?.street || '',
@@ -300,24 +300,24 @@ function ProfilePage() {
                         <div className="col-md-8 col-lg-9 col-xl-9">
                             {/* Profile Information Card */}
                             {activeTab === 'profile' && (
-                                <div className="card">
-                                    <div className="card-body">
-                                        <div className="profile-header">
-                                            <div className="d-flex justify-content-between align-items-center">
-                                                <h4 className="card-title">Thông tin chi tiết</h4>
-                                                <button 
-                                                    className="btn btn-sm btn-primary"
-                                                    onClick={() => setIsEditing(!isEditing)}
-                                                    disabled={updateLoading}
-                                                >
-                                                    <FaEdit className="me-1" />
-                                                    {isEditing ? 'Hủy' : 'Chỉnh sửa'}
-                                                </button>
-                                            </div>
+                            <div className="card">
+                                <div className="card-body">
+                                    <div className="profile-header">
+                                        <div className="d-flex justify-content-between align-items-center">
+                                            <h4 className="card-title">Thông tin chi tiết</h4>
+                                            <button 
+                                                className="btn btn-sm btn-primary"
+                                                onClick={() => setIsEditing(!isEditing)}
+                                                disabled={updateLoading}
+                                            >
+                                                <FaEdit className="me-1" />
+                                                {isEditing ? 'Hủy' : 'Chỉnh sửa'}
+                                            </button>
                                         </div>
+                                    </div>
 
-                                        {isEditing ? (
-                                            <form onSubmit={handleSubmit}>
+                                    {isEditing ? (
+                                        <form onSubmit={handleSubmit}>
                                                 <div className="info-list">
                                                     <div className="info-item">
                                                         <div className="info-icon">
@@ -325,14 +325,14 @@ function ProfilePage() {
                                                         </div>
                                                         <div className="info-content">
                                                             <span className="info-label">Họ và tên</span>
-                                                            <input
-                                                                type="text"
-                                                                className="form-control"
-                                                                name="fullName"
-                                                                value={formData.fullName}
-                                                                onChange={handleInputChange}
-                                                            />
-                                                        </div>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        name="fullName"
+                                                        value={formData.fullName}
+                                                        onChange={handleInputChange}
+                                                    />
+                                                </div>
                                                     </div>
                                                     <div className="info-item">
                                                         <div className="info-icon">
@@ -360,13 +360,13 @@ function ProfilePage() {
                                                         <div className="info-content">
                                                             <span className="info-label">Số điện thoại</span>
                                                             <div className="d-flex align-items-center">
-                                                                <input
-                                                                    type="tel"
-                                                                    className="form-control"
-                                                                    name="phone"
-                                                                    value={formData.phone}
-                                                                    onChange={handleInputChange}
-                                                                />
+                                                    <input
+                                                        type="tel"
+                                                        className="form-control"
+                                                        name="phone"
+                                                        value={formData.phone}
+                                                        onChange={handleInputChange}
+                                                    />
                                                                 {user?.phoneVerified && (
                                                                     <FaCheckCircle className="text-success ms-2" title="Đã xác thực" />
                                                                 )}
@@ -376,38 +376,38 @@ function ProfilePage() {
                                                     <div className="info-item">
                                                         <div className="info-icon">
                                                             <FaMapMarkerAlt className="text-primary" />
-                                                        </div>
+                                                </div>
                                                         <div className="info-content">
                                                             <span className="info-label">Địa chỉ</span>
-                                                            <input
-                                                                type="text"
-                                                                className="form-control mb-2"
-                                                                name="street"
-                                                                placeholder="Số nhà, tên đường"
-                                                                value={formData.street}
-                                                                onChange={handleInputChange}
-                                                            />
+                                                    <input
+                                                        type="text"
+                                                        className="form-control mb-2"
+                                                        name="street"
+                                                        placeholder="Số nhà, tên đường"
+                                                        value={formData.street}
+                                                        onChange={handleInputChange}
+                                                    />
                                                             <div className="row">
                                                                 <div className="col-6">
-                                                                    <input
-                                                                        type="text"
-                                                                        className="form-control"
-                                                                        name="district"
-                                                                        placeholder="Quận/Huyện"
-                                                                        value={formData.district}
-                                                                        onChange={handleInputChange}
-                                                                    />
-                                                                </div>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        name="district"
+                                                        placeholder="Quận/Huyện"
+                                                        value={formData.district}
+                                                        onChange={handleInputChange}
+                                                    />
+                                                </div>
                                                                 <div className="col-6">
-                                                                    <input
-                                                                        type="text"
-                                                                        className="form-control"
-                                                                        name="city"
-                                                                        placeholder="Tỉnh/Thành phố"
-                                                                        value={formData.city}
-                                                                        onChange={handleInputChange}
-                                                                    />
-                                                                </div>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control"
+                                                        name="city"
+                                                        placeholder="Tỉnh/Thành phố"
+                                                        value={formData.city}
+                                                        onChange={handleInputChange}
+                                                    />
+                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -424,16 +424,16 @@ function ProfilePage() {
                                                     </div>
                                                     <div className="info-item mt-3">
                                                         <div className="info-content">
-                                                            <button 
-                                                                type="submit" 
-                                                                className="btn btn-primary me-2"
-                                                                disabled={updateLoading}
-                                                            >
-                                                                {updateLoading ? 'Đang cập nhật...' : 'Lưu thay đổi'}
-                                                            </button>
-                                                            <button 
-                                                                type="button" 
-                                                                className="btn btn-secondary"
+                                                    <button 
+                                                        type="submit" 
+                                                        className="btn btn-primary me-2"
+                                                        disabled={updateLoading}
+                                                    >
+                                                        {updateLoading ? 'Đang cập nhật...' : 'Lưu thay đổi'}
+                                                    </button>
+                                                    <button 
+                                                        type="button" 
+                                                        className="btn btn-secondary"
                                                                 onClick={() => {
                                                                     setIsEditing(false);
                                                                     setFormData({
@@ -444,15 +444,15 @@ function ProfilePage() {
                                                                         city: user?.address?.city || ''
                                                                     });
                                                                 }}
-                                                                disabled={updateLoading}
-                                                            >
-                                                                Hủy
-                                                            </button>
+                                                        disabled={updateLoading}
+                                                    >
+                                                        Hủy
+                                                    </button>
                                                         </div>
-                                                    </div>
                                                 </div>
-                                            </form>
-                                        ) : (
+                                            </div>
+                                        </form>
+                                    ) : (
                                             <div className="profile-information">
                                                 <div className="info-list">
                                                     <div className="info-item">

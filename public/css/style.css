@@ -6468,7 +6468,7 @@ table .badge {
 }
 
 .more-boats-info-sec {
-  background-image: url(../img/bg/ship-sec-bg.png);
+  background-image: url(../img/banner_2.png);
   min-height: 500px;
   background-size: cover;
   background-position: center;
@@ -22963,7 +22963,7 @@ input.form-control.rounded-pill:focus {
 }
 .booking-wizard-lists ul li.active::after {
   content: "";
-  width: 100%;
+  width: 166%;
   height: 1px;
   border: 1px dashed #127384;
   position: absolute;
@@ -22974,6 +22974,7 @@ input.form-control.rounded-pill:focus {
 @media (max-width: 991.96px) {
   .booking-wizard-lists ul li.active::after {
     left: 75%;
+    width: 100%;
   }
 }
 @media (max-width: 575.96px) {

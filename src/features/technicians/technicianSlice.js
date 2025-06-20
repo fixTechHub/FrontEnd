@@ -1,16 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getTechnicianProfile,getTechnicians } from '../technicians/technicianAPI';
 
-
-
-// Async thunk
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
   async (technicianId, thunkAPI) => {
     try {
-      const technicianId = "60d0fe4f7f6a7d001c9a6f51";
       const data = await getTechnicianProfile(technicianId);
-      return data.data;
+      return data; // giữ nguyên trả về { success, data }
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
@@ -49,7 +45,14 @@ const technicianSlice = createSlice({
       })
       .addCase(fetchTechnicianProfile.fulfilled, (state, action) => {
         state.loading = false;
-        state.profile = action.payload;
+
+        const payload = action.payload;
+
+        console.log('Received payload:', payload);
+        state.profile = {
+          technician: payload.data[0],
+          certificates: payload.data[1]
+        };
       })
       .addCase(fetchTechnicianProfile.rejected, (state, action) => {
         state.loading = false;

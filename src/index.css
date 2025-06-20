@@ -1,4 +1,5 @@
-/* Font sizes */
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
 .font-14 {
     font-size: 14px;
 }
@@ -44,4 +45,15 @@
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+.booking-service {
+    border: 1px solid #676767;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.booking-service:hover {
+    background-color: #FFA633 !important;
 }
