@@ -1,145 +1,14 @@
 import { Link } from 'react-router-dom';
-import Header from '../../components/common/Header';
 import TechnicianStatus from './TechnicianStatus';
 import { useParams } from 'react-router-dom';
-import "../../../public/css/style.css";
-
 
 function TechnicianDashboard() {
     const { technicianId } = useParams();
     return (
         <>
-            <Header />
 
-            <div className="container mt-4">
-                <h2>Technician Overview</h2>
-                <TechnicianStatus technicianId={technicianId} />
-            </div>
-            {/* <div className="main-wrapper">
-                <div className="sidebar" id="sidebar">
-                    <div className="sidebar-inner slimscroll">
-                        <div id="sidebar-menu" className="sidebar-menu">
-                            <div className="form-group">
-                                <div className="input-group input-group-flat d-inline-flex">
-                                    <span className="input-icon-addon">
-                                        <i className="ti ti-search"></i>
-                                    </span>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        placeholder="Search"
-                                    />
-                                    <span className="group-text">
-                                        <i className="ti ti-command"></i>
-                                    </span>
-                                </div>
-                            </div>
 
-                            <ul>
-                                <li className="menu-title"><span>Main</span></li>
-                                <li>
-                                    <ul>
-                                        <li className="active">
-                                            <Link to="#">
-                                                <i className="ti ti-layout-dashboard"></i>
-                                                <span>Dashboard</span>
-                                            </Link>
-                                        </li>
-                                    </ul>
-                                </li>
 
-                                <li className="menu-title"><span>Bookings</span></li>
-                                <li>
-                                    <ul>
-                                        <li><Link to="#"><i className="ti ti-files"></i><span>Reservations</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-calendar-bolt"></i><span>Calendar</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-file-symlink"></i><span>Quotations</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-mail"></i><span>Enquiries</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-star"></i><span>Reviews</span></Link></li>
-                                    </ul>
-                                </li>
-
-                                <li className="menu-title"><span>Finance & Accounts</span></li>
-                                <li>
-                                    <ul>
-                                        <li><Link to="#"><i className="ti ti-file-invoice"></i><span>Invoices</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-credit-card"></i><span>Payments</span></Link></li>
-                                    </ul>
-                                </li>
-
-                                <li className="menu-title"><span>Others</span></li>
-                                <li>
-                                    <ul>
-                                        <li>
-                                            <Link to="#">
-                                                <i className="ti ti-message"></i>
-                                                <span>Messages</span>
-                                                <span className="count">5</span>
-                                            </Link>
-                                        </li>
-                                    </ul>
-                                </li>
-
-                                <li className="menu-title"><span>Support</span></li>
-                                <li>
-                                    <ul>
-                                        <li><Link to="#"><i className="ti ti-messages"></i><span>Contact Messages</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-speakerphone"></i><span>Announcements</span></Link></li>
-                                    </ul>
-                                </li>
-
-                                <li className="menu-title"><span>Reports</span></li>
-                                <li>
-                                    <ul>
-                                        <li><Link to="#"><i className="ti ti-chart-histogram"></i><span>Income vs Expense</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-chart-line"></i><span>Earnings</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-chart-infographic"></i><span>Rentals</span></Link></li>
-                                    </ul>
-                                </li>
-
-                                <li className="menu-title"><span>Authentication</span></li>
-                                <li>
-                                    <ul>
-                                        <li><Link to="#"><i className="ti ti-mail-exclamation"></i><span>Email Verification</span></Link></li>
-                                        <li><Link to="#"><i className="ti ti-restore"></i><span>Reset Password</span></Link></li>
-                                    </ul>
-                                </li>
-
-                                <li className="menu-title"><span>Settings & Configuration</span></li>
-                                <li>
-                                    <ul>
-                                        <li className="submenu">
-                                            <a href="#" onClick={(e) => e.preventDefault()}>
-                                                <i className="ti ti-user-cog"></i><span>Account Settings</span>
-                                                <span className="menu-arrow"></span>
-                                            </a>
-                                            <ul>
-                                                <li><Link to="#">Profile</Link></li>
-                                                <li><Link to="#">Security</Link></li>
-                                                <li><Link to="#">Notifications</Link></li>
-                                                <li><Link to="#">Integrations</Link></li>
-                                            </ul>
-                                        </li>
-
-                                        <li className="submenu">
-                                            <a href="#" onClick={(e) => e.preventDefault()}>
-                                                <i className="ti ti-settings-dollar"></i><span>Finance Settings</span>
-                                                <span className="menu-arrow"></span>
-                                            </a>
-                                            <ul>
-                                                <li><Link to="#">Payment Methods</Link></li>
-                                                <li><Link to="#">Bank Accounts</Link></li>
-                                                <li><Link to="#">Tax Rates</Link></li>
-                                                <li><Link to="#">Currencies</Link></li>
-                                            </ul>
-                                        </li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div> */}
             <div className="main-wrapper">
                 <div className="sidebar" id="sidebar">
                     <div className="sidebar-inner slimscroll">
@@ -300,6 +169,81 @@ function TechnicianDashboard() {
                         </div>
                     </div>
                 </div>
+                <div className="page-wrapper">
+                    <div className="content pb-0">
+                        {/* Breadcrumb */}
+                        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+                            <div className="my-auto mb-2">
+                                <h4 className="mb-1">Dashboard</h4>
+                                <nav>
+                                    <ol className="breadcrumb mb-0">
+                                        <li className="breadcrumb-item">
+                                            <a href="">Home</a>
+                                        </li>
+                                        <li className="breadcrumb-item active" aria-current="page">Technician Dashboard</li>
+                                    </ol>
+                                </nav>
+                            </div>
+                            <div className="my-auto mb-2">
+                                <h4 className="mb-1">Technician Status: </h4>
+                                <TechnicianStatus technicianId={technicianId} />
+                            </div>
+                        </div>
+                        <div className="row">
+                            <div className="col-xl-8 d-flex flex-column">
+                                {/* Welcome Wrap */}
+                                <div className="card flex-fill">
+                                    <div className="card-body">
+                                        <div className="row align-items-center row-gap-3">
+                                            <div className="col-sm-7">
+                                                <h4 className="mb-1">Welcome, Andrew </h4>
+                                                <p>400+ Budget Friendly Cars Available for the rents </p>
+                                                <div className="d-flex align-items-center flex-wrap gap-4 mb-3">
+                                                    <div>
+                                                        <p className="mb-1">Total No of Cars</p>
+                                                        <h3>564</h3>
+                                                    </div>
+                                                    <div>
+                                                        <p className="d-flex align-items-center mb-2">
+                                                            <span className="line-icon bg-violet me-2"></span>
+                                                            <span className="fw-semibold text-gray-9 me-1">80</span>In Rental
+                                                        </p>
+                                                        <p className="d-flex align-items-center">
+                                                            <span className="line-icon bg-orange me-2"></span>
+                                                            <span className="fw-semibold text-gray-9 me-1">96</span> Upcoming
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="d-flex align-items-center gap-3 flex-wrap">
+                                                    <a
+                                                        href="https://dreamsrent.dreamstechnologies.com/html/template/admin/reservations.html"
+                                                        className="btn btn-primary d-flex align-items-center"
+                                                    >
+                                                        <i className="ti ti-eye me-1"></i>Reservations
+                                                    </a>
+                                                    <a
+                                                        href="https://dreamsrent.dreamstechnologies.com/html/template/admin/add-car.html"
+                                                        className="btn btn-dark d-flex align-items-center"
+                                                    >
+                                                        <i className="ti ti-plus me-1"></i>Add New Car
+                                                    </a>
+                                                </div>
+                                            </div>
+                                            <div className="col-sm-5">
+                                                <img
+                                                    src="https://dreamsrent.dreamstechnologies.com/html/template/admin/assets/img/icons/car.svg"
+                                                    alt="img"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* /Welcome Wrap */}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
 

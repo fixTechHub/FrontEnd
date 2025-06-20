@@ -1,7 +1,12 @@
 import { Spinner } from "react-bootstrap";
-import { useSelector } from "react-redux";
+import { Link } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { logoutThunk } from '../../features/auth/authSlice';
+import Swal from 'sweetalert2';
 
 function Header() {
+    const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
     const categories = useSelector((state) => state.categories.categories);
     const services = useSelector((state) => state.services.services);
     const categoryStatus = useSelector((state) => state.categories.status);
@@ -9,6 +14,33 @@ function Header() {
 
     // console.log('--- PUBLIC SERVICE ---', services);
     // console.log('--- PUBLIC CATEGORY ---', categories);
+
+    const handleLogout = async () => {
+        const result = await Swal.fire({
+            title: 'Xác nhận đăng xuất',
+            text: 'Bạn có chắc chắn muốn đăng xuất không?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Đăng xuất',
+            cancelButtonText: 'Hủy'
+        });
+
+        if (result.isConfirmed) {
+            await dispatch(logoutThunk());
+            sessionStorage.removeItem('hasWelcomed');
+            Swal.fire({
+                title: 'Đã đăng xuất',
+                text: 'Hẹn gặp lại bạn!',
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false,
+                position: 'bottom-end',
+                toast: true
+            });
+        }
+    };
 
     if (categoryStatus === 'loading' || serviceStatus === 'loading')
         return (
@@ -31,19 +63,21 @@ function Header() {
                                     <span></span>
                                 </span>
                             </a>
-                            <a href="index.html" className="navbar-brand logo">
+                            <Link to="/" className="navbar-brand logo">
                                 <img src="/img/logo.png" className="img-fluid" alt="Logo" />
-                            </a>
-                            <a href="index.html" className="navbar-brand logo-small">
+                            </Link>
+                            <Link to="/" className="navbar-brand logo-small">
                                 <img src="/img/logo-small-2.png" className="img-fluid" alt="Logo" />
-                            </a>
+                            </Link>
                         </div>
                         <div className="main-menu-wrapper">
                             <div className="menu-header">
-                                <a href="index.html" className="menu-logo">
+                                <Link to="/" className="menu-logo">
                                     <img src="/img/logo.png" className="img-fluid" alt="Logo" />
+                                </Link>
+                                <a id="menu_close" className="menu-close" href="javascript:void(0);"> 
+                                    <i className="fas fa-times"></i>
                                 </a>
-                                <a id="menu_close" className="menu-close" href="javascript:void(0);"> <i className="fas fa-times"></i></a>
                             </div>
                             <ul className="main-nav">
                                 <li className="has-submenu megamenu active">
@@ -70,44 +104,70 @@ function Header() {
                                     </ul>
                                 </li>
 
-                                <li className="has-submenu">
-                                    <a href="#">DIỄN ĐÀN </a>
+                                <li>
+                                    <Link to="/forum">DIỄN ĐÀN</Link>
                                 </li>
 
-                                <li className="has-submenu">
-                                    <a href="#">HỖ TRỢ </a>
+                                <li>
+                                    <Link to="/support">HỖ TRỢ</Link>
                                 </li>
 
-                                {/* <li className="has-submenu">
-                                    <a href="#">GIỚI THIỆU <i className="fas fa-chevron-down"></i></a>
-                                    <ul className="submenu">
-                                        <li><a href="listing-grid.html">Listing Grid</a></li>
-                                        <li><a href="listing-list.html">Listing List</a></li>
-                                        <li><a href="listing-map.html">Listing With Map</a></li>
-                                        <li><a href="listing-details.html">Listing Details</a></li>
-                                    </ul>
-                                </li> */}
-                                <li className="login-link">
-                                    <a href="/register">ĐĂNG KÝ</a>
-                                </li>
-                                <li className="login-link">
-                                    <a href="/login">ĐĂNG NHẬP</a>
-                                </li>
+                                {user && (
+                                    <li className="has-submenu">
+                                        <a href="#">QUẢN LÝ <i className="fas fa-chevron-down"></i></a>
+                                        <ul className="submenu">
+                                            <li><Link to="/profile">Thông tin cá nhân</Link></li>
+                                            <li><Link to="/bookings">Đơn đặt lịch</Link></li>
+                                            <li><Link to="/reviews">Đánh giá</Link></li>
+                                            {user.role?.name === 'ADMIN' && (
+                                                <li><Link to="/admin">Quản trị viên</Link></li>
+                                            )}
+                                        </ul>
+                                    </li>
+                                )}
                             </ul>
                         </div>
                         <ul className="nav header-navbar-rht">
-                            <li className="nav-item">
-                                <a className="nav-link header-login" href="/register"><span><i className="fa-regular fa-user"></i></span>Đăng Ký</a>
-                            </li>
-                            <li className="nav-item">
-                                <a className="nav-link header-reg" href="/login"><span><i className="fa-solid fa-lock"></i></span>Đăng Nhập</a>
-                            </li>
+                            {!user ? (
+                                <>
+                                    <li className="nav-item">
+                                        <Link className="nav-link header-login" to="/register">
+                                            <span><i className="fa-regular fa-user"></i></span>Đăng Ký
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <Link className="nav-link header-reg" to="/login">
+                                            <span><i className="fa-solid fa-lock"></i></span>Đăng Nhập
+                                        </Link>
+                                    </li>
+                                </>
+                            ) : (
+                                <>
+                                    <li className="nav-item">
+                                        <Link className="nav-link header-login" to="/profile">
+                                            <span><i className="fa-regular fa-user"></i></span>{user.fullName || 'Tài khoản'}
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <a 
+                                            className="nav-link header-reg" 
+                                            href="#"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                handleLogout();
+                                            }}
+                                        >
+                                            <span><i className="fa-solid fa-sign-out-alt"></i></span>Đăng xuất
+                                        </a>
+                                    </li>
+                                </>
+                            )}
                         </ul>
                     </nav>
                 </div>
             </header>
         </>
-    )
+    );
 }
 
 export default Header;
