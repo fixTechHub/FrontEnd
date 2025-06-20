@@ -30,17 +30,20 @@ import {
   updateCoupon,
   deleteCoupon,
   resetState,
-} from '../features/coupons/couponSlice';
+  restoreCoupon,
+  fetchDeletedCoupons,
+} from '../../features/coupons/couponSlice';
 
-  const { Option } = Select;
+const { Option } = Select;
 
 const CouponManagement = () => {
   const dispatch = useDispatch();
-  const { coupons, loading, error, success } = useSelector((state) => state.coupon);
+  const { coupons, loading, error, success, deletedCoupons } = useSelector((state) => state.coupon);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [form] = Form.useForm();
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [searchText, setSearchText] = useState('');
+  const [showDeleted, setShowDeleted] = useState(false);
 
   useEffect(() => {
     dispatch(fetchCoupons());
@@ -58,6 +61,12 @@ const CouponManagement = () => {
       form.resetFields();
     }
   }, [error, success, dispatch, editingCoupon, form]);
+
+  useEffect(() => {
+    if (showDeleted) {
+      dispatch(fetchDeletedCoupons());
+    }
+  }, [showDeleted, dispatch]);
 
   const filteredCoupons = coupons.filter(coupon =>
     coupon.code.toLowerCase().includes(searchText.toLowerCase())
@@ -170,7 +179,11 @@ const CouponManagement = () => {
 
   const handleDelete = async (id) => {
     console.log('Deleting coupon with ID:', id);
-    dispatch(deleteCoupon(id));
+    dispatch(deleteCoupon(id)).then((action) => {
+      if (action.payload?.message) {
+        message.success(action.payload.message);
+      }
+    });
   };
 
   const handleSubmit = async (values) => {
@@ -361,6 +374,47 @@ const CouponManagement = () => {
             </Space>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Button onClick={() => setShowDeleted(true)}>
+        Xem coupon đã xóa
+      </Button>
+
+      <Modal
+        open={showDeleted}
+        title="Danh sách coupon đã xóa"
+        onCancel={() => setShowDeleted(false)}
+        footer={null}
+        width={800}
+      >
+        <Table
+          columns={[
+            { title: 'Code', dataIndex: 'code', key: 'code' },
+            { title: 'Description', dataIndex: 'description', key: 'description' },
+            {
+              title: 'Actions',
+              key: 'actions',
+              render: (_, record) => (
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    dispatch(restoreCoupon(record.id)).then((action) => {
+                      if (action.payload?.message) {
+                        message.success(action.payload.message);
+                        dispatch(fetchDeletedCoupons());
+                      }
+                    });
+                  }}
+                >
+                  Khôi phục
+                </Button>
+              ),
+            },
+          ]}
+          dataSource={deletedCoupons}
+          rowKey="id"
+          loading={loading}
+        />
       </Modal>
     </div>
   );

@@ -10,6 +10,8 @@ import {
   Col,
   Input,
   Tag,
+  Modal,
+  Descriptions,
 } from 'antd';
 import {
   SearchOutlined,
@@ -19,7 +21,7 @@ import {
   fetchCouponUsages,
   fetchCouponUsageById,
   resetState,
-} from '../features/couponusages/couponUsageSlice';
+} from '../../features/couponusages/couponUsageSlice';
 
 // Helper function to safely truncate ID
 const truncateId = (id) => {
@@ -31,6 +33,8 @@ const CouponUsageManagement = () => {
   const dispatch = useDispatch();
   const { usages, loading, error, success } = useSelector((state) => state.couponUsage);
   const [searchText, setSearchText] = useState('');
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailUsage, setDetailUsage] = useState(null);
 
   useEffect(() => {
     dispatch(fetchCouponUsages());
@@ -53,8 +57,8 @@ const CouponUsageManagement = () => {
   const columns = [
     {
       title: 'ID',
-      dataIndex: '_id',
-      key: '_id',
+      dataIndex: 'id',
+      key: 'id',
       render: (id) => truncateId(id),
     },
     {
@@ -85,12 +89,27 @@ const CouponUsageManagement = () => {
         return dayjs(a.usedAt).unix() - dayjs(b.usedAt).unix();
       },
     },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Button type="link" onClick={() => handleViewDetails(record.id)}>
+          Xem chi tiết
+        </Button>
+      ),
+    },
   ];
 
   const handleViewDetails = (id) => {
-    if (id) {
-      dispatch(fetchCouponUsageById(id));
-    }
+    dispatch(fetchCouponUsageById(id)).then((action) => {
+      console.log('Chi tiết usage trả về:', action.payload);
+      if (action.payload) {
+        setDetailUsage(action.payload);
+        setDetailModalOpen(true);
+      } else {
+        message.error('Không thể lấy chi tiết usage!');
+      }
+    });
   };
 
   return (
@@ -111,7 +130,7 @@ const CouponUsageManagement = () => {
         <Table
           columns={columns}
           dataSource={filteredUsages}
-          rowKey={(record) => record?._id || Math.random().toString()}
+          rowKey={(record) => record?.id || Math.random().toString()}
           loading={loading}
           pagination={{
             pageSize: 10,
@@ -119,10 +138,33 @@ const CouponUsageManagement = () => {
             showTotal: (total) => `Total ${total} usages`,
           }}
           onRow={(record) => ({
-            onClick: () => handleViewDetails(record?._id),
+            onClick: () => handleViewDetails(record.id),
           })}
         />
       </Card>
+
+      <Modal
+        open={detailModalOpen}
+        title="Chi tiết sử dụng coupon"
+        onCancel={() => setDetailModalOpen(false)}
+        footer={null}
+      >
+        {detailUsage ? (
+          <Descriptions column={1} bordered>
+            <Descriptions.Item label="ID">
+              {detailUsage.id || "N/A"}
+            </Descriptions.Item>
+            <Descriptions.Item label="Coupon ID">{detailUsage.couponId || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="User ID">{detailUsage.userId || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="Booking ID">{detailUsage.bookingId || "N/A"}</Descriptions.Item>
+            <Descriptions.Item label="Used At">
+              {detailUsage.usedAt ? dayjs(detailUsage.usedAt).format('YYYY-MM-DD HH:mm:ss') : 'N/A'}
+            </Descriptions.Item>
+          </Descriptions>
+        ) : (
+          <p>Đang tải...</p>
+        )}
+      </Modal>
     </div>
   );
 };

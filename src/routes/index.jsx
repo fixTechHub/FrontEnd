@@ -4,8 +4,8 @@ import HomePage from '../pages/home/HomePage';
 import LogInPage from '../pages/authentication/LogInPage';
 import RegisterPage from '../pages/authentication/RegisterPage';
 import ChooseRole from '../pages/authentication/ChooseRole';
-import CouponManagement from '../pages/CouponManagement';
-import CouponUsageManagement from '../pages/CouponUsageManagement';
+import CouponManagement from "../pages/Management/CouponManagement";
+import CouponUsageManagement from "../pages/Management/CouponUsageManagement";
 export default function AppRoutes() {
     return (
         <>

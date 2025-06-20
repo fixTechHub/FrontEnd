@@ -55,6 +55,31 @@ export const deleteCoupon = createAsyncThunk(
   }
 );
 
+export const fetchDeletedCoupons = createAsyncThunk(
+  'coupon/fetchDeletedCoupons',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await couponAPI.getDeleted();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const restoreCoupon = createAsyncThunk(
+  'coupon/restoreCoupon',
+  async (id, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await couponAPI.restore(id);
+      dispatch(fetchDeletedCoupons());
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 const initialState = {
   coupons: [],
   activeCoupons: [],
@@ -64,6 +89,7 @@ const initialState = {
   success: false,
   currentCoupon: null,
   usageStats: null,
+  deletedCoupons: [],
 };
 
 const couponSlice = createSlice({
@@ -136,6 +162,26 @@ const couponSlice = createSlice({
       })
       .addCase(deleteCoupon.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+      // Fetch Deleted Coupons
+      .addCase(fetchDeletedCoupons.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDeletedCoupons.fulfilled, (state, action) => {
+        state.loading = false;
+        state.deletedCoupons = action.payload;
+      })
+      .addCase(fetchDeletedCoupons.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Restore Coupon
+      .addCase(restoreCoupon.fulfilled, (state) => {
+        state.success = true;
+      })
+      .addCase(restoreCoupon.rejected, (state, action) => {
         state.error = action.payload;
       })
       // Validate Coupon

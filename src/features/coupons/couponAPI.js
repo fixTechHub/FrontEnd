@@ -68,5 +68,17 @@ export const couponAPI = {
             console.error('Delete coupon error:', error);
             throw error;
         }
+    },
+
+    // Lấy danh sách coupon đã xóa
+    getDeleted: async () => {
+        const response = await apiClient.get('/Coupon/deleted');
+        return response.data;
+    },
+
+    // Khôi phục coupon đã xóa
+    restore: async (id) => {
+        const response = await apiClient.post(`/Coupon/${id}/restore`);
+        return response.data;
     }
 }; 
