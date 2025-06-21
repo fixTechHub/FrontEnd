@@ -8,6 +8,7 @@ import messageReducer from '../features/messages/messageSlice';
 import bookingReducer from '../features/bookings/bookingSlice'
 import contractReducer from '../features/contracts/contractSlice'
 import bookingPriceReducer from '../features/booking-price/bookingPriceSlice'
+import transactionReducer from '../features/transactions/transactionSlice'
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -17,7 +18,8 @@ export const store = configureStore({
     technician: technicianReducer,
     messages: messageReducer,
     contracts: contractReducer,
-    bookingPrice: bookingPriceReducer
+    bookingPrice: bookingPriceReducer,
+    transaction: transactionReducer
   },
 
 

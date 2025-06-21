@@ -26,6 +26,10 @@ export const getAcceptedBookingPriceThunk = createAsyncThunk(
   }
 );
 
+
+
+
+
 // Slice
 const bookingPriceSlice = createSlice({
   name: 'bookingPrice',
@@ -57,7 +61,8 @@ const bookingPriceSlice = createSlice({
       .addCase(getAcceptedBookingPriceThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+     
   }
 });
 

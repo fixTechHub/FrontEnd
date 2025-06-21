@@ -18,26 +18,21 @@ import BookingPage from "../pages/booking/BookingPage";
 import ContractPage from '../pages/contracts/ContractPage';
 import ContractComplete from '../pages/contracts/ContractComplete';
 import CheckoutPage from '../pages/booking/CheckoutPage';
-
+import PaymentSuccess from "../pages/transaction/PaymentSuccess";
+import PaymentCancel from "../pages/transaction/PaymentCancel";
+import PaymentFail from "../pages/transaction/PaymentFail";
 export default function AppRoutes() {
   const dispatch = useDispatch();
-  const { user, loading } = useSelector((state) => state.auth);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const { user, loading, isAuthenticated } = useSelector((state) => state.auth);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await dispatch(checkAuthThunk()).unwrap();
-      } catch (error) {
-        console.error("Check auth error:", error);
-      } finally {
-        setIsAuthChecked(true);
-      }
-    };
-    checkAuth();
-  }, [dispatch]);
+    // Only check auth if we haven't already and there's no user.
+    if (!isAuthenticated) {
+      dispatch(checkAuthThunk());
+    }
+  }, [dispatch, isAuthenticated]);
 
-  if (loading || !isAuthChecked) {
+  if (loading && !isAuthenticated) {
     return (
       <div className="loading-wrapper">
         <div className="loading-spinner"></div>
@@ -126,6 +121,10 @@ export default function AppRoutes() {
       <Route path="/contract" element={<ContractPage />} />
       <Route path="/contract/complete" element={<ContractComplete />} />
       <Route path="/checkout/:bookingId/:technicianId" element={<CheckoutPage />} />
+      <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path="/payment-failed" element={<PaymentFail />} />
+      <Route path="/payment-cancel" element={<PaymentCancel />} />
+
       {/* Fallback route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

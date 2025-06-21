@@ -6,7 +6,6 @@ import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCheckCircle, FaExclamati
 import { MdVerifiedUser } from 'react-icons/md';
 import { BsPersonCircle } from 'react-icons/bs';
 import { toast } from 'react-toastify';
-import '../../styles/profile.css';
 
 const getStatusBadgeClass = (status) => {
     switch (status) {

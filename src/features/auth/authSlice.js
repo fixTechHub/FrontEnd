@@ -236,8 +236,21 @@ const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    clearError: (state) => {
+    // Action to manually set loading state, useful for direct API calls without thunks
+    setAuthLoading: (state, action) => {
+      state.loading = action.payload;
+    },
+    // Action to handle successful registration/login from a direct API call
+    authSuccess: (state, action) => {
+      const { user, token } = action.payload;
+      state.user = user;
+      state.isAuthenticated = true;
+      state.loading = false;
       state.error = null;
+      if (token) {
+        localStorage.setItem('token', token);
+      }
+      state.verificationStatus = determineVerificationStatus(user);
     },
     clearVerificationStatus: (state) => {
       state.verificationStatus = {
@@ -245,6 +258,9 @@ const authSlice = createSlice({
         redirectTo: null,
         message: null
       };
+    },
+    clearError: (state) => {
+      state.error = null;
     },
     setVerificationStatus: (state, action) => {
       state.verificationStatus = action.payload;
@@ -467,5 +483,13 @@ const authSlice = createSlice({
   }
 });
 
-export const { clearError, clearVerificationStatus, setVerificationStatus, updateUserState } = authSlice.actions;
+export const { 
+  authSuccess, 
+  setAuthLoading, 
+  clearError, 
+  clearVerificationStatus, 
+  setVerificationStatus, 
+  updateUserState 
+} = authSlice.actions;
+
 export default authSlice.reducer;

@@ -11,4 +11,6 @@ export const bookingAPI = {
             throw error;
         }
     },
+   
+    
 };
