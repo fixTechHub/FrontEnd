@@ -80,4 +80,32 @@ input[type="password"]::-webkit-contacts-auto-fill-button {
 /* Additional security for Chrome/Safari */
 input[type="password"] {
     -webkit-text-security: disc !important;
+}
+
+/* Authentication Styles */
+
+.login-body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Custom spinner size - height matches capital letters */
+.spinner-custom-sm {
+    display: inline-block;
+    width: 0.8rem; 
+    height: 0.8rem; 
+    vertical-align: -0.125em;
+    border: 0.1em solid currentColor; /* Thin border */
+    border-right-color: transparent;
+    border-radius: 50%;
+    -webkit-animation: .75s linear infinite spinner-border;
+    animation: .75s linear infinite spinner-border;
+}
+
+.log-header {
+    padding: 20px;
+    background-color: #fff;
+    border-bottom: 1px solid #dee2e6;
 } 

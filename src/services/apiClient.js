@@ -13,8 +13,8 @@ apiClient.interceptors.request.use(
       config.headers['x-session-type'] = config.data.sessionType;
       // Remove it from the request body
       delete config.data.sessionType;
-  }
-  return config;
+    }
+    return config;
   },
   (error) => {
     return Promise.reject(error);

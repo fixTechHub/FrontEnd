@@ -5,6 +5,7 @@ import { fetchAllPublicCategories } from './features/categories/categorySlice';
 import { fetchAllPublicServices } from './features/services/serviceSlice';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
+import AuthVerification from './features/auth/AuthVerification';
 
 function App() {
     const dispatch = useDispatch();
@@ -18,6 +19,7 @@ function App() {
     return (
         <AppProvider>
             <AppRoutes />
+            <AuthVerification />
         </AppProvider>
     );
 }

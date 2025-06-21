@@ -16,12 +16,19 @@ function VerifyOTPPage() {
     const [timeLeft, setTimeLeft] = useState(0); // Bắt đầu với 0 để có thể gửi ngay
     const [isResending, setIsResending] = useState(false);
     const [codeExpiryTime, setCodeExpiryTime] = useState(300); // 5 phút cho mã xác thực
-    const [loading, setLoading] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
     const [resendDisabled, setResendDisabled] = useState(false);
     const [countdown, setCountdown] = useState(60);
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const { isAuthenticated } = useSelector((state) => state.auth);
+    const { loading, user, isAuthenticated, verificationStatus } = useSelector((state) => state.auth);
+
+    // Theo dõi thay đổi của verificationStatus để redirect
+    useEffect(() => {
+        if (verificationStatus?.redirectTo && verificationStatus.redirectTo !== '/verify-otp') {
+            navigate(verificationStatus.redirectTo);
+        }
+    }, [verificationStatus, navigate]);
 
     // Tạo timer cho thời gian chờ gửi lại
     const startResendTimer = () => {
@@ -115,7 +122,7 @@ function VerifyOTPPage() {
             return;
         }
 
-        setLoading(true);
+        setIsLoading(true);
         try {
             if (isResetPassword) {
                 // Xử lý xác thực OTP cho đặt lại mật khẩu
@@ -142,16 +149,14 @@ function VerifyOTPPage() {
                     showConfirmButton: false
                 });
 
-                // Clear verification status và logout
-                dispatch(clearVerificationStatus());
-                await dispatch(logoutThunk());
-                navigate('/login');
+                // Không cần clear verification status và navigate
+                // Logic verificationStatus sẽ tự động redirect
             }
         } catch (error) {
             console.error('OTP verification error:', error);
             toast.error(error.message || 'Có lỗi xảy ra khi xác thực OTP');
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -159,15 +164,14 @@ function VerifyOTPPage() {
     const handleBack = async () => {
         // Đầu tiên điều hướng về home
         navigate('/');
-        // Sau đó mới clear status và logout
+        // Sau đó mới clear status
         dispatch(clearVerificationStatus());
-        await dispatch(logoutThunk());
     };
 
     const handleResendOTP = async () => {
         if (resendDisabled) return;
 
-        setLoading(true);
+        setIsLoading(true);
         try {
             const phone = localStorage.getItem('resetPasswordPhone');
             if (isResetPassword && phone) {
@@ -182,7 +186,7 @@ function VerifyOTPPage() {
             console.error('Resend OTP error:', error);
             toast.error(error.message || 'Có lỗi xảy ra khi gửi lại mã');
         } finally {
-            setLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -250,9 +254,9 @@ function VerifyOTPPage() {
                                 <button 
                                     type="submit" 
                                     className="btn btn-primary w-100 mb-3"
-                                    disabled={loading}
+                                    disabled={isLoading}
                                 >
-                                    {loading ? 'Đang xử lý...' : 'Xác nhận'}
+                                    {isLoading ? 'Đang xử lý...' : 'Xác nhận'}
                                 </button>
 
                                 <div className="text-center">
@@ -260,7 +264,7 @@ function VerifyOTPPage() {
                                         type="button"
                                         className="btn btn-link text-primary"
                                         onClick={handleResendOTP}
-                                        disabled={resendDisabled || loading}
+                                        disabled={resendDisabled || isLoading}
                                     >
                                         {resendDisabled 
                                             ? `Gửi lại mã sau ${countdown}s` 
@@ -286,4 +290,4 @@ function VerifyOTPPage() {
     );
 }
 
-export default VerifyOTPPage; 
+export default VerifyOTPPage;
