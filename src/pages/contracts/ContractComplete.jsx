@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-
+import Header from '../../components/common/Header';
+import Footer from '../../components/common/Footer';
 import { useParams, Link } from 'react-router-dom';
 
 const ContractComplete = () => {
@@ -14,6 +15,9 @@ const ContractComplete = () => {
  
 
   return (
+    <>
+    <Header />
+
     <div className="contract-page">
       <h1>Contract Generation</h1>
 
@@ -24,6 +28,9 @@ const ContractComplete = () => {
         </div>
      
     </div>
+    <Footer />
+
+    </>
   );
 };
 

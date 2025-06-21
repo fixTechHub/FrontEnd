@@ -139,3 +139,25 @@ export const disconnectSocket = () => {
     console.log('Socket disconnected manually');
   }
 };
+
+export const requestUserNotifications = () => {
+  if (socket && socket.connected) {
+    socket.emit('requestUserNotifications');
+  } else {
+    console.error('Socket not connected when requesting notifications');
+  }
+};
+
+export const onUserNotifications = (callback) => {
+  if (socket) {
+    const listener = (notifications) => {
+      console.log('Received initial notifications:', notifications);
+      callback(notifications);
+    };
+    socket.on('userNotifications', listener);
+    return () => {
+      socket.off('userNotifications', listener);
+      console.log('Removed userNotifications listener');
+    };
+  }
+};

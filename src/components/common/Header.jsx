@@ -1,10 +1,9 @@
-
 import { Spinner } from "react-bootstrap";
-
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutThunk } from '../../features/auth/authSlice';
 import Swal from 'sweetalert2';
+import Notifications from './Notifications'; // Import your Notifications component
 
 function Header() {
     const dispatch = useDispatch();
@@ -13,10 +12,9 @@ function Header() {
     const services = useSelector((state) => state.services.services);
     const categoryStatus = useSelector((state) => state.categories.status);
     const serviceStatus = useSelector((state) => state.services.status);
-
+    
     // console.log('--- PUBLIC SERVICE ---', services);
     // console.log('--- PUBLIC CATEGORY ---', categories);
-
 
     const handleLogout = async () => {
         const result = await Swal.fire({
@@ -148,6 +146,9 @@ function Header() {
                                 </>
                             ) : (
                                 <>
+                                    {/* Add the Notifications component here for logged-in users */}
+                                   <li  className="nav-item"> <Notifications userId={user._id} /></li>
+                                    
                                     <li className="nav-item">
                                         <Link className="nav-link header-login" to="/profile">
                                             <span><i className="fa-regular fa-user"></i></span>{user.fullName || 'Tài khoản'}

@@ -2,41 +2,25 @@
 import apiClient from '../../services/apiClient';
 
 const handleError = (error) => {
-    if (error.response?.data?.error) {
-        throw new Error(error.response.data.error);
-    }
-    throw error;
+    console.error('API Error:', error.response?.data || error.message);
+    throw error.response?.data || error;
 };
 
-const contractAPI = {
-    createContract: async (contractData) => {
-        try {
-            const response = await apiClient.post('/contracts', contractData);
-            return response.data;
-        } catch (error) {
-            throw handleError(error);
-        }
-    },
-
-    getContractById: async (id) => {
-        try {
-            const response = await apiClient.get(`/contracts/${id}`);
-            return response.data;
-        } catch (error) {
-            throw handleError(error);
-        }
-    },
-
-    getContractsByTechnicianId: async (technicianId) => {
+export const contractAPI = {
+    getContractByTechnicianId: async (technicianId) => {
         try {
             const response = await apiClient.get(`/contracts/technician/${technicianId}`);
             return response.data;
         } catch (error) {
-            throw handleError(error);
+            handleError(error);
         }
     },
-
-
+    getContractById: async (contractId) => {
+        try {
+            const response = await apiClient.get(`/contracts/${contractId}`);
+            return response.data;
+        } catch (error) {
+            handleError(error);
+        }
+    },
 };
-
-export default contractAPI;

@@ -241,40 +241,38 @@ const CheckoutPage = () => {
                                             <h5>Phương thức thanh toán</h5>
                                         </div>
                                         <div className="booking-info-body">
-                                            <div className="payment-method-options">
-                                                <div className="form-check">
-                                                    <input
-                                                        className="form-check-input"
-                                                        type="radio"
-                                                        name="paymentMethod"
-                                                        id="payos-payment"
-                                                        value="PAYOS"
-                                                        checked={paymentMethod === 'PAYOS'}
-                                                        onChange={(e) => setPaymentMethod(e.target.value)}
-                                                    />
-                                                    <label className="form-check-label" htmlFor="payos-payment">
-                                                        Thanh toán qua chuyển khoản
-                                                    </label>
+                                            <div className="payment-method-options row">
+                                                <div className="col-md-6 mb-3">
+                                                    <div 
+                                                        className={`card h-100 payment-card ${paymentMethod === 'PAYOS' ? 'selected' : ''}`}
+                                                        onClick={() => setPaymentMethod('PAYOS')}
+                                                    >
+                                                        <div className="card-body text-center" style={{ padding: '1rem' }}>
+                                                            <i className="bx bx-credit-card text-primary mb-3" style={{ fontSize: '2rem' }}></i>
+                                                            <h6>Thanh toán trực tuyến</h6>
+                                                            <p className="small text-muted mb-0">Thẻ, Chuyển khoản</p>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="form-check">
-                                                    <input
-                                                        className="form-check-input"
-                                                        type="radio"
-                                                        name="paymentMethod"
-                                                        id="cash-payment"
-                                                        value="CASH"
-                                                        checked={paymentMethod === 'CASH'}
-                                                        onChange={(e) => setPaymentMethod(e.target.value)}
-                                                    />
-                                                    <label className="form-check-label" htmlFor="cash-payment">
-                                                        Thanh toán bằng tiền mặt
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div class="booking-info-btns d-flex justify-content-end">
-                                                <a href="listing-details.html" class="btn btn-secondary">Trở về</a>
-                                                <button class="btn btn-primary continue-book-btn"
 
+                                                {bookingPrice?.bookingId?.status === 'WAITING_CONFIRM' && (
+                                                    <div className="col-md-6 mb-3">
+                                                        <div 
+                                                            className={`card h-100 payment-card ${paymentMethod === 'CASH' ? 'selected' : ''}`}
+                                                            onClick={() => setPaymentMethod('CASH')}
+                                                        >
+                                                            <div className="card-body text-center" style={{ padding: '1rem' }}>
+                                                                <i className="bx bx-money text-success mb-3" style={{ fontSize: '2rem' }}></i>
+                                                                <h6>Thanh toán tiền mặt</h6>
+                                                                <p className="small text-muted mb-0">Khi hoàn thành dịch vụ</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="booking-info-btns d-flex justify-content-end">
+                                                <a href="listing-details.html" className="btn btn-secondary">Trở về</a>
+                                                <button className="btn btn-primary continue-book-btn"
                                                     onClick={handleContinueBooking}
                                                     disabled={!bookingPrice || isProcessing || (!paymentMethod)}
                                                     type="submit">{isProcessing ? 'Đang xử lý...' : 'Thanh Toán'}</button>

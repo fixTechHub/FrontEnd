@@ -9,6 +9,9 @@ import bookingReducer from '../features/bookings/bookingSlice'
 import contractReducer from '../features/contracts/contractSlice'
 import bookingPriceReducer from '../features/booking-price/bookingPriceSlice'
 import transactionReducer from '../features/transactions/transactionSlice'
+import adminReducer from '../features/admin/adminSlice';
+import notificationReducer from '../features/notifications/notificationSlice';
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -17,9 +20,11 @@ export const store = configureStore({
     services: serviceReducer,
     technician: technicianReducer,
     messages: messageReducer,
-    contracts: contractReducer,
+    contract: contractReducer,
     bookingPrice: bookingPriceReducer,
-    transaction: transactionReducer
+    transaction: transactionReducer,
+    admin: adminReducer,
+    notifications: notificationReducer,
   },
 
 

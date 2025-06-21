@@ -15,24 +15,29 @@ import VerifyOTPPage from "../pages/authentication/VerifyOTPPage";
 import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
-import ContractPage from '../pages/contracts/ContractPage';
+import ChooseTechnician from '../pages/booking/ChooseTechnician';
+import BookingProcessing from "../pages/booking/BookingProcessing";
 import ContractComplete from '../pages/contracts/ContractComplete';
 import CheckoutPage from '../pages/booking/CheckoutPage';
 import PaymentSuccess from "../pages/transaction/PaymentSuccess";
 import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
+
 export default function AppRoutes() {
   const dispatch = useDispatch();
-  const { user, loading, isAuthenticated } = useSelector((state) => state.auth);
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const [isInitialCheckDone, setIsInitialCheckDone] = useState(false);
+
 
   useEffect(() => {
-    // Only check auth if we haven't already and there's no user.
-    if (!isAuthenticated) {
-      dispatch(checkAuthThunk());
-    }
-  }, [dispatch, isAuthenticated]);
+    dispatch(checkAuthThunk()).finally(() => {
+      setIsInitialCheckDone(true);
+    });
+  }, [dispatch]);
 
-  if (loading && !isAuthenticated) {
+  // Show a global loading screen only during the very first authentication check.
+  // Once this check is done, the app will rely on the Redux state for routing.
+  if (!isInitialCheckDone) {
     return (
       <div className="loading-wrapper">
         <div className="loading-spinner"></div>
@@ -43,7 +48,6 @@ export default function AppRoutes() {
 
   return (
     <Routes>
-      {/* Public routes */}
       <Route
         path="/"
         element={
@@ -111,22 +115,49 @@ export default function AppRoutes() {
         }
       />
 
-      <Route path="/choose-role" element={<ChooseRole />} />
-      <Route path="/booking" element={<BookingPage />} />
+      <Route
+        path="/choose-role"
+        element={<ChooseRole />}
+      />
+
+      <Route
+        path="/booking"
+        element={<BookingPage />}
+      />
 
       <Route
         path="/technician/profile/:technicianId"
-        element={<ViewTechnicianProfile />}
+        element={<ViewTechnicianProfile />} 
       />
-      <Route path="/contract" element={<ContractPage />} />
+
+
+      <Route
+        path="/booking/choose-technician"
+        element={<ChooseTechnician />}
+      />
+
+      <Route
+        path="/booking/booking-processing"
+        element={<BookingProcessing />}
+      />
+
+      {/* <Route
+                    path="/dashboard"
+                    element={
+                        <PrivateRoute allowedRoles={[Roles.ADMIN, Roles.TECHNICIAN]}>
+                            <DashboardPage />
+                        </PrivateRoute>
+                    }
+                /> */}
+
+      {/* Fallback route */}
+      <Route path="*" element={<Navigate to="/login" replace />} />
+
       <Route path="/contract/complete" element={<ContractComplete />} />
       <Route path="/checkout/:bookingId/:technicianId" element={<CheckoutPage />} />
       <Route path="/payment-success" element={<PaymentSuccess />} />
       <Route path="/payment-failed" element={<PaymentFail />} />
       <Route path="/payment-cancel" element={<PaymentCancel />} />
-
-      {/* Fallback route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

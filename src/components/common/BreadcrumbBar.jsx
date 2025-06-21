@@ -1,4 +1,4 @@
-const BreadcrumbBar = ({ title }) => {
+const BreadcrumbBar = ({ title, subtitle }) => {
     return (
         <div className="breadcrumb-bar">
             <div className="container">
@@ -10,7 +10,7 @@ const BreadcrumbBar = ({ title }) => {
                                 <a href="index.html">Home</a>
                             </li> */}
                             <li className="breadcrumb-item active" aria-current="page">
-                                *** Create Your Booking Service ***
+                                *** {subtitle} ***
                             </li>
                         </ol>
                     </div>

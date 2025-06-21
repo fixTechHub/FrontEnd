@@ -6,7 +6,8 @@ import { FaUser, FaEnvelope, FaPhone, FaMapMarkerAlt, FaCheckCircle, FaExclamati
 import { MdVerifiedUser } from 'react-icons/md';
 import { BsPersonCircle } from 'react-icons/bs';
 import { toast } from 'react-toastify';
-
+import ContractStatus from '../../components/contracts/ContractStatus';
+import ApproveTechnicianTest from '../../components/admin/ApproveTechnicianTest'
 const getStatusBadgeClass = (status) => {
     switch (status) {
         case 'ACTIVE':
@@ -39,7 +40,7 @@ const getStatusText = (status) => {
 
 function ProfilePage() {
     const dispatch = useDispatch();
-    const { profile, profileLoading, profileError, user, updateLoading } = useSelector(state => state.auth);
+    const { profile, profileLoading, profileError, user, technician, updateLoading } = useSelector(state => state.auth);
     const [isEditing, setIsEditing] = useState(false);
     const [activeTab, setActiveTab] = useState('profile');
     const [formData, setFormData] = useState({
@@ -221,6 +222,16 @@ function ProfilePage() {
 
             <div className="content">
                 <div className="container">
+                <ApproveTechnicianTest />
+                    {/* Conditional Rendering for Contract Status */}
+                    {user?.role?.name === 'TECHNICIAN' && (
+                        <div className="row">
+                            <div className="col-12">
+                                <ContractStatus />
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="row">
                         {/* Profile Sidebar */}
                         <div className="col-md-4 col-lg-3 col-xl-3 theiaStickySidebar">
