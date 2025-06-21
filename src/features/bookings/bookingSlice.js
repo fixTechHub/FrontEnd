@@ -1,4 +1,4 @@
-// src/features/booking/bookingSlice.js
+    // src/features/booking/bookingSlice.js
 
 import { createSlice } from '@reduxjs/toolkit';
 

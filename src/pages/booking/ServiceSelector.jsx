@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import Accordion from 'react-bootstrap/Accordion';
 
 function ServiceSelector({ categories, services, onServiceChange, selectedServiceName }) {

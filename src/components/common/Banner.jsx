@@ -21,7 +21,7 @@ function Banner() {
                                     Dù bạn cần sửa điện, nước, điện lạnh hay các thiết bị gia đình khác – chúng tôi luôn sẵn sàng hỗ trợ bạn mọi lúc, mọi nơi.
                                 </p>
                                 <div className="view-all">
-                                    <a href="listing-grid.html" className="btn btn-view d-inline-flex align-items-center">
+                                    <a href="/booking" className="btn btn-view d-inline-flex align-items-center">
                                         Đặt ngay{" "}
                                         <span>
                                             <i className="feather-arrow-right ms-2"></i>
