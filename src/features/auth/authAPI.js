@@ -39,6 +39,16 @@ const authAPI = {
         }
     },
 
+    // New API function for the final registration step
+    finalizeRegistration: async (registrationData) => {
+        try {
+            const response = await apiClient.post('/auth/finalize-registration', registrationData);
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
     googleLogin: async (accessToken) => {
         try {
             const response = await apiClient.post('/auth/google-login', { 
@@ -71,10 +81,8 @@ const authAPI = {
     verifyEmail: async (code) => {
         try {
             const response = await apiClient.post('/auth/verify-email', { 
-                code,
-                sessionType: 'temporary'
+                code
             });
-            await authAPI.logout();
             return response.data;
         } catch (error) {
             throw handleError(error);
@@ -84,10 +92,8 @@ const authAPI = {
     verifyOTP: async (otp) => {
         try {
             const response = await apiClient.post('/auth/verify-otp', { 
-                otp,
-                sessionType: 'temporary'
+                otp
             });
-            await authAPI.logout();
             return response.data;
         } catch (error) {
             throw handleError(error);
@@ -176,6 +182,88 @@ const authAPI = {
             throw handleError(error);
         }
     },
+
+    deactivateAccount: async (password) => {
+        try {
+            const response = await apiClient.post('/users/deactivate-account', { password });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    requestDeactivateVerification: async (verificationMethod) => {
+        try {
+            const response = await apiClient.post('/users/request-deactivate-verification', { verificationMethod });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    verifyDeactivateAccount: async (otp) => {
+        try {
+            const response = await apiClient.post('/users/verify-deactivate-account', { otp });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    deleteAccount: async () => {
+        try {
+            const response = await apiClient.delete('/users/profile');
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    requestPhoneChange: async (newPhone) => {
+        try {
+            const response = await apiClient.post('/users/request-phone-change', { newPhone });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    verifyPhoneChange: async (otp, newPhone) => {
+        try {
+            const response = await apiClient.post('/users/verify-phone-change', { otp, newPhone });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+};
+
+// Delete Account APIs
+export const requestDeleteVerificationAPI = async (method) => {
+    try {
+        const response = await apiClient.post('/users/delete-account/request-verification', { method });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || error.message;
+    }
+};
+
+export const verifyDeleteOTPAPI = async (otp) => {
+    try {
+        const response = await apiClient.post('/users/delete-account/verify-otp', { otp });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || error.message;
+    }
+};
+
+export const deleteAccountAPI = async (password, confirmText) => {
+    try {
+        const response = await apiClient.post('/users/delete-account/confirm', { password, confirmText });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || error.message;
+    }
 };
 
 export default authAPI;

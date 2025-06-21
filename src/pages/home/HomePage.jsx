@@ -30,20 +30,44 @@ function HomePage() {
       user &&
       !sessionStorage.getItem("hasWelcomed")
     ) {
-      Swal.fire({
-        title: `Xin chào trở lại, ${user.fullName}!`,
-        text: "Chúc bạn một ngày tốt lành",
-        icon: "success",
-        timer: 2000,
-        timerProgressBar: true,
-        showConfirmButton: false,
-        position: "bottom-end",
-        toast: true,
-        didOpen: (toast) => {
-          toast.addEventListener("mouseenter", Swal.stopTimer);
-          toast.addEventListener("mouseleave", Swal.resumeTimer);
-        },
-      });
+      // Kiểm tra xem có phải tài khoản vừa được kích hoạt lại không
+      const wasReactivated = sessionStorage.getItem("wasReactivated");
+      
+      if (wasReactivated === "true") {
+        // Thông báo đặc biệt cho tài khoản được kích hoạt lại
+        Swal.fire({
+          title: `Chào mừng trở lại, ${user.fullName}!`,
+          text: "Tài khoản của bạn đã được kích hoạt lại thành công",
+          icon: "success",
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          position: "bottom-end",
+          toast: true,
+          didOpen: (toast) => {
+            toast.addEventListener("mouseenter", Swal.stopTimer);
+            toast.addEventListener("mouseleave", Swal.resumeTimer);
+          },
+        });
+        // Xóa flag để không hiển thị lại
+        sessionStorage.removeItem("wasReactivated");
+      } else {
+        // Thông báo chào mừng thông thường
+        Swal.fire({
+          title: `Xin chào trở lại, ${user.fullName}!`,
+          text: "Chúc bạn một ngày tốt lành",
+          icon: "success",
+          timer: 2000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          position: "bottom-end",
+          toast: true,
+          didOpen: (toast) => {
+            toast.addEventListener("mouseenter", Swal.stopTimer);
+            toast.addEventListener("mouseleave", Swal.resumeTimer);
+          },
+        });
+      }
       sessionStorage.setItem("hasWelcomed", "true");
     }
   }, [loading, isAuthenticated, verificationStatus, user]);

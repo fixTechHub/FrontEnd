@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { registerThunk, googleLoginThunk } from '../../features/auth/authSlice';
+import { googleLoginThunk, updateRegistrationData } from '../../features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { validateEmail, validatePhone, validatePasswordStrength } from '../../utils/validation';
 import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
@@ -21,7 +21,6 @@ function RegisterPage() {
     const [errors, setErrors] = useState({});
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading } = useSelector((state) => state.auth);
 
     const validateForm = () => {
         const newErrors = {};
@@ -81,34 +80,20 @@ function RegisterPage() {
         }));
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
+        
         if (!validateForm()) return;
 
-        try {
-            const registrationData = {
-                fullName: formData.fullName.trim(),
-                emailOrPhone: formData.emailOrPhone.trim(),
-                password: formData.password,
-                confirmPassword: formData.confirmPassword
-            };
+        // Dispatch data to Redux store instead of calling API
+        dispatch(updateRegistrationData({
+            fullName: formData.fullName.trim(),
+            emailOrPhone: formData.emailOrPhone.trim().toLowerCase(),
+            password: formData.password,
+        }));
 
-            if (formData.emailOrPhone.includes('@')) {
-                localStorage.setItem('verificationEmail', formData.emailOrPhone.trim().toLowerCase());
-            }
-
-            const result = await dispatch(registerThunk(registrationData)).unwrap();
-            
-            if (result.user?.role?.name === 'PENDING') {
-                navigate('/choose-role');
-            } else {
-                navigate('/');
-            }
-            
-            toast.success(result.message || 'Đăng ký thành công!');
-        } catch (error) {
-            toast.error(error.message || 'Đăng ký thất bại');
-        }
+        // Navigate to the next step
+        navigate('/choose-role');
     };
 
     const handleGoogleLogin = async () => {
@@ -174,7 +159,6 @@ function RegisterPage() {
                                             value={formData.fullName}
                                             onChange={handleInputChange}
                                             placeholder="Nhập họ và tên"
-                                            required
                                         />
                                         {errors.fullName && (
                                             <div className="invalid-feedback">{errors.fullName}</div>
@@ -186,7 +170,7 @@ function RegisterPage() {
                                     <label className="form-label text-dark">
                                         Email / Số điện thoại <span className="text-danger">*</span>
                                     </label>
-                                    <div className="position-relative">
+                                    <div className="position-relative" style={{ marginBottom: errors.emailOrPhone ? '24px' : '0' }}>
                                         <span className="position-absolute top-50 translate-middle-y ps-3">
                                             <FaEnvelope className="text-secondary" />
                                         </span>
@@ -197,10 +181,9 @@ function RegisterPage() {
                                             value={formData.emailOrPhone}
                                             onChange={handleInputChange}
                                             placeholder="Nhập email hoặc số điện thoại"
-                                            required
                                         />
                                         {errors.emailOrPhone && (
-                                            <div className="invalid-feedback">{errors.emailOrPhone}</div>
+                                            <div className="invalid-feedback position-absolute" style={{ top: '100%' }}>{errors.emailOrPhone}</div>
                                         )}
                                     </div>
                                 </div>
@@ -220,7 +203,6 @@ function RegisterPage() {
                                             value={formData.password}
                                             onChange={handleInputChange}
                                             placeholder="Nhập mật khẩu"
-                                            required
                                             autoComplete="new-password"
                                         />
                                         <button
@@ -254,7 +236,6 @@ function RegisterPage() {
                                             value={formData.confirmPassword}
                                             onChange={handleInputChange}
                                             placeholder="Nhập lại mật khẩu"
-                                            required
                                             autoComplete="new-password"
                                         />
                                         <button
@@ -276,11 +257,8 @@ function RegisterPage() {
                                 <button 
                                     type="submit" 
                                     className="btn btn-primary w-100 btn-size mb-4"
-                                    disabled={loading}
                                 >
-                                    {loading ? (
-                                        <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG XỬ LÝ...</>
-                                    ) : 'ĐĂNG KÝ'}
+                                    TIẾP TỤC
                                 </button>
 
                                 <div className="text-center mb-4">
@@ -291,10 +269,11 @@ function RegisterPage() {
                                     type="button"
                                     onClick={handleGoogleLogin}
                                     className="btn btn-outline-secondary w-100 mb-4"
-                                    disabled={loading}
                                 >
-                                    <img src="/img/icons/google.svg" alt="Google" className="me-2" style={{ width: '20px' }} />
-                                    {loading ? 'Đang xử lý...' : 'Đăng nhập với Google'}
+                                    <span className="d-flex justify-content-center align-items-center">
+                                        <img src="/img/icons/google.svg" alt="Google" className="me-2" style={{ width: '20px' }} />
+                                        <span>Đăng nhập với Google</span>
+                                    </span>
                                 </button>
 
                                 <div className="text-center">

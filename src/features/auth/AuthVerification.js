@@ -1,108 +1,65 @@
 import { useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { toast } from 'react-toastify';
-import { clearVerificationStatus, logoutThunk } from './authSlice';
+import { logoutThunk } from './authSlice';
 
 const AuthVerification = () => {
-    const { verificationStatus, user, isAuthenticated } = useSelector((state) => state.auth);
+    const { user, isAuthenticated, verificationStatus } = useSelector((state) => state.auth);
     const navigate = useNavigate();
     const location = useLocation();
     const dispatch = useDispatch();
-    const prevStepRef = useRef(null);
-    const completedRef = useRef(false);
+
+    // Ref to track the last known location to detect manual navigation
     const lastPathRef = useRef(location.pathname);
 
     useEffect(() => {
-        // Reset refs khi không có user hoặc chưa đăng nhập
+        // If not authenticated or no user data, do nothing.
         if (!isAuthenticated || !user) {
-            prevStepRef.current = null;
-            completedRef.current = false;
             return;
         }
 
-        // Danh sách các trang xác thực
+        // Use verificationStatus from Redux store instead of calculating it here
+        const nextStep = verificationStatus?.step || 'COMPLETED';
+        const redirectTo = verificationStatus?.redirectTo;
+
+        console.log('=== DEBUG AuthVerification ===');
+        console.log('Redux verificationStatus:', verificationStatus);
+        console.log('Calculated nextStep:', nextStep);
+        console.log('Current location:', location.pathname);
+
         const authPages = ['/choose-role', '/verify-email', '/verify-otp', '/technician/complete-profile'];
-        
-        // Kiểm tra nếu người dùng đang cố gắng thoát khỏi trang xác thực
         const wasOnAuthPage = authPages.some(page => lastPathRef.current.includes(page));
         const isOnHomePage = location.pathname === '/';
         
-        if (wasOnAuthPage && isOnHomePage) {
-            console.log('User manually left auth page, logging out...');
+        // Chỉ logout nếu user thực sự rời khỏi luồng xác thực một cách có chủ ý
+        // Không logout khi vừa được chuyển hướng hợp lệ
+        if (wasOnAuthPage && isOnHomePage && nextStep !== 'COMPLETED' && 
+            // Thêm điều kiện: chỉ logout nếu đã ở home page một thời gian (không phải vừa redirect)
+            lastPathRef.current !== '/verify-email' && 
+            lastPathRef.current !== '/verify-otp' && 
+            lastPathRef.current !== '/choose-role') {
+            console.log('User manually left auth page during verification, logging out...');
             dispatch(logoutThunk());
             return;
         }
 
-        // Cập nhật lastPathRef
+        // Update the last path reference for the next render.
         lastPathRef.current = location.pathname;
 
-        // Kiểm tra trạng thái xác thực của người dùng
-        let nextStep = null;
-        let redirectTo = null;
-
-        // Kiểm tra các bước theo thứ tự ưu tiên
-        if (user.role?.name === 'PENDING') {
-            nextStep = 'CHOOSE_ROLE';
-            redirectTo = '/choose-role';
-        } else if (user.email && !user.emailVerified) {
-            nextStep = 'VERIFY_EMAIL';
-            redirectTo = '/verify-email';
-        } else if (user.phone && !user.phoneVerified) {
-            nextStep = 'VERIFY_PHONE';
-            redirectTo = '/verify-otp';
-        } else if (user.role?.name === 'TECHNICIAN' && (!user.status || user.status === 'PENDING')) {
-            nextStep = 'COMPLETE_PROFILE';
-            redirectTo = '/technician/complete-profile';
+        // Redirect if the user is not on the correct page for their verification step.
+        if (redirectTo && location.pathname !== redirectTo) {
+            console.log(`Redirecting to ${redirectTo} because current step is ${nextStep}`);
+            navigate(redirectTo);
+        } 
+        // If all steps are completed and the user is still on an auth page, redirect to home.
+        else if (nextStep === 'COMPLETED' && authPages.includes(location.pathname)) {
+            console.log('All verification steps completed, redirecting to home.');
+            navigate('/', { replace: true });
         }
 
-        // Nếu có bước tiếp theo và khác với bước trước đó
-        if (nextStep && prevStepRef.current !== nextStep) {
-            prevStepRef.current = nextStep;
-            completedRef.current = false;
+    }, [user, isAuthenticated, verificationStatus, navigate, dispatch, location.pathname]);
 
-            // Hiển thị thông báo tương ứng
-            switch (nextStep) {
-                case 'CHOOSE_ROLE':
-                    toast.info('Vui lòng chọn vai trò của bạn để tiếp tục');
-                    break;
-                case 'VERIFY_EMAIL':
-                    toast.info('Vui lòng xác thực email của bạn để tiếp tục');
-                    break;
-                case 'VERIFY_PHONE':
-                    toast.info('Vui lòng xác thực số điện thoại của bạn để tiếp tục');
-                    break;
-                case 'COMPLETE_PROFILE':
-                    toast.info('Vui lòng hoàn thành hồ sơ của bạn để tiếp tục');
-                    break;
-                default:
-                    break;
-            }
-
-            // Chỉ chuyển hướng nếu không phải đang ở trang chủ sau khi thoát khỏi trang xác thực
-            if (redirectTo && location.pathname !== redirectTo && !isOnHomePage) {
-                navigate(redirectTo);
-            }
-        } else if (!nextStep && !completedRef.current) {
-            // Nếu không có bước tiếp theo và chưa đánh dấu là đã hoàn thành
-            completedRef.current = true;
-            
-            // Nếu đang ở trang xác thực và đã hoàn thành tất cả các bước
-            if (authPages.includes(location.pathname)) {
-                // Chuyển về homepage bằng navigate
-                navigate('/', { replace: true });
-            }
-        }
-
-        // Cleanup function
-        return () => {
-            if (verificationStatus) {
-                dispatch(clearVerificationStatus());
-            }
-        };
-    }, [user, isAuthenticated, verificationStatus, navigate, dispatch, location]);
-
-    return null;
+    return null; // This component does not render anything.
 };
 
 export default AuthVerification; 
