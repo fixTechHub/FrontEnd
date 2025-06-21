@@ -15,114 +15,141 @@ import VerifyOTPPage from "../pages/authentication/VerifyOTPPage";
 import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
+import ChooseTechnician from '../pages/booking/ChooseTechnician';
+import BookingProcessing from "../pages/booking/BookingProcessing";
 
 export default function AppRoutes() {
-  const dispatch = useDispatch();
-  const { user, loading } = useSelector((state) => state.auth);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
+    const dispatch = useDispatch();
+    const { user, loading } = useSelector((state) => state.auth);
+    const [isAuthChecked, setIsAuthChecked] = useState(false);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        await dispatch(checkAuthThunk()).unwrap();
-      } catch (error) {
-        console.error("Check auth error:", error);
-      } finally {
-        setIsAuthChecked(true);
-      }
-    };
-    checkAuth();
-  }, [dispatch]);
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                await dispatch(checkAuthThunk()).unwrap();
+            } catch (error) {
+                console.error("Check auth error:", error);
+            } finally {
+                setIsAuthChecked(true);
+            }
+        };
+        checkAuth();
+    }, [dispatch]);
 
-  if (loading || !isAuthChecked) {
+    if (loading || !isAuthChecked) {
+        return (
+            <div className="loading-wrapper">
+                <div className="loading-spinner"></div>
+                <p>Đang tải...</p>
+            </div>
+        );
+    }
+
     return (
-      <div className="loading-wrapper">
-        <div className="loading-spinner"></div>
-        <p>Đang tải...</p>
-      </div>
+        <Routes>
+            <Route
+                path="/"
+                element={
+                    <ProtectedRoute isAllowed={true}>
+                        <HomePage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+            {/* Verification routes */}
+            <Route
+                path="/choose-role"
+                element={
+                    <ProtectedRoute
+                        isAllowed={!!user && (!user.role || user.role.name === "PENDING")}
+                        redirectPath={user ? "/" : "/login"}
+                    >
+                        <ChooseRole />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/verify-email"
+                element={
+                    <ProtectedRoute
+                        isAllowed={!!user && user.email && !user.emailVerified}
+                        redirectPath={user ? "/" : "/login"}
+                    >
+                        <VerifyEmailPage />
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/verify-otp"
+                element={
+                    <ProtectedRoute
+                        isAllowed={!!user && !user.phoneVerified && user.phone}
+                        redirectPath={user ? "/" : "/login"}
+                    >
+                        <VerifyOTPPage />
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* Protected routes */}
+            <Route
+                path="/technician/profile/:id"
+                element={
+                    <ProtectedRoute isAllowed={!!user}>
+                        <ViewTechnicianProfile />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/profile"
+                element={
+                    <ProtectedRoute isAllowed={!!user}>
+                        <ProfilePage />
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/choose-role"
+                element={<ChooseRole />}
+            />
+
+            <Route
+                path="/booking"
+                element={<BookingPage />}
+            />
+
+            <Route
+                path="/technician/profile/:technicianId"
+                element={<ViewTechnicianProfile />}
+            />
+
+            <Route
+                path="/booking/choose-technician"
+                element={<ChooseTechnician />}
+            />
+
+            <Route
+                path="/booking/booking-processing"
+                element={<BookingProcessing />}
+            />
+
+            {/* <Route
+                    path="/dashboard"
+                    element={
+                        <PrivateRoute allowedRoles={[Roles.ADMIN, Roles.TECHNICIAN]}>
+                            <DashboardPage />
+                        </PrivateRoute>
+                    }
+                /> */}
+
+            {/* Fallback route */}
+            <Route path="*" element={<Navigate to="/login" replace />} />
+        </Routes>
     );
-  }
-
-  return (
-    <Routes>
-      {/* Public routes */}
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute isAllowed={true}>
-            <HomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-
-      {/* Verification routes */}
-      <Route
-        path="/choose-role"
-        element={
-          <ProtectedRoute
-            isAllowed={!!user && (!user.role || user.role.name === "PENDING")}
-            redirectPath={user ? "/" : "/login"}
-          >
-            <ChooseRole />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/verify-email"
-        element={
-          <ProtectedRoute
-            isAllowed={!!user && user.email && !user.emailVerified}
-            redirectPath={user ? "/" : "/login"}
-          >
-            <VerifyEmailPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/verify-otp"
-        element={
-          <ProtectedRoute
-            isAllowed={!!user && !user.phoneVerified && user.phone}
-            redirectPath={user ? "/" : "/login"}
-          >
-            <VerifyOTPPage />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Protected routes */}
-      <Route
-        path="/technician/profile/:id"
-        element={
-          <ProtectedRoute isAllowed={!!user}>
-            <ViewTechnicianProfile />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute isAllowed={!!user}>
-            <ProfilePage />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route path="/choose-role" element={<ChooseRole />} />
-      <Route path="/booking" element={<BookingPage />} />
-
-      <Route
-        path="/technician/profile/:technicianId"
-        element={<ViewTechnicianProfile />}
-      />
-
-      {/* Fallback route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
-  );
 }
