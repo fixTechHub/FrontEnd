@@ -1,8 +1,19 @@
 import axios from 'axios';
 
+// Get API base URL from environment variables
+const getApiBaseUrl = () => {
+  // For production build, use the environment variable
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  
+  // For development, default to localhost
+  return 'http://localhost:5000/api';
+};
+
 // Try HTTPS first, fallback to HTTP if HTTPS fails
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://localhost:7260/api' ,
+  baseURL: getApiBaseUrl(),
   // withCredentials: true, // bật nếu bạn dùng Cookie Auth (ví dụ với Identity)
   headers: {
     'Content-Type': 'application/json',
