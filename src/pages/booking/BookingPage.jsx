@@ -2,15 +2,21 @@ import BreadcrumbBar from "../../components/common/BreadcrumbBar";
 import Header from "../../components/common/Header";
 import BookingWizard from "./BookingHeader";
 import Map from "../../components/map/Map";
-import { useSelector } from "react-redux";
+import ServiceSelector from "./ServiceSelector";
+import { useDispatch, useSelector } from "react-redux";
 import { Spinner } from "react-bootstrap";
 import { useCallback, useState } from "react";
-import ServiceSelector from "./ServiceSelector";
-import { createBooking } from "../../features/bookings/bookingAPI";
+import { useNavigate } from "react-router-dom";
+import ImageUploader from "./ImageUploader";
+import { createNewBooking } from "../../features/bookings/bookingSlice";
+import { unwrapResult } from "@reduxjs/toolkit";
 
 function BookingPage() {
     const { categories, status: categoryStatus } = useSelector((state) => state.categories);
     const { services, status: serviceStatus } = useSelector((state) => state.services);
+
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     // Địa chỉ khách nhập
     const [addressInput, setAddressInput] = useState("");
@@ -24,8 +30,6 @@ function BookingPage() {
         description: '',
         scheduleDate: '',
         scheduleTime: '',
-        address: '',
-        geoJson: null,
         images: []
     });
 
@@ -56,18 +60,15 @@ function BookingPage() {
     };
 
     const handleInputChange = (e) => {
-        const { name, value, files } = e.target;
-        if (name === "images") {
-            setBookingData(prev => ({
-                ...prev,
-                images: files
-            }));
-        } else {
-            setBookingData(prev => ({
-                ...prev,
-                [name]: value
-            }));
-        }
+        const { name, value } = e.target;
+        setBookingData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleFilesSelect = (files) => {
+        setBookingData(prev => ({ ...prev, images: files }));
     };
 
     const handleSubmit = async (e) => {
@@ -91,10 +92,18 @@ function BookingPage() {
             for (let [key, value] of formData.entries()) {
                 console.log(key, value);
             }
-            
-            const res = await createBooking(formData);
 
-            console.log('--- RES BOOKING ---', res);
+            const actionResult = await dispatch(createNewBooking(formData));
+            const bookingResult = unwrapResult(actionResult);
+
+            // console.log('--- RES BOOKING ---', res);
+            // console.log('--- RES BOOKING ID ---', res.data._id);
+
+            if (bookingResult && bookingResult._id) {
+                navigate(`/booking/choose-technician?bookingId=${bookingResult._id}`);
+            } else {
+                alert('Đặt lịch thành công nhưng không thể chuyển sang trang chọn kỹ thuật viên!');
+            }
         } catch (error) {
             alert('Đặt lịch thất bại!');
             console.error(error);
@@ -112,7 +121,7 @@ function BookingPage() {
     return (
         <>
             <Header />
-            <BreadcrumbBar title='Đặt Lịch Sửa Chữa' />
+            <BreadcrumbBar title={'Đặt Lịch Sửa Chữa'} subtitle={'Create Your Booking Service'} />
             <div className="booking-new-module">
                 <div className="container">
                     <BookingWizard activeStep={1} />
@@ -166,9 +175,12 @@ function BookingPage() {
                                     </div>
                                 </div>
                             </div>
+
                             <div className="col-lg-4">
                                 <div className="input-block">
-                                    <label className="form-label">Dịch vụ</label>
+                                    <label className="form-label">
+                                        Dịch vụ <span className="text-danger">*</span>
+                                    </label>
                                     <ServiceSelector
                                         categories={categories}
                                         services={services}
@@ -176,8 +188,11 @@ function BookingPage() {
                                         selectedServiceName={bookingData.service?.serviceName}
                                     />
                                 </div>
+
                                 <div className="input-block">
-                                    <label className="form-label">Mô tả</label>
+                                    <label className="form-label">
+                                        Mô tả <span className="text-danger">*</span>
+                                    </label>
                                     <div className="group-img">
                                         <textarea
                                             name="description"
@@ -188,8 +203,11 @@ function BookingPage() {
                                         />
                                     </div>
                                 </div>
+
                                 <div className="input-block">
-                                    <label className="form-label">Chọn ngày</label>
+                                    <label className="form-label">
+                                        Chọn ngày <span className="text-danger">*</span>
+                                    </label>
                                     <div className="group-img">
                                         <input
                                             name="scheduleDate"
@@ -203,7 +221,9 @@ function BookingPage() {
                                     </div>
                                 </div>
                                 <div className="input-block">
-                                    <label className="form-label">Chọn thời gian</label>
+                                    <label className="form-label">
+                                        Chọn thời gian <span className="text-danger">*</span>
+                                    </label>
                                     <div className="group-img">
                                         <input
                                             name="scheduleTime"
@@ -217,18 +237,9 @@ function BookingPage() {
                                         {/* <span className="input-cal-icon"><i className="bx bx-time"></i></span> */}
                                     </div>
                                 </div>
-                                <div className="input-block">
-                                    <label className="form-label">Tải lên hình ảnh</label>
-                                    <div className="group-img">
-                                        <input
-                                            name="images"
-                                            type="file"
-                                            className="form-control image-sign"
-                                            multiple
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                </div>
+
+                                <ImageUploader onFilesSelect={handleFilesSelect} />
+
                                 <div style={{ position: 'relative', bottom: 0 }} className="booking-info-btns d-flex justify-content-end">
                                     <button type="submit" className="btn btn-primary continue-book-btn">Đặt dịch vụ</button>
                                 </div>
