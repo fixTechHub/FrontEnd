@@ -1,13 +1,13 @@
 import BreadcrumbBar from "../../components/common/BreadcrumbBar";
 import Header from "../../components/common/Header";
-import BookingWizard from "./BookingHeader";
+import BookingWizard from "./common/BookingHeader";
 import Map from "../../components/map/Map";
-import ServiceSelector from "./ServiceSelector";
+import ServiceSelector from "./common/ServiceSelector";
 import { useDispatch, useSelector } from "react-redux";
 import { Spinner } from "react-bootstrap";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ImageUploader from "./ImageUploader";
+import ImageUploader from "./common/ImageUploader";
 import { createNewBooking } from "../../features/bookings/bookingSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 
@@ -121,7 +121,9 @@ function BookingPage() {
     return (
         <>
             <Header />
+
             <BreadcrumbBar title={'Đặt Lịch Sửa Chữa'} subtitle={'Create Your Booking Service'} />
+
             <div className="booking-new-module">
                 <div className="container">
                     <BookingWizard activeStep={1} />

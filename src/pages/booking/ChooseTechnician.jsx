@@ -1,7 +1,7 @@
 import Header from '../../components/common/Header';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
-import BookingWizard from './BookingHeader';
-import BookingDetails from './BookingDetails';
+import BookingWizard from './common/BookingHeader';
+import BookingDetails from './common/BookingDetails';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,10 +32,10 @@ function ChooseTechnician() {
     const handleComfirm = async (id) => {
         try {
             const res = await acceptQuotation(id);
-            console.log('--- ACCEPT QUOTATION ---', res);
+            // console.log('--- ACCEPT QUOTATION ---', res);
 
             if (res.data.success) {
-                navigate(`/booking`);
+                navigate(`/booking/booking-processing?bookingId=${bookingId}`);
             } else {
                 alert(res.data.message);
             }

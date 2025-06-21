@@ -16,6 +16,7 @@ import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ChooseTechnician from '../pages/booking/ChooseTechnician';
+import BookingProcessing from "../pages/booking/BookingProcessing";
 
 export default function AppRoutes() {
     const dispatch = useDispatch();
@@ -113,14 +114,14 @@ export default function AppRoutes() {
                 }
             />
 
-            <Route 
-                path="/choose-role" 
-                element={<ChooseRole />} 
+            <Route
+                path="/choose-role"
+                element={<ChooseRole />}
             />
 
-            <Route 
-                path="/booking" 
-                element={<BookingPage />} 
+            <Route
+                path="/booking"
+                element={<BookingPage />}
             />
 
             <Route
@@ -128,9 +129,14 @@ export default function AppRoutes() {
                 element={<ViewTechnicianProfile />}
             />
 
-            <Route 
-                path="/booking/choose-technician" 
-                element={<ChooseTechnician />} 
+            <Route
+                path="/booking/choose-technician"
+                element={<ChooseTechnician />}
+            />
+
+            <Route
+                path="/booking/booking-processing"
+                element={<BookingProcessing />}
             />
 
             {/* <Route

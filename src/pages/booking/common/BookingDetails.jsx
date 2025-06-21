@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { cancelBooking, fetchBookingById } from "../../features/bookings/bookingSlice";
-import { formatDate } from "../../utils/formatDate";
-import { BOOKING_STATUS_CONFIG } from "../../constants/bookingConstants";
+import { cancelBooking, fetchBookingById } from "../../../features/bookings/bookingSlice";
+import { formatDate } from "../../../utils/formatDate";
+import { BOOKING_STATUS_CONFIG } from "../../../constants/bookingConstants";
 import { useNavigate } from "react-router-dom";
 
 function BookingDetails({ bookingId }) {
