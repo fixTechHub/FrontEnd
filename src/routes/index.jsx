@@ -30,8 +30,13 @@ export default function AppRoutes() {
   const { user, loading, registrationData } = useSelector((state) => state.auth);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
+  useEffect(() => {
+    dispatch(checkAuthThunk()).finally(() => {
+      setIsAuthChecked(true);
+    });
+  }, [dispatch]);
 
-  if (loading || !isAuthChecked) {
+  if (!isAuthChecked) {
     return (
       <div className="loading-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <div className="spinner-border text-warning" role="status">
@@ -44,139 +49,139 @@ export default function AppRoutes() {
 
   // Show a global loading screen only during the very first authentication check.
   // Once this check is done, the app will rely on the Redux state for routing.
-  if (!isInitialCheckDone) {
-    return (
-      <Routes>
-        {/* ================= PUBLIC ROUTES ================= */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-        <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
 
 
-        {/* ================= VERIFICATION ROUTES ================= */}
-        <Route
-          path="/choose-role"
-          element={
-            <PrivateRoute
-              isAllowed={
-                // Allow access if user exists and needs to choose role
-                (!!user && (!user.role || user.role.name === "PENDING")) ||
-                // OR if user is in registration process (has registration data)
-                (!!registrationData && registrationData.fullName && registrationData.emailOrPhone && registrationData.password)
-              }
-              redirectPath={user ? "/" : "/login"}
-            >
-              <ChooseRole />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/verify-email"
-          element={
-            <PrivateRoute
-              isAllowed={!!user && user.email && !user.emailVerified}
-              redirectPath={user ? "/" : "/login"}
-            >
-              <VerifyEmailPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/verify-otp"
-          element={
-            <PrivateRoute
-              isAllowed={!!user && !user.phoneVerified && user.phone}
-              redirectPath={user ? "/" : "/login"}
-            >
-              <VerifyOTPPage />
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/technician/complete-profile"
-          element={
-            <PrivateRoute
-              isAllowed={!!user && user.role?.name === "TECHNICIAN"}
-              redirectPath={user ? "/" : "/login"}
-            >
-              <CompleteProfile />
-            </PrivateRoute>
-          }
-        />
+  return (
+    <Routes>
+      {/* ================= PUBLIC ROUTES ================= */}
+      <Route path="/" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
 
-        {/* ================= USER PROTECTED ROUTES ================= */}
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute isAllowed={!!user}>
-              <ProfilePage />
-            </PrivateRoute>
-          }
-        />
-        <Route path="/contract/complete" element={
-          <PrivateRoute isAllowed={!!user}>
-            <ContractComplete />
+
+      {/* ================= VERIFICATION ROUTES ================= */}
+      <Route
+        path="/choose-role"
+        element={
+          <PrivateRoute
+            isAllowed={
+              // Allow access if user exists and needs to choose role
+              (!!user && (!user.role || user.role.name === "PENDING")) ||
+              // OR if user is in registration process (has registration data)
+              (!!registrationData && registrationData.fullName && registrationData.emailOrPhone && registrationData.password)
+            }
+            redirectPath={user ? "/" : "/login"}
+          >
+            <ChooseRole />
           </PrivateRoute>
+        }
+      />
+      <Route
+        path="/verify-email"
+        element={
+          <PrivateRoute
+            isAllowed={!!user && user.email && !user.emailVerified}
+            redirectPath={user ? "/" : "/login"}
+          >
+            <VerifyEmailPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/verify-otp"
+        element={
+          <PrivateRoute
+            isAllowed={!!user && !user.phoneVerified && user.phone}
+            redirectPath={user ? "/" : "/login"}
+          >
+            <VerifyOTPPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/technician/complete-profile"
+        element={
+          <PrivateRoute
+            isAllowed={!!user && user.role?.name === "TECHNICIAN"}
+            redirectPath={user ? "/" : "/login"}
+          >
+            <CompleteProfile />
+          </PrivateRoute>
+        }
+      />
 
-        } />
-        <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user}>
-          <CheckoutPage />
+      {/* ================= USER PROTECTED ROUTES ================= */}
+      <Route
+        path="/profile"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <ProfilePage />
+          </PrivateRoute>
+        }
+      />
+      <Route path="/contract/complete" element={
+        <PrivateRoute isAllowed={!!user}>
+          <ContractComplete />
+        </PrivateRoute>
+
+      } />
+      <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user}>
+        <CheckoutPage />
+      </PrivateRoute>} />
+      <Route path="/payment-success" element={
+        <PrivateRoute isAllowed={!!user}>
+          <PaymentSuccess />
         </PrivateRoute>} />
-        <Route path="/payment-success" element={
+      <Route path="/payment-failed" element={
+        <PrivateRoute isAllowed={!!user}>
+          <PaymentFail />
+        </PrivateRoute>
+      } />
+      <Route path="/payment-cancel" element={
+        <PrivateRoute isAllowed={!!user}>
+          <PaymentCancel />
+        </PrivateRoute>
+      } />
+      <Route
+        path="/booking"
+        element={
           <PrivateRoute isAllowed={!!user}>
-            <PaymentSuccess />
-          </PrivateRoute>} />
-        <Route path="/payment-failed" element={
-          <PrivateRoute isAllowed={!!user}>
-            <PaymentFail />
+            <BookingPage />
           </PrivateRoute>
-        } />
-        <Route path="/payment-cancel" element={
-          <PrivateRoute isAllowed={!!user}>
-            <PaymentCancel />
-          </PrivateRoute>
-        } />
-        <Route
-          path="/booking"
-          element={
-            <PrivateRoute isAllowed={!!user}>
-              <BookingPage />
-            </PrivateRoute>
-          }
-        />
-        {/* Thêm các route cần user đăng nhập ở đây, ví dụ: */}
-        {/* 
-            <Route
-                path="/my-bookings"
-                element={
-                    <PrivateRoute isAllowed={!!user}>
-                        <MyBookingsPage />
-                    </PrivateRoute>
-                }
-            /> 
-            */}
+        }
+      />
+      {/* Thêm các route cần user đăng nhập ở đây, ví dụ: */}
+      {/* 
+          <Route
+              path="/my-bookings"
+              element={
+                  <PrivateRoute isAllowed={!!user}>
+                      <MyBookingsPage />
+                  </PrivateRoute>
+              }
+          /> 
+          */}
 
-        {/* ================= ADMIN PROTECTED ROUTES ================= */}
-        {/* 
-            <Route
-                path="/admin/*"
-                element={
-                    <AdminRoute isAllowed={!!user && user.role.name === 'ADMIN'}>
-                        <Routes>
-                            <Route path="dashboard" element={<AdminDashboard />} />
-                            <Route path="users" element={<ManageUsersPage />} />
-                        </Routes>
-                    </AdminRoute>
-                }
-            /> 
-            */}
+      {/* ================= ADMIN PROTECTED ROUTES ================= */}
+      {/* 
+          <Route
+              path="/admin/*"
+              element={
+                  <AdminRoute isAllowed={!!user && user.role.name === 'ADMIN'}>
+                      <Routes>
+                          <Route path="dashboard" element={<AdminDashboard />} />
+                          <Route path="users" element={<ManageUsersPage />} />
+                      </Routes>
+                  </AdminRoute>
+              }
+          /> 
+          */}
 
-        {/* ================= FALLBACK ROUTE ================= */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    );
-  }
+      {/* ================= FALLBACK ROUTE ================= */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
 }

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getTechnicianProfile, completeTechnicianProfile } from '../technicians/technicianAPI';
+import { getTechnicianProfile,getTechnicians, completeTechnicianProfile } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
