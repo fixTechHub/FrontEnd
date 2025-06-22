@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getTechnicianProfile, completeTechnicianProfile } from '../technicians/technicianAPI';
+import { getTechnicianProfile,getTechnicians, completeTechnicianProfile } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
@@ -15,6 +15,18 @@ export const fetchTechnicianProfile = createAsyncThunk(
   }
 );
 
+export const fetchTechnicians = createAsyncThunk(
+  'technician/fetchList',
+  async (thunkAPI) => {
+    try {
+      const data = await getTechnicians();
+      return data.data;}
+      catch (error){
+        return thunkAPI.rejectWithValue(
+          error.response?.data?.message || error.message)
+      }
+    }
+  )
 export const completeTechnicianProfileThunk = createAsyncThunk(
   'technician/completeProfile',
   async (technicianData, thunkAPI) => {
@@ -55,6 +67,19 @@ const technicianSlice = createSlice({
         };
       })
       .addCase(fetchTechnicianProfile.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchTechnicians.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnicians.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = action.payload;
+      })
+      .addCase(fetchTechnicians.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

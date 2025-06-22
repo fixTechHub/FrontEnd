@@ -1,14 +1,17 @@
 import { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { checkAuthThunk } from './features/auth/authSlice'
 import { fetchAllPublicCategories } from './features/categories/categorySlice';
 import { fetchAllPublicServices } from './features/services/serviceSlice';
+import { initializeSocket, disconnectSocket } from './services/socket';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
 import AuthVerification from './features/auth/AuthVerification';
+import VideoCallProvider from './components/video-call/VideoCallProvider';
 
 function App() {
     const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
 
     useEffect(() => {
         dispatch(fetchAllPublicCategories());
@@ -16,10 +19,22 @@ function App() {
         dispatch(checkAuthThunk());
     }, [dispatch]);
 
+    useEffect(() => {
+        if (user) {
+            console.log('--- Initializing socket for user:', user._id);
+            initializeSocket(user._id);
+        } else {
+            console.log('--- Disconnecting socket on logout ---');
+            disconnectSocket();
+        }
+    }, [user?._id]);
+
     return (
         <AppProvider>
-            <AppRoutes />
-            <AuthVerification />
+            <VideoCallProvider>
+                <AppRoutes />
+                <AuthVerification />
+            </VideoCallProvider>
         </AppProvider>
     );
 }

@@ -106,5 +106,14 @@ const bookingSlice = createSlice({
             })
     }
 });
-
+// Export các action creator để các component có thể import và sử dụng (dispatch)
+export const {setSelectedBookingLocation, setBookingDescription, clearBookingForm, clearBookingError } = bookingSlice.actions;
+// Export reducer để thêm vào store chính trong file store.js
 export default bookingSlice.reducer;
+
+
+
+
+
+
+
