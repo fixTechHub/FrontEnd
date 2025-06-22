@@ -25,7 +25,10 @@ const ProtectedRoute = ({ children, isAllowed, redirectPath = '/login' }) => {
             // Thêm điều kiện: chỉ redirect nếu không phải đang ở trang verification
             !location.pathname.includes('/verify-') &&
             !location.pathname.includes('/choose-role') &&
-            !location.pathname.includes('/technician/complete-profile')) {
+            !location.pathname.includes('/technician/complete-profile') &&
+            // Cho phép truy cập vào /profile ngay cả khi chưa hoàn thành verification
+            !location.pathname.includes('/profile')) {
+            
             return {
                 path: verificationStatus.redirectTo,
                 state: { from: location }

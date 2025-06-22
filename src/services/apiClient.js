@@ -11,12 +11,6 @@ const apiClient = axios.create({
 // Add request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // If the request has sessionType in the body, add it as a header
-    if (config.data && config.data.sessionType) {
-      config.headers['x-session-type'] = config.data.sessionType;
-      // Remove it from the request body
-      delete config.data.sessionType;
-    }
     return config;
   },
   (error) => {

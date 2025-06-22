@@ -26,6 +26,7 @@ const initialState = {
     password: '',
     role: '',
   },
+  registrationToken: null, // Thêm token để lưu JWT
 };
 
 // Async thunks
@@ -62,16 +63,10 @@ export const loginThunk = createAsyncThunk(
     try {
       const result = await authAPI.login(credentials);
       
-      console.log("Login result:", result); // Debug log
-      console.log("wasReactivated:", result.wasReactivated); // Debug log
-      
-      // Kiểm tra nếu tài khoản vừa được kích hoạt lại
       if (result.wasReactivated) {
-        // Lưu thông tin vào sessionStorage để HomePage có thể sử dụng
         sessionStorage.setItem("wasReactivated", "true");
         toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
       } else if (result.user && result.user.status === 'PENDING_DELETION') {
-        // Khôi phục tài khoản tự động
         toast.success("Tài khoản của bạn đã được khôi phục thành công! Việc xóa tài khoản đã được hủy bỏ.");
       } else {
         toast.success("Đăng nhập thành công!");
@@ -119,43 +114,30 @@ export const finalizeRegistrationThunk = createAsyncThunk(
       if (!registrationData.emailOrPhone || !registrationData.password || !registrationData.role) {
         return rejectWithValue("Thông tin đăng ký không đầy đủ.");
       }
-      return await authAPI.finalizeRegistration(registrationData);
+      const result = await authAPI.finalizeRegistration(registrationData);
+      
+      // Nếu cần xác thực email, trả về thông tin để chuyển hướng
+      if (result.requiresVerification) {
+        return {
+          requiresVerification: true,
+          message: result.message,
+          registrationToken: result.registrationToken // Lưu token từ response
+        };
+      }
+      
+      return result;
     } catch (error) {
       return rejectWithValue(error.message);
     }
   }
 );
-
-/*
-// OLD THUNKS - No longer needed in the new flow
-export const registerThunk = createAsyncThunk(
-  "auth/register",
-  async (userData, { rejectWithValue }) => {
-    try {
-      return await authAPI.register(userData);
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const completeRegistrationThunk = createAsyncThunk(
-  "auth/completeRegistration",
-  async (role, { rejectWithValue }) => {
-    try {
-      return await authAPI.completeRegistration(role);
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-*/
 
 export const verifyEmailThunk = createAsyncThunk(
   "auth/verifyEmail",
-  async (code, { rejectWithValue }) => {
+  async (code, { getState, rejectWithValue }) => {
     try {
-      return await authAPI.verifyEmail(code);
+      const { registrationToken } = getState().auth;
+      return await authAPI.verifyEmail(code, registrationToken);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -175,9 +157,11 @@ export const verifyOTPThunk = createAsyncThunk(
 
 export const resendEmailCodeThunk = createAsyncThunk(
   "auth/resendEmailCode",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
-      return await authAPI.resendEmailCode();
+      const { registrationToken } = getState().auth;
+      const result = await authAPI.resendEmailCode(registrationToken);
+      return result;
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -189,6 +173,17 @@ export const resendOTPThunk = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       return await authAPI.resendOTP();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const checkExistThunk = createAsyncThunk(
+  "auth/checkExist",
+  async (emailOrPhone, { rejectWithValue }) => {
+    try {
+      return await authAPI.checkExist(emailOrPhone);
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -237,7 +232,8 @@ export const updateProfileThunk = createAsyncThunk(
   async (userData, thunkAPI) => {
     try {
       const response = await authAPI.updateUserProfile(userData);
-      await thunkAPI.dispatch(checkAuthThunk());
+      // Tạm thời comment out để test
+      // await thunkAPI.dispatch(checkAuthThunk());
       return response;
     } catch (error) {
       const errorMessage =
@@ -255,8 +251,8 @@ export const updateAvatarThunk = createAsyncThunk(
   async (formData, thunkAPI) => {
     try {
       const response = await authAPI.updateAvatar(formData);
-      toast.success("Cập nhật ảnh đại diện thành công");
-      await thunkAPI.dispatch(checkAuthThunk());
+      // Tạm thời comment out để test
+      // await thunkAPI.dispatch(checkAuthThunk());
       return response;
     } catch (error) {
       const errorMessage =
@@ -274,7 +270,6 @@ export const changePasswordThunk = createAsyncThunk(
   async (passwordData, thunkAPI) => {
     try {
       const response = await authAPI.changePassword(passwordData);
-      toast.success("Đổi mật khẩu thành công");
       return response;
     } catch (error) {
       const errorMessage =
@@ -382,7 +377,6 @@ export const requestPhoneChangeThunk = createAsyncThunk(
   async (newPhone, { rejectWithValue }) => {
     try {
       await authAPI.requestPhoneChange(newPhone);
-      toast.success("Mã OTP đã được gửi đến số điện thoại mới.");
       return { newPhone };
     } catch (error) {
       const msg =
@@ -399,7 +393,6 @@ export const verifyPhoneChangeThunk = createAsyncThunk(
   async ({ otp, newPhone }, { dispatch, rejectWithValue }) => {
     try {
       const response = await authAPI.verifyPhoneChange(otp, newPhone);
-      toast.success("Cập nhật số điện thoại thành công!");
       await dispatch(checkAuthThunk());
       return response;
     } catch (error) {
@@ -412,21 +405,10 @@ export const verifyPhoneChangeThunk = createAsyncThunk(
 
 // Thêm helper function để xác định verification status
 const determineVerificationStatus = (user) => {
-  console.log('=== DEBUG determineVerificationStatus ===');
-  console.log('User:', user);
-  console.log('User role:', user?.role);
-  console.log('User role name:', user?.role?.name);
-  console.log('User email:', user?.email);
-  console.log('User emailVerified:', user?.emailVerified);
-  console.log('User phone:', user?.phone);
-  console.log('User phoneVerified:', user?.phoneVerified);
-  console.log('User status:', user?.status);
-
   if (!user) return null;
 
-  // FALLBACK: Nếu user có email và chưa xác thực email, luôn trả về VERIFY_EMAIL
+  // Kiểm tra email verification trước
   if (user.email && !user.emailVerified) {
-    console.log('FALLBACK: Returning VERIFY_EMAIL (user has email but not verified)');
     return {
       step: "VERIFY_EMAIL",
       redirectTo: "/verify-email",
@@ -434,29 +416,8 @@ const determineVerificationStatus = (user) => {
     };
   }
 
-  // Kiểm tra role PENDING trước tiên
-  if (user.role?.name === 'PENDING') {
-    console.log('Returning CHOOSE_ROLE');
-    return {
-      step: "CHOOSE_ROLE",
-      redirectTo: "/choose-role",
-      message: "Vui lòng chọn vai trò của bạn",
-    };
-  }
-
-  // Kiểm tra xác thực email (đã được xử lý ở trên, nhưng giữ lại để đảm bảo)
-  if (user.email && !user.emailVerified) {
-    console.log('Returning VERIFY_EMAIL');
-    return {
-      step: "VERIFY_EMAIL",
-      redirectTo: "/verify-email",
-      message: "Vui lòng xác thực email của bạn",
-    };
-  }
-
-  // Kiểm tra xác thực số điện thoại (chỉ khi không có email)
+  // Kiểm tra phone verification (chỉ khi không có email)
   if (user.phone && !user.phoneVerified && !user.email) {
-    console.log('Returning VERIFY_PHONE');
     return {
       step: "VERIFY_PHONE",
       redirectTo: "/verify-otp",
@@ -464,22 +425,18 @@ const determineVerificationStatus = (user) => {
     };
   }
 
-  // Kiểm tra hoàn thành hồ sơ kỹ thuật viên
-  if (user.role?.name === 'TECHNICIAN' && (!user.status || user.status === 'PENDING')) {
-    console.log('=== DEBUG TECHNICIAN PROFILE CHECK ===');
-    console.log('User role:', user.role?.name);
-    console.log('User status:', user.status);
-    console.log('User emailVerified:', user.emailVerified);
-    console.log('User phoneVerified:', user.phoneVerified);
-    console.log('Returning COMPLETE_PROFILE');
-    return {
-      step: "COMPLETE_PROFILE",
-      redirectTo: "/technician/complete-profile",
-      message: "Vui lòng hoàn thành hồ sơ của bạn",
-    };
+  // Kiểm tra technician profile completion (sau khi đã xác thực email/phone)
+  if (user.role?.name === 'TECHNICIAN') {
+    // Nếu chưa có technician profile, cần hoàn thành hồ sơ
+    if (!user.technician) {
+      return {
+        step: "COMPLETE_PROFILE",
+        redirectTo: "/technician/complete-profile",
+        message: "Vui lòng hoàn thành hồ sơ của bạn",
+      };
+    }
   }
 
-  console.log('Returning COMPLETED');
   return {
     step: "COMPLETED",
     redirectTo: null,
@@ -551,18 +508,16 @@ const authSlice = createSlice({
         );
       })
       .addCase(checkAuthThunk.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
-        state.isAuthenticated = false;
-        state.user = null;
-        state.technician = null;
-        state.verificationStatus = null;
-        
-        // Nếu tài khoản bị vô hiệu hóa bởi admin, chuyển hướng về trang đăng nhập
-        if (action.payload && action.payload.includes('vô hiệu hóa bởi quản trị viên')) {
-          // Có thể dispatch logout action ở đây nếu cần
-          window.location.href = '/login';
+        // Chỉ cập nhật state và reset nếu người dùng đang ở trạng thái đăng nhập
+        // Điều này ngăn vòng lặp vô hạn khi tải ứng dụng lúc chưa đăng nhập
+        if (state.isAuthenticated) {
+          state.isAuthenticated = false;
+          state.user = null;
+          state.technician = null;
+          state.verificationStatus = null;
+          state.error = action.payload;
         }
+        state.loading = false; // Luôn set loading về false
       })
       // Login
       .addCase(loginThunk.pending, (state) => {
@@ -608,18 +563,25 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(finalizeRegistrationThunk.fulfilled, (state, action) => {
-        console.log('=== DEBUG finalizeRegistrationThunk.fulfilled ===');
-        console.log('Action payload:', action.payload);
-        console.log('User from payload:', action.payload.user);
-        
         state.loading = false;
-        state.user = action.payload.user;
-        state.isAuthenticated = true;
         state.error = null;
-        // Correctly determine the verification status instead of hardcoding it.
-        state.verificationStatus = determineVerificationStatus(action.payload.user);
         
-        console.log('Final verificationStatus:', state.verificationStatus);
+        // Nếu cần xác thực email, lưu token và không set user
+        if (action.payload.requiresVerification) {
+          state.registrationToken = action.payload.registrationToken; // Lưu token
+          return;
+        }
+        
+        // Nếu có user data (từ verifyEmail), set như bình thường
+        if (action.payload.user) {
+          state.user = action.payload.user;
+          state.isAuthenticated = true;
+          state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
+            action.payload.user
+          );
+          // Clear token sau khi đăng ký thành công
+          state.registrationToken = null;
+        }
       })
       .addCase(finalizeRegistrationThunk.rejected, (state, action) => {
         state.loading = false;
@@ -631,21 +593,14 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(verifyEmailThunk.fulfilled, (state, action) => {
-        console.log('=== DEBUG verifyEmailThunk.fulfilled ===');
-        console.log('Action payload:', action.payload);
-        console.log('User from payload:', action.payload.user);
-        console.log('VerificationStatus from payload:', action.payload.verificationStatus);
-        
         state.loading = false;
         state.user = action.payload.user;
-        state.isAuthenticated = true; // Đảm bảo user được authenticated
+        state.isAuthenticated = true;
+        state.error = null;
         // Sử dụng verificationStatus từ backend nếu có, nếu không thì tính toán
         state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
           action.payload.user
         );
-        
-        console.log('Updated verificationStatus:', state.verificationStatus);
-        console.log('Updated isAuthenticated:', state.isAuthenticated);
       })
       .addCase(verifyEmailThunk.rejected, (state, action) => {
         state.loading = false;
@@ -666,6 +621,23 @@ const authSlice = createSlice({
         );
       })
       .addCase(verifyOTPThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Resend Email Code
+      .addCase(resendEmailCodeThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(resendEmailCodeThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+        // Cập nhật token mới nếu có
+        if (action.payload.registrationToken) {
+          state.registrationToken = action.payload.registrationToken;
+        }
+      })
+      .addCase(resendEmailCodeThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -690,6 +662,7 @@ const authSlice = createSlice({
         state.profileError = null;
         state.updateLoading = false;
         state.updateError = null;
+        state.registrationToken = null; // Clear registration token
       })
       .addCase(logoutThunk.rejected, (state, action) => {
         state.loading = false;
@@ -857,6 +830,19 @@ const authSlice = createSlice({
       .addCase(verifyPhoneChangeThunk.rejected, (state, action) => {
         state.updateLoading = false;
         state.updateError = action.payload;
+      })
+      // Check Exist
+      .addCase(checkExistThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(checkExistThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(checkExistThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });

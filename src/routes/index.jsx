@@ -1,9 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
-import { checkAuthThunk } from "../features/auth/authSlice";
+import { useSelector } from "react-redux";
 import PrivateRoute from "./access/PrivateRoute";
-import AdminRoute from "./access/AdminRoute";
 
 import HomePage from "../pages/home/HomePage";
 import LoginPage from "../pages/authentication/LogInPage";
@@ -26,26 +23,11 @@ import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
 
 export default function AppRoutes() {
-  const dispatch = useDispatch();
-  const { user, loading, registrationData } = useSelector((state) => state.auth);
-  const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const { user, registrationData, loading } = useSelector((state) => state.auth);
 
-  useEffect(() => {
-    const checkAuth = async () => {
-        try {
-            await dispatch(checkAuthThunk()).unwrap();
-        } catch (error) {
-            console.error("Check auth error:", error);
-        } finally {
-            setIsAuthChecked(true);
-        }
-    };
-    checkAuth();
-}, [dispatch]);
-
-  if (loading || !isAuthChecked) {
+  if (loading) {
     return (
-      <div className="loading-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+      <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
         <div className="spinner-border text-warning" role="status">
           <span className="visually-hidden">Loading...</span>
         </div>
@@ -53,10 +35,6 @@ export default function AppRoutes() {
       </div>
     );
   }
-
-  // Show a global loading screen only during the very first authentication check.
-  // Once this check is done, the app will rely on the Redux state for routing.
-
 
   return (
     <Routes>

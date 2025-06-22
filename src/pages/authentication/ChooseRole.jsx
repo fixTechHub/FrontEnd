@@ -26,13 +26,18 @@ function ChooseRole() {
 
         // Dispatch the final registration thunk
         try {
-            await dispatch(finalizeRegistrationThunk()).unwrap();
+            const result = await dispatch(finalizeRegistrationThunk()).unwrap();
             
-            toast.success('Đăng ký hoàn tất! Đang chuyển hướng...');
-            
-            // On success, AuthVerification will handle the redirect.
-            // We can also clear the registration data.
-            dispatch(clearRegistrationData());
+            // Nếu cần xác thực email
+            if (result.requiresVerification) {
+                toast.success(result.message || 'Đăng ký hoàn tất! Vui lòng kiểm tra email để xác thực.');
+                // Chuyển đến trang xác thực email
+                navigate('/verify-email');
+            } else {
+                // Nếu không cần xác thực (hiếm khi xảy ra)
+                toast.success('Đăng ký hoàn tất! Đang chuyển hướng...');
+                dispatch(clearRegistrationData());
+            }
 
         } catch (error) {
             toast.error(`Đăng ký thất bại: ${error.message || 'Lỗi không xác định'}`);
