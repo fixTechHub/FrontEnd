@@ -6,6 +6,8 @@ export const fetchTechnicianProfile = createAsyncThunk(
   async (technicianId, thunkAPI) => {
     try {
       const data = await getTechnicianProfile(technicianId);
+      console.log('--- FETCH TECHNICIAN PROFILE ---', data);
+      
       return data; // giữ nguyên trả về { success, data }
     } catch (error) {
       return thunkAPI.rejectWithValue(
