@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { googleLoginThunk, updateRegistrationData } from '../../features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { validateEmail, validatePhone, validatePasswordStrength } from '../../utils/validation';
 import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
+import authAPI from '../../features/auth/authAPI';
 import '../../styles/auth.css';
 
 function RegisterPage() {
@@ -19,10 +20,65 @@ function RegisterPage() {
         confirmPassword: false
     });
     const [errors, setErrors] = useState({});
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const timeoutRef = useRef(null);
 
-    const validateForm = () => {
+    const checkEmailExists = async (emailOrPhone) => {
+        try {
+            setIsCheckingEmail(true);
+            const result = await authAPI.checkExist(emailOrPhone);
+            if (result.exists) {
+                setErrors(prev => ({
+                    ...prev,
+                    emailOrPhone: result.message
+                }));
+                return true; // Email đã tồn tại
+            } else {
+                // Clear error if email doesn't exist
+                setErrors(prev => ({
+                    ...prev,
+                    emailOrPhone: ''
+                }));
+                return false; // Email chưa tồn tại
+            }
+        } catch (error) {
+            console.error('Error checking email:', error);
+            return false;
+        } finally {
+            setIsCheckingEmail(false);
+        }
+    };
+
+    // Debounced validation effect
+    useEffect(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        if (formData.emailOrPhone.trim()) {
+            timeoutRef.current = setTimeout(async () => {
+                if (formData.emailOrPhone.includes('@')) {
+                    if (validateEmail(formData.emailOrPhone)) {
+                        await checkEmailExists(formData.emailOrPhone);
+                    }
+                } else {
+                    if (validatePhone(formData.emailOrPhone)) {
+                        await checkEmailExists(formData.emailOrPhone);
+                    }
+                }
+            }, 500);
+        }
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [formData.emailOrPhone]);
+
+    const validateForm = async () => {
         const newErrors = {};
         
         if (!formData.fullName.trim()) {
@@ -36,10 +92,24 @@ function RegisterPage() {
         } else if (formData.emailOrPhone.includes('@')) {
             if (!validateEmail(formData.emailOrPhone)) {
                 newErrors.emailOrPhone = 'Email không hợp lệ';
+            } else {
+                // Kiểm tra email đã tồn tại
+                const emailExists = await checkEmailExists(formData.emailOrPhone);
+                if (emailExists) {
+                    // Error đã được set trong checkEmailExists
+                    return false;
+                }
             }
         } else {
             if (!validatePhone(formData.emailOrPhone)) {
                 newErrors.emailOrPhone = 'Số điện thoại không hợp lệ';
+            } else {
+                // Kiểm tra phone đã tồn tại
+                const phoneExists = await checkEmailExists(formData.emailOrPhone);
+                if (phoneExists) {
+                    // Error đã được set trong checkEmailExists
+                    return false;
+                }
             }
         }
 
@@ -65,6 +135,8 @@ function RegisterPage() {
             ...prev,
             [name]: value
         }));
+        
+        // Clear error for the field being edited
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -80,10 +152,10 @@ function RegisterPage() {
         }));
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (!validateForm()) return;
+        if (!(await validateForm())) return;
 
         // Dispatch data to Redux store instead of calling API
         dispatch(updateRegistrationData({
@@ -181,7 +253,15 @@ function RegisterPage() {
                                             value={formData.emailOrPhone}
                                             onChange={handleInputChange}
                                             placeholder="Nhập email hoặc số điện thoại"
+                                            disabled={isCheckingEmail}
                                         />
+                                        {isCheckingEmail && (
+                                            <div className="position-absolute top-50 translate-middle-y end-0 pe-3">
+                                                <div className="spinner-border spinner-border-sm text-primary" role="status">
+                                                    <span className="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         {errors.emailOrPhone && (
                                             <div className="invalid-feedback position-absolute" style={{ top: '100%' }}>{errors.emailOrPhone}</div>
                                         )}

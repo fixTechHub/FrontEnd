@@ -13,7 +13,12 @@ function VerifyEmailPage() {
     const [codeExpiryTime, setCodeExpiryTime] = useState(300); // 5 phút cho mã xác thực
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, user, isAuthenticated, verificationStatus } = useSelector((state) => state.auth);
+    
+    // Di chuyển tất cả useSelector lên đầu component
+    const { loading, user, isAuthenticated, verificationStatus, registrationData, registrationToken } = useSelector((state) => state.auth);
+    
+    const [showVerificationForm, setShowVerificationForm] = useState(false);
+    const [error, setError] = useState('');
 
     // Tạo timer cho thời gian chờ gửi lại
     const startResendTimer = useCallback(() => {
@@ -52,26 +57,21 @@ function VerifyEmailPage() {
 
     // Theo dõi thay đổi của verificationStatus để redirect
     useEffect(() => {
-        console.log('=== DEBUG VerifyEmailPage verificationStatus ===');
-        console.log('verificationStatus:', verificationStatus);
-        console.log('user:', user);
-        console.log('current pathname:', window.location.pathname);
-        
-        // Chỉ redirect nếu verificationStatus yêu cầu chuyển đến trang khác
-        // và không phải trang hiện tại
-        if (verificationStatus?.redirectTo && 
-            verificationStatus.redirectTo !== '/verify-email' &&
-            verificationStatus.redirectTo !== window.location.pathname) {
-            console.log('Redirecting to:', verificationStatus.redirectTo);
-            navigate(verificationStatus.redirectTo);
+        if (verificationStatus?.step === 'VERIFY_EMAIL') {
+            setShowVerificationForm(true);
         }
-    }, [verificationStatus, navigate]);
+    }, [verificationStatus]);
 
     useEffect(() => {
+        // Nếu không có user, có thể đang trong quá trình đăng ký
+        // Không redirect về login ngay lập tức
         if (!user?.email) {
-            dispatch(clearVerificationStatus());
-            navigate('/login');
-            return;
+            // Chỉ redirect nếu không có registration token
+            if (!registrationToken) {
+                dispatch(clearVerificationStatus());
+                navigate('/login');
+                return;
+            }
         }
 
         // Khởi tạo timer cho thời gian hết hạn mã
@@ -81,7 +81,7 @@ function VerifyEmailPage() {
         return () => {
             clearInterval(expiryTimer);
         };
-    }, [user, navigate, startExpiryTimer, dispatch]);
+    }, [user, navigate, startExpiryTimer, dispatch, registrationToken]);
 
     const handleInputChange = (index, value) => {
         if (value.length > 1) value = value[0];
@@ -105,27 +105,13 @@ function VerifyEmailPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        try {
-            const code = verificationCode.join('');
-            if (code.length !== 6) {
-                toast.error('Vui lòng nhập đủ 6 chữ số');
-                return;
-            }
+        setError('');
 
-            const result = await dispatch(verifyEmailThunk(code)).unwrap();
-            console.log('=== DEBUG VerifyEmailPage handleSubmit ===');
-            console.log('Backend response:', result);
-            console.log('User after verification:', result.user);
-            console.log('VerificationStatus from backend:', result.verificationStatus);
-            
+        try {
+            await dispatch(verifyEmailThunk(verificationCode.join(''))).unwrap();
             toast.success('Xác thực email thành công!');
-            
-            // Không cần clear verification status và navigate
-            // Logic verificationStatus sẽ tự động redirect
         } catch (error) {
-            console.error('Verification error details:', error);
-            toast.error(error.message || 'Xác thực thất bại');
+            setError(error.message || 'Có lỗi xảy ra khi xác thực email');
         }
     };
 
@@ -169,6 +155,24 @@ function VerifyEmailPage() {
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
+    // Nếu không có user hoặc email, hiển thị loading
+    if (!user?.email) {
+        if (!registrationToken) {
+            return (
+                <div className="main-wrapper login-body">
+                    <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
+                        <div className="spinner-border text-primary" role="status">
+                            <span className="visually-hidden">Loading...</span>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+    }
+
+    // Lấy email từ user hoặc registration data
+    const emailToDisplay = user?.email || registrationData?.emailOrPhone;
+
     return (
         <div className="main-wrapper login-body">
             <header className="log-header">
@@ -191,11 +195,17 @@ function VerifyEmailPage() {
                                 <h3 className="mb-2 text-dark">Xác thực Email</h3>
                                 <p className="text-secondary">
                                     Vui lòng nhập mã xác thực đã được gửi đến email<br />
-                                    <strong className="text-dark">{user?.email}</strong>
+                                    <strong className="text-dark">{emailToDisplay}</strong>
                                 </p>
                             </div>
 
                             <form onSubmit={handleSubmit} className="verification-form">
+                                {error && (
+                                    <div className="alert alert-danger mb-3" role="alert">
+                                        {error}
+                                    </div>
+                                )}
+                                
                                 <div className="d-flex justify-content-center gap-2 mb-4">
                                     {verificationCode.map((digit, index) => (
                                         <input

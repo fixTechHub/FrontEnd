@@ -10,6 +10,10 @@ import 'aos/dist/aos.css'
 import 'owl.carousel/dist/assets/owl.carousel.css'
 import 'owl.carousel/dist/assets/owl.theme.default.css'
 import store from './app/store.js';
+import { checkAuthThunk } from './features/auth/authSlice.js';
+
+// Gọi checkAuthThunk ngay khi store được khởi tạo
+store.dispatch(checkAuthThunk());
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

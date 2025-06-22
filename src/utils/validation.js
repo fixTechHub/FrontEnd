@@ -131,4 +131,67 @@ export const validateURL = (url) => {
     } catch {
         return false;
     }
+};
+
+// Validate login form
+export const validateLoginForm = (formData) => {
+    const errors = {};
+    
+    const emailError = validateLoginEmail(formData.email);
+    if (emailError) errors.email = emailError;
+
+    const passwordError = validateLoginPassword(formData.password);
+    if (passwordError) errors.password = passwordError;
+
+    return errors;
+};
+
+// Validate email for login
+export const validateLoginEmail = (email) => {
+    if (!email) return 'Vui lòng nhập địa chỉ email';
+    if (!validateEmail(email)) return 'Địa chỉ email không hợp lệ';
+    return '';
+};
+
+// Validate password for login
+export const validateLoginPassword = (password) => {
+    if (!password) return 'Vui lòng nhập mật khẩu';
+    return '';
+};
+
+// Test cases for validation functions (for development only)
+export const testValidation = () => {
+    console.log('Testing validation functions...');
+    
+    // Test email validation
+    console.log('Email validation:');
+    console.log('test@example.com:', validateEmail('test@example.com')); // true
+    console.log('invalid-email:', validateEmail('invalid-email')); // false
+    console.log('empty:', validateEmail('')); // false
+    
+    // Test phone validation
+    console.log('Phone validation:');
+    console.log('0123456789:', validatePhone('0123456789')); // true
+    console.log('1234567890:', validatePhone('1234567890')); // false (no leading 0)
+    console.log('012345678:', validatePhone('012345678')); // false (9 digits)
+    
+    // Test password validation
+    console.log('Password validation:');
+    console.log('StrongPass1!:', validatePasswordStrength('StrongPass1!')); // true
+    console.log('weak:', validatePasswordStrength('weak')); // false
+    console.log('NoSpecial1:', validatePasswordStrength('NoSpecial1')); // false
+    
+    // Test login validation
+    console.log('Login validation:');
+    const loginData = {
+        email: 'test@example.com',
+        password: 'password123'
+    };
+    console.log('Valid login:', validateLoginForm(loginData)); // {}
+    
+    const invalidLoginData = {
+        email: 'invalid-email',
+        password: ''
+    };
+    console.log('Invalid login:', validateLoginForm(invalidLoginData)); // {email: '...', password: '...'}
 }; 

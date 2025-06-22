@@ -156,7 +156,7 @@ const CompleteProfile = () => {
 
             await dispatch(completeTechnicianProfileThunk(technicianData)).unwrap();
             
-            toast.success('Hoàn thành hồ sơ thành công!');
+            toast.success('Hoàn thành hồ sơ thành công! Hồ sơ đang chờ admin phê duyệt.');
             navigate('/');
         } catch (error) {
             toast.error(error.message || 'Có lỗi xảy ra khi hoàn thành hồ sơ');

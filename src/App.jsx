@@ -1,6 +1,5 @@
 import { useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { checkAuthThunk } from './features/auth/authSlice'
+import { useDispatch } from 'react-redux'
 import { fetchAllPublicCategories } from './features/categories/categorySlice';
 import { fetchAllPublicServices } from './features/services/serviceSlice';
 import { initializeSocket, disconnectSocket } from './services/socket';
@@ -16,7 +15,7 @@ function App() {
     useEffect(() => {
         dispatch(fetchAllPublicCategories());
         dispatch(fetchAllPublicServices());
-        dispatch(checkAuthThunk());
+        // Logic checkAuth đã được chuyển sang main.jsx
     }, [dispatch]);
 
     useEffect(() => {
