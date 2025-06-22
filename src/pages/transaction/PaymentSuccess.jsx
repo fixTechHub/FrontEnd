@@ -5,7 +5,7 @@ import { RingLoader } from 'react-spinners';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
-import BookingWizard from "../booking/BookingHeader";
+import BookingWizard from "../booking/common/BookingHeader";
 import { checkAuthThunk } from '../../features/auth/authSlice';
 
 const PaymentSuccess = () => {

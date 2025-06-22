@@ -4,11 +4,12 @@ import BreadcrumbBar from "../../components/common/BreadcrumbBar";
 import Header from "../../components/common/Header";
 import BookingDetails from "./common/BookingDetails";
 import BookingWizard from "./common/BookingHeader";
+import MessageBox from "../../components/message/MessageBox";
 
 function BookingProcessing() {
     const [searchParams] = useSearchParams();
     const [bookingId, setBookingId] = useState(null);
-
+    
     useEffect(() => {
         const id = searchParams.get('bookingId');
         setBookingId(id);
@@ -33,8 +34,9 @@ function BookingProcessing() {
                                 <BookingDetails bookingId={bookingId} />
                             </div>
 
-                            <div className="col-lg-8">
+                            <div className="col-lg">
                                 {/* Gắn chat component ở đây */}
+                                <MessageBox bookingId={bookingId} />
                             </div>
                         </div>
                     </div>

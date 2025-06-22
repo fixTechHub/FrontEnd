@@ -6,7 +6,7 @@ import { finalizeBookingThunk } from '../../features/transactions/transactionSli
 import { RingLoader } from 'react-spinners';
 import { toast } from 'react-toastify';
 import Accordion from 'react-bootstrap/Accordion';
-import BookingWizard from "./BookingHeader";
+import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';

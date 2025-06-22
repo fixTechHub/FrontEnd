@@ -37,6 +37,7 @@ const messageSlice = createSlice({
     initialState,
     reducers: {
         addMessage(state, action) {
+            console.log('--- REDUCER: addMessage ---', action.payload);
             const newMessage = action.payload;
             // Prevent duplicates by checking _id
             if (!state.messages.some((msg) => msg._id === newMessage._id)) {
@@ -67,8 +68,15 @@ const messageSlice = createSlice({
             })
             .addCase(sendMessageThunk.fulfilled, (state, action) => {
                 state.sending = 'succeeded';
-                // The new message is added via websocket, so we don't need to push it here.
-                // This prevents duplicates.
+                // The new message is returned from the API.
+                // We add it to the state here for an immediate UI update for the sender.
+                // The websocket listener will update the other user's UI.
+                // The duplicate check in the 'addMessage' reducer will prevent a double-add
+                // if the sender also gets the websocket event.
+                const newMessage = action.payload;
+                if (!state.messages.some((msg) => msg._id === newMessage._id)) {
+                    state.messages.push(newMessage);
+                }
             })
             .addCase(sendMessageThunk.rejected, (state, action) => {
                 state.sending = 'failed';
