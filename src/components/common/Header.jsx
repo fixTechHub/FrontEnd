@@ -1,9 +1,91 @@
+import { useState, useEffect, useRef } from "react";
 import { Spinner } from "react-bootstrap";
 import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutThunk } from '../../features/auth/authSlice';
 import Swal from 'sweetalert2';
-import Notifications from './Notifications'; // Import your Notifications component
+import styled from '@emotion/styled';
+import Notifications from './Notifications'; 
+// Styled-components for the dropdown
+const UserMenuWrapper = styled.div`
+    position: relative;
+    cursor: pointer;
+`;
+
+const UserInfo = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 10px;
+    border-radius: 50px;
+    transition: background-color 0.2s;
+
+    &:hover {
+        background-color: #f0f0f0;
+    }
+`;
+
+const Avatar = styled.img`
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+`;
+
+const UserName = styled.span`
+    font-weight: 500;
+    color: #333;
+`;
+
+const DropdownMenu = styled.div`
+    position: absolute;
+    top: 110%;
+    right: 0;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    width: 200px;
+    z-index: 1000;
+    overflow: hidden;
+    padding: 8px 0;
+`;
+
+const DropdownItem = styled(Link)`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: #333;
+    font-size: 15px;
+    text-decoration: none;
+
+    &:hover {
+        background-color: #f5f5f5;
+        color: #111;
+    }
+`;
+
+const DropdownItemButton = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    color: #333;
+    font-size: 15px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #f5f5f5;
+        color: #111;
+    }
+`;
+
+const Divider = styled.hr`
+    margin: 8px 0;
+    border: none;
+    border-top: 1px solid #e0e0e0;
+`;
+
 
 function Header() {
     const dispatch = useDispatch();
@@ -12,11 +94,24 @@ function Header() {
     const services = useSelector((state) => state.services.services);
     const categoryStatus = useSelector((state) => state.categories.status);
     const serviceStatus = useSelector((state) => state.services.status);
-    
-    // console.log('--- PUBLIC SERVICE ---', services);
-    // console.log('--- PUBLIC CATEGORY ---', categories);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const menuRef = useRef(null);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, [menuRef]);
 
     const handleLogout = async () => {
+        setDropdownOpen(false);
         const result = await Swal.fire({
             title: 'Xác nhận đăng xuất',
             text: 'Bạn có chắc chắn muốn đăng xuất không?',
@@ -145,28 +240,35 @@ function Header() {
                                     </li>
                                 </>
                             ) : (
-                                <>
-                                    {/* Add the Notifications component here for logged-in users */}
-                                   <li  className="nav-item"> <Notifications userId={user._id} /></li>
-                                    
-                                    <li className="nav-item">
-                                        <Link className="nav-link header-login" to="/profile">
-                                            <span><i className="fa-regular fa-user"></i></span>{user.fullName || 'Tài khoản'}
-                                        </Link>
-                                    </li>
-                                    <li className="nav-item">
-                                        <a 
-                                            className="nav-link header-reg" 
-                                            href="#"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                handleLogout();
-                                            }}
-                                        >
-                                            <span><i className="fa-solid fa-sign-out-alt"></i></span>Đăng xuất
-                                        </a>
-                                    </li>
-                                </>
+                              <>
+                                <li  className="nav-item"> <Notifications userId={user._id} /></li>
+                                <li className="nav-item" ref={menuRef}>
+                                    <UserMenuWrapper onClick={() => setDropdownOpen(!dropdownOpen)}>
+                                        <UserInfo>
+                                            <Avatar src={user.avatar || '/img/profiles/avatar-01.jpg'} alt="Avatar" />
+                                            <UserName>{user.fullName || 'Tài khoản'}</UserName>
+                                            <i className={`fas fa-chevron-${dropdownOpen ? 'up' : 'down'}`} style={{ fontSize: '12px' }}></i>
+                                        </UserInfo>
+                                        {dropdownOpen && (
+                                            <DropdownMenu>
+                                                <DropdownItem to="/dashboard" onClick={() => setDropdownOpen(false)}>
+                                                    <i className="bi bi-speedometer2"></i>
+                                                    Bảng điều khiển
+                                                </DropdownItem>
+                                                <DropdownItem to="/profile" onClick={() => setDropdownOpen(false)}>
+                                                    <i className="bi bi-gear-fill"></i>
+                                                    Cài đặt
+                                                </DropdownItem>
+                                                <Divider />
+                                                <DropdownItemButton onClick={handleLogout}>
+                                                    <i className="bi bi-box-arrow-right"></i>
+                                                    Đăng xuất
+                                                </DropdownItemButton>
+                                            </DropdownMenu>
+                                        )}
+                                    </UserMenuWrapper>
+                                </li>
+                              </>
                             )}
                         </ul>
                     </nav>

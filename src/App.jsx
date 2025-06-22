@@ -6,7 +6,7 @@ import { fetchAllPublicServices } from './features/services/serviceSlice';
 import { initializeSocket, disconnectSocket } from './services/socket';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
-import 'react-toastify/dist/ReactToastify.css';
+import AuthVerification from './features/auth/AuthVerification';
 
 function App() {
     const dispatch = useDispatch();
@@ -31,6 +31,7 @@ function App() {
     return (
         <AppProvider>
             <AppRoutes />
+            <AuthVerification />
         </AppProvider>
     );
 }

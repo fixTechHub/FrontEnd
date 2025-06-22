@@ -26,6 +26,15 @@ export const validateConfirmPassword = (password, confirmPassword) => {
     return '';
 };
 
+export const validatePassword = (password) => {
+    if (!password) return 'Vui lòng nhập mật khẩu';
+    if (password.length < 8) return 'Mật khẩu phải có ít nhất 8 ký tự';
+    if (!validatePasswordStrength(password)) {
+        return 'Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ thường, 1 số và 1 ký tự đặc biệt';
+    }
+    return '';
+};
+
 export const validateRegistrationForm = (formData) => {
     const errors = {};
     

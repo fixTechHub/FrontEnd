@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { googleLoginThunk, authSuccess } from "../../features/auth/authSlice";
+import { loginThunk, googleLoginThunk } from "../../features/auth/authSlice";
 import authAPI from "../../features/auth/authAPI";
 import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
@@ -28,6 +28,13 @@ function LogInPage() {
       ...prev,
       [name]: value,
     }));
+    // Clear error for the field being edited
+    if (errors[name]) {
+        setErrors(prev => ({ ...prev, [name]: null }));
+    }
+    if (errors.form) {
+        setErrors(prev => ({ ...prev, form: null }));
+    }
   };
 
   const handleRememberMeChange = (e) => {
@@ -38,11 +45,27 @@ function LogInPage() {
     setShowPassword(!showPassword);
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email.trim()) {
+        newErrors.email = "Vui lòng nhập địa chỉ email.";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = "Địa chỉ email không hợp lệ.";
+    }
+
+    if (!formData.password.trim()) {
+        newErrors.password = "Vui lòng nhập mật khẩu.";
+    }
+    return newErrors;
+  };
+
   const handleServerError = (errorMessage) => {
     const newErrors = {};
     const lowerMessage = errorMessage.toLowerCase();
     
-    if (lowerMessage.includes('password') || lowerMessage.includes('credentials') || lowerMessage.includes('không đúng') || lowerMessage.includes('user not found')) {
+    if (lowerMessage.includes('vô hiệu hóa bởi quản trị viên') || lowerMessage.includes('admin')) {
+        newErrors.form = 'Tài khoản của bạn đã bị vô hiệu hóa bởi quản trị viên. Vui lòng liên hệ với quản trị viên để được hỗ trợ.';
+    } else if (lowerMessage.includes('password') || lowerMessage.includes('credentials') || lowerMessage.includes('không đúng') || lowerMessage.includes('user not found')) {
         newErrors.form = 'Email hoặc mật khẩu không đúng.';
     } else if (lowerMessage.includes('email') && lowerMessage.includes('not found')) {
         newErrors.form = 'Tài khoản không tồn tại.';
@@ -54,20 +77,28 @@ function LogInPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+        setErrors(formErrors);
+        return;
+    }
+
     setErrors({});
     setIsLoading(true);
     try {
-      const result = await authAPI.login(formData);
-      dispatch(authSuccess(result));
+      const result = await dispatch(loginThunk(formData)).unwrap();
       
-      if (result.user.role.name === "ADMIN") {
+      // Kiểm tra verificationStatus trước
+      if (result.verificationStatus && result.verificationStatus.redirectTo) {
+        navigate(result.verificationStatus.redirectTo, { replace: true });
+      } else if (result.user.role.name === "ADMIN") {
         navigate("/admin/dashboard", { replace: true });
-      } else if (!result.verificationStatus || !result.verificationStatus.redirectTo) {
+      } else {
         navigate("/", { replace: true });
       }
       
     } catch (error) {
-      const errorMessage = error.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+      const errorMessage = error || "Đăng nhập thất bại. Vui lòng thử lại.";
       handleServerError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -87,8 +118,7 @@ function LogInPage() {
             return;
           }
           try {
-            const result = await authAPI.googleLogin(response.access_token);
-            dispatch(authSuccess(result));
+            const result = await dispatch(googleLoginThunk(response.access_token)).unwrap();
 
             if (result.verificationStatus && result.verificationStatus.redirectTo) {
               navigate(result.verificationStatus.redirectTo, { replace: true });
@@ -98,7 +128,7 @@ function LogInPage() {
               navigate("/", { replace: true });
             }
           } catch (error) {
-            toast.error(error.message || "Đăng nhập Google thất bại");
+            toast.error(error || "Đăng nhập Google thất bại");
           } finally {
             setIsLoading(false);
           }
@@ -149,14 +179,14 @@ function LogInPage() {
                     </span>
                     <input
                       type="email"
-                      className={`form-control ps-5 bg-white ${errors.form ? 'is-invalid' : ''}`}
+                      className={`form-control ps-5 bg-white ${errors.email || errors.form ? 'is-invalid' : ''}`}
                       name="email"
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="Nhập email của bạn"
-                      required
                     />
                   </div>
+                  {errors.email && <div className="invalid-feedback d-block">{errors.email}</div>}
                 </div>
 
                 <div className="input-block mb-3">
@@ -172,12 +202,11 @@ function LogInPage() {
                     </span>
                     <input
                       type={showPassword ? "text" : "password"}
-                      className={`form-control ps-5 pe-5 bg-white ${errors.form ? 'is-invalid' : ''}`}
+                      className={`form-control ps-5 pe-5 bg-white ${errors.password || errors.form ? 'is-invalid' : ''}`}
                       name="password"
                       value={formData.password}
                       onChange={handleInputChange}
                       placeholder="Nhập mật khẩu của bạn"
-                      required
                     />
                     <button
                       type="button"
@@ -188,6 +217,7 @@ function LogInPage() {
                       {showPassword ? <FaEyeSlash /> : <FaEye />}
                     </button>
                   </div>
+                   {errors.password && <div className="invalid-feedback d-block">{errors.password}</div>}
                 </div>
 
                 <div className="d-flex justify-content-between align-items-center mb-4">

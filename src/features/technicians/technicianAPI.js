@@ -8,5 +8,8 @@ export const getTechnicianProfile = async (technicianId) => {
 };
 export const getTechnicians = async () => {
   const response = await apiClient.get(`/technicians/`);
+}
+export const completeTechnicianProfile = async (technicianData) => {
+  const response = await apiClient.post('/technicians/complete-profile', technicianData);
   return response.data;
 };

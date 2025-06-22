@@ -13,7 +13,7 @@ function VerifyEmailPage() {
     const [codeExpiryTime, setCodeExpiryTime] = useState(300); // 5 phút cho mã xác thực
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, user, isAuthenticated } = useSelector((state) => state.auth);
+    const { loading, user, isAuthenticated, verificationStatus } = useSelector((state) => state.auth);
 
     // Tạo timer cho thời gian chờ gửi lại
     const startResendTimer = useCallback(() => {
@@ -49,6 +49,23 @@ function VerifyEmailPage() {
             }
         };
     }, [isAuthenticated, dispatch]);
+
+    // Theo dõi thay đổi của verificationStatus để redirect
+    useEffect(() => {
+        console.log('=== DEBUG VerifyEmailPage verificationStatus ===');
+        console.log('verificationStatus:', verificationStatus);
+        console.log('user:', user);
+        console.log('current pathname:', window.location.pathname);
+        
+        // Chỉ redirect nếu verificationStatus yêu cầu chuyển đến trang khác
+        // và không phải trang hiện tại
+        if (verificationStatus?.redirectTo && 
+            verificationStatus.redirectTo !== '/verify-email' &&
+            verificationStatus.redirectTo !== window.location.pathname) {
+            console.log('Redirecting to:', verificationStatus.redirectTo);
+            navigate(verificationStatus.redirectTo);
+        }
+    }, [verificationStatus, navigate]);
 
     useEffect(() => {
         if (!user?.email) {
@@ -96,13 +113,16 @@ function VerifyEmailPage() {
                 return;
             }
 
-            await dispatch(verifyEmailThunk(code)).unwrap();
-            toast.success('Xác thực email thành công! Vui lòng đăng nhập lại để tiếp tục.');
+            const result = await dispatch(verifyEmailThunk(code)).unwrap();
+            console.log('=== DEBUG VerifyEmailPage handleSubmit ===');
+            console.log('Backend response:', result);
+            console.log('User after verification:', result.user);
+            console.log('VerificationStatus from backend:', result.verificationStatus);
             
-            // Clear verification status và logout
-            dispatch(clearVerificationStatus());
-            await dispatch(logoutThunk());
-            navigate('/login');
+            toast.success('Xác thực email thành công!');
+            
+            // Không cần clear verification status và navigate
+            // Logic verificationStatus sẽ tự động redirect
         } catch (error) {
             console.error('Verification error details:', error);
             toast.error(error.message || 'Xác thực thất bại');
@@ -111,11 +131,12 @@ function VerifyEmailPage() {
 
     // Xử lý khi user muốn thoát
     const handleBack = async () => {
-        // Đầu tiên điều hướng về home
+        // Chỉ clear status nếu user chưa hoàn thành xác thực
+        if (verificationStatus && verificationStatus.step !== 'COMPLETED') {
+            dispatch(clearVerificationStatus());
+        }
+        // Điều hướng về home
         navigate('/');
-        // Sau đó mới clear status và logout
-        dispatch(clearVerificationStatus());
-        await dispatch(logoutThunk());
     };
 
     const handleResendCode = async () => {
