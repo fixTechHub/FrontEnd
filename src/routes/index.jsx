@@ -31,12 +31,19 @@ export default function AppRoutes() {
   const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   useEffect(() => {
-    dispatch(checkAuthThunk()).finally(() => {
-      setIsAuthChecked(true);
-    });
-  }, [dispatch]);
+    const checkAuth = async () => {
+        try {
+            await dispatch(checkAuthThunk()).unwrap();
+        } catch (error) {
+            console.error("Check auth error:", error);
+        } finally {
+            setIsAuthChecked(true);
+        }
+    };
+    checkAuth();
+}, [dispatch]);
 
-  if (!isAuthChecked) {
+  if (loading || !isAuthChecked) {
     return (
       <div className="loading-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <div className="spinner-border text-warning" role="status">
@@ -150,6 +157,22 @@ export default function AppRoutes() {
         element={
           <PrivateRoute isAllowed={!!user}>
             <BookingPage />
+          </PrivateRoute>
+        }
+      />
+       <Route
+        path="/booking/choose-techinician"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <ChooseTechnician />
+          </PrivateRoute>
+        }
+      />
+       <Route
+        path="/booking/booking-processing"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <BookingProcessing />
           </PrivateRoute>
         }
       />
