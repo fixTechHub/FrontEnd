@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { fetchAllPublicCategories } from './features/categories/categorySlice';
 import { fetchAllPublicServices } from './features/services/serviceSlice';
 import { initializeSocket, disconnectSocket } from './services/socket';

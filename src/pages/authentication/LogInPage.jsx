@@ -125,14 +125,15 @@ function LogInPage() {
     } else if (lowerMessage.includes('mật khẩu không đúng')) {
         newErrors.password = 'Mật khẩu không đúng';
     } else if (lowerMessage.includes('đăng ký bằng google')) {
-        newErrors.form = 'Tài khoản này được đăng ký bằng Google. Vui lòng sử dụng đăng nhập Google.';
-    } else if (lowerMessage.includes('password') || lowerMessage.includes('credentials') || lowerMessage.includes('không đúng')) {
+        newErrors.email = 'Tài khoản này được đăng ký bằng Google. Vui lòng sử dụng đăng nhập Google.';
+    } else if (lowerMessage.includes('email hoặc mật khẩu không đúng')) {
         newErrors.form = 'Email hoặc mật khẩu không đúng.';
     } else if (lowerMessage.includes('email') && lowerMessage.includes('not found')) {
         newErrors.form = 'Tài khoản không tồn tại.';
     } else {
         newErrors.form = 'Đăng nhập thất bại. Vui lòng thử lại.';
     }
+    
     setErrors(newErrors);
   };
 
@@ -141,7 +142,6 @@ function LogInPage() {
     
     if (!(await validateForm())) return;
 
-    setErrors({});
     setIsLoading(true);
     try {
       const result = await authAPI.login(formData);
