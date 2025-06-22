@@ -3,6 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { addMessage, sendMessageThunk, fetchMessagesThunk } from '../../features/messages/messageSlice';
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { onReceiveMessage } from '../../services/socket';
+import CallButton from '../video-call/CallButton';
+import { FaVideo } from 'react-icons/fa';
 
 const MessageBox = ({ bookingId }) => {
     const dispatch = useDispatch();
@@ -100,14 +102,61 @@ const MessageBox = ({ bookingId }) => {
                 <div className="chat-cont-right" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', width: '100%'  }}>
                     {/* Chat Header */}
                     <div className="chat-header">
-                        <div className="notify-block d-flex">
-                            <div className="media-img-wrap flex-shrink-0">
-                                <div className="avatar avatar-online">
-                                    <img src={otherParticipant?.avatar || "/assets/img/profiles/default-avatar.jpg"} alt="User Image" className="avatar-img rounded-circle" />
+                        <div className="notify-block d-flex align-items-center justify-content-between">
+                            <div className="d-flex align-items-center">
+                                <div className="media-img-wrap flex-shrink-0">
+                                    <div className="avatar avatar-online">
+                                        <img src={otherParticipant?.avatar || "/assets/img/profiles/default-avatar.jpg"} alt="User Image" className="avatar-img rounded-circle" />
+                                    </div>
+                                </div>
+                                <div className="media-body flex-grow-1 ms-3">
+                                    <div className="user-name">{otherParticipant?.fullName}</div>
+                                    <div className="user-status text-muted small">Online</div>
                                 </div>
                             </div>
-                            <div className="media-body flex-grow-1">
-                                <div className="user-name">{otherParticipant?.fullName}</div>
+                            {/* Video Call Button */}
+                            <div className="flex-shrink-0" style={{ position: 'relative' }}>
+                                <CallButton
+                                    calleeId={otherParticipant?._id}
+                                    calleeName={otherParticipant?.fullName}
+                                    bookingId={bookingId}
+                                    size="sm"
+                                    className="btn btn-outline-primary btn-sm"
+                                    style={{
+                                        borderRadius: '50%',
+                                        width: '40px',
+                                        height: '40px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        border: '2px solid #007bff',
+                                        backgroundColor: 'transparent',
+                                        color: '#007bff',
+                                        transition: 'all 0.3s ease',
+                                        boxShadow: '0 2px 4px rgba(0,123,255,0.2)'
+                                    }}
+                                />
+                                {/* Tooltip */}
+                                <div 
+                                    className="position-absolute"
+                                    style={{
+                                        top: '-30px',
+                                        right: '0',
+                                        backgroundColor: '#333',
+                                        color: 'white',
+                                        padding: '4px 8px',
+                                        borderRadius: '4px',
+                                        fontSize: '12px',
+                                        whiteSpace: 'nowrap',
+                                        opacity: '0',
+                                        transition: 'opacity 0.3s ease',
+                                        pointerEvents: 'none'
+                                    }}
+                                    onMouseEnter={(e) => e.target.style.opacity = '1'}
+                                    onMouseLeave={(e) => e.target.style.opacity = '0'}
+                                >
+                                    Video Call {otherParticipant?.fullName}
+                                </div>
                             </div>
                         </div>
                     </div>

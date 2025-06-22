@@ -66,7 +66,7 @@ export const onReceiveMessage = (callback) => {
     };
     socket.on('receiveMessage', listener);
     return () => {
-      socket.off('receiveMessage', listener);
+      if (socket) socket.off('receiveMessage', listener);
       console.log('Removed receiveMessage listener');
     };
   }
@@ -80,7 +80,7 @@ export const onReceiveNotification = (callback) => {
     };
     socket.on('receiveNotification', listener);
     return () => {
-      socket.off('receiveNotification', listener);
+      if (socket) socket.off('receiveNotification', listener);
       console.log('Removed receiveNotification listener');
     };
   }
@@ -94,7 +94,7 @@ export const onNewRequest = (callback) => {
     };
     socket.on('new_request', listener);
     return () => {
-      socket.off('new_request', listener);
+      if (socket) socket.off('new_request', listener);
       console.log('Removed new_request listener');
     };
   }
@@ -108,7 +108,7 @@ export const onNewBooking = (callback) => {
     };
     socket.on('new_booking', listener);
     return () => {
-      socket.off('new_booking', listener);
+      if (socket) socket.off('new_booking', listener);
       console.log('Removed new_booking listener');
     };
   }
@@ -122,7 +122,7 @@ export const onNotificationUpdated = (callback) => {
     };
     socket.on('notificationUpdated', listener);
     return () => {
-      socket.off('notificationUpdated', listener);
+      if (socket) socket.off('notificationUpdated', listener);
       console.log('Removed notificationUpdated listener');
     };
   }
@@ -157,8 +157,138 @@ export const onUserNotifications = (callback) => {
     };
     socket.on('userNotifications', listener);
     return () => {
-      socket.off('userNotifications', listener);
+      if (socket) socket.off('userNotifications', listener);
       console.log('Removed userNotifications listener');
+    };
+  }
+};
+
+// Video Call Socket Functions
+export const joinCallRoom = (callId) => {
+  if (socket && socket.connected) {
+    socket.emit('join_call_room', { callId });
+  }
+};
+
+export const leaveCallRoom = (callId) => {
+  if (socket && socket.connected) {
+    socket.emit('leave_call_room', { callId });
+  }
+};
+
+export const sendOffer = (callId, offer, targetUserId) => {
+  if (socket && socket.connected) {
+    socket.emit('offer', { callId, offer, targetUserId });
+  }
+};
+
+export const sendAnswer = (callId, answer, targetUserId) => {
+  if (socket && socket.connected) {
+    socket.emit('answer', { callId, answer, targetUserId });
+  }
+};
+
+export const sendIceCandidate = (callId, candidate, targetUserId) => {
+  if (socket && socket.connected) {
+    socket.emit('ice_candidate', { callId, candidate, targetUserId });
+  }
+};
+
+// Video Call Event Listeners
+export const onIncomingCall = (callback) => {
+  if (socket) {
+    const listener = (callData) => {
+      console.log('Received incoming call:', callData);
+      callback(callData);
+    };
+    socket.on('incoming_call', listener);
+    return () => {
+      if (socket) socket.off('incoming_call', listener);
+      console.log('Removed incoming_call listener');
+    };
+  }
+};
+
+export const onCallAccepted = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Call accepted:', data);
+      callback(data);
+    };
+    socket.on('call_accepted', listener);
+    return () => {
+      if (socket) socket.off('call_accepted', listener);
+      console.log('Removed call_accepted listener');
+    };
+  }
+};
+
+export const onCallRejected = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Call rejected:', data);
+      callback(data);
+    };
+    socket.on('call_rejected', listener);
+    return () => {
+      if (socket) socket.off('call_rejected', listener);
+      console.log('Removed call_rejected listener');
+    };
+  }
+};
+
+export const onCallEnded = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Call ended:', data);
+      callback(data);
+    };
+    socket.on('call_ended', listener);
+    return () => {
+      if (socket) socket.off('call_ended', listener);
+      console.log('Removed call_ended listener');
+    };
+  }
+};
+
+export const onOffer = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received offer:', data);
+      callback(data);
+    };
+    socket.on('offer', listener);
+    return () => {
+      if (socket) socket.off('offer', listener);
+      console.log('Removed offer listener');
+    };
+  }
+};
+
+export const onAnswer = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received answer:', data);
+      callback(data);
+    };
+    socket.on('answer', listener);
+    return () => {
+      if (socket) socket.off('answer', listener);
+      console.log('Removed answer listener');
+    };
+  }
+};
+
+export const onIceCandidate = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received ICE candidate:', data);
+      callback(data);
+    };
+    socket.on('ice_candidate', listener);
+    return () => {
+      if (socket) socket.off('ice_candidate', listener);
+      console.log('Removed ice_candidate listener');
     };
   }
 };

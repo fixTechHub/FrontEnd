@@ -11,6 +11,7 @@ import bookingPriceReducer from '../features/booking-price/bookingPriceSlice'
 import transactionReducer from '../features/transactions/transactionSlice'
 import adminReducer from '../features/admin/adminSlice';
 import notificationReducer from '../features/notifications/notificationSlice';
+import videoCallReducer from '../features/video-call/videoCallSlice';
 
 export const store = configureStore({
   reducer: {
@@ -25,10 +26,27 @@ export const store = configureStore({
     transaction: transactionReducer,
     admin: adminReducer,
     notifications: notificationReducer,
+    videoCall: videoCallReducer,
   },
-
-
-
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        // Ignore these action types
+        ignoredActions: [
+          'videoCall/setLocalStream',
+          'videoCall/setRemoteStream',
+          'videoCall/setPeerConnection',
+        ],
+        // Ignore these field paths in all actions
+        ignoredActionPaths: ['payload'],
+        // Ignore these paths in the state
+        ignoredPaths: [
+          'videoCall.localStream',
+          'videoCall.remoteStream',
+          'videoCall.peerConnection',
+        ],
+      },
+    }),
 });
 
 export default store;

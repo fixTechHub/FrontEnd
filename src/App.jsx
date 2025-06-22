@@ -7,6 +7,7 @@ import { initializeSocket, disconnectSocket } from './services/socket';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
 import AuthVerification from './features/auth/AuthVerification';
+import VideoCallProvider from './components/video-call/VideoCallProvider';
 
 function App() {
     const dispatch = useDispatch();
@@ -30,8 +31,10 @@ function App() {
 
     return (
         <AppProvider>
-            <AppRoutes />
-            <AuthVerification />
+            <VideoCallProvider>
+                <AppRoutes />
+                <AuthVerification />
+            </VideoCallProvider>
         </AppProvider>
     );
 }

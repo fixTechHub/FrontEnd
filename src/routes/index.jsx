@@ -161,7 +161,7 @@ export default function AppRoutes() {
         }
       />
        <Route
-        path="/booking/choose-techinician"
+        path="/booking/choose-technician"
         element={
           <PrivateRoute isAllowed={!!user}>
             <ChooseTechnician />
