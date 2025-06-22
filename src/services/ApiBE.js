@@ -7,8 +7,8 @@ const getApiBaseUrl = () => {
     return import.meta.env.VITE_API_BASE_URL;
   }
   
-  // For development, default to localhost
-  return 'http://localhost:5000/api';
+  // For development, use the deployed backend on Render
+  return 'https://backend-dotnet.onrender.com/api';
 };
 
 // Try HTTPS first, fallback to HTTP if HTTPS fails
