@@ -18,18 +18,6 @@ const authAPI = {
         }
     },
 
-    register: async (userData) => {
-        try {
-            const response = await apiClient.post('/auth/register', {
-                ...userData,
-                sessionType: 'temporary'
-            });
-            return response.data;
-        } catch (error) {
-            throw handleError(error);
-        }
-    },
-
     login: async (credentials) => {
         try {
             const response = await apiClient.post('/auth/login', credentials);
@@ -52,18 +40,8 @@ const authAPI = {
     googleLogin: async (accessToken) => {
         try {
             const response = await apiClient.post('/auth/google-login', { 
-                access_token: accessToken,
-                sessionType: 'temporary'
+                access_token: accessToken
             });
-            return response.data;
-        } catch (error) {
-            throw handleError(error);
-        }
-    },
-
-    completeRegistration: async (role) => {
-        try {
-            const response = await apiClient.post('/auth/complete-registration', { role });
             return response.data;
         } catch (error) {
             throw handleError(error);
@@ -78,10 +56,11 @@ const authAPI = {
         }
     },
 
-    verifyEmail: async (code) => {
+    verifyEmail: async (code, registrationToken) => {
         try {
             const response = await apiClient.post('/auth/verify-email', { 
-                code
+                code,
+                registrationToken
             });
             return response.data;
         } catch (error) {
@@ -100,10 +79,10 @@ const authAPI = {
         }
     },
 
-    resendEmailCode: async () => {
+    resendEmailCode: async (registrationToken) => {
         try {
             const response = await apiClient.post('/auth/resend-email-code', {
-                sessionType: 'temporary'
+                registrationToken
             });
             return response.data;
         } catch (error) {
@@ -113,9 +92,7 @@ const authAPI = {
 
     resendOTP: async () => {
         try {
-            const response = await apiClient.post('/auth/resend-otp', {
-                sessionType: 'temporary'
-            });
+            const response = await apiClient.post('/auth/resend-otp');
             return response.data;
         } catch (error) {
             throw handleError(error);
@@ -194,7 +171,9 @@ const authAPI = {
 
     requestDeactivateVerification: async (verificationMethod) => {
         try {
-            const response = await apiClient.post('/users/request-deactivate-verification', { verificationMethod });
+            const response = await apiClient.post('/auth/request-deactivate-verification', {
+                verificationMethod
+            });
             return response.data;
         } catch (error) {
             throw handleError(error);
@@ -231,6 +210,26 @@ const authAPI = {
     verifyPhoneChange: async (otp, newPhone) => {
         try {
             const response = await apiClient.post('/users/verify-phone-change', { otp, newPhone });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    checkExist: async (emailOrPhone) => {
+        try {
+            const response = await apiClient.post('/auth/check-exist', { emailOrPhone });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    requestDeleteVerification: async (verificationMethod) => {
+        try {
+            const response = await apiClient.post('/auth/request-delete-verification', {
+                verificationMethod
+            });
             return response.data;
         } catch (error) {
             throw handleError(error);

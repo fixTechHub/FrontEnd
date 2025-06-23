@@ -472,8 +472,11 @@ function ProfilePage() {
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchUserProfileThunk());
-  }, [dispatch]);
+    // Chỉ gọi API nếu user đã tồn tại
+    if (user) {
+      dispatch(fetchUserProfileThunk());
+    }
+  }, [dispatch]); // Bỏ user khỏi dependency để tránh gọi nhiều lần
 
   useEffect(() => {
     if (user) {
