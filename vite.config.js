@@ -4,15 +4,11 @@ export default defineConfig({
   plugins: [react()],
   build: {
     sourcemap: true,
-    outDir: "dist",
-  },
-  server: {
-    port: 3000,
-    open: true,
+    outDir: 'dist'
   },
   resolve: {
     alias: {
-      "@": "/src",
-    },
-  },
+      '@': '/src'
+    }
+  }
 });
