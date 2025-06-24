@@ -1,32 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { completeRegistrationThunk, logoutThunk, clearVerificationStatus } from '../../features/auth/authSlice';
+import { updateRegistrationData, finalizeRegistrationThunk, clearRegistrationData } from '../../features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { FaUser, FaTools, FaCheck } from 'react-icons/fa';
 
 function ChooseRole() {
     const [selectedRole, setSelectedRole] = useState(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading, user, isAuthenticated, verificationStatus } = useSelector((state) => state.auth);
-
-    // Theo dõi thay đổi của verificationStatus để redirect
-    useEffect(() => {
-        if (verificationStatus?.redirectTo && verificationStatus.redirectTo !== '/choose-role') {
-            navigate(verificationStatus.redirectTo);
-        }
-    }, [verificationStatus, navigate]);
-
-    // Xử lý khi component unmount hoặc user không còn authenticated
-    useEffect(() => {
-        return () => {
-            if (!isAuthenticated) {
-                dispatch(clearVerificationStatus());
-            }
-        };
-    }, [isAuthenticated, dispatch]);
+    const { loading } = useSelector((state) => state.auth);
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
@@ -38,27 +21,35 @@ function ChooseRole() {
             return;
         }
 
-        setIsSubmitting(true);
+        // Update the role in the Redux store
+        dispatch(updateRegistrationData({ role: selectedRole }));
+
+        // Dispatch the final registration thunk
         try {
-            await dispatch(completeRegistrationThunk(selectedRole)).unwrap();
-            toast.success('Đã chọn vai trò thành công!');
+            const result = await dispatch(finalizeRegistrationThunk()).unwrap();
             
-            // Không cần xử lý navigation ở đây nữa vì useEffect sẽ tự động redirect
-            // dựa trên verificationStatus mới từ completeRegistrationThunk
+            // Nếu cần xác thực email
+            if (result.requiresVerification) {
+                toast.success(result.message || 'Đăng ký hoàn tất! Vui lòng kiểm tra email để xác thực.');
+                // Chuyển đến trang xác thực email
+                navigate('/verify-email');
+            } else {
+                // Nếu không cần xác thực (hiếm khi xảy ra)
+                toast.success('Đăng ký hoàn tất! Đang chuyển hướng...');
+                dispatch(clearRegistrationData());
+            }
+
         } catch (error) {
-            toast.error(error.message || 'Không thể chọn vai trò');
-        } finally {
-            setIsSubmitting(false);
+            toast.error(`Đăng ký thất bại: ${error.message || 'Lỗi không xác định'}`);
+            // If it fails, maybe navigate back to the start
+            navigate('/register');
         }
     };
 
-    // Xử lý khi user muốn thoát
-    const handleBack = async () => {
-        // Đầu tiên điều hướng về home
-        navigate('/');
-        // Sau đó mới clear status và logout
-        dispatch(clearVerificationStatus());
-        await dispatch(logoutThunk());
+    // Handle user going back
+    const handleBack = () => {
+        // Just navigate back, the data is still in Redux
+        navigate('/register');
     };
 
     const roleCards = [
@@ -164,11 +155,11 @@ function ChooseRole() {
                                 <button
                                     className="btn btn-primary w-100 btn-size"
                                     onClick={handleSubmit}
-                                    disabled={isSubmitting || !selectedRole}
+                                    disabled={loading || !selectedRole}
                                 >
-                                    {isSubmitting ? (
-                                        <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG XỬ LÝ...</>
-                                    ) : 'XÁC NHẬN'}
+                                    {loading ? (
+                                        <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG HOÀN TẤT...</>
+                                    ) : 'HOÀN TẤT ĐĂNG KÝ'}
                                 </button>
                                     </div>
                                     </div>

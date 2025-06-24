@@ -18,18 +18,6 @@ const authAPI = {
         }
     },
 
-    register: async (userData) => {
-        try {
-            const response = await apiClient.post('/auth/register', {
-                ...userData,
-                sessionType: 'temporary'
-            });
-            return response.data;
-        } catch (error) {
-            throw handleError(error);
-        }
-    },
-
     login: async (credentials) => {
         try {
             const response = await apiClient.post('/auth/login', credentials);
@@ -39,21 +27,21 @@ const authAPI = {
         }
     },
 
-    googleLogin: async (accessToken) => {
+    // New API function for the final registration step
+    finalizeRegistration: async (registrationData) => {
         try {
-            const response = await apiClient.post('/auth/google-login', { 
-                access_token: accessToken,
-                sessionType: 'temporary'
-            });
+            const response = await apiClient.post('/auth/finalize-registration', registrationData);
             return response.data;
         } catch (error) {
             throw handleError(error);
         }
     },
 
-    completeRegistration: async (role) => {
+    googleLogin: async (accessToken) => {
         try {
-            const response = await apiClient.post('/auth/complete-registration', { role });
+            const response = await apiClient.post('/auth/google-login', { 
+                access_token: accessToken
+            });
             return response.data;
         } catch (error) {
             throw handleError(error);
@@ -68,13 +56,12 @@ const authAPI = {
         }
     },
 
-    verifyEmail: async (code) => {
+    verifyEmail: async (code, registrationToken) => {
         try {
             const response = await apiClient.post('/auth/verify-email', { 
                 code,
-                sessionType: 'temporary'
+                registrationToken
             });
-            await authAPI.logout();
             return response.data;
         } catch (error) {
             throw handleError(error);
@@ -84,20 +71,18 @@ const authAPI = {
     verifyOTP: async (otp) => {
         try {
             const response = await apiClient.post('/auth/verify-otp', { 
-                otp,
-                sessionType: 'temporary'
+                otp
             });
-            await authAPI.logout();
             return response.data;
         } catch (error) {
             throw handleError(error);
         }
     },
 
-    resendEmailCode: async () => {
+    resendEmailCode: async (registrationToken) => {
         try {
             const response = await apiClient.post('/auth/resend-email-code', {
-                sessionType: 'temporary'
+                registrationToken
             });
             return response.data;
         } catch (error) {
@@ -107,9 +92,7 @@ const authAPI = {
 
     resendOTP: async () => {
         try {
-            const response = await apiClient.post('/auth/resend-otp', {
-                sessionType: 'temporary'
-            });
+            const response = await apiClient.post('/auth/resend-otp');
             return response.data;
         } catch (error) {
             throw handleError(error);
@@ -176,6 +159,110 @@ const authAPI = {
             throw handleError(error);
         }
     },
+
+    deactivateAccount: async (password) => {
+        try {
+            const response = await apiClient.post('/users/deactivate-account', { password });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    requestDeactivateVerification: async (verificationMethod) => {
+        try {
+            const response = await apiClient.post('/auth/request-deactivate-verification', {
+                verificationMethod
+            });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    verifyDeactivateAccount: async (otp) => {
+        try {
+            const response = await apiClient.post('/users/verify-deactivate-account', { otp });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    deleteAccount: async () => {
+        try {
+            const response = await apiClient.delete('/users/profile');
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    requestPhoneChange: async (newPhone) => {
+        try {
+            const response = await apiClient.post('/users/request-phone-change', { newPhone });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    verifyPhoneChange: async (otp, newPhone) => {
+        try {
+            const response = await apiClient.post('/users/verify-phone-change', { otp, newPhone });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    checkExist: async (emailOrPhone) => {
+        try {
+            const response = await apiClient.post('/auth/check-exist', { emailOrPhone });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+
+    requestDeleteVerification: async (verificationMethod) => {
+        try {
+            const response = await apiClient.post('/auth/request-delete-verification', {
+                verificationMethod
+            });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
+};
+
+// Delete Account APIs
+export const requestDeleteVerificationAPI = async (method) => {
+    try {
+        const response = await apiClient.post('/users/delete-account/request-verification', { method });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || error.message;
+    }
+};
+
+export const verifyDeleteOTPAPI = async (otp) => {
+    try {
+        const response = await apiClient.post('/users/delete-account/verify-otp', { otp });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || error.message;
+    }
+};
+
+export const deleteAccountAPI = async (password, confirmText) => {
+    try {
+        const response = await apiClient.post('/users/delete-account/confirm', { password, confirmText });
+        return response.data;
+    } catch (error) {
+        throw error.response?.data?.message || error.message;
+    }
 };
 
 export default authAPI;

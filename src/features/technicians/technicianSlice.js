@@ -5,7 +5,8 @@ import {
   getTechnicianAvailability,
   updateTechnicianAvailability,
   getTechnicianJob,
-  getJobDetails
+  getJobDetails,
+  getTechnicians, completeTechnicianProfile
 } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
@@ -13,6 +14,8 @@ export const fetchTechnicianProfile = createAsyncThunk(
   async (technicianId, thunkAPI) => {
     try {
       const data = await getTechnicianProfile(technicianId);
+      console.log('--- FETCH TECHNICIAN PROFILE ---', data);
+
       return data; // giữ nguyên trả về { success, data }
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -35,6 +38,31 @@ export const fetchEarningAndCommission = createAsyncThunk(
     }
   }
 );
+
+export const fetchTechnicians = createAsyncThunk(
+  'technician/fetchList',
+  async (thunkAPI) => {
+    try {
+      const data = await getTechnicians();
+      return data.data;}
+      catch (error){
+        return thunkAPI.rejectWithValue(
+          error.response?.data?.message || error.message)
+      }
+    }
+  )
+export const completeTechnicianProfileThunk = createAsyncThunk(
+  'technician/completeProfile',
+  async (technicianData, thunkAPI) => {
+    try {
+      const data = await completeTechnicianProfile(technicianData);
+      return data.data;}
+      catch (error){
+        return thunkAPI.rejectWithValue(
+          error.response?.data?.message || error.message)
+      }
+    }
+  )
 
 export const fetchTechnicianAvailability = createAsyncThunk(
   'technician/fetchAvailability',
@@ -172,17 +200,42 @@ const technicianSlice = createSlice({
 
       //JobDetails
       .addCase(fetchTechnicianJobDetails.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    })
-    .addCase(fetchTechnicianJobDetails.fulfilled, (state, action) => {
-      state.loading = false;
-      state.jobDetail = action.payload;
-    })
-    .addCase(fetchTechnicianJobDetails.rejected, (state, action) => {
-      state.loading = false;
-      state.error = action.payload;
-    });
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnicianJobDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        state.jobDetail = action.payload;
+      })
+      .addCase(fetchTechnicianJobDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(fetchTechnicians.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnicians.fulfilled, (state, action) => {
+        state.loading = false;
+        state.profile = action.payload;
+      })
+      .addCase(fetchTechnicians.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(completeTechnicianProfileThunk.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(completeTechnicianProfileThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        state.error = null;
+      })
+      .addCase(completeTechnicianProfileThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   }
 });
 

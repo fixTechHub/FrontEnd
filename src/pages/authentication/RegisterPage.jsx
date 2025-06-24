@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useState, useEffect, useRef } from 'react';
+import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { registerThunk, googleLoginThunk } from '../../features/auth/authSlice';
+import { googleLoginThunk, updateRegistrationData } from '../../features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { validateEmail, validatePhone, validatePasswordStrength } from '../../utils/validation';
 import { FaEye, FaEyeSlash, FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
+import authAPI from '../../features/auth/authAPI';
 import '../../styles/auth.css';
 
 function RegisterPage() {
@@ -19,11 +20,65 @@ function RegisterPage() {
         confirmPassword: false
     });
     const [errors, setErrors] = useState({});
+    const [isCheckingEmail, setIsCheckingEmail] = useState(false);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading } = useSelector((state) => state.auth);
+    const timeoutRef = useRef(null);
 
-    const validateForm = () => {
+    const checkEmailExists = async (emailOrPhone) => {
+        try {
+            setIsCheckingEmail(true);
+            const result = await authAPI.checkExist(emailOrPhone);
+            if (result.exists) {
+                setErrors(prev => ({
+                    ...prev,
+                    emailOrPhone: result.message
+                }));
+                return true; // Email đã tồn tại
+            } else {
+                // Clear error if email doesn't exist
+                setErrors(prev => ({
+                    ...prev,
+                    emailOrPhone: ''
+                }));
+                return false; // Email chưa tồn tại
+            }
+        } catch (error) {
+            console.error('Error checking email:', error);
+            return false;
+        } finally {
+            setIsCheckingEmail(false);
+        }
+    };
+
+    // Debounced validation effect
+    useEffect(() => {
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+        }
+
+        if (formData.emailOrPhone.trim()) {
+            timeoutRef.current = setTimeout(async () => {
+                if (formData.emailOrPhone.includes('@')) {
+                    if (validateEmail(formData.emailOrPhone)) {
+                        await checkEmailExists(formData.emailOrPhone);
+                    }
+                } else {
+                    if (validatePhone(formData.emailOrPhone)) {
+                        await checkEmailExists(formData.emailOrPhone);
+                    }
+                }
+            }, 500);
+        }
+
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, [formData.emailOrPhone]);
+
+    const validateForm = async () => {
         const newErrors = {};
         
         if (!formData.fullName.trim()) {
@@ -37,10 +92,24 @@ function RegisterPage() {
         } else if (formData.emailOrPhone.includes('@')) {
             if (!validateEmail(formData.emailOrPhone)) {
                 newErrors.emailOrPhone = 'Email không hợp lệ';
+            } else {
+                // Kiểm tra email đã tồn tại
+                const emailExists = await checkEmailExists(formData.emailOrPhone);
+                if (emailExists) {
+                    // Error đã được set trong checkEmailExists
+                    return false;
+                }
             }
         } else {
             if (!validatePhone(formData.emailOrPhone)) {
                 newErrors.emailOrPhone = 'Số điện thoại không hợp lệ';
+            } else {
+                // Kiểm tra phone đã tồn tại
+                const phoneExists = await checkEmailExists(formData.emailOrPhone);
+                if (phoneExists) {
+                    // Error đã được set trong checkEmailExists
+                    return false;
+                }
             }
         }
 
@@ -66,6 +135,8 @@ function RegisterPage() {
             ...prev,
             [name]: value
         }));
+        
+        // Clear error for the field being edited
         if (errors[name]) {
             setErrors(prev => ({
                 ...prev,
@@ -83,32 +154,18 @@ function RegisterPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
+        
+        if (!(await validateForm())) return;
 
-        try {
-            const registrationData = {
-                fullName: formData.fullName.trim(),
-                emailOrPhone: formData.emailOrPhone.trim(),
-                password: formData.password,
-                confirmPassword: formData.confirmPassword
-            };
+        // Dispatch data to Redux store instead of calling API
+        dispatch(updateRegistrationData({
+            fullName: formData.fullName.trim(),
+            emailOrPhone: formData.emailOrPhone.trim().toLowerCase(),
+            password: formData.password,
+        }));
 
-            if (formData.emailOrPhone.includes('@')) {
-                localStorage.setItem('verificationEmail', formData.emailOrPhone.trim().toLowerCase());
-            }
-
-            const result = await dispatch(registerThunk(registrationData)).unwrap();
-            
-            if (result.user?.role?.name === 'PENDING') {
-                navigate('/choose-role');
-            } else {
-                navigate('/');
-            }
-            
-            toast.success(result.message || 'Đăng ký thành công!');
-        } catch (error) {
-            toast.error(error.message || 'Đăng ký thất bại');
-        }
+        // Navigate to the next step
+        navigate('/choose-role');
     };
 
     const handleGoogleLogin = async () => {
@@ -174,7 +231,6 @@ function RegisterPage() {
                                             value={formData.fullName}
                                             onChange={handleInputChange}
                                             placeholder="Nhập họ và tên"
-                                            required
                                         />
                                         {errors.fullName && (
                                             <div className="invalid-feedback">{errors.fullName}</div>
@@ -186,7 +242,7 @@ function RegisterPage() {
                                     <label className="form-label text-dark">
                                         Email / Số điện thoại <span className="text-danger">*</span>
                                     </label>
-                                    <div className="position-relative">
+                                    <div className="position-relative" style={{ marginBottom: errors.emailOrPhone ? '24px' : '0' }}>
                                         <span className="position-absolute top-50 translate-middle-y ps-3">
                                             <FaEnvelope className="text-secondary" />
                                         </span>
@@ -197,10 +253,17 @@ function RegisterPage() {
                                             value={formData.emailOrPhone}
                                             onChange={handleInputChange}
                                             placeholder="Nhập email hoặc số điện thoại"
-                                            required
+                                            disabled={isCheckingEmail}
                                         />
+                                        {isCheckingEmail && (
+                                            <div className="position-absolute top-50 translate-middle-y end-0 pe-3">
+                                                <div className="spinner-border spinner-border-sm text-primary" role="status">
+                                                    <span className="visually-hidden">Loading...</span>
+                                                </div>
+                                            </div>
+                                        )}
                                         {errors.emailOrPhone && (
-                                            <div className="invalid-feedback">{errors.emailOrPhone}</div>
+                                            <div className="invalid-feedback position-absolute" style={{ top: '100%' }}>{errors.emailOrPhone}</div>
                                         )}
                                     </div>
                                 </div>
@@ -220,7 +283,6 @@ function RegisterPage() {
                                             value={formData.password}
                                             onChange={handleInputChange}
                                             placeholder="Nhập mật khẩu"
-                                            required
                                             autoComplete="new-password"
                                         />
                                         <button
@@ -254,7 +316,6 @@ function RegisterPage() {
                                             value={formData.confirmPassword}
                                             onChange={handleInputChange}
                                             placeholder="Nhập lại mật khẩu"
-                                            required
                                             autoComplete="new-password"
                                         />
                                         <button
@@ -276,11 +337,8 @@ function RegisterPage() {
                                 <button 
                                     type="submit" 
                                     className="btn btn-primary w-100 btn-size mb-4"
-                                    disabled={loading}
                                 >
-                                    {loading ? (
-                                        <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG XỬ LÝ...</>
-                                    ) : 'ĐĂNG KÝ'}
+                                    TIẾP TỤC
                                 </button>
 
                                 <div className="text-center mb-4">
@@ -291,10 +349,11 @@ function RegisterPage() {
                                     type="button"
                                     onClick={handleGoogleLogin}
                                     className="btn btn-outline-secondary w-100 mb-4"
-                                    disabled={loading}
                                 >
-                                    <img src="/img/icons/google.svg" alt="Google" className="me-2" style={{ width: '20px' }} />
-                                    {loading ? 'Đang xử lý...' : 'Đăng nhập với Google'}
+                                    <span className="d-flex justify-content-center align-items-center">
+                                        <img src="/img/icons/google.svg" alt="Google" className="me-2" style={{ width: '20px' }} />
+                                        <span>Đăng nhập với Google</span>
+                                    </span>
                                 </button>
 
                                 <div className="text-center">

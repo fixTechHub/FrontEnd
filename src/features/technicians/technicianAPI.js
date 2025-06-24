@@ -42,3 +42,12 @@ export const updateTechnicianAvailability = async (technicianId, status) => {
   });
   return response.data.availability;
 };
+
+export const getTechnicians = async () => {
+  const response = await apiClient.get(`/technicians/`);
+};
+
+export const completeTechnicianProfile = async (technicianData) => {
+  const response = await apiClient.post('/technicians/complete-profile', technicianData);
+  return response.data;
+};
