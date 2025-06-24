@@ -1,49 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  Table,
-  Button,
-  Modal,
-  Form,
-  Input,
-  DatePicker,
-  InputNumber,
-  Space,
-  message,
-  Popconfirm,
-  Select,
-  Card,
-  Row,
-  Col,
-  Tag,
-} from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  SearchOutlined,
-} from '@ant-design/icons';
-import dayjs from 'dayjs';
-import {
-  fetchCoupons,
-  createCoupon,
-  updateCoupon,
-  deleteCoupon,
-  resetState,
-  restoreCoupon,
-  fetchDeletedCoupons,
-} from '../../features/coupons/couponSlice';
-
-const { Option } = Select;
+import { message } from 'antd';
+import { fetchCoupons, createCoupon, updateCoupon, deleteCoupon, resetState } from '../../features/coupons/couponSlice';
 
 const CouponManagement = () => {
   const dispatch = useDispatch();
-  const { coupons, loading, error, success, deletedCoupons } = useSelector((state) => state.coupon);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [form] = Form.useForm();
-  const [editingCoupon, setEditingCoupon] = useState(null);
+  const { coupons, loading, error, success } = useSelector((state) => state.coupon);
+
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [searchText, setSearchText] = useState('');
-  const [showDeleted, setShowDeleted] = useState(false);
+  
+  const initialFormState = {
+    code: '',
+    description: '',
+    type: 'PERCENT',
+    value: '',
+    maxDiscount: '',
+    minOrderValue: '',
+    totalUsageLimit: '',
+    startDate: '',
+    endDate: '',
+    isActive: true,
+    audience: 'ALL',
+    userIds: []
+  };
+  const [formData, setFormData] = useState(initialFormState);
 
   useEffect(() => {
     dispatch(fetchCoupons());
@@ -51,371 +35,390 @@ const CouponManagement = () => {
 
   useEffect(() => {
     if (error) {
-      message.error(error);
+      message.error(error.title || 'An error occurred. Please try again.');
       dispatch(resetState());
     }
     if (success) {
-      message.success(editingCoupon ? 'Coupon updated successfully' : 'Coupon created successfully');
+      message.success('Operation successful!');
+      setShowAddModal(false);
+      setShowEditModal(false);
+      setShowDeleteModal(false);
       dispatch(resetState());
-      setIsModalVisible(false);
-      form.resetFields();
+      dispatch(fetchCoupons());
     }
-  }, [error, success, dispatch, editingCoupon, form]);
-
-  useEffect(() => {
-    if (showDeleted) {
-      dispatch(fetchDeletedCoupons());
-    }
-  }, [showDeleted, dispatch]);
+  }, [error, success, dispatch]);
 
   const filteredCoupons = coupons.filter(coupon =>
     coupon.code.toLowerCase().includes(searchText.toLowerCase())
   );
 
-  const columns = [
-    {
-      title: 'Code',
-      dataIndex: 'code',
-      key: 'code',
-      sorter: (a, b) => a.code.localeCompare(b.code),
-    },
-    {
-      title: 'Description',
-      dataIndex: 'description',
-      key: 'description',
-    },
-    {
-      title: 'Discount',
-      key: 'discount',
-      render: (_, record) => (
-        <span>
-          {record.value}
-          <Tag color={record.type === 'PERCENT' ? 'blue' : 'green'} style={{ marginLeft: 8 }}>
-            {record.type === 'PERCENT' ? '%' : '$'}
-          </Tag>
-        </span>
-      ),
-    },
-    {
-      title: 'Valid Period',
-      key: 'validPeriod',
-      render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <div>From: {new Date(record.startDate).toLocaleDateString()}</div>
-          <div>To: {new Date(record.endDate).toLocaleDateString()}</div>
-        </Space>
-      ),
-    },
-    {
-      title: 'Min Order',
-      dataIndex: 'minOrderValue',
-      key: 'minOrderValue',
-      render: (text) => `$${text}`,
-    },
-    {
-      title: 'Usage',
-      key: 'usage',
-      render: (_, record) => (
-        <Space direction="vertical" size="small">
-          <div>Used: {record.usedCount}</div>
-          <div>Limit: {record.totalUsageLimit}</div>
-        </Space>
-      ),
-    },
-    {
-      title: 'Status',
-      key: 'status',
-      render: (_, record) => (
-        <Tag color={record.isActive ? 'success' : 'error'}>
-          {record.isActive ? 'ACTIVE' : 'INACTIVE'}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (_, record) => {
-        return (
-          <Space>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => handleEdit(record)}
-            >
-              Edit
-            </Button>
-            <Popconfirm
-              title="Are you sure you want to delete this coupon?"
-              onConfirm={() => handleDelete(record.id)}
-              okText="Yes"
-              cancelText="No"
-            >
-              <Button danger icon={<DeleteOutlined />}>
-                Delete
-              </Button>
-            </Popconfirm>
-          </Space>
-        );
-      },
-    },
-  ];
-
-  const handleAdd = () => {
-    setEditingCoupon(null);
-    form.resetFields();
-    setIsModalVisible(true);
+  const handleAddCoupon = () => {
+    setFormData(initialFormState);
+    setShowAddModal(true);
   };
-
-  const handleEdit = (coupon) => {
-    console.log('Editing coupon data:', coupon);
-    setEditingCoupon(coupon);
-    form.setFieldsValue({
+  
+  const handleEditCoupon = (coupon) => {
+    setSelectedCoupon(coupon);
+    setFormData({
       ...coupon,
-      startDate: dayjs(coupon.startDate),
-      endDate: dayjs(coupon.endDate),
+      startDate: coupon.startDate ? new Date(coupon.startDate).toISOString().split('T')[0] : '',
+      endDate: coupon.endDate ? new Date(coupon.endDate).toISOString().split('T')[0] : ''
     });
-    setIsModalVisible(true);
+    setShowEditModal(true);
   };
 
-  const handleDelete = async (id) => {
-    console.log('Deleting coupon with ID:', id);
-    dispatch(deleteCoupon(id)).then((action) => {
-      if (action.payload?.message) {
-        message.success(action.payload.message);
-      }
-    });
+  const handleDeleteCoupon = (coupon) => {
+    setSelectedCoupon(coupon);
+    setShowDeleteModal(true);
   };
 
-  const handleSubmit = async (values) => {
-    console.log('Raw form values:', values);
+  const confirmDelete = () => {
+    if (selectedCoupon) {
+      dispatch(deleteCoupon(selectedCoupon.id));
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
     const couponData = {
-      code: values.code,
-      description: values.description,
-      type: values.type.toUpperCase(),
-      value: values.value,
-      maxDiscount: values.maxDiscount,
-      minOrderValue: values.minOrderValue,
-      totalUsageLimit: values.totalUsageLimit,
-      startDate: values.startDate.toISOString(),
-      endDate: values.endDate.toISOString(),
-      isActive: true,
-      audience: "ALL",
-      userIds: []
+      ...formData,
+      value: parseFloat(formData.value),
+      maxDiscount: formData.maxDiscount ? parseFloat(formData.maxDiscount) : null,
+      minOrderValue: parseFloat(formData.minOrderValue),
+      totalUsageLimit: parseInt(formData.totalUsageLimit, 10)
     };
-    console.log('Transformed coupon data:', couponData);
 
-    if (editingCoupon) {
-      console.log('Updating coupon:', {
-        id: editingCoupon.id,
-        originalData: editingCoupon,
-        newData: couponData
-      });
-      dispatch(updateCoupon({ 
-        id: editingCoupon.id, 
-        couponData 
-      }));
-    } else {
+    if (showAddModal) {
       dispatch(createCoupon(couponData));
+    } else if (showEditModal && selectedCoupon) {
+      dispatch(updateCoupon({ id: selectedCoupon.id, couponData }));
     }
   };
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
-          <Col span={12}>
-            <Input
-              placeholder="Search coupons..."
-              prefix={<SearchOutlined />}
+    <div className="page-wrapper">
+      <div className="content me-4">
+        {/* Breadcrumb */}
+        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+          <div className="my-auto mb-2">
+            <h4 className="mb-1">Coupons</h4>
+            <nav>
+              <ol className="breadcrumb mb-0">
+                <li className="breadcrumb-item"><a href="/admin">Home</a></li>
+                <li className="breadcrumb-item active">Coupons</li>
+              </ol>
+            </nav>
+          </div>
+          <div className="d-flex my-xl-auto right-content align-items-center flex-wrap">
+            <div className="mb-2">
+              <button className="btn btn-primary d-flex align-items-center" onClick={handleAddCoupon}>
+                <i className="ti ti-plus me-2"></i>Add Coupon
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Search */}
+        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
+          <div className="top-search me-2">
+            <div className="top-search-group">
+              <span className="input-icon">
+                <i className="ti ti-search"></i>
+              </span>
+              <input 
+                type="text" 
+                className="form-control" 
+                placeholder="Search coupons"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
-              allowClear
-            />
-          </Col>
-          <Col span={12} style={{ textAlign: 'right' }}>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={handleAdd}
-            >
-              Add New Coupon
-            </Button>
-          </Col>
-        </Row>
+              />
+            </div>
+          </div>
+        </div>
 
-        <Table
-          columns={columns}
-          dataSource={filteredCoupons}
-          rowKey="_id"
-          loading={loading}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showTotal: (total) => `Total ${total} coupons`,
-          }}
-        />
-      </Card>
+        {/* Table */}
+        <div className="custom-datatable-filter table-responsive">
+          <table className="table datatable">
+            <thead className="thead-light">
+              <tr>
+                <th>CODE</th>
+                <th>DESCRIPTION</th>
+                <th>DISCOUNT</th>
+                <th>VALID PERIOD</th>
+                <th>MIN ORDER</th>
+                <th>USAGE</th>
+                <th>STATUS</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredCoupons.map((coupon) => (
+                <tr key={coupon.id}>
+                  <td>
+                    <div className="d-flex align-items-center">
+                      <h6><span className="fs-14 fw-semibold">{coupon.code}</span></h6>
+                    </div>
+                  </td>
+                  <td><p className="text-gray-9">{coupon.description}</p></td>
+                  <td>
+                    <div className="d-flex align-items-center">
+                      <span className="fw-semibold">{coupon.value}</span>
+                      <span className={`badge badge-sm ms-2 ${coupon.type === 'PERCENT' ? 'bg-primary' : 'bg-success'}`}>
+                        {coupon.type === 'PERCENT' ? '%' : '$'}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    <div className="d-flex flex-column">
+                      <small className="text-gray-6">From: {new Date(coupon.startDate).toLocaleDateString()}</small>
+                      <small className="text-gray-6">To: {new Date(coupon.endDate).toLocaleDateString()}</small>
+                    </div>
+                  </td>
+                  <td><p className="text-gray-9">${coupon.minOrderValue}</p></td>
+                  <td>
+                    <div className="d-flex flex-column">
+                      <small className="text-gray-6">Used: {coupon.usedCount}</small>
+                      <small className="text-gray-6">Limit: {coupon.totalUsageLimit}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <span className={`badge badge-dark-transparent ${coupon.isActive ? 'text-success' : 'text-danger'}`}>
+                      <i className={`ti ti-point-filled ${coupon.isActive ? 'text-success' : 'text-danger'} me-1`}></i>
+                      {coupon.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="dropdown">
+                      <button className="btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown">
+                        <i className="ti ti-dots-vertical"></i>
+                      </button>
+                      <ul className="dropdown-menu dropdown-menu-end p-2">
+                        <li>
+                          <button className="dropdown-item rounded-1" onClick={() => handleEditCoupon(coupon)}>
+                            <i className="ti ti-edit me-1"></i>Edit
+                          </button>
+                        </li>
+                        <li>
+                          <button className="dropdown-item rounded-1" onClick={() => handleDeleteCoupon(coupon)}>
+                            <i className="ti ti-trash me-1"></i>Delete
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
 
-      <Modal
-        title={editingCoupon ? 'Edit Coupon' : 'Add New Coupon'}
-        open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={null}
-        width={600}
-      >
-        <Form
-          form={form}
-          layout="vertical"
-          onFinish={handleSubmit}
-        >
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="code"
-                label="Coupon Code"
-                rules={[{ required: true, message: 'Please enter coupon code' }]}
-              >
-                <Input />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="type"
-                label="Discount Type"
-                rules={[{ required: true, message: 'Please select discount type' }]}
-              >
-                <Select>
-                  <Option value="PERCENT" >Percentage</Option>
-                  <Option value="FIXED">Fixed Amount</Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+      {/* Add Modal */}
+      {showAddModal && (
+        <div className="modal fade show" style={{ display: 'block' }}>
+          <div className="modal-dialog modal-dialog-centered modal-md">
+            <div className="modal-content">
+              <form onSubmit={handleSubmit}>
+                <div className="modal-header">
+                  <h5 className="mb-0">Create Coupon</h5>
+                  <button type="button" className="btn-close" onClick={() => setShowAddModal(false)}></button>
+                </div>
+                <div className="modal-body pb-1">
+                  {/* Form fields will be inserted here from the component */}
+                  <div className="row">
+                    <div className="col-md-12">
+                      <div className="mb-3">
+                        <label className="form-label">Coupon Code <span className="text-danger">*</span></label>
+                        <input type="text" name="code" className="form-control" value={formData.code} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-12">
+                      <div className="mb-3">
+                        <label className="form-label">Description <span className="text-danger">*</span></label>
+                        <textarea name="description" className="form-control" rows="3" value={formData.description} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Discount Type <span className="text-danger">*</span></label>
+                        <select name="type" className="form-select" value={formData.type} onChange={handleChange} required >
+                          <option value="PERCENT">Percentage (%)</option>
+                          <option value="FIXED">Fixed Amount ($)</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Discount Value <span className="text-danger">*</span></label>
+                        <input type="number" name="value" className="form-control" value={formData.value} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Max Discount</label>
+                        <input type="number" name="maxDiscount" className="form-control" value={formData.maxDiscount} onChange={handleChange} />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Min Order Value <span className="text-danger">*</span></label>
+                        <input type="number" name="minOrderValue" className="form-control" value={formData.minOrderValue} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Usage Limit <span className="text-danger">*</span></label>
+                        <input type="number" name="totalUsageLimit" className="form-control" value={formData.totalUsageLimit} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Start Date <span className="text-danger">*</span></label>
+                        <input type="date" name="startDate" className="form-control" value={formData.startDate} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-12">
+                      <div className="mb-3">
+                        <label className="form-label">End Date <span className="text-danger">*</span></label>
+                        <input type="date" name="endDate" className="form-control" value={formData.endDate} onChange={handleChange} required />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-light" onClick={() => setShowAddModal(false)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">Create</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
-          <Form.Item
-            name="description"
-            label="Description"
-            rules={[{ required: true, message: 'Please enter description' }]}
-          >
-            <Input.TextArea rows={2} />
-          </Form.Item>
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="modal fade show" style={{ display: 'block' }}>
+          <div className="modal-dialog modal-dialog-centered modal-md">
+            <div className="modal-content">
+              <form onSubmit={handleSubmit}>
+                <div className="modal-header">
+                  <h5 className="mb-0">Edit Coupon</h5>
+                  <button type="button" className="btn-close" onClick={() => setShowEditModal(false)}></button>
+                </div>
+                <div className="modal-body pb-1">
+                  <div className="row">
+                  <div className="col-md-12">
+                      <div className="mb-3">
+                        <label className="form-label">Coupon Code <span className="text-danger">*</span></label>
+                        <input type="text" name="code" className="form-control" value={formData.code} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-12">
+                      <div className="mb-3">
+                        <label className="form-label">Description <span className="text-danger">*</span></label>
+                        <textarea name="description" className="form-control" rows="3" value={formData.description} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Discount Type <span className="text-danger">*</span></label>
+                        <select name="type" className="form-select" value={formData.type} onChange={handleChange} required >
+                          <option value="PERCENT">Percentage (%)</option>
+                          <option value="FIXED">Fixed Amount ($)</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Discount Value <span className="text-danger">*</span></label>
+                        <input type="number" name="value" className="form-control" value={formData.value} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Max Discount</label>
+                        <input type="number" name="maxDiscount" className="form-control" value={formData.maxDiscount} onChange={handleChange} />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Min Order Value <span className="text-danger">*</span></label>
+                        <input type="number" name="minOrderValue" className="form-control" value={formData.minOrderValue} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Usage Limit <span className="text-danger">*</span></label>
+                        <input type="number" name="totalUsageLimit" className="form-control" value={formData.totalUsageLimit} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="mb-3">
+                        <label className="form-label">Start Date <span className="text-danger">*</span></label>
+                        <input type="date" name="startDate" className="form-control" value={formData.startDate} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-12">
+                      <div className="mb-3">
+                        <label className="form-label">End Date <span className="text-danger">*</span></label>
+                        <input type="date" name="endDate" className="form-control" value={formData.endDate} onChange={handleChange} required />
+                      </div>
+                    </div>
+                    <div className="col-md-12">
+                      <div className="form-check form-check-md form-switch">
+                        <label className="form-check-label form-label mt-0 mb-0">
+                          <input className="form-check-input me-2" type="checkbox" name="isActive" role="switch" checked={formData.isActive} onChange={handleChange}/>
+                          Active
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-light" onClick={() => setShowEditModal(false)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="value"
-                label="Discount Value"
-                rules={[{ required: true, message: 'Please enter discount value' }]}
-              >
-                <InputNumber min={0} style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="minOrderValue"
-                label="Minimum Order Value"
-                rules={[{ required: true, message: 'Please enter minimum order value' }]}
-              >
-                <InputNumber min={0} style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-          </Row>
+      {/* Delete Modal */}
+      {showDeleteModal && (
+        <div className="modal fade show" style={{ display: 'block' }}>
+          <div className="modal-dialog modal-dialog-centered modal-sm">
+            <div className="modal-content">
+              <div className="modal-body text-center">
+                <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
+                <h4 className="mb-1">Delete Coupon</h4>
+                <p className="mb-3">Are you sure you want to delete this coupon?</p>
+                <div className="d-flex justify-content-center">
+                  <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+                  <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="startDate"
-                label="Start Date"
-                rules={[{ required: true, message: 'Please select start date' }]}
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="endDate"
-                label="End Date"
-                rules={[{ required: true, message: 'Please select end date' }]}
-              >
-                <DatePicker style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item
-                name="maxDiscount"
-                label="Maximum Discount"
-                rules={[{ required: true, message: 'Please enter maximum discount' }]}
-              >
-                <InputNumber min={0} style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item
-                name="totalUsageLimit"
-                label="Usage Limit"
-                rules={[{ required: true, message: 'Please enter usage limit' }]}
-              >
-                <InputNumber min={1} style={{ width: '100%' }} />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                {editingCoupon ? 'Update' : 'Create'}
-              </Button>
-              <Button onClick={() => setIsModalVisible(false)}>
-                Cancel
-              </Button>
-            </Space>
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Button onClick={() => setShowDeleted(true)}>
-        Xem coupon đã xóa
-      </Button>
-
-      <Modal
-        open={showDeleted}
-        title="Danh sách coupon đã xóa"
-        onCancel={() => setShowDeleted(false)}
-        footer={null}
-        width={800}
-      >
-        <Table
-          columns={[
-            { title: 'Code', dataIndex: 'code', key: 'code' },
-            { title: 'Description', dataIndex: 'description', key: 'description' },
-            {
-              title: 'Actions',
-              key: 'actions',
-              render: (_, record) => (
-                <Button
-                  type="primary"
-                  onClick={() => {
-                    dispatch(restoreCoupon(record.id)).then((action) => {
-                      if (action.payload?.message) {
-                        message.success(action.payload.message);
-                        dispatch(fetchDeletedCoupons());
-                      }
-                    });
-                  }}
-                >
-                  Khôi phục
-                </Button>
-              ),
-            },
-          ]}
-          dataSource={deletedCoupons}
-          rowKey="id"
-          loading={loading}
-        />
-      </Modal>
+      {/* Footer */}
+      <div className="footer d-sm-flex align-items-center justify-content-between bg-white p-3">
+        <p className="mb-0">
+          <a href="#">Privacy Policy</a>
+          <a href="#" className="ms-4">Terms of Use</a>
+        </p>
+        <p>&copy; 2025 Fix Tech, Made with <span className="text-danger">❤</span> by <a href="#" className="text-secondary">Fix Tech Team</a></p>
+      </div>
     </div>
   );
 };

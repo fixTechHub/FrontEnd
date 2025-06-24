@@ -2,12 +2,7 @@ import axios from 'axios';
 
 // Get API base URL from environment variables
 const getApiBaseUrl = () => {
-  // For production build, use the environment variable
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  
-  // For development, use the deployed backend on Render
+  // LUÔN LUÔN sử dụng URL của Render để đảm bảo kết nối
   return 'https://backend-dotnet.onrender.com/api';
 };
 

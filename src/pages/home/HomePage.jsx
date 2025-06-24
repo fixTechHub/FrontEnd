@@ -6,7 +6,7 @@ function HomePage() {
     return (
         <>
             <div className="main-wrapper">
-                <Header />
+                <Header className="header"/>
 
                 <Banner />
 
