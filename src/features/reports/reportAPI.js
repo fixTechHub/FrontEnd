@@ -1,10 +1,10 @@
-import apiClient from '../../services/ApiBE';
+import ApiBE from '../../services/ApiBE';
 
 export const reportAPI = {
     // Get all reports
     getAll: async () => {
         try {
-            const response = await apiClient.get('/Dashboard/reports');
+            const response = await ApiBE.get('/Dashboard/reports');
             return response.data;
         } catch (error) {
             console.error('Get all reports error:', error);
@@ -15,7 +15,7 @@ export const reportAPI = {
     // Get report by ID
     getById: async (id) => {
         try {
-            const response = await apiClient.get(`/Dashboard/reports/${id}`);
+            const response = await ApiBE.get(`/Dashboard/reports/${id}`);
             return response.data;
         } catch (error) {
             console.error('Get report by ID error:', error);

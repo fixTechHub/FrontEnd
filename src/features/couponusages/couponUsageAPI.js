@@ -1,9 +1,9 @@
-import apiClient from '../../services/ApiBE';
+import ApiBE from '../../services/ApiBE';
 
 export const couponUsageAPI = {
     getAll: async () => {
       try {
-        const response = await apiClient.get('/Dashboard/couponusages');
+        const response = await ApiBE.get('/Dashboard/couponusages');
         return response.data;
       } catch (error) {
         console.error('Get all coupon usage error:', error);
@@ -13,7 +13,7 @@ export const couponUsageAPI = {
   
     getById: async (id) => {
       try {
-        const response = await apiClient.get(`/Dashboard/couponusages/id/${id}`);
+        const response = await ApiBE.get(`/Dashboard/couponusages/id/${id}`);
         return response.data;
       } catch (error) {
         console.error('Get coupon usage by ID error:', error);

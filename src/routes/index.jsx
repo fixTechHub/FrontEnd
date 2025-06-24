@@ -12,8 +12,7 @@ import AdminLayout from '../components/layout/AdminLayout';
 import ReportManagement from '../pages/Management/ReportManagement';
 import SystemReportManagement from '../pages/Management/SystemReportManagement';
 import TechnicianManagement from '../pages/Management/TechnicianManagement';
-import BookingManagement from '../pages/Management/BookingManagement';
-import Header from '../components/common/Header';   
+import BookingManagement from '../pages/Management/BookingManagement';  
 
 export default function AppRoutes() {
     return (

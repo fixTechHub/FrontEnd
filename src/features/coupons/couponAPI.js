@@ -1,10 +1,10 @@
-import apiClient from '../../services/ApiBE';
+import ApiBE from '../../services/ApiBE';
 
 export const couponAPI = {
     // Get all coupons
     getAll: async () => {
         try {
-            const response = await apiClient.get('/Coupon');
+            const response = await ApiBE.get('/Coupon');
             return response.data;
         } catch (error) {
             console.error('Get all coupons error:', error);
@@ -15,7 +15,7 @@ export const couponAPI = {
     // Get coupon by ID
     getById: async (id) => {
         try {
-            const response = await apiClient.get(`/Coupon/${id}`);
+            const response = await ApiBE.get(`/Coupon/${id}`);
             return response.data;
         } catch (error) {
             console.error('Get coupon by ID error:', error);
@@ -26,7 +26,7 @@ export const couponAPI = {
     // Create new coupon
     create: async (couponData) => {
         try {
-            const response = await apiClient.post('/Coupon', couponData);
+            const response = await ApiBE.post('/Coupon', couponData);
             return response.data;
         } catch (error) {
             console.error('Create coupon error:', error);
@@ -43,7 +43,7 @@ export const couponAPI = {
                 url: `/Coupon/${id}`,
                 method: 'PUT'
             });
-            const response = await apiClient.put(`/Coupon/${id}`, couponData);
+            const response = await ApiBE.put(`/Coupon/${id}`, couponData);
             return response.data;
         } catch (error) {
             console.error('Update coupon error details:', {
@@ -62,7 +62,7 @@ export const couponAPI = {
     // Delete coupon
     delete: async (id) => {
         try {
-            const response = await apiClient.delete(`/Coupon/${id}`);
+            const response = await ApiBE.delete(`/Coupon/${id}`);
             return response.data;
         } catch (error) {
             console.error('Delete coupon error:', error);
@@ -72,13 +72,13 @@ export const couponAPI = {
 
     // Lấy danh sách coupon đã xóa
     getDeleted: async () => {
-        const response = await apiClient.get('/Coupon/deleted');
+        const response = await ApiBE.get('/Coupon/deleted');
         return response.data;
     },
 
     // Khôi phục coupon đã xóa
     restore: async (id) => {
-        const response = await apiClient.post(`/Coupon/${id}/restore`);
+        const response = await ApiBE.post(`/Coupon/${id}/restore`);
         return response.data;
     }
 }; 

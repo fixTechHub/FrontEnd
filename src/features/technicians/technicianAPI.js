@@ -1,10 +1,10 @@
-import apiClient from '../../services/ApiBE';
+import ApiBE from '../../services/ApiBE';
 
 export const technicianAPI = {
     // Get all technicians
     getAll: async () => {
         try {
-            const response = await apiClient.get('/Dashboard/technicians');
+            const response = await ApiBE.get('/Dashboard/technicians');
             return response.data;
         } catch (error) {
             console.error('Get all technicians error:', error);
@@ -15,7 +15,7 @@ export const technicianAPI = {
     // Get technician by ID
     getById: async (id) => {
         try {
-            const response = await apiClient.get(`/Dashboard/technicians/${id}`);
+            const response = await ApiBE.get(`/Dashboard/technicians/${id}`);
             return response.data;
         } catch (error) {
             console.error('Get technician by ID error:', error);
@@ -26,7 +26,7 @@ export const technicianAPI = {
     // Update technician status
     updateStatus: async (id, status, note) => {
         try {
-            const response = await apiClient.patch(`/Dashboard/technicians/${id}/status`, {
+            const response = await ApiBE.patch(`/Dashboard/technicians/${id}/status`, {
                 status,
                 note
             });
