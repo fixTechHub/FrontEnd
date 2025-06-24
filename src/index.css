@@ -57,3 +57,20 @@
 .booking-service:hover {
     background-color: #FFA633 !important;
 }
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-weight: bold;
+    font-size: 13px;
+    color: #ffffff !important;
+}
+
+.status-pending { background-color: #f0ad4e; } /* Vàng cam */
+.status-quoted { background-color: #0275d8; } /* Xanh dương */
+.status-confirmed { background-color: #5cb85c; } /* Xanh lá */
+.status-in-progress { background-color: #5bc0de; } /* Xanh ngọc */
+.status-completed { background-color: #337ab7; } /* Xanh đậm */
+.status-cancelled { background-color: #777; } /* Xám */
+.status-rejected { background-color: #d9534f; } /* Đỏ */
+.status-unknown { background-color: #ccc; color: #333; }

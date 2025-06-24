@@ -1,8 +1,12 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getTechnicianProfile, 
-         getEarningAndCommission,
-         getTechnicianAvailability,
-         updateTechnicianAvailability  } from '../technicians/technicianAPI';
+import {
+  getTechnicianProfile,
+  getEarningAndCommission,
+  getTechnicianAvailability,
+  updateTechnicianAvailability,
+  getTechnicianJob,
+  getJobDetails
+} from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
@@ -58,6 +62,34 @@ export const changeTechnicianAvailability = createAsyncThunk(
   }
 );
 
+export const fetchTechnicianJobDetails = createAsyncThunk(
+  'technician/fetchTechnicianJobDetails',
+  async ({ technicianId, bookingId }, { rejectWithValue }) => {
+    try {
+      const data = await getJobDetails(technicianId, bookingId);
+      console.log(data);
+      return data;
+
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+export const fetchTechnicianJobs = createAsyncThunk(
+  'technician/fetchTechnicianJobs',
+  async (technicianId, { rejectWithValue }) => {
+    try {
+      const data = await getTechnicianJob(technicianId);
+      console.log(data);
+      return data;
+
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
 const technicianSlice = createSlice({
   name: 'technician',
   initialState: {
@@ -65,7 +97,9 @@ const technicianSlice = createSlice({
     earnings: null,
     availability: 'FREE',
     loading: false,
-    error: null
+    error: null,
+    bookings: [],
+    jobDetail: null,
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -120,7 +154,35 @@ const technicianSlice = createSlice({
       })
       .addCase(changeTechnicianAvailability.rejected, (state, action) => {
         state.error = action.payload;
-      });
+      })
+
+      //Jobs
+      .addCase(fetchTechnicianJobs.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnicianJobs.fulfilled, (state, action) => {
+        state.loading = false;
+        state.bookings = action.payload.data || action.payload.bookings || [];
+      })
+      .addCase(fetchTechnicianJobs.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch bookings';
+      })
+
+      //JobDetails
+      .addCase(fetchTechnicianJobDetails.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(fetchTechnicianJobDetails.fulfilled, (state, action) => {
+      state.loading = false;
+      state.jobDetail = action.payload;
+    })
+    .addCase(fetchTechnicianJobDetails.rejected, (state, action) => {
+      state.loading = false;
+      state.error = action.payload;
+    });
   }
 });
 

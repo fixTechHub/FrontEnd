@@ -4,7 +4,7 @@ function Sidebar() {
         <>
            <div className="main-wrapper">
                 <div className="sidebar" id="sidebar">
-                    <div className="sidebar-inner slimscroll">
+                    <div className="sidebar-inner slimscroll overflow-auto" style={{ maxHeight: '100vh' }}>
                         <div id="sidebar-menu" className="sidebar-menu">
                             <div className="form-group">
                                 <div className="input-group input-group-flat d-inline-flex">
@@ -21,7 +21,7 @@ function Sidebar() {
                                 <li className="menu-title"><span>Main</span></li>
                                 <li>
                                     <ul>
-                                        <li className="active">
+                                        <li>
                                             <a href="https://dreamsrent.dreamstechnologies.com/html/template/admin/index.html">
                                                 <i className="ti ti-layout-dashboard"></i><span>Dashboard</span>
                                             </a>
@@ -38,17 +38,7 @@ function Sidebar() {
                                         </li>
                                         <li>
                                             <a href="">
-                                                <i className="ti ti-calendar-bolt"></i><span>Calendar</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-file-symlink"></i><span>Quotations</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-mail"></i><span>Enquiries</span>
+                                                <i className="ti ti-calendar-bolt"></i><span>Work</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -58,7 +48,12 @@ function Sidebar() {
                                     <ul>
                                         <li>
                                             <a href="">
-                                                <i className="ti ti-users-group"></i><span>Customers</span>
+                                                <i className="ti ti-users-group"></i><span>Account</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="">
+                                                <i className="ti ti-star"></i><span>Reviews</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -66,9 +61,9 @@ function Sidebar() {
                                 <li className="menu-title"><span>FINANCE & ACCOUNTS</span></li>
                                 <li>
                                     <ul>
-                                        <li>
+                                        <li className="active">
                                             <a href="">
-                                                <i className="ti ti-file-invoice"></i><span>Invoices</span>
+                                                <i className="ti ti-file-invoice"></i><span>Earnings</span>
                                             </a>
                                         </li>
                                         <li>
@@ -126,38 +121,8 @@ function Sidebar() {
                                                 <i className="ti ti-file-invoice"></i><span>Verification</span>
                                             </a>
                                         </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-ban"></i><span>Error Page</span>
-                                            </a>
-                                        </li>
                                     </ul>
-                                </li>
-                                <li className="menu-title"><span>UI Interface</span></li>
-                                <li>
-                                    <ul>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-pocket"></i><span>Components</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-database"></i><span>Forms</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-layout-navbar-expand"></i><span>Tables</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-layout-grid"></i><span>Icons</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
+                                </li>     
                             </ul>
                         </div>
                     </div>

@@ -8,6 +8,8 @@ function Categories() {
     const categories = useSelector((state) => state.categories.categories);
     const status = useSelector((state) => state.categories.status);
 
+    console.log('--- CATEGORY ---', categories);
+
     // Sử dụng useRef để tránh double call từ StrictMode
     const hasFetched = useRef(false);
     const carouselInitialized = useRef(false);
@@ -23,62 +25,62 @@ function Categories() {
         }
     }, []); // Empty dependency array - chỉ chạy khi mount
 
-    // // Effect để khởi tạo Owl Carousel
-    // useEffect(() => {
-    //     if (status === 'succeeded' && categories.length > 0 && !carouselInitialized.current) {
-    //         carouselInitialized.current = true;
+    // Effect để khởi tạo Owl Carousel
+    useEffect(() => {
+        if (status === 'succeeded' && categories.length > 0 && !carouselInitialized.current) {
+            carouselInitialized.current = true;
 
-    //         const timer = setTimeout(() => {
-    //             console.log('🎠 Initializing Owl Carousel');
+            const timer = setTimeout(() => {
+                console.log('🎠 Initializing Owl Carousel');
 
-    //             const $carousel = $('.popular-cartype-slider');
+                const $carousel = $('.popular-cartype-slider');
 
-    //             // Cleanup existing carousel nếu có
-    //             if ($carousel.hasClass('owl-loaded')) {
-    //                 $carousel.trigger('destroy.owl.carousel');
-    //                 $carousel.removeClass('owl-carousel owl-loaded');
-    //                 $carousel.find('.owl-stage-outer').children().unwrap();
-    //             }
+                // Cleanup existing carousel nếu có
+                if ($carousel.hasClass('owl-loaded')) {
+                    $carousel.trigger('destroy.owl.carousel');
+                    $carousel.removeClass('owl-carousel owl-loaded');
+                    $carousel.find('.owl-stage-outer').children().unwrap();
+                }
 
-    //             // Khởi tạo carousel mới
-    //             $carousel.addClass('owl-carousel').owlCarousel({
-    //                 loop: true,
-    //                 margin: 10,
-    //                 nav: true,
-    //                 dots: true,
-    //                 autoplay: true,
-    //                 autoplayTimeout: 3000,
-    //                 responsive: {
-    //                     0: { items: 1 },
-    //                     600: { items: 2 },
-    //                     1000: { items: 4 }
-    //                 }
-    //             });
-    //         }, 200);
+                // Khởi tạo carousel mới
+                $carousel.addClass('owl-carousel').owlCarousel({
+                    loop: true,
+                    margin: 10,
+                    nav: true,
+                    dots: true,
+                    autoplay: true,
+                    autoplayTimeout: 3000,
+                    responsive: {
+                        0: { items: 1 },
+                        600: { items: 2 },
+                        1000: { items: 4 }
+                    }
+                });
+            }, 200);
 
-    //         // Cleanup function
-    //         return () => {
-    //             clearTimeout(timer);
-    //             // Reset flag nếu component unmount
-    //             carouselInitialized.current = false;
-    //         };
-    //     }
-    // }, [status, categories.length]);
+            // Cleanup function
+            return () => {
+                clearTimeout(timer);
+                // Reset flag nếu component unmount
+                carouselInitialized.current = false;
+            };
+        }
+    }, [status, categories.length]);
 
-    // // Cleanup khi component unmount
-    // useEffect(() => {
-    //     return () => {
-    //         console.log('💀 Categories component unmounting');
-    //         hasFetched.current = false;
-    //         carouselInitialized.current = false;
+    // Cleanup khi component unmount
+    useEffect(() => {
+        return () => {
+            console.log('💀 Categories component unmounting');
+            hasFetched.current = false;
+            carouselInitialized.current = false;
 
-    //         // Destroy carousel khi unmount
-    //         const $carousel = $('.popular-cartype-slider');
-    //         if ($carousel.hasClass('owl-loaded')) {
-    //             $carousel.trigger('destroy.owl.carousel');
-    //         }
-    //     };
-    // }, []);
+            // Destroy carousel khi unmount
+            const $carousel = $('.popular-cartype-slider');
+            if ($carousel.hasClass('owl-loaded')) {
+                $carousel.trigger('destroy.owl.carousel');
+            }
+        };
+    }, []);
 
     if (status === 'loading') {
         return (
@@ -131,7 +133,7 @@ function Categories() {
 
                         <div className="row">
                             <div className="popular-slider-group">
-                                <div className="owl-carousel popular-cartype-slider owl-theme">
+                                {/* <div className="owl-carousel popular-cartype-slider owl-theme"> */}
                                     {categories.map((category) => (
                                         <div className="listing-owl-item"
                                             key={category._id}
@@ -144,7 +146,7 @@ function Categories() {
                                             </div>
                                         </div>
                                     ))}
-                                </div>
+                                {/* </div> */}
                             </div>
                         </div>
 

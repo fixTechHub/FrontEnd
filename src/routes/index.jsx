@@ -16,7 +16,11 @@ import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ViewEarningAndCommission from "../pages/technician/ViewEarningAndCommission";
-
+import ChooseTechnician from '../pages/booking/ChooseTechnician';
+import BookingProcessing from "../pages/booking/BookingProcessing";
+import RegisterTechnician from "../pages/technician/RegisterTechnician";
+import TechnicianJobList from "../pages/technician/TechnicianJob";
+import TechnicianJob from "../pages/technician/TechnicianJobDetails";
 
 export default function AppRoutes() {
   const dispatch = useDispatch();
@@ -38,8 +42,6 @@ export default function AppRoutes() {
 
   if (loading || !isAuthChecked) {
     return (
-
-
       <div className="loading-wrapper">
         <div className="loading-spinner"></div>
         <p>Đang tải...</p>
@@ -49,7 +51,6 @@ export default function AppRoutes() {
 
   return (
     <Routes>
-      {/* Public routes */}
       <Route
         path="/"
         element={
@@ -99,28 +100,69 @@ export default function AppRoutes() {
       />
 
       {/* Protected routes */}
-      <Route path="/technician/profile/:id" element={
+      <Route
+        path="/technician/profile/:id"
+        element={
           <ProtectedRoute isAllowed={!!user}>
             <ViewTechnicianProfile />
           </ProtectedRoute>
         }
       />
 
-      <Route path="/profile" element={
+      <Route
+        path="/profile"
+        element={
           <ProtectedRoute isAllowed={!!user}>
             <ProfilePage />
           </ProtectedRoute>
         }
       />
 
-      <Route path="/choose-role" element={<ChooseRole />} />
-      <Route path="/booking" element={<BookingPage />} />
-      <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />}/>
+      <Route
+        path="/choose-role"
+        element={<ChooseRole />}
+      />
+
+      <Route
+        path="/booking"
+        element={<BookingPage />}
+      />
+
+      <Route
+        path="/technician/profile/:technicianId"
+        element={<ViewTechnicianProfile />}
+      />
       <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
+
+      <Route path="/technician/:technicianId/booking" element={<TechnicianJobList />} />
+
+      <Route path="/technician/:technicianId/booking/:bookingId" element={<TechnicianJob />} />
+      
       <Route path="/technician/:technicianId" element={< TechnicianDashboard />} />
 
+      <Route path="/registerTechnician" element={< RegisterTechnician />} />
+
+      <Route
+        path="/booking/choose-technician"
+        element={<ChooseTechnician />}
+      />
+
+      <Route
+        path="/booking/booking-processing"
+        element={<BookingProcessing />}
+      />
+
+      {/* <Route
+                    path="/dashboard"
+                    element={
+                        <PrivateRoute allowedRoles={[Roles.ADMIN, Roles.TECHNICIAN]}>
+                            <DashboardPage />
+                        </PrivateRoute>
+                    }
+                /> */}
+
       {/* Fallback route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );
 }

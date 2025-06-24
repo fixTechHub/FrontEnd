@@ -16,6 +16,18 @@ export const getEarningAndCommission = async (technicianId) => {
   return response.data;
 };
 
+export const getJobDetails = async (technicianId, bookingId) => {
+  const response = await apiClient.get(`/technicians/${technicianId}/bookings/${bookingId}`);
+  console.log("📦 Dữ liệu trả về:", response.data);
+  return response.data;
+};
+
+export const getTechnicianJob = async (technicianId) => {
+  console.log('✅ Gọi API với technicianId:', technicianId);
+  const response = await apiClient.get(`/technicians/${technicianId}/bookings`);
+  console.log("📦 Dữ liệu trả về:", response.data);
+  return response.data;
+};
 
 export const getTechnicianAvailability = async (technicianId, status) => {
   const response = await apiClient.get(`/technicians/${technicianId}/availability`, {
