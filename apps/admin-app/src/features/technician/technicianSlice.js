@@ -7,7 +7,7 @@ import {
   getTechnicianJob,
   getJobDetails,
   getTechnicians, completeTechnicianProfile
-} from '../technicians/technicianAPI';
+} from '../technician/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
@@ -143,10 +143,11 @@ const technicianSlice = createSlice({
         const payload = action.payload;
 
         console.log('Received payload:', payload);
-        state.profile = {
-          technician: payload.data[0],
-          certificates: payload.data[1]
-        };
+        state.profile = action.payload;
+        // state.profile = {
+        //   technician: payload.data[0],
+        //   certificates: payload.data[1]
+        // };
       })
       .addCase(fetchTechnicianProfile.rejected, (state, action) => {
         state.loading = false;

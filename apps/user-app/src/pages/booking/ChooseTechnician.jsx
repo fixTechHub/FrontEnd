@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchQuotationsByBookingId } from '../../features/bookings/bookingSlice';
 import { acceptQuotation } from '../../features/bookings/bookingAPI';
 import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
-import { fetchBookingPriceInformation } from '../../features/booking-prices/bookingPriceSlice';
+
 
 function ChooseTechnician() {
     const dispatch = useDispatch();

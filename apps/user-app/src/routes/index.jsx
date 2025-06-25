@@ -1,7 +1,9 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { checkAuthThunk } from "../features/auth/authSlice";
+import ProtectedRoute from "./access/PrivateRoute";
 import PrivateRoute from "./access/PrivateRoute";
-
 import HomePage from "../pages/home/HomePage";
 import LoginPage from "../pages/authentication/LogInPage";
 import RegisterPage from "../pages/authentication/RegisterPage";
@@ -15,7 +17,8 @@ import CompleteProfile from "../pages/technician/CompleteProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ChooseTechnician from '../pages/booking/ChooseTechnician';
-import BookingProcessing from "../pages/booking/BookingProcessing";
+import BookingProcessing from "../../../user-app/src/pages/booking/BookingProcessing";
+import RegisterTechnician from "../../../admin-app/src/pages/technician-dashboard/RegisterTechnician";
 import ContractComplete from '../pages/contracts/ContractComplete';
 import CheckoutPage from '../pages/booking/CheckoutPage';
 import PaymentSuccess from "../pages/transaction/PaymentSuccess";
@@ -23,7 +26,8 @@ import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
 
 export default function AppRoutes() {
-  const { user, registrationData, loading } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+ const { user, registrationData, loading } = useSelector((state) => state.auth);
 
   if (loading) {
     return (

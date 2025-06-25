@@ -1,8 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTechnicianProfile } from '../../../../user-app/src/features/technicians/technicianSlice';
+import { fetchTechnicianProfile } from '../../features/technician/technicianSlice';
 import { useParams } from 'react-router-dom';
-import Header from '../../../../user-app/src/components/common/Header';
 import Rating from 'react-rating';
 
 function ViewTechnicianProfile() {
@@ -10,13 +9,16 @@ function ViewTechnicianProfile() {
     const { technicianId } = useParams();
 
     const { profile, loading, error } = useSelector(state => state.technician);
+    console.log("Profile:", profile);
 
     useEffect(() => {
-        if (technicianId) {
-            console.log("Dispatching technicianId:", technicianId);
-            dispatch(fetchTechnicianProfile(technicianId));
-        }
-    }, [dispatch, technicianId]);
+    if (technicianId) {
+        console.log("Dispatching technicianId:", technicianId);
+        dispatch(fetchTechnicianProfile(technicianId));
+    } else {
+        console.log("No technicianId available");
+    }
+}, [dispatch, technicianId]);
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
@@ -30,7 +32,7 @@ function ViewTechnicianProfile() {
 
     return (
         <>
-            <Header />
+           
             <div>
                 <div className="settings-info" >
                     <div className="settings-sub-heading">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { message } from 'antd';
-import { technicianAPI } from '../../features/technicians/technicianAPI';
+import { technicianAPI } from '../../features/technicians/techniciansAPI';
 import { setTechnicians, setFilters, setLoading, setError } from '../../features/technicians/technicianSlice';
 import { selectFilteredTechnicians, selectTechnicianFilters } from '../../features/technicians/technicianSelectors';
 
