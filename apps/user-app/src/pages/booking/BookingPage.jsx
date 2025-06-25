@@ -3,17 +3,20 @@ import Header from "../../components/common/Header";
 import BookingWizard from "./common/BookingHeader";
 import Map from "../../components/map/Map";
 import ServiceSelector from "./common/ServiceSelector";
+import ImageUploader from "./common/ImageUploader";
 import { useDispatch, useSelector } from "react-redux";
 import { Spinner } from "react-bootstrap";
 import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import ImageUploader from "./common/ImageUploader";
 import { createNewBooking } from "../../features/bookings/bookingSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
+import { customerSteps, technicianSteps } from "../../utils/stepsData";
 
 function BookingPage() {
     const { categories, status: categoryStatus } = useSelector((state) => state.categories);
     const { services, status: serviceStatus } = useSelector((state) => state.services);
+    const { user } = useSelector((state) => state.auth);
+    const stepsForCurrentUser = user.role.name === 'CUSTOMER' ? customerSteps : technicianSteps;
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -126,7 +129,7 @@ function BookingPage() {
 
             <div className="booking-new-module">
                 <div className="container">
-                    <BookingWizard activeStep={1} />
+                    <BookingWizard steps={stepsForCurrentUser} activeStep={1} />
                     <form onSubmit={handleSubmit} className="booking-detail-info">
                         <div className="row">
                             <div className="col-lg-8">

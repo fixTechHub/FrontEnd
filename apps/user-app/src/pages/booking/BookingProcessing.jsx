@@ -1,16 +1,21 @@
+import { customerSteps, technicianSteps } from "../../utils/stepsData";
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import BreadcrumbBar from "../../components/common/BreadcrumbBar";
 import Header from "../../components/common/Header";
 import BookingDetails from "./common/BookingDetails";
 import BookingWizard from "./common/BookingHeader";
 import MessageBox from "../../components/message/MessageBox";
-import { useNavigate } from "react-router-dom";
+
 function BookingProcessing() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [bookingId, setBookingId] = useState(null);
-    const [technicianId, setTechnicianId] = useState(null)
+    const [technicianId, setTechnicianId] = useState(null);
+    const { user } = useSelector((state) => state.auth);
+    const stepsForCurrentUser = user.role.name === 'CUSTOMER' ? customerSteps : technicianSteps;
+
     useEffect(() => {
         const bookingId = searchParams.get('bookingId');
         setBookingId(bookingId);
@@ -21,6 +26,7 @@ function BookingProcessing() {
         console.log('--- BOOKING PROCESSING ---', technicianId);
 
     }, [searchParams]);
+
     const handleComfirm = () => {
         if (!bookingId || !technicianId) {
             alert("Thiếu thông tin booking hoặc kỹ thuật viên!");
@@ -29,6 +35,7 @@ function BookingProcessing() {
 
         navigate(`/checkout/${bookingId}/${technicianId}`);
     };
+
     return (
         <>
             <Header />
@@ -37,7 +44,7 @@ function BookingProcessing() {
 
             <div className="booking-new-module">
                 <div className="container">
-                    <BookingWizard activeStep={3} />
+                    <BookingWizard steps={stepsForCurrentUser} activeStep={3} />
 
                     <div className="booking-detail-info">
                         <div className="row">
