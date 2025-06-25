@@ -1,0 +1,306 @@
+@import 'mapbox-gl/dist/mapbox-gl.css';
+
+.font-14 {
+    font-size: 14px;
+}
+
+.banner-font {
+    font-size: 3.5rem;
+}
+
+/* Colors */
+.main-color {
+    color: #FFA633 !important; 
+}
+
+/* Margins */
+.mtd-30 {
+    margin-top: -30px;
+}
+
+.mb-20 {
+    margin-bottom: 20px !important;
+}
+
+/* Loading Spinner */
+.loading-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+body {
+    background-color: #f8f9fa; /* Set a global background color */
+}
+
+.booking-service {
+    border: 1px solid #676767;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.booking-service:hover {
+    background-color: #FFA633 !important;
+}
+
+
+/* Custom Accordion Styles (fully namespaced) */
+.custom-accordion {
+  border: 0;
+  margin: 0;
+}
+.custom-accordion .custom-accordion-item {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-width: 0 0 1px 0;
+  border-color: #dbdbdb;
+  box-shadow: none;
+  border-radius: 0;
+  background: transparent;
+}
+.custom-accordion .custom-accordion-item .custom-accordion-button {
+  background: transparent;
+  font-size: 20px;
+  font-weight: 500;
+  color: #111111;
+  padding: 0;
+  box-shadow: none;
+}
+@media (max-width: 991.98px) {
+  .custom-accordion .custom-accordion-item .custom-accordion-button {
+    font-size: 18px;
+  }
+}
+@media (max-width: 767.98px) {
+  .custom-accordion .custom-accordion-item .custom-accordion-button {
+    font-size: 16px;
+  }
+}
+.custom-accordion .custom-accordion-item .custom-accordion-button::after {
+  content: "\ea57";
+  font-family: boxicons;
+  background-image: none;
+  width: 32px;
+  height: 32px;
+  background: #111111;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.custom-accordion .custom-accordion-item .custom-accordion-button:not(.collapsed) {
+  padding-bottom: 24px;
+}
+.custom-accordion .custom-accordion-item .custom-accordion-button:not(.collapsed)::after {
+  content: "\ea4a";
+}
+.custom-accordion .custom-accordion-item .custom-accordion-body {
+  padding: 12px 0 0;
+  color: #676767;
+  border-top: 1px solid #dbdbdb;
+}
+.custom-accordion .custom-accordion-item:last-child {
+  padding-bottom: 0;
+  margin-bottom: 0;
+  border: 0;
+}
+
+/* Custom Accordion White Board/Card Style */
+
+.custom-accordion-board {
+    padding: 5px;
+    background: #ffffff;
+    box-shadow: 0px 4px 24px 0px #E1E1E140;
+    border-radius: 5px;
+    margin-bottom: 24px;
+  }
+
+/* Custom Payment Button Style */
+.payment-btn {
+    background-color: #FFA633;
+    border: 1px solid #FFA633;
+    color: #ffffff;
+    box-shadow: inset 0 0 0 0 #ffffff;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.payment-btn:hover {
+    background-color: #ffffff;
+    border-color: #FFA633;
+    color: #FFA633;
+    box-shadow: inset 0 50px 0 0 #ffffff;
+}
+
+.payment-btn:active {
+    background: #FFA633;
+    border-color: #FFA633;
+}
+
+.payment-btn:disabled {
+    background-color: #cccccc;
+    border-color: #cccccc;
+    color: #666666;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.payment-btn:disabled:hover {
+    background-color: #cccccc;
+    border-color: #cccccc;
+    color: #666666;
+    box-shadow: none;
+}
+
+/* Ensure payment button container is properly positioned */
+.booking-info-btns {
+    position: relative;
+    z-index: 5;
+}
+
+.booking-info-btns .payment-btn {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Ensure no overlapping elements */
+.booking-info-btns::before,
+.booking-info-btns::after {
+    display: none;
+}
+
+/* Payment action buttons container */
+.payment-action-buttons {
+    position: relative;
+    z-index: 5;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #f4f4f4;
+}
+
+.payment-action-buttons .thanh-toan-btn {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+/* New isolated payment button style */
+.thanh-toan-btn {
+    background-color: #FFA633 !important;
+    border: 1px solid #FFA633 !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 0 0 0 #ffffff !important;
+    font-weight: 600 !important;
+    font-size: 16px !important;
+    padding: 12px 20px !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    transition: all 0.5s ease !important;
+    text-decoration: none !important;
+    display: inline-block !important;
+    text-align: center !important;
+    position: relative !important;
+    z-index: 999 !important;
+    pointer-events: auto !important;
+    min-height: 44px !important;
+    min-width: 120px !important;
+    margin-left: 8px !important;
+    line-height: 1.2 !important;
+    vertical-align: middle !important;
+}
+
+.thanh-toan-btn:hover {
+    background-color: #ffffff !important;
+    border-color: #FFA633 !important;
+    color: #FFA633 !important;
+    box-shadow: inset 0 50px 0 0 #ffffff !important;
+}
+
+.thanh-toan-btn:active {
+    background: #FFA633 !important;
+    border-color: #FFA633 !important;
+}
+
+.thanh-toan-btn:disabled {
+    background-color: #cccccc !important;
+    border-color: #cccccc !important;
+    color: #666666 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+.thanh-toan-btn:disabled:hover {
+    background-color: #cccccc !important;
+    border-color: #cccccc !important;
+    color: #666666 !important;
+    box-shadow: none !important;
+}
+
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-weight: bold;
+    font-size: 13px;
+    color: #ffffff !important;
+}
+
+.status-pending { background-color: #f0ad4e; } /* Vàng cam */
+.status-quoted { background-color: #0275d8; } /* Xanh dương */
+.status-confirmed { background-color: #5cb85c; } /* Xanh lá */
+.status-in-progress { background-color: #5bc0de; } /* Xanh ngọc */
+.status-completed { background-color: #337ab7; } /* Xanh đậm */
+.status-cancelled { background-color: #777; } /* Xám */
+.status-rejected { background-color: #d9534f; } /* Đỏ */
+.status-unknown { background-color: #ccc; color: #333; }
+
+.payment-card {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 2px solid transparent;
+}
+
+.payment-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.payment-card.selected {
+  border-color: #FFA633 ; /* Primary color for selection */
+  box-shadow: 0 4px 15px rgba(25, 119, 243, 0.3);
+}
+
