@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getTechnicianProfile,getTechnicians, completeTechnicianProfile } from '../technicians/technicianAPI';
+import { getTechnicianProfile, getTechnicians, completeTechnicianProfile, sendQuotationAPI } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
@@ -7,7 +7,7 @@ export const fetchTechnicianProfile = createAsyncThunk(
     try {
       const data = await getTechnicianProfile(technicianId);
       console.log('--- FETCH TECHNICIAN PROFILE ---', data);
-      
+
       return data; // giữ nguyên trả về { success, data }
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -22,13 +22,15 @@ export const fetchTechnicians = createAsyncThunk(
   async (thunkAPI) => {
     try {
       const data = await getTechnicians();
-      return data.data;}
-      catch (error){
-        return thunkAPI.rejectWithValue(
-          error.response?.data?.message || error.message)
-      }
+      return data.data;
     }
-  )
+    catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message)
+    }
+  }
+);
+
 export const completeTechnicianProfileThunk = createAsyncThunk(
   'technician/completeProfile',
   async (technicianData, thunkAPI) => {
@@ -43,10 +45,27 @@ export const completeTechnicianProfileThunk = createAsyncThunk(
   }
 );
 
+export const sendQuotation = createAsyncThunk(
+  'technician/sendQuotation',
+  async (formData, thunkAPI) => {
+    try {
+      const res = await sendQuotationAPI(formData);
+      console.log('--- SEND QUOTATION ---', res.data);
+
+      return res.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
 const technicianSlice = createSlice({
   name: 'technician',
   initialState: {
     profile: null,
+    quotations: [],
     loading: false,
     error: null
   },
@@ -95,6 +114,19 @@ const technicianSlice = createSlice({
       })
       .addCase(completeTechnicianProfileThunk.rejected, (state, action) => {
         state.loading = false;
+        state.error = action.payload;
+      })
+      
+      // Send Quotation
+      .addCase(sendQuotation.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(sendQuotation.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.quotations.unshift(action.payload);
+      })
+      .addCase(sendQuotation.rejected, (state, action) => {
+        state.status = 'failed';
         state.error = action.payload;
       });
   }

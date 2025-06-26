@@ -10,6 +10,7 @@ import { fetchQuotationsByBookingId } from '../../features/bookings/bookingSlice
 import { acceptQuotation } from '../../features/bookings/bookingAPI';
 import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
 import { fetchBookingPriceInformation } from '../../features/booking-prices/bookingPriceSlice';
+import { customerSteps, technicianSteps } from '../../utils/stepsData';
 
 function ChooseTechnician() {
     const dispatch = useDispatch();
@@ -21,6 +22,8 @@ function ChooseTechnician() {
     const { quotations, status: quotationsStatus } = useSelector((state) => state.booking);
     const { quotationDetail, status: quotationStatus } = useSelector((state) => state.bookingPrice);
     const { profile, loading, error } = useSelector(state => state.technician);
+    const { userRole } = useSelector((state) => state.auth);
+    const stepsForCurrentUser = userRole.role.name === 'CUSTOMER' ? customerSteps : technicianSteps;
 
     const technician = profile?.technician;
     const certificates = profile?.certificates;
@@ -75,7 +78,7 @@ function ChooseTechnician() {
 
             <div className="booking-new-module">
                 <div className="container">
-                    <BookingWizard activeStep={2} />
+                    <BookingWizard steps={stepsForCurrentUser} activeStep={2} />
 
                     <div className="booking-detail-info">
                         <div className="row">

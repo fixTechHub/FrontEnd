@@ -97,7 +97,7 @@ function BookingDetails({ bookingId }) {
                 </div>
             </div>
             {booking?.status !== 'DONE' && (
-                <button onClick={handleCancel} className="btn btn-outline-danger" style={{ width: '100%', marginTop: -5 }}>Hủy đặt thợ</button>
+                <button onClick={handleCancel} className="btn btn-outline-danger" style={{ width: '100%', marginTop: -5 }}>Hủy đơn hàng</button>
             )}
         </div>
     );

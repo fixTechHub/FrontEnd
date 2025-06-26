@@ -13,3 +13,5 @@ export const completeTechnicianProfile = async (technicianData) => {
   const response = await apiClient.post('/technicians/complete-profile', technicianData);
   return response.data;
 };
+
+export const sendQuotationAPI = (formData) => apiClient.post('/technicians/send-quotation', formData);

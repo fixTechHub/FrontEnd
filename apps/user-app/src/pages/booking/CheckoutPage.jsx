@@ -19,13 +19,16 @@ const CheckoutPage = () => {
     const [selectedCouponId, setSelectedCouponId] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('PAYOS'); // Default to PayOS
+    const { user } = useSelector((state) => state.auth);
+    const stepsForCurrentUser = user.role.name === 'CUSTOMER' ? customerSteps : technicianSteps;
+
     const navigate = useNavigate();
+
     useEffect(() => {
         if (bookingId && technicianId) {
             dispatch(getAcceptedBookingPriceThunk({ bookingId, technicianId }));
         }
     }, [dispatch, bookingId, technicianId]);
-
 
     const itemsTotal = bookingItem.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
     const laborPrice = bookingPrice?.laborPrice || 0;
@@ -157,13 +160,13 @@ const CheckoutPage = () => {
     return (
         <>
             <Header />
+
             <BreadcrumbBar title='Thanh toán' />
-
-
 
             <div className="booking-new-module">
                 <div className="container">
-                    <BookingWizard activeStep={4} />
+                    <BookingWizard steps={stepsForCurrentUser} activeStep={4} />
+
                     <div className="booking-detail-info pt-0">
                         <div className="row">
                             <div className="col-lg-8">
