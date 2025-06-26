@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import React, { useEffect, useState } from 'react';
+
 import PrivateRoute from "./access/PrivateRoute";
 
 import HomePage from "../pages/home/HomePage";
@@ -24,9 +26,31 @@ import PaymentFail from "../pages/transaction/PaymentFail";
 import SendQuotation from "../pages/technician/SendQuotation";
 import WaitingConfirm from "../pages/technician/WaitingConfirm";
 
+import VideoCallPage from "../pages/video-call/VideoCallPage";
+import NotificationsPage from "../pages/notifications/NotificationPage";
+import ReceiptPage from "../pages/receipt/ReceiptPage";
+// import { checkAuthThunk } from '../features/auth/authSlice';
 export default function AppRoutes() {
+  const dispatch = useDispatch();
   const { user, registrationData, loading } = useSelector((state) => state.auth);
-  // console.log('--- GET ROLE ---', user?.role?.name);
+  // const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+  //   useEffect(() => {
+  //     dispatch(checkAuthThunk()).finally(() => {
+  //       setIsAuthChecked(true);
+  //     });
+  //   }, [dispatch]);
+
+  // if (!isAuthChecked) {
+  //     return (
+  //       <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+  //         <div className="spinner-border text-warning" role="status">
+  //           <span className="visually-hidden">Loading...</span>
+  //         </div>
+  //         <p className="ms-3">Đang tải...</p>
+  //       </div>
+  //     );
+  //   }
 
   return (
     <Routes>
@@ -103,33 +127,59 @@ export default function AppRoutes() {
       />
 
       <Route path="/contract/complete" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "TECHNICIAN"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <ContractComplete />
         </PrivateRoute>
 
       } />
 
-      <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user}>
+      <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+        redirectPath={user ? "/" : "/login"}
+      >
         <CheckoutPage />
       </PrivateRoute>} />
+      <Route path="/receipts" element={
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
+          <ReceiptPage />
+        </PrivateRoute>
+      } />
 
       <Route path="/payment-success" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentSuccess />
-        </PrivateRoute>} />
+        </PrivateRoute>
+      } />
 
       <Route path="/payment-failed" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentFail />
         </PrivateRoute>
       } />
 
       <Route path="/payment-cancel" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentCancel />
         </PrivateRoute>
       } />
 
+      <Route
+        path="/notifications/all"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <NotificationsPage />
+          </PrivateRoute>
+        }
+      />
       <Route
         path="/booking"
         element={
@@ -138,7 +188,6 @@ export default function AppRoutes() {
           // </PrivateRoute>
         }
       />
-
       <Route
         path="/booking/choose-technician"
         element={
@@ -147,13 +196,20 @@ export default function AppRoutes() {
           // </PrivateRoute>
         }
       />
-
       <Route
         path="/booking/booking-processing"
         element={
           // <PrivateRoute isAllowed={!!user}>
             <BookingProcessing />
           // </PrivateRoute>
+        }
+      />
+      <Route
+        path="/video-call/:bookingId"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <VideoCallPage />
+          </PrivateRoute>
         }
       />
       {/* Thêm các route cần user đăng nhập ở đây, ví dụ: */}

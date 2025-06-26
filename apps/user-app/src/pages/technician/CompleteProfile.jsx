@@ -41,23 +41,23 @@ const CompleteProfile = () => {
         fetchCategories();
         
         // Get current location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setFormData(prev => ({
-                        ...prev,
-                        currentLocation: {
-                            type: 'Point',
-                            coordinates: [position.coords.longitude, position.coords.latitude]
-                        }
-                    }));
-                },
-                (error) => {
-                    console.error('Error getting location:', error);
-                    toast.warning('Không thể lấy vị trí hiện tại. Vui lòng nhập thủ công.');
-                }
-            );
-        }
+        // if (navigator.geolocation) {
+        //     navigator.geolocation.getCurrentPosition(
+        //         (position) => {
+        //             setFormData(prev => ({
+        //                 ...prev,
+        //                 currentLocation: {
+        //                     type: 'Point',
+        //                     coordinates: [position.coords.longitude, position.coords.latitude]
+        //                 }
+        //             }));
+        //         },
+        //         (error) => {
+        //             console.error('Error getting location:', error);
+        //             toast.warning('Không thể lấy vị trí hiện tại. Vui lòng nhập thủ công.');
+        //         }
+        //     );
+        // }
     }, [user, navigate]);
 
     const fetchCategories = async () => {
@@ -118,15 +118,15 @@ const CompleteProfile = () => {
             return;
         }
 
-        if (selectedCategories.length === 0) {
-            toast.error('Vui lòng chọn ít nhất một chuyên môn');
-            return;
-        }
+        // if (selectedCategories.length === 0) {
+        //     toast.error('Vui lòng chọn ít nhất một chuyên môn');
+        //     return;
+        // }
 
-        if (certificates.length === 0) {
-            toast.error('Vui lòng upload ít nhất một chứng chỉ');
-            return;
-        }
+        // if (certificates.length === 0) {
+        //     toast.error('Vui lòng upload ít nhất một chứng chỉ');
+        //     return;
+        // }
 
         try {
             // Upload certificates first
@@ -211,7 +211,7 @@ const CompleteProfile = () => {
                                 </div>
 
                                 {/* Chuyên môn */}
-                                <div className="mb-4">
+                                {/* <div className="mb-4">
                                     <h5>Chuyên môn *</h5>
                                     <div className="row">
                                         {categories.map((category) => (
@@ -231,7 +231,7 @@ const CompleteProfile = () => {
                                             </div>
                                         ))}
                                     </div>
-                                </div>
+                                </div> */}
 
                                 {/* Chứng chỉ */}
                                 <div className="mb-4">
