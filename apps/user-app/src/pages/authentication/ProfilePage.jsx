@@ -14,6 +14,7 @@ import {
   verifyDeactivateAccountThunk,
   requestDeleteVerificationThunk,
   verifyDeleteOTPThunk,
+  checkAuthThunk,
   logoutThunk,
 } from "../../features/auth/authSlice";
 import { toast } from "react-toastify";
@@ -25,6 +26,12 @@ import styled from "@emotion/styled";
 import authAPI from "../../features/auth/authAPI";
 import ContractStatus from '../../components/contracts/ContractStatus';
 import ApproveTechnicianTest from '../../components/admin/ApproveTechnicianTest'
+import apiClient from "../../services/apiClient";
+
+// ------- GLOBAL FLAG --------
+// Đánh dấu đã lấy thông tin technician thành công để tránh dispatch lặp
+let hasFetchedTechnician = false;
+
 // --- STYLED COMPONENTS ---
 
 // Main color from the image
@@ -429,6 +436,8 @@ function ProfilePage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, profileLoading } = useSelector((state) => state.auth);
+  const authTechnician = useSelector(state=> state.auth.technician);
+  const categoriesList = useSelector(state => state.categories.categories);
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -445,6 +454,8 @@ function ProfilePage() {
     newPassword: "",
     confirmPassword: "",
   });
+  const [showPwd, setShowPwd] = useState({ current:false, new:false, confirm:false });
+  const [pwdRules, setPwdRules] = useState({ length:false, upper:false, lower:false, digit:false, special:false });
   const [newPhone, setNewPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
@@ -471,6 +482,44 @@ function ProfilePage() {
   const [accountDeleted, setAccountDeleted] = useState(false);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
+  // Preview certificate modal state
+  const [certPreviewUrl, setCertPreviewUrl] = useState(null);
+  const certDialogRef = useRef(null);
+
+  // 0. ensure apiClient imported (already in file at top)
+  // 1. Add state after pwdRules
+  const [currentPwdValid, setCurrentPwdValid] = useState(null);
+  const [passwordErrors, setPasswordErrors] = useState({ current:'', new:'', confirm:'' });
+
+  // 1. thêm state sau deletePassword
+  const [deletePwdError, setDeletePwdError] = useState("");
+  const [showDeletePwd, setShowDeletePwd] = useState(false);
+
+  // Reset form khi đóng modal đổi mật khẩu
+  useEffect(() => {
+    if (!showChangePasswordModal) {
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPwdRules({ length:false, upper:false, lower:false, digit:false, special:false });
+      setCurrentPwdValid(null);
+      setPasswordErrors({ current:'', new:'', confirm:'' });
+      setShowPwd({ current:false, new:false, confirm:false });
+    }
+  }, [showChangePasswordModal]);
+
+  // Lấy thông tin technician (chỉ fetch đúng 1 lần thành công)
+  useEffect(() => {
+    if (!hasFetchedTechnician && !authTechnician && user?.role?.name === 'TECHNICIAN') {
+      dispatch(checkAuthThunk())
+        .unwrap()
+        .then(() => {
+          hasFetchedTechnician = true; // đặt cờ sau khi fetch thành công
+        })
+        .catch(() => {
+          // Giữ cờ = false để thử lại ở lần render sau (nếu cần)
+        });
+    }
+  }, [authTechnician, user, dispatch]);
+
   useEffect(() => {
     // Chỉ gọi API nếu user đã tồn tại
     if (user) {
@@ -492,12 +541,50 @@ function ProfilePage() {
     }
   }, [user]);
 
+  // 2. thêm hook reset khi modal đóng sau hook tương tự (sau reset change password)
+  useEffect(()=>{
+    if(!showDeletePasswordModal){
+      setDeletePassword("");
+      setDeletePwdError("");
+      setShowDeletePwd(false);
+    }
+  },[showDeletePasswordModal]);
+
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handlePasswordChange = (e) => {
-    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setPasswordData({ ...passwordData, [name]: value });
+    setPasswordErrors(prev=>({ ...prev, [name.replace('Password','')]: '' }));
+
+    if(name === 'newPassword') {
+      setPwdRules({
+        length:  value.length >= 8,
+        upper:   /[A-Z]/.test(value),
+        lower:   /[a-z]/.test(value),
+        digit:   /[0-9]/.test(value),
+        special: /[!@#$%^&*]/.test(value),
+      });
+    }
+  };
+
+  const verifyCurrentPassword = async (pwd) => {
+    // Nếu ô trống thì reset trạng thái, không hiển thị lỗi
+    if(!pwd.trim()){
+      setCurrentPwdValid(null);
+      setPasswordErrors(prev => ({ ...prev, current: '' }));
+      return;
+    }
+    try {
+      const { data } = await apiClient.post('/auth/verify-password', { currentPassword: pwd });
+      setCurrentPwdValid(data.valid);
+      setPasswordErrors(prev => ({ ...prev, current: data.valid ? '' : 'Mật khẩu hiện tại không đúng' }));
+    } catch(err) {
+      setCurrentPwdValid(false);
+      setPasswordErrors(prev => ({ ...prev, current: 'Không thể xác thực mật khẩu' }));
+    }
   };
 
   const handleCancel = () => {
@@ -527,6 +614,7 @@ function ProfilePage() {
     };
     try {
       await dispatch(updateProfileThunk(updateData)).unwrap();
+      await dispatch(fetchUserProfileThunk());
       setIsEditing(false);
       toast.success("Cập nhật thành công!");
       setAvatarPreview(null);
@@ -567,11 +655,21 @@ function ProfilePage() {
       toast.error("Không thể đổi mật khẩu cho tài khoản đăng nhập bằng Google");
       return;
     }
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      return toast.error("Mật khẩu mới và xác nhận không khớp");
-    }
-    if (passwordData.newPassword.length < 8) {
-      return toast.error("Mật khẩu mới phải có ít nhất 8 ký tự");
+    const errors={ current:'', new:'', confirm:'' };
+    if(!passwordData.currentPassword.trim()) errors.current='Vui lòng nhập mật khẩu hiện tại';
+    else if(currentPwdValid===false) errors.current='Mật khẩu hiện tại không đúng';
+
+    const strongRegex=/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+    if(!passwordData.newPassword.trim()) errors.new='Vui lòng nhập mật khẩu mới';
+    else if(!strongRegex.test(passwordData.newPassword)) errors.new='Mật khẩu chưa đáp ứng yêu cầu';
+    else if(passwordData.newPassword === passwordData.currentPassword) errors.new='Mật khẩu mới phải khác mật khẩu hiện tại';
+
+    if(!passwordData.confirmPassword.trim()) errors.confirm='Vui lòng nhập mật khẩu xác nhận';
+    else if(passwordData.newPassword!==passwordData.confirmPassword) errors.confirm='Mật khẩu xác nhận không khớp';
+
+    if(errors.current||errors.new||errors.confirm){
+      setPasswordErrors(errors);
+      return; // không toast ở đây
     }
     try {
       await dispatch(
@@ -702,13 +800,34 @@ function ProfilePage() {
     }
   };
 
+  // 3. thêm hàm verifyDeletePassword (đặt sau verifyCurrentPassword)
+  const verifyDeletePassword = async (pwd) => {
+    if(!pwd.trim()){
+      setDeletePwdError('');
+      return false;
+    }
+    try {
+      const { data } = await apiClient.post('/auth/verify-password', { currentPassword: pwd });
+      setDeletePwdError(data.valid ? '' : 'Mật khẩu không đúng');
+      return data.valid;
+    } catch(err) {
+      setDeletePwdError('Không thể xác thực mật khẩu');
+      return false;
+    }
+  };
+
+  // 4. sửa handleDeletePasswordSubmit
   const handleDeletePasswordSubmit = async (e) => {
     e.preventDefault();
     if (!deletePassword.trim()) {
-      toast.error("Vui lòng nhập mật khẩu");
+      setDeletePwdError('Vui lòng nhập mật khẩu');
       return;
     }
-    // Lưu mật khẩu và chuyển sang bước chọn phương thức xác thực
+    let valid = await verifyDeletePassword(deletePassword);
+    if(!valid){
+      return; // lỗi đã được hiển thị
+    }
+    // Xác thực thành công
     setShowDeletePasswordModal(false);
     setShowDeleteVerificationModal(true);
   };
@@ -867,14 +986,6 @@ function ProfilePage() {
                   <label htmlFor="fullName">Họ và tên</label>
                   <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleInputChange} />
                 </FormControl>
-                <FormControl>
-                  <label htmlFor="email">Địa chỉ email</label>
-                  <input type="email" id="email" name="email" value={formData.email} disabled />
-                </FormControl>
-                <FormControl>
-                  <label htmlFor="phone">Số điện thoại</label>
-                  <input type="text" id="phone" name="phone" value={formData.phone} disabled />
-                </FormControl>
               </div>
             </InfoCard>
             <InfoCard>
@@ -882,16 +993,16 @@ function ProfilePage() {
                 <i className="bi bi-geo-alt-fill"></i>
                 <h6>Địa chỉ</h6>
               </CardHeader>
-              <div style={{ padding: '0.5rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <FormControl>
+              <div style={{ padding: '0.5rem 0', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                <FormControl style={{ flex: '1 1 100%' }}>
                   <label htmlFor="address">Địa chỉ</label>
-                  <input type="text" id="address" name="address" value={formData.address} onChange={handleInputChange} placeholder="Số nhà, tên đường" />
+                  <input type="text" id="address" name="address" value={formData.address} onChange={handleInputChange} />
                 </FormControl>
-                <FormControl>
+                <FormControl style={{ flex: '1 1 45%' }}>
                   <label htmlFor="district">Quận/Huyện</label>
                   <input type="text" id="district" name="district" value={formData.district} onChange={handleInputChange} />
                 </FormControl>
-                <FormControl>
+                <FormControl style={{ flex: '1 1 45%' }}>
                   <label htmlFor="city">Tỉnh/Thành phố</label>
                   <input type="text" id="city" name="city" value={formData.city} onChange={handleInputChange} />
                 </FormControl>
@@ -915,6 +1026,22 @@ function ProfilePage() {
                 <InfoLabel>Họ và tên:</InfoLabel>
                 <InfoValue>{formData.fullName || "Chưa cập nhật"}</InfoValue>
               </CardContent>
+              {user?.role?.name === 'TECHNICIAN' && authTechnician && (
+                <>
+                  <CardContent>
+                    <InfoLabel>Số CCCD:</InfoLabel>
+                    <InfoValue>{authTechnician.identification}</InfoValue>
+                  </CardContent>
+                  <CardContent>
+                    <InfoLabel>Kinh nghiệm:</InfoLabel>
+                    <InfoValue>{authTechnician.experienceYears} năm</InfoValue>
+                  </CardContent>
+                  <CardContent>
+                    <InfoLabel>Ngân hàng:</InfoLabel>
+                    <InfoValue>{authTechnician.bankAccount?.bankName} - {authTechnician.bankAccount?.accountNumber} ({authTechnician.bankAccount?.accountHolder})</InfoValue>
+                  </CardContent>
+                </>
+              )}
             </div>
           </InfoCard>
           <InfoCard>
@@ -945,6 +1072,69 @@ function ProfilePage() {
                 </CardContent>
             </div>
           </InfoCard>
+          {/* Chuyên môn (danh mục) của kỹ thuật viên */}
+          {user?.role?.name === 'TECHNICIAN' && Array.isArray(authTechnician?.specialtiesCategories) && authTechnician.specialtiesCategories.length > 0 && (
+            <InfoCard>
+              <CardHeader>
+                <i className="bi bi-tags-fill"></i>
+                <h6>Chuyên môn</h6>
+              </CardHeader>
+              <div style={{ padding: '0.5rem 0', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {authTechnician.specialtiesCategories.map((catId) => {
+                  const catObj = Array.isArray(categoriesList) ? categoriesList.find(c => c._id === catId) : null;
+                  const catName = catObj ? catObj.categoryName : 'Đang cập nhật';
+                  return (
+                    <span key={catId} style={{ background:'#f5f5f5', border:'1px solid #e0e0e0', borderRadius:16, padding:'0.25rem 0.75rem', fontSize:14 }}>
+                      {catName}
+                    </span>
+                  );
+                })}
+              </div>
+            </InfoCard>
+          )}
+          {/* Chứng chỉ kỹ thuật viên */}
+          {user?.role?.name === 'TECHNICIAN' && Array.isArray(authTechnician?.certificate) && authTechnician.certificate.length > 0 && (
+            <InfoCard>
+              <CardHeader>
+                <i className="bi bi-award-fill"></i>
+                <h6>Chứng chỉ</h6>
+              </CardHeader>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', padding: '0.5rem 0' }}>
+                {authTechnician.certificate.map((item, idx) => {
+                  const src = typeof item === 'string' ? item : item.fileUrl;
+                  const isPDF = src.toLowerCase().endsWith('.pdf');
+                  return isPDF ? (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setCertPreviewUrl(src);
+                        certDialogRef.current?.showModal();
+                      }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 120, cursor:'pointer' }}
+                    >
+                      <i className="bi bi-file-earmark-pdf-fill" style={{ fontSize: '3rem', color: '#dc3545' }}></i>
+                      <small>PDF {idx + 1}</small>
+                    </div>
+                  ) : (
+                    <img
+                      key={idx}
+                      src={src}
+                      alt={`certificate-${idx + 1}`}
+                      onClick={() => {
+                        setCertPreviewUrl(src);
+                        certDialogRef.current?.showModal();
+                      }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/img/placeholder.png';
+                      }}
+                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid #dee2e6', cursor: 'pointer' }}
+                    />
+                  );
+                })}
+              </div>
+            </InfoCard>
+          )}
         </ProfileInfoContainer>
       )}
     </Section>
@@ -1033,16 +1223,36 @@ function ProfilePage() {
           <ModalBody>
             <FormControl>
               <label>Mật khẩu hiện tại</label>
-              <input type="password" name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} required />
+              <div style={{ position:'relative' }}>
+                <input type={showPwd.current? 'text':'password'} name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} onBlur={(e)=>verifyCurrentPassword(e.target.value)} />
+                <i className={`bi ${showPwd.current? 'bi-eye-slash':'bi-eye'}`} onClick={()=>setShowPwd(p=>({...p,current:!p.current}))} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', cursor:'pointer' }}></i>
+              </div>
+              {passwordErrors.current && <small className="text-danger d-block mt-1">{passwordErrors.current}</small>}
             </FormControl>
             <FormControl style={{marginTop: '1rem'}}>
               <label>Mật khẩu mới</label>
-              <input type="password" name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} required />
+              <div style={{ position:'relative' }}>
+                <input type={showPwd.new? 'text':'password'} name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} />
+                <i className={`bi ${showPwd.new? 'bi-eye-slash':'bi-eye'}`} onClick={()=>setShowPwd(p=>({...p,new:!p.new}))} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', cursor:'pointer' }}></i>
+              </div>
+              {passwordErrors.new && <small className="text-danger d-block mt-1">{passwordErrors.new}</small>}
             </FormControl>
              <FormControl style={{marginTop: '1rem'}}>
               <label>Xác nhận mật khẩu mới</label>
-              <input type="password" name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange} required />
+              <div style={{ position:'relative' }}>
+                <input type={showPwd.confirm? 'text':'password'} name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange} />
+                <i className={`bi ${showPwd.confirm? 'bi-eye-slash':'bi-eye'}`} onClick={()=>setShowPwd(p=>({...p,confirm:!p.confirm}))} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', cursor:'pointer' }}></i>
+              </div>
+              {passwordErrors.confirm && <small className="text-danger d-block mt-1">{passwordErrors.confirm}</small>}
             </FormControl>
+            {/* Danh sách yêu cầu mật khẩu */}
+            <ul style={{ listStyle:'none', paddingLeft:0, fontSize:'0.85rem', marginTop:'0.5rem' }}>
+              <li><i className={`bi ${pwdRules.length ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Ít nhất 8 ký tự</li>
+              <li><i className={`bi ${pwdRules.upper ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Chữ HOA</li>
+              <li><i className={`bi ${pwdRules.lower ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Chữ thường</li>
+              <li><i className={`bi ${pwdRules.digit ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Số</li>
+              <li><i className={`bi ${pwdRules.special ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Ký tự đặc biệt (!@#$%^&*)</li>
+            </ul>
           </ModalBody>
           <ModalFooter>
             <Button type="button" className="btn-light" onClick={() => setShowChangePasswordModal(false)}>Hủy</Button>
@@ -1272,7 +1482,6 @@ function ProfilePage() {
                 onChange={(e) => setDeactivateOtp(e.target.value)} 
                 maxLength="6" 
                 placeholder="Nhập mã 6 số"
-                required 
               />
             </FormControl>
           </ModalBody>
@@ -1385,7 +1594,6 @@ function ProfilePage() {
                 onChange={(e) => setDeleteOtp(e.target.value)} 
                 maxLength="6" 
                 placeholder="Nhập mã 6 số"
-                required 
               />
             </FormControl>
           </ModalBody>
@@ -1415,15 +1623,19 @@ function ProfilePage() {
             </ModalHeader>
             <ModalBody>
               <p>Vui lòng nhập mật khẩu của bạn để xác thực việc xóa tài khoản.</p>
-              <FormControl>
-                <label>Mật khẩu</label>
-                <input 
-                  type="password" 
-                  value={deletePassword} 
-                  onChange={(e) => setDeletePassword(e.target.value)} 
-                  placeholder="Nhập mật khẩu của bạn"
-                  required 
-                />
+              <FormControl style={{ marginTop:'1rem' }}>
+                <label>Mật khẩu hiện tại</label>
+                <div style={{ position:'relative' }}>
+                  <input 
+                     type={showDeletePwd? 'text':'password'}
+                     value={deletePassword}
+                     onChange={(e) => { setDeletePassword(e.target.value); setDeletePwdError(''); }}
+                     onBlur={(e)=>verifyDeletePassword(e.target.value)}
+                     placeholder="Nhập mật khẩu của bạn"
+                  />
+                   <i className={`bi ${showDeletePwd? 'bi-eye-slash':'bi-eye'}`} onClick={()=>setShowDeletePwd(p=>!p)} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', cursor:'pointer' }}></i>
+                 </div>
+                 {deletePwdError && <small className="text-danger d-block mt-1">{deletePwdError}</small>}
               </FormControl>
             </ModalBody>
             <ModalFooter>
@@ -1472,9 +1684,6 @@ function ProfilePage() {
               <li>Thông tin cá nhân (họ tên, email, số điện thoại, địa chỉ)</li>
               <li>Ảnh đại diện</li>
               <li>Lịch sử đăng nhập</li>
-              {user?.role?.name === 'TECHNICIAN' && (
-                <li>Thông tin kỹ thuật viên và chứng chỉ</li>
-              )}
             </ul>
             
             <p><strong>Dữ liệu sẽ được giữ lại (ẩn thông tin cá nhân):</strong></p>
@@ -1491,7 +1700,6 @@ function ProfilePage() {
                 value={deleteConfirmText} 
                 onChange={(e) => setDeleteConfirmText(e.target.value)} 
                 placeholder="Nhập 'DELETE' để xác nhận"
-                required 
               />
               <small style={{ color: '#6c757d' }}>
                 Vui lòng nhập chính xác "DELETE" để xác nhận việc xóa tài khoản
@@ -1519,7 +1727,7 @@ function ProfilePage() {
     return (
       <ProfilePageContainer>
         <Header />
-        <BreadcrumbBar title="Cài đặt người dùng" />
+        <BreadcrumbBar title="Thông tin cá nhân" />
         <ContentContainer>
           <div className="container">
             <div style={{textAlign: 'center', padding: '3rem 0'}}>
@@ -1536,7 +1744,7 @@ function ProfilePage() {
   return (
     <ProfilePageContainer>
       <Header />
-      <BreadcrumbBar title="Cài đặt người dùng" />
+      <BreadcrumbBar title="Thông tin cá nhân" />
       <ContentContainer>
         <div className="container">
             {/* <ApproveTechnicianTest />
@@ -1562,6 +1770,15 @@ function ProfilePage() {
       {showDeleteOtpModal && renderDeleteOtpModal()}
       {showDeletePasswordModal && !accountDeleted && renderDeletePasswordModal()}
       {showDeleteConfirmModal && !accountDeleted && renderDeleteConfirmModal()}
+      <dialog ref={certDialogRef} style={{ border:'none', background:'rgba(0,0,0,.6)', padding:0 }} onClick={(e)=>{
+        if(e.target === certDialogRef.current) { certDialogRef.current.close(); }
+      }}>
+        {certPreviewUrl && (certPreviewUrl.toLowerCase().endsWith('.pdf') ? (
+          <iframe src={certPreviewUrl} title="pdf-view" style={{ width:'90vw', height:'90vh', border:'none' }} />
+        ) : (
+          <img src={certPreviewUrl} alt="certificate-large" style={{ maxWidth:'90vw', maxHeight:'90vh', borderRadius:8 }} />
+        ))}
+      </dialog>
     </ProfilePageContainer>
   );
 }
