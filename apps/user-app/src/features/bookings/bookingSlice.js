@@ -5,7 +5,7 @@ export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',
     async (bookingId) => {
         const res = await getBookingById(bookingId);
-        console.log('--- FETCH BOOKING ---', res);
+        // console.log('--- FETCH BOOKING ---', res);
 
         return res.data.data;
     }
@@ -15,7 +15,7 @@ export const fetchQuotationsByBookingId = createAsyncThunk(
     'booking/fetchQuotationsByBookingId',
     async (bookingId) => {
         const res = await getQuatationsByBookingId(bookingId);
-        console.log('--- FETCH QUOTATIONS ---', res);
+        // console.log('--- FETCH QUOTATIONS ---', res);
 
         return res.data.data;
     }
@@ -25,7 +25,7 @@ export const createNewBooking = createAsyncThunk(
     'booking/createNewBooking',
     async (data) => {
         const res = await createBooking(data);
-        console.log('--- CREATE BOOKING ---', res);
+        // console.log('--- CREATE BOOKING ---', res);
 
         return res.data.data;
     }
@@ -36,11 +36,10 @@ export const cancelBooking = createAsyncThunk(
     async ({ bookingId, reason }, { rejectWithValue }) => {
         try {
             const res = await cancelBookingById(bookingId, reason);
-            console.log('--- CANCEL BOOKING ---', res);
+            // console.log('--- CANCEL BOOKING ---', res);
             return res.data;
         } catch (error) {
-            console.error('--- CANCEL BOOKING ERROR ---', error);
-
+            // console.error('--- CANCEL BOOKING ERROR ---', error);
             const message =
                 error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
             return rejectWithValue(message);
@@ -106,14 +105,5 @@ const bookingSlice = createSlice({
             })
     }
 });
-// Export các action creator để các component có thể import và sử dụng (dispatch)
-export const {setSelectedBookingLocation, setBookingDescription, clearBookingForm, clearBookingError } = bookingSlice.actions;
-// Export reducer để thêm vào store chính trong file store.js
+
 export default bookingSlice.reducer;
-
-
-
-
-
-
-
