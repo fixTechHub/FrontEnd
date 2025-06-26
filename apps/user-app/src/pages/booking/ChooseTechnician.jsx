@@ -10,33 +10,22 @@ import { fetchQuotationsByBookingId } from '../../features/bookings/bookingSlice
 import { acceptQuotation } from '../../features/bookings/bookingAPI';
 import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
 import { fetchBookingPriceInformation } from '../../features/booking-prices/bookingPriceSlice';
-import { customerSteps, technicianSteps } from '../../utils/stepsData';
+import { useBookingParams } from '../../hooks/useBookingParams';
 
 function ChooseTechnician() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const [bookingId, setBookingId] = useState(null);
     const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
     const [selectedQuotationId, setSelectedQuotationId] = useState(null);
     const { quotations, status: quotationsStatus } = useSelector((state) => state.booking);
     const { quotationDetail, status: quotationStatus } = useSelector((state) => state.bookingPrice);
     const { profile, loading, error } = useSelector(state => state.technician);
-    const { userRole } = useSelector((state) => state.auth);
-    const stepsForCurrentUser = userRole.role.name === 'CUSTOMER' ? customerSteps : technicianSteps;
+    const { bookingId, stepsForCurrentUser } = useBookingParams();
 
     const technician = profile?.technician;
     const certificates = profile?.certificates;
     const user = technician?.userId ?? {};
     const specialties = technician?.specialtiesCategories ?? [];
-
-    useEffect(() => {
-        const id = searchParams.get('bookingId');
-        setBookingId(id);
-
-        console.log('--- CHOOSE TECHNICIAN ---', id);
-
-    }, [searchParams]);
 
     useEffect(() => {
         if (bookingId) {

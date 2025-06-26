@@ -10,13 +10,12 @@ import { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createNewBooking } from "../../features/bookings/bookingSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
-import { customerSteps, technicianSteps } from "../../utils/stepsData";
+import { useBookingParams } from "../../hooks/useBookingParams";
 
 function BookingPage() {
     const { categories, status: categoryStatus } = useSelector((state) => state.categories);
     const { services, status: serviceStatus } = useSelector((state) => state.services);
-    const { user } = useSelector((state) => state.auth);
-    const stepsForCurrentUser = user.role.name === 'CUSTOMER' ? customerSteps : technicianSteps;
+    const { stepsForCurrentUser } = useBookingParams();
 
     const dispatch = useDispatch();
     const navigate = useNavigate();

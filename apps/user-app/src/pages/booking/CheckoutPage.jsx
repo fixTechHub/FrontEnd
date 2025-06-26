@@ -10,6 +10,7 @@ import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
+import { useBookingParams } from '../../hooks/useBookingParams';
 
 const CheckoutPage = () => {
     const { bookingId, technicianId } = useParams();
@@ -19,8 +20,7 @@ const CheckoutPage = () => {
     const [selectedCouponId, setSelectedCouponId] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('PAYOS'); // Default to PayOS
-    const { user } = useSelector((state) => state.auth);
-    const stepsForCurrentUser = user.role.name === 'CUSTOMER' ? customerSteps : technicianSteps;
+    const { stepsForCurrentUser } = useBookingParams();
 
     const navigate = useNavigate();
 

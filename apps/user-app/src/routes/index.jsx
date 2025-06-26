@@ -11,7 +11,7 @@ import ChooseRole from "../pages/authentication/ChooseRole";
 import VerifyEmailPage from "../pages/authentication/VerifyEmailPage";
 import VerifyOTPPage from "../pages/authentication/VerifyOTPPage";
 import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
-import CompleteProfile from "../pages/technician/CompleteProfile";
+// import CompleteProfile from "../pages/technician/CompleteProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ChooseTechnician from '../pages/booking/ChooseTechnician';
@@ -21,20 +21,12 @@ import CheckoutPage from '../pages/booking/CheckoutPage';
 import PaymentSuccess from "../pages/transaction/PaymentSuccess";
 import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
+import SendQuotation from "../pages/technician/SendQuotation";
+import WaitingConfirm from "../pages/technician/WaitingConfirm";
 
 export default function AppRoutes() {
   const { user, registrationData, loading } = useSelector((state) => state.auth);
-
-  if (loading) {
-    return (
-      <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-        <div className="spinner-border text-warning" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="ms-3">Đang tải...</p>
-      </div>
-    );
-  }
+  // console.log('--- GET ROLE ---', user?.role?.name);
 
   return (
     <Routes>
@@ -64,6 +56,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route
         path="/verify-email"
         element={
@@ -75,6 +68,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route
         path="/verify-otp"
         element={
@@ -86,7 +80,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
-      <Route
+      {/* <Route
         path="/technician/complete-profile"
         element={
           <PrivateRoute
@@ -96,7 +90,7 @@ export default function AppRoutes() {
             <CompleteProfile />
           </PrivateRoute>
         }
-      />
+      /> */}
 
       {/* ================= USER PROTECTED ROUTES ================= */}
       <Route
@@ -107,51 +101,59 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route path="/contract/complete" element={
         <PrivateRoute isAllowed={!!user}>
           <ContractComplete />
         </PrivateRoute>
 
       } />
+
       <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user}>
         <CheckoutPage />
       </PrivateRoute>} />
+
       <Route path="/payment-success" element={
         <PrivateRoute isAllowed={!!user}>
           <PaymentSuccess />
         </PrivateRoute>} />
+
       <Route path="/payment-failed" element={
         <PrivateRoute isAllowed={!!user}>
           <PaymentFail />
         </PrivateRoute>
       } />
+
       <Route path="/payment-cancel" element={
         <PrivateRoute isAllowed={!!user}>
           <PaymentCancel />
         </PrivateRoute>
       } />
+
       <Route
         path="/booking"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          // <PrivateRoute isAllowed={!!user}>
             <BookingPage />
-          </PrivateRoute>
+          // </PrivateRoute>
         }
       />
-       <Route
+
+      <Route
         path="/booking/choose-technician"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          // <PrivateRoute isAllowed={!!user}>
             <ChooseTechnician />
-          </PrivateRoute>
+          // </PrivateRoute>
         }
       />
-       <Route
+
+      <Route
         path="/booking/booking-processing"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          // <PrivateRoute isAllowed={!!user}>
             <BookingProcessing />
-          </PrivateRoute>
+          // </PrivateRoute>
         }
       />
       {/* Thêm các route cần user đăng nhập ở đây, ví dụ: */}
@@ -181,8 +183,29 @@ export default function AppRoutes() {
           /> 
           */}
 
+      {/* ================= TECHNICIAN PROTECTED ROUTES ================= */}
+      <Route
+        path="/technician/send-quotation"
+        element={
+          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <SendQuotation />
+          // </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/technician/waiting-confirm"
+        element={
+          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <WaitingConfirm />
+          // </PrivateRoute>
+        }
+      />
+
+
       {/* ================= FALLBACK ROUTE ================= */}
       <Route path="*" element={<Navigate to="/" replace />} />
+
     </Routes>
   );
 }
