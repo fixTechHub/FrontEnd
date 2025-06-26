@@ -16,7 +16,7 @@ export const fetchTechnicianProfile = createAsyncThunk(
       const data = await getTechnicianProfile(technicianId);
       console.log('--- FETCH TECHNICIAN PROFILE ---', data);
 
-      return data; // giữ nguyên trả về { success, data }
+      return data.data; // giữ nguyên trả về { success, data }
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
@@ -143,10 +143,7 @@ const technicianSlice = createSlice({
         const payload = action.payload;
 
         console.log('Received payload:', payload);
-        state.profile = {
-          technician: payload.data[0],
-          certificates: payload.data[1]
-        };
+        state.profile = action.payload;
       })
       .addCase(fetchTechnicianProfile.rejected, (state, action) => {
         state.loading = false;

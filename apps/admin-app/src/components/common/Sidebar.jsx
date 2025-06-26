@@ -1,4 +1,3 @@
-import "../../../public/css/style.css";
 function Sidebar() {
     return (
         <>
@@ -89,7 +88,7 @@ function Sidebar() {
                                 <li>
                                     <ul>
                                         <li>
-                                            <a href="https://dreamsrent.dreamstechnologies.com/html/template/admin/chat.html">
+                                            <a href="">
                                                 <i className="ti ti-message"></i><span>Messages</span><span className="count">5</span>
                                             </a>
                                         </li>

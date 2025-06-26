@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import TechnicianStatus from '../../pages/technician-dashboard/TechnicianStatus';
 import { useParams } from 'react-router-dom';
+import Sidebar from '../../components/common/Sidebar';
 
 function TechnicianDashboard() {
     const { technicianId } = useParams();
@@ -161,6 +162,18 @@ function TechnicianDashboard() {
                 </div>
 
                 <div className="sidebar" id="sidebar">
+                    <div className="sidebar-logo">
+                        <a href="https://dreamsrent.dreamstechnologies.com/html/template/admin/index.html" className="logo logo-normal">
+                            <img src="https://dreamsrent.dreamstechnologies.com/html/template/admin/assets/img/logo.svg" alt="Logo" />
+                        </a>
+                        <a href="https://dreamsrent.dreamstechnologies.com/html/template/admin/index.html" className="logo-small">
+                            <img src="https://dreamsrent.dreamstechnologies.com/html/template/admin/assets/img/logo-small.svg" alt="Logo" />
+                        </a>
+                        <a href="https://dreamsrent.dreamstechnologies.com/html/template/admin/index.html" className="dark-logo">
+                            <img src="https://dreamsrent.dreamstechnologies.com/html/template/admin/assets/img/logo-white.svg" alt="Logo" />
+                        </a>
+                    </div>
+
                     <div className="sidebar-inner slimscroll overflow-auto" style={{ maxHeight: '100vh' }}>
                         <div id="sidebar-menu" className="sidebar-menu">
                             <div className="form-group">
@@ -179,7 +192,7 @@ function TechnicianDashboard() {
                                 <li>
                                     <ul>
                                         <li className="active">
-                                            <a href="https://dreamsrent.dreamstechnologies.com/html/template/admin/index.html">
+                                            <a href="">
                                                 <i className="ti ti-layout-dashboard"></i><span>Dashboard</span>
                                             </a>
                                         </li>
@@ -195,17 +208,7 @@ function TechnicianDashboard() {
                                         </li>
                                         <li>
                                             <a href="">
-                                                <i className="ti ti-calendar-bolt"></i><span>Calendar</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-file-symlink"></i><span>Quotations</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-mail"></i><span>Enquiries</span>
+                                                <i className="ti ti-calendar-bolt"></i><span>Work</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -215,7 +218,12 @@ function TechnicianDashboard() {
                                     <ul>
                                         <li>
                                             <a href="">
-                                                <i className="ti ti-users-group"></i><span>Customers</span>
+                                                <i className="ti ti-users-group"></i><span>Account</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href="">
+                                                <i className="ti ti-star"></i><span>Reviews</span>
                                             </a>
                                         </li>
                                     </ul>
@@ -223,9 +231,9 @@ function TechnicianDashboard() {
                                 <li className="menu-title"><span>FINANCE & ACCOUNTS</span></li>
                                 <li>
                                     <ul>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-file-invoice"></i><span>Invoices</span>
+                                        <li >
+                                            <a href={`/technician/${technicianId}/earning`}>
+                                                <i className="ti ti-file-invoice"></i><span>Earnings</span>
                                             </a>
                                         </li>
                                         <li>
@@ -283,42 +291,13 @@ function TechnicianDashboard() {
                                                 <i className="ti ti-file-invoice"></i><span>Verification</span>
                                             </a>
                                         </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-ban"></i><span>Error Page</span>
-                                            </a>
-                                        </li>
-                                    </ul>
-                                </li>
-                                <li className="menu-title"><span>UI Interface</span></li>
-                                <li>
-                                    <ul>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-pocket"></i><span>Components</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-database"></i><span>Forms</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-layout-navbar-expand"></i><span>Tables</span>
-                                            </a>
-                                        </li>
-                                        <li>
-                                            <a href="">
-                                                <i className="ti ti-layout-grid"></i><span>Icons</span>
-                                            </a>
-                                        </li>
                                     </ul>
                                 </li>
                             </ul>
                         </div>
                     </div>
                 </div>
+
                 <div className="page-wrapper">
                     <div className="content pb-0">
                         {/* Breadcrumb */}

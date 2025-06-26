@@ -7,7 +7,6 @@ import ViewTechnicianProfile from "../../../admin-app/src/pages/technician-dashb
 import TechnicianDashboard from '../../../admin-app/src/pages/technician-dashboard/TechnicianDashboard';
 
 export default function AppRoutes() {
-  const dispatch = useDispatch();
  const {registrationData, loading } = useSelector((state) => state.auth);
 
   if (loading) {
@@ -23,9 +22,10 @@ export default function AppRoutes() {
 
   return (
   <Routes>
+    <Route path="/technician/:technicianId" element={<TechnicianDashboard />} />
     <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
     <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
-    <Route path="/technician/:technicianId/booking/:bookingId" element={<TechnicianJobList />} />
+    <Route path="/technician/:technicianId/booking/:bookingId" element={<TechnicianJob />} />
     <Route path="/technician/:technicianId/booking" element={<TechnicianJobList />} />
     <Route path="*" element={<Navigate to="/" replace />} />
   </Routes>

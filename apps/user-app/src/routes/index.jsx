@@ -26,7 +26,6 @@ import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
 
 export default function AppRoutes() {
-  const dispatch = useDispatch();
  const { user, registrationData, loading } = useSelector((state) => state.auth);
 
   if (loading) {
