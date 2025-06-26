@@ -12,6 +12,7 @@ import transactionReducer from '../features/transactions/transactionSlice'
 import adminReducer from '../features/admin/adminSlice';
 import notificationReducer from '../features/notifications/notificationSlice';
 import videoCallReducer from '../features/video-call/videoCallSlice';
+import quotationReducer from '../features/quotations/quotationSlice';
 
 export const store = configureStore({
   reducer: {
@@ -27,6 +28,7 @@ export const store = configureStore({
     admin: adminReducer,
     notifications: notificationReducer,
     videoCall: videoCallReducer,
+    quotation: quotationReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
