@@ -7,19 +7,15 @@ import Header from "../../components/common/Header";
 import BookingDetails from "./common/BookingDetails";
 import BookingWizard from "./common/BookingHeader";
 import MessageBox from "../../components/message/MessageBox";
+import { useBookingParams } from "../../hooks/useBookingParams";
 
 function BookingProcessing() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [bookingId, setBookingId] = useState(null);
     const [technicianId, setTechnicianId] = useState(null);
-    const { user } = useSelector((state) => state.auth);
-    const stepsForCurrentUser = user.role.name === 'CUSTOMER' ? customerSteps : technicianSteps;
+    const { bookingId, stepsForCurrentUser } = useBookingParams();
 
     useEffect(() => {
-        const bookingId = searchParams.get('bookingId');
-        setBookingId(bookingId);
-
         console.log('--- BOOKING PROCESSING ---', bookingId);
         const technicianId = searchParams.get('technicianId')
         setTechnicianId(technicianId)
