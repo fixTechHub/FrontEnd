@@ -8,43 +8,39 @@ import { FaEnvelope } from 'react-icons/fa';
 function VerifyEmailPage() {
     const [verificationCode, setVerificationCode] = useState(['', '', '', '', '', '']);
     const [activeInput, setActiveInput] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(0); // Bắt đầu với 0 để có thể gửi ngay
+    const { loading, user, isAuthenticated, verificationStatus, registrationData, registrationToken } = useSelector((state) => state.auth);
+
+    const STORAGE_PREFIX = 'verifyEmail_';
+    const storageKey = STORAGE_PREFIX + (user?.email || registrationData?.emailOrPhone || 'unknown');
+
+    const readTimestamp = (key, def) => {
+        const v = localStorage.getItem(key);
+        return v ? parseInt(v, 10) : def;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(0); // resend cooldown
     const [isResending, setIsResending] = useState(false);
-    const [codeExpiryTime, setCodeExpiryTime] = useState(300); // 5 phút cho mã xác thực
+    const [codeExpiryTime, setCodeExpiryTime] = useState(300);
     const dispatch = useDispatch();
     const navigate = useNavigate();
     
-    // Di chuyển tất cả useSelector lên đầu component
-    const { loading, user, isAuthenticated, verificationStatus, registrationData, registrationToken } = useSelector((state) => state.auth);
-    
     const [showVerificationForm, setShowVerificationForm] = useState(false);
     const [error, setError] = useState('');
+    const [expireMsg, setExpireMsg] = useState('');
 
     // Tạo timer cho thời gian chờ gửi lại
     const startResendTimer = useCallback(() => {
-        setTimeLeft(60); // 60 giây cho thời gian chờ gửi lại
-        return setInterval(() => {
-            setTimeLeft((prevTime) => {
-                if (prevTime <= 1) {
-                    return 0;
-                }
-                return prevTime - 1;
-            });
-        }, 1000);
-    }, []);
+        const end = Date.now() + 60 * 1000;
+        localStorage.setItem(storageKey + '_resend', end.toString());
+        setTimeLeft(60);
+    }, [storageKey]);
 
     // Tạo timer cho thời gian hết hạn mã
     const startExpiryTimer = useCallback(() => {
-        setCodeExpiryTime(300); // 5 phút cho mã xác thực
-        return setInterval(() => {
-            setCodeExpiryTime((prevTime) => {
-                if (prevTime <= 1) {
-                    return 0;
-                }
-                return prevTime - 1;
-            });
-        }, 1000);
-    }, []);
+        const end = Date.now() + 300 * 1000;
+        localStorage.setItem(storageKey + '_expire', end.toString());
+        setCodeExpiryTime(300);
+    }, [storageKey]);
 
     // Xử lý khi component unmount hoặc user không còn authenticated
     useEffect(() => {
@@ -63,25 +59,41 @@ function VerifyEmailPage() {
     }, [verificationStatus]);
 
     useEffect(() => {
-        // Nếu không có user, có thể đang trong quá trình đăng ký
-        // Không redirect về login ngay lập tức
-        if (!user?.email) {
-            // Chỉ redirect nếu không có registration token
-            if (!registrationToken) {
-                dispatch(clearVerificationStatus());
-                navigate('/login');
-                return;
-            }
+        // Điều kiện dữ liệu
+        if (!user?.email && !registrationToken) {
+            dispatch(clearVerificationStatus());
+            navigate('/login');
+            return;
         }
 
-        // Khởi tạo timer cho thời gian hết hạn mã
-        const expiryTimer = startExpiryTimer();
+        // Thiết lập giá trị ban đầu cho timers từ localStorage
+        const now = Date.now();
+        const resendEndStored = readTimestamp(storageKey + '_resend', 0);
+        const expireEndStored = readTimestamp(storageKey + '_expire', 0);
 
-        // Cleanup timer khi component unmount
-        return () => {
-            clearInterval(expiryTimer);
-        };
-    }, [user, navigate, startExpiryTimer, dispatch, registrationToken]);
+        const resendEnd = resendEndStored;
+        const expireEnd = expireEndStored || (async () => { const end = now + 300000; localStorage.setItem(storageKey + '_expire', end.toString()); return end; })();
+
+        setTimeLeft(Math.max(0, Math.floor((resendEnd - now) / 1000)));
+        Promise.resolve(expireEnd).then(eEnd=> setCodeExpiryTime(Math.max(0, Math.floor((eEnd - now) / 1000))));
+
+        // Start interval to update expiry countdown
+        const interval = setInterval(() => {
+            setTimeLeft(prev => (prev > 0 ? prev - 1 : 0));
+            setCodeExpiryTime(prev => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => clearInterval(interval);
+    }, [user, registrationToken, navigate, dispatch, storageKey]);
+
+    // Thông báo khi mã hết hạn
+    useEffect(() => {
+        if (codeExpiryTime === 0) {
+            setExpireMsg('Mã xác thực đã hết hạn. Vui lòng nhấn "Gửi lại mã" để lấy mã mới.');
+        } else if (expireMsg) {
+            setExpireMsg('');
+        }
+    }, [codeExpiryTime, expireMsg]);
 
     const handleInputChange = (index, value) => {
         if (value.length > 1) value = value[0];
@@ -108,8 +120,15 @@ function VerifyEmailPage() {
         setError('');
 
         try {
-            await dispatch(verifyEmailThunk(verificationCode.join(''))).unwrap();
+            const result = await dispatch(verifyEmailThunk(verificationCode.join(''))).unwrap();
             toast.success('Xác thực email thành công!');
+
+            // Điều hướng tùy vai trò
+            if (result?.verificationStatus?.step === 'COMPLETE_PROFILE' || (result?.user?.role?.name === 'TECHNICIAN')) {
+                navigate('/technician/complete-profile');
+            } else {
+                navigate('/');
+            }
         } catch (error) {
             setError(error.message || 'Có lỗi xảy ra khi xác thực email');
         }
@@ -130,18 +149,13 @@ function VerifyEmailPage() {
         
         try {
             setIsResending(true);
-            const result = await dispatch(resendEmailCodeThunk()).unwrap();
+            await dispatch(resendEmailCodeThunk()).unwrap();
             
-            // Khởi động timer cho thời gian chờ gửi lại
-            const resendTimer = startResendTimer();
-            
-            // Reset timer cho thời gian hết hạn mã
+            // reset timers and persist
+            startResendTimer();
             startExpiryTimer();
             
-            toast.success(result.message || 'Mã xác thực mới đã được gửi');
-
-            // Cleanup resend timer sau khi hoàn thành
-            return () => clearInterval(resendTimer);
+            toast.success('Mã xác thực mới đã được gửi');
         } catch (error) {
             toast.error(error.message || 'Không thể gửi lại mã xác thực');
         } finally {
@@ -154,6 +168,9 @@ function VerifyEmailPage() {
         const remainingSeconds = seconds % 60;
         return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
+
+    // Disable verify if code expired
+    const isCodeExpired = codeExpiryTime === 0;
 
     // Nếu không có user hoặc email, hiển thị loading
     if (!user?.email) {
@@ -234,7 +251,7 @@ function VerifyEmailPage() {
                                 <button
                                     type="submit"
                                     className="btn btn-primary w-100 btn-size mb-3"
-                                    disabled={loading || verificationCode.join('').length !== 6}
+                                    disabled={loading || verificationCode.join('').length !== 6 || isCodeExpired}
                                 >
                                     {loading ? (
                                         <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG XỬ LÝ...</>
@@ -253,11 +270,17 @@ function VerifyEmailPage() {
                                     >
                                         {isResending ? (
                                             <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG GỬI...</>
+                                        ) : isCodeExpired ? (
+                                            'Gửi lại mã'
                                         ) : timeLeft > 0 ? (
                                             `Gửi lại mã sau ${timeLeft}s`
                                         ) : 'Gửi lại mã xác thực'}
                                     </button>
                                 </div>
+
+                                {expireMsg && (
+                                    <p className="text-danger mb-0 text-center">{expireMsg}</p>
+                                )}
                             </form>
                         </div>
                     </div>

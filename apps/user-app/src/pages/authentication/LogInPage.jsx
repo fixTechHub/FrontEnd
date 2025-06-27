@@ -159,10 +159,8 @@ function LogInPage() {
         toast.success("Đăng nhập thành công!");
       }
       
-      // Kiểm tra verificationStatus trước
-      if (result.verificationStatus && result.verificationStatus.redirectTo) {
-        navigate(result.verificationStatus.redirectTo, { replace: true });
-      } else if (result.user.role.name === "ADMIN") {
+      // Không tự động chuyển hướng tới trang xác thực; chỉ điều hướng theo vai trò.
+      if (result.user.role.name === "ADMIN") {
         navigate("/admin/dashboard", { replace: true });
       } else {
         navigate("/", { replace: true });
@@ -204,9 +202,8 @@ function LogInPage() {
               toast.success("Đăng nhập thành công!");
             }
 
-            if (result.verificationStatus && result.verificationStatus.redirectTo) {
-              navigate(result.verificationStatus.redirectTo, { replace: true });
-            } else if (result.user.role.name === "ADMIN") {
+            // Không tự động chuyển hướng tới trang xác thực.
+            if (result.user.role.name === "ADMIN") {
               navigate("/admin/dashboard", { replace: true });
             } else {
               navigate("/", { replace: true });

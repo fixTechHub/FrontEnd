@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { updateRegistrationData, finalizeRegistrationThunk, clearRegistrationData } from '../../features/auth/authSlice';
+import { updateRegistrationData, finalizeRegistrationThunk, clearRegistrationData, checkAuthThunk } from '../../features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { FaUser, FaTools, FaCheck } from 'react-icons/fa';
 
@@ -10,6 +10,7 @@ function ChooseRole() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { loading } = useSelector((state) => state.auth);
+    const { items: roles } = useSelector((state) => state.roles);
 
     const handleRoleSelect = (role) => {
         setSelectedRole(role);
@@ -28,15 +29,17 @@ function ChooseRole() {
         try {
             const result = await dispatch(finalizeRegistrationThunk()).unwrap();
             
-            // Nếu cần xác thực email
             if (result.requiresVerification) {
                 toast.success(result.message || 'Đăng ký hoàn tất! Vui lòng kiểm tra email để xác thực.');
-                // Chuyển đến trang xác thực email
+
+                // Lấy thông tin user ngay để PrivateRoute cho phép vào trang xác thực
+                await dispatch(checkAuthThunk());
+
                 navigate('/verify-email');
             } else {
-                // Nếu không cần xác thực (hiếm khi xảy ra)
-                toast.success('Đăng ký hoàn tất! Đang chuyển hướng...');
+                toast.success('Đăng ký hoàn tất! Vui lòng đăng nhập để tiếp tục.');
                 dispatch(clearRegistrationData());
+                navigate('/login');
             }
 
         } catch (error) {
@@ -52,9 +55,9 @@ function ChooseRole() {
         navigate('/register');
     };
 
-    const roleCards = [
-        {
-            id: 'CUSTOMER',
+    // Map mô tả & icon cho từng role
+    const roleMeta = {
+        CUSTOMER: {
             title: 'Khách hàng',
             icon: <FaUser size={40} />,
             description: 'Đặt dịch vụ sửa chữa, gửi yêu cầu kỹ thuật',
@@ -64,8 +67,7 @@ function ChooseRole() {
                 'Đánh giá và phản hồi dịch vụ'
             ]
         },
-        {
-            id: 'TECHNICIAN',
+        TECHNICIAN: {
             title: 'Kỹ thuật viên',
             icon: <FaTools size={40} />,
             description: 'Nhận và thực hiện các yêu cầu sửa chữa',
@@ -74,8 +76,19 @@ function ChooseRole() {
                 'Nhận thanh toán an toàn',
                 'Xây dựng hồ sơ chuyên môn'
             ]
+        },
+    };
+
+    // Tạo danh sách roleCards dựa trên roles lấy từ BE (nếu có)
+    const roleCards = useMemo(() => {
+        if (Array.isArray(roles) && roles.length > 0) {
+            return roles
+                .filter(r => roleMeta[r.name])
+                .map(r => ({ id: r.name, ...roleMeta[r.name] }));
         }
-    ];
+        // Fallback khi roles chưa tải – dùng hai role mặc định
+        return ['CUSTOMER','TECHNICIAN'].map(id => ({ id, ...roleMeta[id] }));
+    }, [roles]);
 
     return (
             <div className="main-wrapper login-body">

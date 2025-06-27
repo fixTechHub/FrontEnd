@@ -5,9 +5,10 @@ import { fetchAllPublicServices } from './features/services/serviceSlice';
 import { initializeSocket, disconnectSocket } from './services/socket';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
-import AuthVerification from './features/auth/AuthVerification';
 import React, { useState } from 'react';
 import { checkAuthThunk } from './features/auth/authSlice';
+import { fetchAllRoles } from './features/roles/roleSlice';
+
 function App() {
     const dispatch = useDispatch();
     const { user, registrationData, loading } = useSelector((state) => state.auth);
@@ -23,6 +24,7 @@ function App() {
     useEffect(() => {
         dispatch(fetchAllPublicCategories());
         dispatch(fetchAllPublicServices());
+        dispatch(fetchAllRoles());
         // Logic checkAuth đã được chuyển sang main.jsx
     }, [dispatch]);
 
@@ -48,7 +50,6 @@ function App() {
             ) : (
                 <>
                     <AppRoutes />
-                    <AuthVerification />
                 </>
             )}
         </AppProvider>

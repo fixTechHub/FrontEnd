@@ -263,7 +263,7 @@ export default function AppRoutes() {
         path="/dashboard"
         element={
           <PrivateRoute
-            isAllowed={loading || (!!user && user.role?.name === 'CUSTOMER' && (verificationStatus?.step === 'COMPLETED' || !verificationStatus?.step))}
+            isAllowed={!!user && user.role?.name === 'CUSTOMER'}
           >
             <CustomerDashboard />
           </PrivateRoute>
