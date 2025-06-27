@@ -404,7 +404,7 @@ export const verifyPhoneChangeThunk = createAsyncThunk(
 );
 
 // Thêm helper function để xác định verification status
-const determineVerificationStatus = (user) => {
+const determineVerificationStatus = (user, technician) => {
   if (!user) return null;
 
   // Kiểm tra email verification trước
@@ -427,8 +427,7 @@ const determineVerificationStatus = (user) => {
 
   // Kiểm tra technician profile completion (sau khi đã xác thực email/phone)
   if (user.role?.name === 'TECHNICIAN') {
-    // Nếu chưa có technician profile, cần hoàn thành hồ sơ
-    if (!user.technician) {
+    if (!technician) {
       return {
         step: "COMPLETE_PROFILE",
         redirectTo: "/technician/complete-profile",
@@ -470,8 +469,7 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.loading = false;
       state.error = null;
-      // Sử dụng verificationStatus từ backend nếu có, nếu không thì tính toán
-      state.verificationStatus = verificationStatus || determineVerificationStatus(user);
+      state.verificationStatus = verificationStatus || determineVerificationStatus(user, state.technician);
     },
     clearVerificationStatus: (state) => {
       state.verificationStatus = {
@@ -488,7 +486,7 @@ const authSlice = createSlice({
     },
     updateUserState: (state, action) => {
       state.user = action.payload;
-      state.verificationStatus = determineVerificationStatus(action.payload);
+      state.verificationStatus = determineVerificationStatus(action.payload, state.technician);
     },
   },
   extraReducers: (builder) => {
@@ -504,7 +502,8 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.technician = action.payload.technician;
         state.verificationStatus = determineVerificationStatus(
-          action.payload.user
+          action.payload.user,
+          action.payload.technician
         );
       })
       .addCase(checkAuthThunk.rejected, (state, action) => {
@@ -531,7 +530,8 @@ const authSlice = createSlice({
         state.error = null;
         // Sử dụng verificationStatus từ backend nếu có, nếu không thì tính toán
         state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
-          action.payload.user
+          action.payload.user,
+          action.payload.technician
         );
       })
       .addCase(loginThunk.rejected, (state, action) => {
@@ -550,7 +550,8 @@ const authSlice = createSlice({
         state.error = null;
         // Sử dụng verificationStatus từ backend nếu có, nếu không thì tính toán
         state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
-          action.payload.user
+          action.payload.user,
+          action.payload.technician
         );
       })
       .addCase(googleLoginThunk.rejected, (state, action) => {
@@ -577,7 +578,8 @@ const authSlice = createSlice({
           state.user = action.payload.user;
           state.isAuthenticated = true;
           state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
-            action.payload.user
+            action.payload.user,
+            action.payload.technician
           );
           // Clear token sau khi đăng ký thành công
           state.registrationToken = null;
@@ -599,7 +601,8 @@ const authSlice = createSlice({
         state.error = null;
         // Sử dụng verificationStatus từ backend nếu có, nếu không thì tính toán
         state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
-          action.payload.user
+          action.payload.user,
+          action.payload.technician
         );
       })
       .addCase(verifyEmailThunk.rejected, (state, action) => {
@@ -617,7 +620,8 @@ const authSlice = createSlice({
         state.isAuthenticated = true; // Đảm bảo user được authenticated
         // Sử dụng verificationStatus từ backend nếu có, nếu không thì tính toán
         state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
-          action.payload.user
+          action.payload.user,
+          action.payload.technician
         );
       })
       .addCase(verifyOTPThunk.rejected, (state, action) => {

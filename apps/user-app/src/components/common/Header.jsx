@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logoutThunk } from '../../features/auth/authSlice';
 import Swal from 'sweetalert2';
 import styled from '@emotion/styled';
-import Notifications from './Notifications'; 
+// import Notifications from './Notifications';
 // Styled-components for the dropdown
 const UserMenuWrapper = styled.div`
     position: relative;
@@ -209,20 +209,6 @@ function Header() {
                                 <li>
                                     <Link to="/support">HỖ TRỢ</Link>
                                 </li>
-
-                                {user && (
-                                    <li className="has-submenu">
-                                        <a href="#">QUẢN LÝ <i className="fas fa-chevron-down"></i></a>
-                                        <ul className="submenu">
-                                            <li><Link to="/profile">Thông tin cá nhân</Link></li>
-                                            <li><Link to="/bookings">Đơn đặt lịch</Link></li>
-                                            <li><Link to="/reviews">Đánh giá</Link></li>
-                                            {user.role?.name === 'ADMIN' && (
-                                                <li><Link to="/admin">Quản trị viên</Link></li>
-                                            )}
-                                        </ul>
-                                    </li>
-                                )}
                             </ul>
                         </div>
                         <ul className="nav header-navbar-rht">
@@ -241,7 +227,7 @@ function Header() {
                                 </>
                             ) : (
                               <>
-                                <li  className="nav-item"> <Notifications userId={user._id} /></li>
+                                {/* <li  className="nav-item"> <Notifications userId={user._id} /></li> */}
                                 <li className="nav-item" ref={menuRef}>
                                     <UserMenuWrapper onClick={() => setDropdownOpen(!dropdownOpen)}>
                                         <UserInfo>
@@ -251,14 +237,24 @@ function Header() {
                                         </UserInfo>
                                         {dropdownOpen && (
                                             <DropdownMenu>
-                                                <DropdownItem to="/dashboard" onClick={() => setDropdownOpen(false)}>
-                                                    <i className="bi bi-speedometer2"></i>
-                                                    Bảng điều khiển
-                                                </DropdownItem>
                                                 <DropdownItem to="/profile" onClick={() => setDropdownOpen(false)}>
-                                                    <i className="bi bi-gear-fill"></i>
-                                                    Cài đặt
+                                                    <i className="bi bi-person-circle"></i>
+                                                    Thông tin cá nhân
                                                 </DropdownItem>
+                                                <DropdownItem to="/bookings" onClick={() => setDropdownOpen(false)}>
+                                                    <i className="bi bi-calendar-check"></i>
+                                                    Đơn đặt lịch
+                                                </DropdownItem>
+                                                <DropdownItem to="/reviews" onClick={() => setDropdownOpen(false)}>
+                                                    <i className="bi bi-star-fill"></i>
+                                                    Đánh giá
+                                                </DropdownItem>
+                                                {user.role?.name === 'ADMIN' && (
+                                                    <DropdownItem to="/admin" onClick={() => setDropdownOpen(false)}>
+                                                        <i className="bi bi-shield-lock"></i>
+                                                        Quản trị viên
+                                                    </DropdownItem>
+                                                )}
                                                 <Divider />
                                                 <DropdownItemButton onClick={handleLogout}>
                                                     <i className="bi bi-box-arrow-right"></i>
