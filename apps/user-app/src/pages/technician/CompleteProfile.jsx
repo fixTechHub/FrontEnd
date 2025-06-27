@@ -47,25 +47,6 @@ const CompleteProfile = () => {
         }
         // Lấy categories qua redux (giống HomePage)
         dispatch(fetchAllPublicCategories());
-        // Get current location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setFormData(prev => ({
-                        ...prev,
-                        currentLocation: {
-                            type: 'Point',
-                            coordinates: [position.coords.longitude, position.coords.latitude]
-                        }
-                    }));
-                },
-                (error) => {
-                    console.error('Error getting location:', error);
-                    toast.warning('Không thể lấy vị trí hiện tại. Vui lòng nhập thủ công.');
-                }
-            );
-        }
-    }, [user, navigate, dispatch]);
 
     // Log kiểm tra dữ liệu categories
     useEffect(() => {
@@ -118,16 +99,16 @@ const CompleteProfile = () => {
             return;
         }
 
-        if (selectedCategories.length === 0) {
-            toast.error('Vui lòng chọn ít nhất một chuyên môn');
-            return;
-        }
+        // if (selectedCategories.length === 0) {
+        //     toast.error('Vui lòng chọn ít nhất một chuyên môn');
+        //     return;
+        // }
 
-        // Kiểm tra bắt buộc phải có chứng chỉ
-        if (certificates.length === 0) {
-            toast.error('Vui lòng upload ít nhất một chứng chỉ');
-            return;
-        }
+      // Kiểm tra bắt buộc phải có chứng chỉ
+        // if (certificates.length === 0) {
+        //     toast.error('Vui lòng upload ít nhất một chứng chỉ');
+        //     return;
+        // }
 
         if (!frontImage || !backImage) {
             toast.error('Vui lòng tải lên cả hai mặt trước và sau của CCCD');
@@ -209,7 +190,7 @@ const CompleteProfile = () => {
                                 </div>
 
                                 {/* Chuyên môn */}
-                                <div className="mb-4">
+                                {/* <div className="mb-4">
                                     <h5>Chuyên môn *</h5>
                                     <div className="row">
                                         {categories && categories.length > 0 ? categories.map((category) => (
@@ -229,7 +210,7 @@ const CompleteProfile = () => {
                                             </div>
                                         )) : <div className="col-12">Không có dữ liệu chuyên môn</div>}
                                     </div>
-                                </div>
+                                </div> */}
 
                                 {/* Chứng chỉ */}
                                 <div className="mb-4">

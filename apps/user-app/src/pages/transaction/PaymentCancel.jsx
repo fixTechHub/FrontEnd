@@ -1,23 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, Link, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { RingLoader } from 'react-spinners';
 import { toast } from 'react-toastify';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
 import BookingWizard from "../booking/common/BookingHeader";
-import { checkAuthThunk } from '../../features/auth/authSlice';
+import { checkAuthThunk,setAuthLoading } from '../../features/auth/authSlice';
 
 const PaymentCancel = () => {
     const dispatch = useDispatch();
-    const { loading } = useSelector(state => state.auth);
     const navigate = useNavigate();
 
+    const { loading} = useSelector(state => state.auth.loading);
+  
     useEffect(() => {
-        dispatch(checkAuthThunk());
-    }, [dispatch]);
-
+        dispatch(setAuthLoading(true)); // Set loading to true immediately
+        dispatch(checkAuthThunk()).finally(() => {
+        });
+      }, [dispatch]);
+    
+    //   if (loading) {
+    //     return (
+    //       <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+    //         <div className="spinner-border text-warning" role="status">
+    //           <span className="visually-hidden">Loading...</span>
+    //         </div>
+    //         <p className="ms-3">Đang tải...</p>
+    //       </div>
+    //     );
+    //   }
     const handleRetryPayment = () => {
         // Navigate back to checkout page with the same booking details
         toast.info('Đang chuyển hướng đến trang thanh toán...');
@@ -31,13 +43,7 @@ const PaymentCancel = () => {
         navigate('/');
     };
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center" style={{ minHeight: '80vh' }}>
-                <RingLoader color={"#1977F3"} loading={loading} size={100} />
-            </div>
-        );
-    }
+ 
 
     return (
         <>

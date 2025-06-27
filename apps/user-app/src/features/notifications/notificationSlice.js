@@ -23,12 +23,34 @@ export const markNotificationAsReadThunk = createAsyncThunk(
     'notifications/markAsRead',
     async (notificationId, { rejectWithValue }) => {
         try {
-            // The API call will trigger a websocket event.
-            // We just need to ensure the call succeeds.
             await notificationAPI.markAsRead(notificationId);
             return notificationId;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to mark as read');
+        }
+    }
+);
+
+export const clearAllNotificationsThunk = createAsyncThunk(
+    'notifications/clearAll',
+    async (_, { rejectWithValue }) => {
+        try {
+            await notificationAPI.clearAllNotifications();
+            return;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to clear notifications');
+        }
+    }
+);
+
+export const fetchAllNotificationsThunk = createAsyncThunk(
+    'notifications/fetchAllNotifications',
+    async ({ limit = 20, skip = 0 }, { rejectWithValue }) => {
+        try {
+            const response = await notificationAPI.getAllUserNotifications({ limit, skip });
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch all notifications');
         }
     }
 );
@@ -38,7 +60,6 @@ const notificationSlice = createSlice({
     initialState,
     reducers: {
         addNotification(state, action) {
-            // Add to the beginning of the list and prevent duplicates
             if (!state.notifications.some(n => n._id === action.payload._id)) {
                 state.notifications.unshift(action.payload);
             }
@@ -49,6 +70,9 @@ const notificationSlice = createSlice({
             if (index !== -1) {
                 state.notifications[index] = updated;
             }
+        },
+        clearNotifications(state) {
+            state.notifications = state.notifications.filter(n => n.status !== 'DELETED');
         },
     },
     extraReducers: (builder) => {
@@ -63,9 +87,34 @@ const notificationSlice = createSlice({
             .addCase(fetchNotificationsThunk.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.payload;
+            })
+            .addCase(fetchAllNotificationsThunk.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchAllNotificationsThunk.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.notifications = action.payload;
+            })
+            .addCase(fetchAllNotificationsThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+            .addCase(clearAllNotificationsThunk.fulfilled, (state) => {
+                state.notifications = [];
+                state.status = 'succeeded';
+            })
+            .addCase(clearAllNotificationsThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+            .addCase(markNotificationAsReadThunk.fulfilled, (state, action) => {
+                const index = state.notifications.findIndex(n => n._id === action.payload);
+                if (index !== -1) {
+                    state.notifications[index].isRead = true;
+                }
             });
     },
 });
 
-export const { addNotification, updateNotification } = notificationSlice.actions;
-export default notificationSlice.reducer; 
+export const { addNotification, updateNotification, clearNotifications } = notificationSlice.actions;
+export default notificationSlice.reducer;

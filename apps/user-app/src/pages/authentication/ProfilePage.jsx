@@ -1747,8 +1747,8 @@ function ProfilePage() {
       <BreadcrumbBar title="Thông tin cá nhân" />
       <ContentContainer>
         <div className="container">
-            {/* <ApproveTechnicianTest />
-            <ContractStatus /> */}
+            <ApproveTechnicianTest />
+            <ContractStatus />
           <SettingsWrapper>
             {renderSidebar()}
             <SettingsContent>

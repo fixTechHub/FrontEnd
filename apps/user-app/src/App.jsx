@@ -6,11 +6,19 @@ import { initializeSocket, disconnectSocket } from './services/socket';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
 import AuthVerification from './features/auth/AuthVerification';
-import VideoCallProvider from './components/video-call/VideoCallProvider';
-
+import React, { useState } from 'react';
+import { checkAuthThunk } from './features/auth/authSlice';
 function App() {
     const dispatch = useDispatch();
-    const { user } = useSelector((state) => state.auth);
+    const { user, registrationData, loading } = useSelector((state) => state.auth);
+    const [isAuthChecked, setIsAuthChecked] = useState(false);
+
+    useEffect(() => {
+        dispatch(checkAuthThunk()).finally(() => {
+            setIsAuthChecked(true);
+        });
+    }, [dispatch]);
+
 
     useEffect(() => {
         dispatch(fetchAllPublicCategories());
@@ -26,14 +34,23 @@ function App() {
             console.log('--- Disconnecting socket on logout ---');
             disconnectSocket();
         }
-    }, [user?._id]);
+    }, [user, dispatch]);
 
     return (
         <AppProvider>
-            <VideoCallProvider>
-                <AppRoutes />
-                <AuthVerification />
-            </VideoCallProvider>
+            {!isAuthChecked ? (
+                <div className="loading-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                    <div className="spinner-border text-warning" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="ms-3">Đang tải...</p>
+                </div>
+            ) : (
+                <>
+                    <AppRoutes />
+                    <AuthVerification />
+                </>
+            )}
         </AppProvider>
     );
 }
