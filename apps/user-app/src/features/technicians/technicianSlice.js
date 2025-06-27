@@ -6,17 +6,17 @@ import {
   updateTechnicianAvailability,
   getTechnicianJob,
   getJobDetails,
-  getTechnicians, completeTechnicianProfile
+  getTechnicians, completeTechnicianProfile, fetchCertificatesByTechnicianId 
 } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
   async (technicianId, thunkAPI) => {
     try {
-      const data = await getTechnicianProfile(technicianId);
-      console.log('--- FETCH TECHNICIAN PROFILE ---', data);
+      const response  = await getTechnicianProfile(technicianId);
+      console.log('--- FETCH TECHNICIAN PROFILE ---', response);
 
-      return data.data; // giữ nguyên trả về { success, data }
+      return response.data; // giữ nguyên trả về { success, data }
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
@@ -44,25 +44,27 @@ export const fetchTechnicians = createAsyncThunk(
   async (thunkAPI) => {
     try {
       const data = await getTechnicians();
-      return data.data;}
-      catch (error){
-        return thunkAPI.rejectWithValue(
-          error.response?.data?.message || error.message)
-      }
+      return data.data;
     }
-  )
+    catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message)
+    }
+  }
+)
 export const completeTechnicianProfileThunk = createAsyncThunk(
   'technician/completeProfile',
   async (technicianData, thunkAPI) => {
     try {
       const data = await completeTechnicianProfile(technicianData);
-      return data.data;}
-      catch (error){
-        return thunkAPI.rejectWithValue(
-          error.response?.data?.message || error.message)
-      }
+      return data.data;
     }
-  )
+    catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message)
+    }
+  }
+)
 
 export const fetchTechnicianAvailability = createAsyncThunk(
   'technician/fetchAvailability',
@@ -118,6 +120,20 @@ export const fetchTechnicianJobs = createAsyncThunk(
   }
 );
 
+export const getCertificates = createAsyncThunk(
+  'certificates/getCertificates',
+  async (technicianId, { rejectWithValue }) => {
+    try {
+      const data = await fetchCertificatesByTechnicianId(technicianId);
+      console.log("data" + data);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Lỗi lấy chứng chỉ');
+    }
+  }
+);
+
+
 const technicianSlice = createSlice({
   name: 'technician',
   initialState: {
@@ -128,6 +144,7 @@ const technicianSlice = createSlice({
     error: null,
     bookings: [],
     jobDetail: null,
+    certificates: []
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -139,9 +156,7 @@ const technicianSlice = createSlice({
       })
       .addCase(fetchTechnicianProfile.fulfilled, (state, action) => {
         state.loading = false;
-
         const payload = action.payload;
-
         console.log('Received payload:', payload);
         state.profile = action.payload;
       })
@@ -232,11 +247,22 @@ const technicianSlice = createSlice({
       .addCase(completeTechnicianProfileThunk.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      .addCase(getCertificates.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getCertificates.fulfilled, (state, action) => {
+        state.loading = false;
+        state.certificates = action.payload;
+      })
+      .addCase(getCertificates.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   }
 });
-
-
 
 export default technicianSlice.reducer;
 

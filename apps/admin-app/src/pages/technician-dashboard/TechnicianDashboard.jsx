@@ -1,7 +1,5 @@
 import { Link } from 'react-router-dom';
-import TechnicianStatus from '../../pages/technician-dashboard/TechnicianStatus';
 import { useParams } from 'react-router-dom';
-import Sidebar from '../../components/common/Sidebar';
 
 function TechnicianDashboard() {
     const { technicianId } = useParams();
@@ -207,7 +205,7 @@ function TechnicianDashboard() {
                                             </a>
                                         </li>
                                         <li>
-                                            <a href="">
+                                            <a href={`/technician/${technicianId}/booking`}>
                                                 <i className="ti ti-calendar-bolt"></i><span>Work</span>
                                             </a>
                                         </li>
@@ -219,6 +217,11 @@ function TechnicianDashboard() {
                                         <li>
                                             <a href="">
                                                 <i className="ti ti-users-group"></i><span>Account</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href={`/technician/profile/${technicianId}`}>
+                                                <i className="ti ti-users-group"></i><span>Profile</span>
                                             </a>
                                         </li>
                                         <li>

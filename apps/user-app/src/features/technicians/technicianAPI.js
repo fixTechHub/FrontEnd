@@ -1,5 +1,4 @@
 import apiClient from '../../services/apiClient';
-
 export const FETCH_AVAILABILITY_SUCCESS = 'FETCH_AVAILABILITY_SUCCESS';
 export const FETCH_AVAILABILITY_ERROR = 'FETCH_AVAILABILITY_ERROR';
 
@@ -51,3 +50,9 @@ export const completeTechnicianProfile = async (technicianData) => {
   const response = await apiClient.post('/technicians/complete-profile', technicianData);
   return response.data;
 };
+
+export const fetchCertificatesByTechnicianId = async (technicianId) => {
+  const response = await apiClient.get(`/technicians/${technicianId}/certificates`);
+  return response.data.certificates;
+};
+

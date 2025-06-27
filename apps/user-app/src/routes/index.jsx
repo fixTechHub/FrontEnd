@@ -24,6 +24,11 @@ import CheckoutPage from '../pages/booking/CheckoutPage';
 import PaymentSuccess from "../pages/transaction/PaymentSuccess";
 import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
+import TechnicianDashboard from "../pages/technician/TechnicianDashboard";
+import ViewEarningAndCommission from "../pages/technician/ViewEarningAndCommission";
+import TechnicianJobList from "../pages/technician/TechnicianJob";
+import TechnicianJob from "../pages/technician/TechnicianJobDetail";
+import CertificateList from "../pages/technician/Certificate";
 
 export default function AppRoutes() {
  const { user, registrationData, loading } = useSelector((state) => state.auth);
@@ -47,7 +52,7 @@ export default function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-      <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
+      <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
 
 
       {/* ================= VERIFICATION ROUTES ================= */}
@@ -89,6 +94,11 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route path="/technician/:technicianId" element={<TechnicianDashboard />} />
+      <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
+      <Route path="/technician/:technicianId/booking" element={< TechnicianJobList/>} />
+      <Route path="/technician/:technicianId/booking/:bookingId" element={< TechnicianJob/>} />
+      <Route path="/technician/:technicianId/certificate" element={< CertificateList/>} />
       <Route
         path="/technician/complete-profile"
         element={

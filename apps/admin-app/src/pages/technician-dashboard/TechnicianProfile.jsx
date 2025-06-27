@@ -232,7 +232,7 @@ function ViewTechnicianProfile() {
                                             </a>
                                         </li>
                                         <li>
-                                            <a href="">
+                                            <a href={`/technician/${technicianId}/booking`}>
                                                 <i className="ti ti-calendar-bolt"></i><span>Work</span>
                                             </a>
                                         </li>
@@ -244,6 +244,11 @@ function ViewTechnicianProfile() {
                                         <li>
                                             <a href="">
                                                 <i className="ti ti-users-group"></i><span>Account</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a href={`/technician/profile/${technicianId}`}>
+                                                <i className="ti ti-users-group"></i><span>Profile</span>
                                             </a>
                                         </li>
                                         <li>
@@ -431,7 +436,7 @@ function ViewTechnicianProfile() {
 
                                                 <div>
                                                     <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                                                        <h6>Documents</h6>
+                                                        <h6>Chứng chỉ</h6>
                                                         <a href="#" className="link-default"><i className="ti ti-edit"></i></a>
                                                     </div>
                                                     <div className="d-flex align-items-center flex-wrap gap-4">
