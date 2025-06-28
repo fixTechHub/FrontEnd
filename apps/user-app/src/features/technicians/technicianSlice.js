@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getTechnicianProfile, getTechnicians, completeTechnicianProfile, sendQuotationAPI } from '../technicians/technicianAPI';
+import { getTechnicianProfile, getTechnicians, completeTechnicianProfile, sendQuotationAPI, getTechnicianDepositLogs } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
@@ -16,6 +16,7 @@ export const fetchTechnicianProfile = createAsyncThunk(
     }
   }
 );
+
 
 export const fetchTechnicians = createAsyncThunk(
   'technician/fetchList',
@@ -61,13 +62,28 @@ export const sendQuotation = createAsyncThunk(
   }
 );
 
+export const fetchTechnicianDepositLogs = createAsyncThunk(
+  'technician/fetchTechnicianDepositLogs',
+  async ({ limit, skip }, { rejectWithValue }) => {
+    try {
+      const response = await getTechnicianDepositLogs({ limit, skip });
+      console.log('Data', response.data);
+      return response.data.technicianDepositLogs;
+    } catch (error) {
+      console.error('Thunk Error:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch deposit logs');
+    }
+  }
+);
+
 const technicianSlice = createSlice({
   name: 'technician',
   initialState: {
     profile: null,
     quotations: [],
     loading: false,
-    error: null
+    error: null,
+    logs: [],
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -116,7 +132,7 @@ const technicianSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
-      
+
       // Send Quotation
       .addCase(sendQuotation.pending, (state) => {
         state.status = 'loading';
@@ -127,6 +143,20 @@ const technicianSlice = createSlice({
       })
       .addCase(sendQuotation.rejected, (state, action) => {
         state.status = 'failed';
+        state.error = action.payload;
+      })
+
+      .addCase(fetchTechnicianDepositLogs.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnicianDepositLogs.fulfilled, (state, action) => {
+        state.loading = false;
+        
+        state.logs = action.payload;
+      })
+      .addCase(fetchTechnicianDepositLogs.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload;
       });
   }

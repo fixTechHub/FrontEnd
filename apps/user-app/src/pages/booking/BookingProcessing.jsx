@@ -8,30 +8,59 @@ import BookingDetails from "./common/BookingDetails";
 import BookingWizard from "./common/BookingHeader";
 import MessageBox from "../../components/message/MessageBox";
 import { useBookingParams } from "../../hooks/useBookingParams";
-
+import { checkBookingAccess } from "../../hooks/checkBookingAccess"; 
+import { useDispatch,useSelector } from "react-redux";
 function BookingProcessing() {
-    const [searchParams] = useSearchParams();
     const navigate = useNavigate();
-    const [technicianId, setTechnicianId] = useState(null);
+    const dispatch = useDispatch();
     const { bookingId, stepsForCurrentUser } = useBookingParams();
-
+    const { user } = useSelector((state) => state.auth);
+    const [isChecking, setIsChecking] = useState(false);
+    const [isAuthorized, setIsAuthorized] = useState(null);
+    const [authError, setAuthError] = useState(null);
     useEffect(() => {
-        console.log('--- BOOKING PROCESSING ---', bookingId);
-        const technicianId = searchParams.get('technicianId')
-        setTechnicianId(technicianId)
-        console.log('--- BOOKING PROCESSING ---', technicianId);
+        const verifyAccess = async () => {
+            if (!bookingId || !user?._id) {
+                setAuthError("Missing booking ID or user information");
+                setIsAuthorized(false);
+                setIsChecking(true);
+                return;
+            }
 
-    }, [searchParams]);
+            const { isAuthorized, error } = await checkBookingAccess(dispatch, bookingId, user._id,user.role.name);
+            setIsAuthorized(isAuthorized);
+            setAuthError(error);
+            setIsChecking(true);
+        };
+
+        verifyAccess();
+    }, [dispatch, bookingId, user?._id]);
+    
+    useEffect(() => {
+        if (isChecking) return; 
+        if (isAuthorized === false) {
+            
+            // Redirect to the original page or default to '/'
+            const redirectPath = location.state?.from?.pathname || '/';
+            navigate(redirectPath, { replace: true });
+        }
+    }, [isAuthorized, isChecking, navigate]);
 
     const handleComfirm = () => {
-        if (!bookingId || !technicianId) {
+        if (!bookingId) {
             alert("Thiếu thông tin booking hoặc kỹ thuật viên!");
             return;
         }
 
-        navigate(`/checkout/${bookingId}/${technicianId}`);
+        navigate(`/checkout?bookingId=${bookingId}`);
     };
+    // if (isAuthorized === null) {
+    //     return <div>Loading...</div>;
+    // }
 
+    // if (!isAuthorized) {
+    //     return <div>Error: {authError}</div>;
+    // }
     return (
         <>
             <Header />
@@ -55,9 +84,15 @@ function BookingProcessing() {
                         </div>
                     </div>
                     <div className="text-end my-4">
-                        <button className="btn btn-primary" onClick={handleComfirm}>
-                            Xác nhận và Thanh toán
-                        </button>
+                        
+                        {user?.role?.name === 'CUSTOMER' && (
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleComfirm}
+                            >
+                                Xác nhận và Thanh toán
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

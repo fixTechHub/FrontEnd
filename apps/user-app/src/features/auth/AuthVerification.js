@@ -22,10 +22,10 @@ const AuthVerification = () => {
         lastPathRef.current = location.pathname;
 
         // Nếu có bước xác thực chưa hoàn thành và có redirectTo, chuyển hướng
-        if (nextStep !== 'COMPLETED' && redirectTo && location.pathname !== redirectTo) {
-            navigate(redirectTo);
-            return;
-        }
+        // if (nextStep !== 'COMPLETED' && redirectTo && location.pathname !== redirectTo) {
+        //     navigate(redirectTo);
+        //     return;
+        // }
 
         // Nếu đã hoàn thành tất cả bước xác thực và không ở trang home, chuyển về home
         // Nhưng không redirect nếu đang ở các trang mà user có quyền truy cập

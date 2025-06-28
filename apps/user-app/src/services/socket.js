@@ -25,12 +25,20 @@ export const initializeSocket = (userId) => {
   }
 
   console.log(`Initializing new socket for user: ${userId}`);
-  socket = io(SOCKET_URL, {
-    withCredentials: true,
-    transports: ['websocket'],
-    reconnection: false, // Turn off auto-reconnect to manage it manually
-    query: { userId },
-  });
+  socket = io(
+    SOCKET_URL 
+    // || '/'
+    , {
+      // path: '/socket.io',
+      withCredentials: true,
+      transports: ['websocket'],
+      reconnection: true,
+      // reconnectionAttempts: 5,     // Max attempts
+      // reconnectionDelay: 1000,     // Start with 1s delay
+      // reconnectionDelayMax: 5000,  // Cap the delay to 5s
+      // timeout: 10000,              // Timeout for each connection attempt
+      query: { userId },
+    });
 
   socket.on('connect', () => {
     console.log(`Socket connected: ${socket.id}`);
