@@ -14,6 +14,8 @@ import notificationReducer from '../features/notifications/notificationSlice';
 import videoCallReducer from '../features/video-call/videoCallSlice';
 import quotationReducer from '../features/quotations/quotationSlice';
 import receiptReducer from '../features/receipts/receiptSlice';
+import roleReducer from '../features/roles/roleSlice';
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -29,7 +31,8 @@ export const store = configureStore({
     notifications: notificationReducer,
     videoCall: videoCallReducer,
     quotation: quotationReducer,
-    receipt: receiptReducer
+    receipt: receiptReducer,
+    roles: roleReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

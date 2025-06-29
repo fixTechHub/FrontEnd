@@ -11,6 +11,7 @@ export default defineConfig({
     sourcemap: true,
     outDir: 'dist'
   },
+  
   optimizeDeps: {
     esbuildOptions: {
       define: {

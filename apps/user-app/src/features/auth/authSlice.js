@@ -427,11 +427,22 @@ const determineVerificationStatus = (user, technician) => {
 
   // Kiểm tra technician profile completion (sau khi đã xác thực email/phone)
   if (user.role?.name === 'TECHNICIAN') {
-    if (!technician) {
+    const profileCompleted = (() => {
+      if (!technician) return false;
+      // 1) Nếu backend có cờ profileCompleted
+      if (typeof technician.profileCompleted === 'boolean') return technician.profileCompleted;
+      // 2) Tự kiểm tra một số trường cơ bản
+      const hasSpecialties = Array.isArray(technician.specialtiesCategories) && technician.specialtiesCategories.length > 0;
+      const hasCertificates = Array.isArray(technician.certificate) && technician.certificate.length > 0;
+      const identityVerified = technician.identityVerified || false;
+      return hasSpecialties && hasCertificates && identityVerified;
+    })();
+
+    if (!profileCompleted) {
       return {
         step: "COMPLETE_PROFILE",
         redirectTo: "/technician/complete-profile",
-        message: "Vui lòng hoàn thành hồ sơ của bạn",
+        message: "Vui lòng hoàn thiện hồ sơ kỹ thuật viên của bạn",
       };
     }
   }
