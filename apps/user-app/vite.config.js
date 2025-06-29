@@ -11,7 +11,29 @@ export default defineConfig({
     sourcemap: true,
     outDir: 'dist'
   },
-  
+
+  // server: {
+  //   port: 5174, // Explicitly set frontend port
+  //   host: '0.0.0.0', // Allow external connections (needed for ngrok)
+  //   allowedHosts: [
+  //     'b8d9-2001-ee0-4b7b-3bd0-2d89-bdfa-7310-9e33.ngrok-free.app', // Specific ngrok host
+  //     '*.ngrok-free.app', // Wildcard for all ngrok-free.app hosts
+  //   ],
+  //   proxy: {
+  //     '/api': {
+  //       target: 'http://localhost:3000', // Proxy to backend
+  //       changeOrigin: true,
+  //       secure: false,
+  //       ws: true, // Support WebSockets if needed
+  //     },
+  //     '/socket.io': {
+  //       target: 'http://localhost:3000',
+  //       changeOrigin: true,
+  //       secure: false,
+  //       ws: true,
+  //     },
+  //   },
+  // },
   optimizeDeps: {
     esbuildOptions: {
       define: {

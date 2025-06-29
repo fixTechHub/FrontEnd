@@ -15,3 +15,16 @@ export const completeTechnicianProfile = async (technicianData) => {
 };
 
 export const sendQuotationAPI = (formData) => apiClient.post('/technicians/send-quotation', formData);
+
+export const getTechnicianDepositLogs = async ({ limit, skip }) => {
+  try {
+    const response = await apiClient.get('/technicians/technician-deposit', {
+      params: { limit, skip }
+    });
+    console.log('API Response:', response.data);
+    return response;
+  } catch (error) {
+    console.error('API Error:', error.response?.data || error.message);
+    throw error;
+  }
+};

@@ -43,9 +43,45 @@ const styles = {
   },
   unreadNotification: {
     backgroundColor: '#f8f9fa'
+  },
+  bellIcon: {
+    position: 'relative',
+    display: 'flex',
+    width: '36px',
+    height: '36px',
+    background: '#F1F1F1',
+    borderRadius: '50%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgePill: {
+    minWidth: '24px',
+    height: '24px',
+    fontSize: '12px',
+    fontWeight: 'bold',
+    lineHeight: '24px',
+    padding: '0 8px',
+    borderRadius: '12px',
+    position: 'absolute',
+    top: '-8px',
+    right: '-8px',
+    backgroundColor: '#dc3545',
+    color: 'white',
+    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badgePillLarge: {
+    minWidth: '28px',
+    height: '28px',
+    fontSize: '14px',
+    lineHeight: '28px',
+    borderRadius: '14px',
+    top: '-10px',
+    right: '-10px',
   }
 };
-
 const Notifications = ({ userId }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -73,6 +109,9 @@ const Notifications = ({ userId }) => {
 
   const handleNotificationClick = (notification) => {
     if (notification.url) {
+      if (!notification.isRead) {
+        dispatch(markNotificationAsReadThunk(notification._id));
+      }
       navigate(notification.url);
       setIsOpen(false);
     }
@@ -120,11 +159,11 @@ const Notifications = ({ userId }) => {
         onClick={() => setIsOpen(!isOpen)}
         data-bs-toggle="dropdown"
       >
-        <span className="bell-icon">
+        <span style={styles.bellIcon}>
           <img src="/img/icons/bell-icon.svg" alt="Bell" />
         </span>
         {unreadCount > 0 && (
-          <span className="badge badge-pill">{unreadCount}</span>
+          <span style={{ ...styles.badgePill, ...styles.badgePillLarge }}>{unreadCount}</span>
         )}
       </a>
 
@@ -164,8 +203,8 @@ const Notifications = ({ userId }) => {
               ) : (
                 notifications.map((notification) => (
                   notification.status === 'DISPLAY' && (
-                    <li 
-                      key={notification._id} 
+                    <li
+                      key={notification._id}
                       className="notification-message"
                       style={{
                         ...styles.notificationMessage,

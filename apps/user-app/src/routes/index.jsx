@@ -30,6 +30,7 @@ import CustomerDashboard from "../pages/customer/CustomerDashboard";
 import VideoCallPage from "../pages/video-call/VideoCallPage";
 import NotificationsPage from "../pages/notifications/NotificationPage";
 import ReceiptPage from "../pages/receipt/ReceiptPage";
+import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
 // import { checkAuthThunk } from '../features/auth/authSlice';
 export default function AppRoutes() {
   // const dispatch = useDispatch();
@@ -135,8 +136,15 @@ export default function AppRoutes() {
         </PrivateRoute>
 
       } />
+      <Route path="/technician/deposit" element={
+        <PrivateRoute isAllowed={!!user && user.role?.name === "TECHNICIAN"}
+          redirectPath={user ? "/" : "/login"}
+        >
+          <TechnicianDeposit />
+        </PrivateRoute>
 
-      <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+      } />
+      <Route path="/checkout" element={<PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
         redirectPath={user ? "/" : "/login"}
       >
         <CheckoutPage />

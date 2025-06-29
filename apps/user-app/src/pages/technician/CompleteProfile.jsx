@@ -389,6 +389,8 @@ const CompleteProfile = () => {
             </div>
         </div>
     );
-}
+
+});}
+
 
 export default CompleteProfile; 

@@ -1,0 +1,246 @@
+/* Custom Video Call Container */
+.custom-video-call-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    background: #000;
+    overflow: hidden;
+    position: relative;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Custom Video Container */
+.custom-video-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Custom Remote Video Wrapper */
+.custom-video-wrapper.remote {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+}
+
+/* Custom Local Video Wrapper (Picture-in-Picture) */
+.custom-video-wrapper.local {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    width: 150px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    border: 2px solid #fff;
+}
+
+/* Custom Video Element */
+.custom-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    background: #000;
+}
+
+/* Custom Video Label */
+.custom-video-label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(0, 0, 0, 0.6);
+    color: #fff;
+    padding: 0.4rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    z-index: 1001;
+}
+
+/* Custom Waiting Message */
+.custom-waiting-message {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+    z-index: 999;
+}
+
+/* Custom Controls */
+.custom-controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 1rem;
+    padding: 0.75rem;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 50px;
+    z-index: 1001;
+}
+
+/* Custom Control Buttons */
+.custom-btn-hangup,
+.custom-btn-mute,
+.custom-btn-camera {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: none;
+    background: #fff;
+    color: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-btn-hangup {
+    background: #e63946;
+    color: #fff;
+}
+
+.custom-btn-hangup:hover {
+    background: #d00000;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.4);
+}
+
+.custom-btn-mute:hover,
+.custom-btn-camera:hover {
+    background: #e0e0e0;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom Animations */
+@keyframes custom-fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .custom-video-call-container {
+        height: 100vh;
+    }
+
+    .custom-video-wrapper.local {
+        width: 120px;
+        height: 80px;
+        bottom: 80px; /* Adjusted to avoid overlap with larger buttons */
+        right: 15px;
+    }
+
+    .custom-video-label {
+        font-size: 0.75rem;
+        padding: 0.3rem 0.6rem;
+    }
+
+    .custom-waiting-message {
+        font-size: 1rem;
+    }
+
+    .custom-controls {
+        bottom: 15px;
+        padding: 0.75rem;
+        gap: 1.25rem; /* Increased gap for larger buttons */
+    }
+
+    .custom-btn-hangup,
+    .custom-btn-mute,
+    .custom-btn-camera {
+        width: 64px;
+        height: 64px;
+        font-size: 1.5rem;
+      }
+}
+
+@media (max-width: 480px) {
+    .custom-video-wrapper.local {
+        width: 100px;
+        height: 70px;
+        bottom: 75px; /* Adjusted to avoid overlap */
+        right: 10px;
+    }
+
+    .custom-video-label {
+        font-size: 0.7rem;
+    }
+
+    .custom-waiting-message {
+        font-size: 0.9rem;
+    }
+
+    .custom-btn-hangup,
+    .custom-btn-mute,
+    .custom-btn-camera {
+        touch-action: manipulation;
+        width: 80px;
+        height: 80px;
+        font-size: 2rem;
+        padding: 0;
+        flex-shrink: 0;
+    }
+    
+    .custom-controls {
+        bottom: 20px;
+        gap: 1.5rem;
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .custom-video-call-container {
+        background: #000;
+    }
+
+    .custom-video-container {
+        background: #000;
+    }
+
+    .custom-waiting-message {
+        background: rgba(0, 0, 0, 0.8);
+        color: #e0e0e0;
+    }
+
+    .custom-controls {
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    .custom-btn-mute,
+    .custom-btn-camera {
+        background: #333;
+        color: #fff;
+    }
+
+    .custom-btn-mute:hover,
+    .custom-btn-camera:hover {
+        background: #444;
+    }
+}
