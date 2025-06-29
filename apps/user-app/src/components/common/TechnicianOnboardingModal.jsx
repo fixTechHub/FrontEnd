@@ -22,15 +22,27 @@ const TechnicianOnboardingModal = () => {
 
     // Điều kiện hiển thị
     const needVerify = (verificationStatus?.step === 'VERIFY_EMAIL' || verificationStatus?.step === 'VERIFY_PHONE') && !location.pathname.startsWith('/verify-');
-    const incompleteProfile = technician ? ( (technician.profileCompleted === false) || (technician.status === 'DRAFT') ) : true;
-    const needComplete = verificationStatus?.step === 'COMPLETE_PROFILE' && incompleteProfile && location.pathname !== '/technician/complete-profile';
+    
+    // Kiểm tra profile completion dựa trên các trường thực tế
+    const profileCompleted = (() => {
+      if (!technician) return false;
+      const hasSpecialties = Array.isArray(technician.specialtiesCategories) && technician.specialtiesCategories.length > 0;
+      const hasCertificates = Array.isArray(technician.certificate) && technician.certificate.length > 0;
+      const hasIdentification = technician.identification && technician.identification.trim() !== '';
+      const hasFrontIdImage = technician.frontIdImage && technician.frontIdImage.trim() !== '';
+      const hasBackIdImage = technician.backIdImage && technician.backIdImage.trim() !== '';
+      
+      return hasSpecialties && hasCertificates && hasIdentification && hasFrontIdImage && hasBackIdImage;
+    })();
+    
+    const needComplete = verificationStatus?.step === 'COMPLETE_PROFILE' && !profileCompleted && location.pathname !== '/technician/complete-profile';
 
     if ((needVerify || needComplete) && location.pathname === '/profile') {
       setMode(needVerify ? 'VERIFY' : 'COMPLETE');
       setInternalHide(false); // reset nếu quay lại profile
     }
 
-  }, [isAuthenticated, user, verificationStatus, location.pathname]);
+  }, [isAuthenticated, user, verificationStatus, technician, location.pathname]);
 
   const shouldShow = !internalHide && mode && location.pathname === '/profile';
 

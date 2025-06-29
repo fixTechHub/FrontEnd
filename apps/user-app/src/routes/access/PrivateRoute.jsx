@@ -3,17 +3,30 @@ import { useSelector } from 'react-redux';
 import React, { useMemo, useRef } from 'react';
 import { toast } from 'react-toastify';
 
-const ProtectedRoute = ({ children, isAllowed, redirectPath = '/login', unauthorizedMessage }) => {
+// requiredRole: string | string[] | undefined => nếu truyền, route chỉ cho phép user có role tương ứng
+// isAllowed: boolean | undefined => giữ tương thích cũ; nếu undefined thì component tự tính dựa trên role & auth
+const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/login', unauthorizedMessage }) => {
     const location = useLocation();
-    const { verificationStatus, isAuthenticated } = useSelector((state) => state.auth);
+    const { verificationStatus, isAuthenticated, user } = useSelector((state) => state.auth);
     const prevPathRef = useRef(location.pathname);
     const lastToastMessageRef = useRef('');
 
     const verificationPaths = ['/choose-role','/verify-email','/verify-otp','/technician/complete-profile'];
 
+    // Tính toán quyền nếu prop isAllowed không truyền
+    let computedAllowed = isAllowed;
+    if (typeof isAllowed === 'undefined') {
+        const roleMatch = !requiredRole ? true : (
+            Array.isArray(requiredRole)
+                ? requiredRole.includes(user?.role?.name)
+                : user?.role?.name === requiredRole
+        );
+        computedAllowed = isAuthenticated && roleMatch;
+    }
+
     const redirectInfo = useMemo(() => {
         // Nếu không được phép truy cập
-        if (!isAllowed) {
+        if (!computedAllowed) {
             // Với các trang verification flow, không hiển thị toast khi hoàn tất và tự rời trang
             const comingFromVerification = verificationPaths.some(p => location.pathname.startsWith(p));
 
@@ -43,7 +56,7 @@ const ProtectedRoute = ({ children, isAllowed, redirectPath = '/login', unauthor
 
         // Không cần redirect
         return null;
-    }, [isAllowed, redirectPath, location, verificationStatus, isAuthenticated, unauthorizedMessage]);
+    }, [computedAllowed, requiredRole, redirectPath, location, verificationStatus, isAuthenticated, unauthorizedMessage]);
 
     // Cập nhật prevPathRef khi location thay đổi
     if (location.pathname !== prevPathRef.current) {
