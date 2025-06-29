@@ -27,6 +27,8 @@ import authAPI from "../../features/auth/authAPI";
 import ContractStatus from '../../components/contracts/ContractStatus';
 import ApproveTechnicianTest from '../../components/admin/ApproveTechnicianTest'
 import apiClient from "../../services/apiClient";
+import TechnicianOnboardingModal from "../../components/common/TechnicianOnboardingModal";
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 // ------- GLOBAL FLAG --------
 // Đánh dấu đã lấy thông tin technician thành công để tránh dispatch lặp
@@ -1052,11 +1054,29 @@ function ProfilePage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem 0' }}>
               <CardContent>
                 <InfoLabel>Email:</InfoLabel>
-                <InfoValue>{formData.email || "Chưa cập nhật"}</InfoValue>
+                <InfoValue>
+                  {formData.email || "Chưa cập nhật"}
+                  {user.email && (
+                    user.emailVerified ? (
+                      <FaCheckCircle className="text-success ms-2" />
+                    ) : (
+                      <FaTimesCircle className="text-danger ms-2" />
+                    )
+                  )}
+                </InfoValue>
               </CardContent>
               <CardContent>
                 <InfoLabel>Số điện thoại:</InfoLabel>
-                <InfoValue>{formData.phone || "Chưa cập nhật"}</InfoValue>
+                <InfoValue>
+                  {formData.phone || "Chưa cập nhật"}
+                  {user.phone && (
+                    user.phoneVerified ? (
+                      <FaCheckCircle className="text-success ms-2" />
+                    ) : (
+                      <FaTimesCircle className="text-danger ms-2" />
+                    )
+                  )}
+                </InfoValue>
               </CardContent>
             </div>
           </InfoCard>
@@ -1747,6 +1767,22 @@ function ProfilePage() {
       <BreadcrumbBar title="Thông tin cá nhân" />
       <ContentContainer>
         <div className="container">
+            {/* Banner nhắc xác thực email/phone */}
+            {user && ((!user.emailVerified && user.email) || (!user.email && !user.phoneVerified)) && (
+               <div className="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+                 <span>
+                   {(user.email && !user.emailVerified) ? 'Email của bạn chưa được xác thực.' : 'Số điện thoại của bạn chưa được xác thực.'}
+                   &nbsp;Vui lòng xác thực để sử dụng đầy đủ tính năng.
+                 </span>
+                 <button
+                   className="btn btn-sm btn-primary"
+                   onClick={() => navigate((user.email && !user.emailVerified) ? '/verify-email' : '/verify-otp')}
+                 >
+                   Xác thực ngay
+                 </button>
+               </div>
+             )}
+
             <ApproveTechnicianTest />
             <ContractStatus />
           <SettingsWrapper>
@@ -1770,6 +1806,7 @@ function ProfilePage() {
       {showDeleteOtpModal && renderDeleteOtpModal()}
       {showDeletePasswordModal && !accountDeleted && renderDeletePasswordModal()}
       {showDeleteConfirmModal && !accountDeleted && renderDeleteConfirmModal()}
+      <TechnicianOnboardingModal />
       <dialog ref={certDialogRef} style={{ border:'none', background:'rgba(0,0,0,.6)', padding:0 }} onClick={(e)=>{
         if(e.target === certDialogRef.current) { certDialogRef.current.close(); }
       }}>
