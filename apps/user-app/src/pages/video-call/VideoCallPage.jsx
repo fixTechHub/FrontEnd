@@ -109,7 +109,7 @@ const VideoCallPage = () => {
           connectionRef.current = null;
         }
         stopStream('call ended');
-        navigate(`/booking/booking-processing?bookingId=${bookingId}&technicianId=${booking.technicianId._id}`, { replace: true });
+        navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
         window.location.reload();
       }
     };
@@ -122,7 +122,7 @@ const VideoCallPage = () => {
       stopStream('call declined');
       dispatch(setCallEnded(true)); // Reset call state
       hasCalled.current = false; // Allow initiating a new call
-      navigate(`/booking/booking-processing?bookingId=${bookingId}&technicianId=${booking.technicianId._id}`, { replace: true });
+      navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
       window.location.reload();
     };
     socket.on('callUser', handleCallUser);
@@ -368,7 +368,7 @@ const VideoCallPage = () => {
       connectionRef.current = null;
     }
     stopStream('manual hang up');
-    navigate(`/booking/booking-processing?bookingId=${bookingId}&technicianId=${booking.technicianId._id}`, { replace: true });
+    navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
     window.location.reload();
   };
   useEffect(() => {

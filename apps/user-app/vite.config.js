@@ -1,8 +1,8 @@
 import { defineConfig } from "vite";
 import path from "path";
 import react from "@vitejs/plugin-react";
-import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
+// import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
+// import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 
 export default defineConfig({
   plugins: [react()],
@@ -34,31 +34,35 @@ export default defineConfig({
   //     },
   //   },
   // },
-  optimizeDeps: {
-    esbuildOptions: {
-      define: {
-        global: 'globalThis', // Polyfill 'global' for browser compatibility
-      },
-      plugins: [
-        NodeGlobalsPolyfillPlugin({
-          buffer: true,
-          process: true, // Explicitly polyfill process
-        }),
-        NodeModulesPolyfillPlugin(), // Polyfill Node.js modules like 'stream'
-      ],
-    },
-  },
+  // optimizeDeps: {
+  //   esbuildOptions: {
+  //     define: {
+  //       global: 'globalThis', // Polyfill 'global' for browser compatibility
+  //     },
+  //     plugins: [
+  //       NodeGlobalsPolyfillPlugin({
+  //         buffer: true,
+  //         process: true, // Explicitly polyfill process
+  //       }),
+  //       NodeModulesPolyfillPlugin(), // Polyfill Node.js modules like 'stream'
+  //     ],
+  //   },
+  // },
   define: {
     // 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'), // Ensure NODE_ENV is defined
-    global: 'window', // Define global as window for browser
+    global: 'globalThis', // Define global as window for browser
+    'process.env': {},
   },
   resolve: {
     alias: {
       process: 'process/browser', // Alias for process
-      stream: 'stream-browserify', // Polyfill 'stream' module
-      crypto: 'crypto-browserify', // Polyfill 'crypto' if needed
-      events: 'events/', // Polyfill 'events' if required
+      stream: 'stream-browserify',
+      crypto: 'crypto-browserify',
+      events: 'events',
       "@": path.resolve(__dirname, "./src")
     }
+  },
+  optimizeDeps: {
+    include: ['process', 'stream', 'crypto', 'events']
   }
 });

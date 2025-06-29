@@ -390,7 +390,7 @@ const CompleteProfile = () => {
         </div>
     );
 
-});}
+}
 
 
 export default CompleteProfile; 
