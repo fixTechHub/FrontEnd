@@ -43,7 +43,7 @@ const CheckoutPage = () => {
                 return;
             }
 
-            const { isAuthorized, error } = await checkOutCustomerAccess(dispatch, bookingId, user._id);
+            const { booking,isAuthorized, error } = await checkOutCustomerAccess(dispatch, bookingId, user._id);
             setIsAuthorized(isAuthorized);
             setAuthError(error);
             setIsChecking(true);

@@ -18,6 +18,7 @@ function BookingProcessing() {
     const [isChecking, setIsChecking] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState(null);
     const [authError, setAuthError] = useState(null);
+    const [getBooking, setGetBooking] = useState(null)
     useEffect(() => {
         const verifyAccess = async () => {
             if (!bookingId || !user?._id) {
@@ -27,10 +28,11 @@ function BookingProcessing() {
                 return;
             }
 
-            const { isAuthorized, error } = await checkBookingAccess(dispatch, bookingId, user._id,user.role.name);
+            const { booking,isAuthorized, error } = await checkBookingAccess(dispatch, bookingId, user._id,user.role.name);
             setIsAuthorized(isAuthorized);
             setAuthError(error);
             setIsChecking(true);
+            setGetBooking(booking)
         };
 
         verifyAccess();
@@ -85,7 +87,7 @@ function BookingProcessing() {
                     </div>
                     <div className="text-end my-4">
                         
-                        {user?.role?.name === 'CUSTOMER' && (
+                        {user?.role?.name === 'CUSTOMER' && getBooking.status==='WAITING_CONFIRM' (
                             <button
                                 className="btn btn-primary"
                                 onClick={handleComfirm}

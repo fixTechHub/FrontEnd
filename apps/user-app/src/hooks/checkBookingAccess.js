@@ -11,8 +11,8 @@ export const checkBookingAccess = async (dispatch, bookingId, userId, role) => {
         }
 
         // Fetch booking data
-        const result = await dispatch(fetchBookingById(bookingId)).unwrap();
-        const booking = result;
+        const booking = await dispatch(fetchBookingById(bookingId)).unwrap();
+     
         // Extract customerId and technicianId (handle both populated objects and ObjectId strings)
         const customerId = booking.customerId?._id || booking.customerId;
         const technicianId = booking.technicianId?.userId?._id 
@@ -27,11 +27,13 @@ export const checkBookingAccess = async (dispatch, bookingId, userId, role) => {
         console.log(isAuthorized);
         
         return {
+            booking,
             isAuthorized,
             error: isAuthorized ? null : 'Bạn không có quyền vào trang này ',
         };
     } catch (error) {
         return {
+            
             isAuthorized: false,
             error: error.message || 'Không thể lấy thông tin ',
         };
