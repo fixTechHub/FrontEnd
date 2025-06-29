@@ -30,7 +30,7 @@ function BookingProcessing() {
     useEffect(() => {
         const verifyAccess = async () => {
             if (!bookingId || !user?._id) {
-                setAuthError("Missing booking ID or user information");
+                // setAuthError("Missing booking ID or user information");
                 setIsAuthorized(false);
                 setIsChecking(true);
                 return;
