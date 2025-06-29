@@ -13,7 +13,7 @@ import ChooseRole from "../pages/authentication/ChooseRole";
 import VerifyEmailPage from "../pages/authentication/VerifyEmailPage";
 import VerifyOTPPage from "../pages/authentication/VerifyOTPPage";
 import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
-// import CompleteProfile from "../pages/technician/CompleteProfile";
+import CompleteProfile from "../pages/technician/CompleteProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ChooseTechnician from '../pages/booking/ChooseTechnician';
@@ -25,6 +25,7 @@ import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
 import SendQuotation from "../pages/technician/SendQuotation";
 import WaitingConfirm from "../pages/technician/WaitingConfirm";
+import CustomerDashboard from "../pages/customer/CustomerDashboard";
 
 import VideoCallPage from "../pages/video-call/VideoCallPage";
 import NotificationsPage from "../pages/notifications/NotificationPage";
@@ -32,8 +33,8 @@ import ReceiptPage from "../pages/receipt/ReceiptPage";
 import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
 // import { checkAuthThunk } from '../features/auth/authSlice';
 export default function AppRoutes() {
-  const dispatch = useDispatch();
-  const { user, registrationData, loading } = useSelector((state) => state.auth);
+  // const dispatch = useDispatch();
+  const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
   // const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   //   useEffect(() => {
@@ -105,7 +106,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
-      {/* <Route
+      <Route
         path="/technician/complete-profile"
         element={
           <PrivateRoute
@@ -115,7 +116,7 @@ export default function AppRoutes() {
             <CompleteProfile />
           </PrivateRoute>
         }
-      /> */}
+      />
 
       {/* ================= USER PROTECTED ROUTES ================= */}
       <Route
@@ -266,6 +267,16 @@ export default function AppRoutes() {
         }
       />
 
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute
+            isAllowed={!!user && user.role?.name === 'CUSTOMER'}
+          >
+            <CustomerDashboard />
+          </PrivateRoute>
+        }
+      />
 
       {/* ================= FALLBACK ROUTE ================= */}
       <Route path="*" element={<Navigate to="/" replace />} />

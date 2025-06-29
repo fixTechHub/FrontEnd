@@ -11,6 +11,7 @@ export default defineConfig({
     sourcemap: true,
     outDir: 'dist'
   },
+
   // server: {
   //   port: 5174, // Explicitly set frontend port
   //   host: '0.0.0.0', // Allow external connections (needed for ngrok)

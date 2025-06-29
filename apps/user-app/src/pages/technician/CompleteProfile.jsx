@@ -45,10 +45,10 @@ const CompleteProfile = () => {
             navigate('/');
             return;
         }
-        // Lấy categories qua redux (giống HomePage)
         dispatch(fetchAllPublicCategories());
+    }, [user, navigate, dispatch]);
 
-    // Log kiểm tra dữ liệu categories
+    // Log kiểm tra dữ liệu categories (riêng)
     useEffect(() => {
         console.log('Categories in CompleteProfile:', categories);
     }, [categories]);
@@ -99,10 +99,10 @@ const CompleteProfile = () => {
             return;
         }
 
-        // if (selectedCategories.length === 0) {
-        //     toast.error('Vui lòng chọn ít nhất một chuyên môn');
-        //     return;
-        // }
+        if (selectedCategories.length === 0) {
+            toast.error('Vui lòng chọn ít nhất một chuyên môn');
+            return;
+        }
 
       // Kiểm tra bắt buộc phải có chứng chỉ
         // if (certificates.length === 0) {
@@ -190,7 +190,7 @@ const CompleteProfile = () => {
                                 </div>
 
                                 {/* Chuyên môn */}
-                                {/* <div className="mb-4">
+                                <div className="mb-4">
                                     <h5>Chuyên môn *</h5>
                                     <div className="row">
                                         {categories && categories.length > 0 ? categories.map((category) => (
@@ -210,7 +210,7 @@ const CompleteProfile = () => {
                                             </div>
                                         )) : <div className="col-12">Không có dữ liệu chuyên môn</div>}
                                     </div>
-                                </div> */}
+                                </div>
 
                                 {/* Chứng chỉ */}
                                 <div className="mb-4">
@@ -389,6 +389,8 @@ const CompleteProfile = () => {
             </div>
         </div>
     );
+
 });}
+
 
 export default CompleteProfile; 
