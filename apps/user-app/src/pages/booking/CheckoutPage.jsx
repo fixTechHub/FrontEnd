@@ -194,7 +194,7 @@ const CheckoutPage = () => {
         <>
             <Header />
 
-            <BreadcrumbBar title='Thanh toán' />
+            <BreadcrumbBar title='Thanh toán' subtitle={'Payment'} />
 
             <div className="booking-new-module">
                 <div className="container">
