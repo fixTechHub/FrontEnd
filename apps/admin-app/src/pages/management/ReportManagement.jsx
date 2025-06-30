@@ -174,146 +174,148 @@ const ReportManagement = () => {
   ];
 
   return (
-    <div style={{ padding: '24px' }}>
-      <Card>
-        {/* Stats Cards */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col span={6}>
-            <Card>
-              <div style={{ textAlign: 'center' }}>
-                <h5>Total Reports</h5>
-                <h3 style={{ color: '#1890ff', margin: 0 }}>{reportStats.total}</h3>
-              </div>
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <div style={{ textAlign: 'center' }}>
-                <h5>Pending</h5>
-                <h3 style={{ color: '#faad14', margin: 0 }}>{reportStats.pending}</h3>
-              </div>
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <div style={{ textAlign: 'center' }}>
-                <h5>Resolved</h5>
-                <h3 style={{ color: '#52c41a', margin: 0 }}>{reportStats.resolved}</h3>
-              </div>
-            </Card>
-          </Col>
-          <Col span={6}>
-            <Card>
-              <div style={{ textAlign: 'center' }}>
-                <h5>Rejected</h5>
-                <h3 style={{ color: '#ff4d4f', margin: 0 }}>{reportStats.rejected}</h3>
-              </div>
-            </Card>
-          </Col>
-        </Row>
+    <div className="page-wrapper">
+      <div className="content me-4">
+        <Card>
+          {/* Stats Cards */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col span={6}>
+              <Card>
+                <div style={{ textAlign: 'center' }}>
+                  <h5>Total Reports</h5>
+                  <h3 style={{ color: '#1890ff', margin: 0 }}>{reportStats.total}</h3>
+                </div>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <div style={{ textAlign: 'center' }}>
+                  <h5>Pending</h5>
+                  <h3 style={{ color: '#faad14', margin: 0 }}>{reportStats.pending}</h3>
+                </div>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <div style={{ textAlign: 'center' }}>
+                  <h5>Resolved</h5>
+                  <h3 style={{ color: '#52c41a', margin: 0 }}>{reportStats.resolved}</h3>
+                </div>
+              </Card>
+            </Col>
+            <Col span={6}>
+              <Card>
+                <div style={{ textAlign: 'center' }}>
+                  <h5>Rejected</h5>
+                  <h3 style={{ color: '#ff4d4f', margin: 0 }}>{reportStats.rejected}</h3>
+                </div>
+              </Card>
+            </Col>
+          </Row>
 
-        {/* Filter Controls */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-          <Col span={8}>
-            <Input
-              placeholder="Search reports..."
-              prefix={<SearchOutlined />}
-              value={filters.search}
-              onChange={(e) => handleFilterChange('search', e.target.value)}
-              allowClear
-            />
-          </Col>
-          <Col span={5}>
-            <Select
-              value={filters.type}
-              onChange={(value) => handleFilterChange('type', value)}
-              style={{ width: '100%' }}
-              placeholder="Filter by Type"
-              allowClear
-            >
-              <Option value="REPORT">Report</Option>
-            </Select>
-          </Col>
-          <Col span={5}>
-            <Select
-              value={filters.status}
-              onChange={(value) => handleFilterChange('status', value)}
-              style={{ width: '100%' }}
-              placeholder="Filter by Status"
-              allowClear
-            >
-              <Option value="pending">Pending</Option>
-              <Option value="resolved">Resolved</Option>
-              <Option value="rejected">Rejected</Option>
-            </Select>
-          </Col>
-          <Col span={6}>
-            <Space>
-              <Button onClick={handleClearFilters}>Clear Filters</Button>
-            </Space>
-          </Col>
-        </Row>
+          {/* Filter Controls */}
+          <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+            <Col span={8}>
+              <Input
+                placeholder="Search reports..."
+                prefix={<SearchOutlined />}
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                allowClear
+              />
+            </Col>
+            <Col span={5}>
+              <Select
+                value={filters.type}
+                onChange={(value) => handleFilterChange('type', value)}
+                style={{ width: '100%' }}
+                placeholder="Filter by Type"
+                allowClear
+              >
+                <Option value="REPORT">Report</Option>
+              </Select>
+            </Col>
+            <Col span={5}>
+              <Select
+                value={filters.status}
+                onChange={(value) => handleFilterChange('status', value)}
+                style={{ width: '100%' }}
+                placeholder="Filter by Status"
+                allowClear
+              >
+                <Option value="pending">Pending</Option>
+                <Option value="resolved">Resolved</Option>
+                <Option value="rejected">Rejected</Option>
+              </Select>
+            </Col>
+            <Col span={6}>
+              <Space>
+                <Button onClick={handleClearFilters}>Clear Filters</Button>
+              </Space>
+            </Col>
+          </Row>
 
-        {/* Reports Table */}
-        <Table
-          columns={columns}
-          dataSource={filteredReports}
-          rowKey="id"
-          loading={loading}
-          pagination={{
-            total: filteredReports.length,
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) =>
-              `${range[0]}-${range[1]} of ${total} reports`,
-          }}
-        />
-      </Card>
+          {/* Reports Table */}
+          <Table
+            columns={columns}
+            dataSource={filteredReports}
+            rowKey="id"
+            loading={loading}
+            pagination={{
+              total: filteredReports.length,
+              pageSize: 10,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} of ${total} reports`,
+            }}
+          />
+        </Card>
 
-      {/* Report Details Modal */}
-      <Modal
-        title="Report Details"
-        open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setIsModalVisible(false)}>
-            Close
-          </Button>,
-        ]}
-        width={800}
-      >
-        {selectedReport && (
-          <Descriptions bordered column={1}>
-            <Descriptions.Item label="ID">{selectedReport.id}</Descriptions.Item>
-            <Descriptions.Item label="Type">
-              <Tag color={getTypeColor(selectedReport.type)}>
-                {selectedReport.type}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Status">
-              <Tag color={getStatusColor(selectedReport.status)}>
-                {selectedReport.status?.toUpperCase()}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Reported User ID">
-              {selectedReport.reportedUserId}
-            </Descriptions.Item>
-            <Descriptions.Item label="Reporter ID">
-              {selectedReport.reporterId}
-            </Descriptions.Item>
-            <Descriptions.Item label="Description">
-              {selectedReport.description}
-            </Descriptions.Item>
-            <Descriptions.Item label="Created At">
-              {new Date(selectedReport.createdAt).toLocaleString()}
-            </Descriptions.Item>
-            <Descriptions.Item label="Updated At">
-              {new Date(selectedReport.updatedAt).toLocaleString()}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Modal>
+        {/* Report Details Modal */}
+        <Modal
+          title="Report Details"
+          open={isModalVisible}
+          onCancel={() => setIsModalVisible(false)}
+          footer={[
+            <Button key="close" onClick={() => setIsModalVisible(false)}>
+              Close
+            </Button>,
+          ]}
+          width={800}
+        >
+          {selectedReport && (
+            <Descriptions bordered column={1}>
+              <Descriptions.Item label="ID">{selectedReport.id}</Descriptions.Item>
+              <Descriptions.Item label="Type">
+                <Tag color={getTypeColor(selectedReport.type)}>
+                  {selectedReport.type}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Status">
+                <Tag color={getStatusColor(selectedReport.status)}>
+                  {selectedReport.status?.toUpperCase()}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Reported User ID">
+                {selectedReport.reportedUserId}
+              </Descriptions.Item>
+              <Descriptions.Item label="Reporter ID">
+                {selectedReport.reporterId}
+              </Descriptions.Item>
+              <Descriptions.Item label="Description">
+                {selectedReport.description}
+              </Descriptions.Item>
+              <Descriptions.Item label="Created At">
+                {new Date(selectedReport.createdAt).toLocaleString()}
+              </Descriptions.Item>
+              <Descriptions.Item label="Updated At">
+                {new Date(selectedReport.updatedAt).toLocaleString()}
+              </Descriptions.Item>
+            </Descriptions>
+          )}
+        </Modal>
+      </div>
     </div>
   );
 };

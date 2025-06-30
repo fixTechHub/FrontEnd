@@ -1,18 +1,7 @@
-import { Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import React from "react";
 
 const AdminRoute = ({ children }) => {
-    const { isAuthenticated, user } = useSelector((state) => state.auth);
-
-    if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
-    }
-
-    if (user?.role?.name !== 'ADMIN') {
-        // Redirect non-admin users to home page or a 'not-authorized' page
-        return <Navigate to="/" replace />;
-    }
-
+    // Bỏ hoàn toàn kiểm tra đăng nhập và phân quyền
     return children;
 };
 

@@ -7,8 +7,10 @@ export const fetchCoupons = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await couponAPI.getAll();
+      console.log('fetchCoupons response:', response);
       return response;
     } catch (error) {
+      console.error('fetchCoupons error:', error);
       return rejectWithValue(error.response?.data || error.message);
     }
   }
@@ -48,6 +50,7 @@ export const deleteCoupon = createAsyncThunk(
     try {
       await couponAPI.delete(id);
       dispatch(fetchCoupons());
+      dispatch(fetchDeletedCoupons());
       return id;
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
@@ -118,10 +121,13 @@ const couponSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchCoupons.fulfilled, (state, action) => {
+        console.log('API trả về:', action.payload);
         state.loading = false;
         state.coupons = action.payload;
+        console.log('State sau khi set:', state.coupons);
       })
       .addCase(fetchCoupons.rejected, (state, action) => {
+        console.error('Fetch coupons error:', action.payload);
         state.loading = false;
         state.error = action.payload;
       })

@@ -27,4 +27,26 @@ export const userAPI = {
         const response = await ApiBE.put(`/Dashboard/users/${id}`, userData);
         return response.data;
     },
+
+    // Lock user
+    lockUser: async (id, reason) => {
+        try {
+            const response = await ApiBE.post(`/Dashboard/users/${id}/lock`, { reason });
+            return response.data;
+        } catch (error) {
+            console.error('Lock user error:', error);
+            throw error;
+        }
+    },
+
+    // Unlock user
+    unlockUser: async (id, note = '') => {
+        try {
+            const response = await ApiBE.post(`/Dashboard/users/${id}/unlock`, { note });
+            return response.data;
+        } catch (error) {
+            console.error('Unlock user error:', error);
+            throw error;
+        }
+    },
 }; 

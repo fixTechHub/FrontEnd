@@ -13,12 +13,22 @@ export const systemReportAPI = {
     },
 
     // Update system report status
-    updateStatus: async (id, status) => {
+    updateStatus: async (id, statusValue) => {
         try {
-            const response = await ApiBE.patch(`/Dashboard/systemreports/${id}/status`, status);
+            if (typeof statusValue !== 'string') {
+                throw new Error('statusValue must be a string');
+            }
+            const payload = { status: statusValue.toUpperCase() };
+            console.log('Payload gửi lên:', payload);
+            const response = await ApiBE.patch(`/Dashboard/systemreports/${id}/status`, payload);
             return response.data;
         } catch (error) {
             console.error('Update system report status error:', error);
+            if (error.response) {
+                console.error('Response data:', error.response.data);
+                console.error('Response status:', error.response.status);
+                console.error('Response errors:', error.response.data.errors);
+            }
             throw error;
         }
     },

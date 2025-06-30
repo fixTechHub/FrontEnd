@@ -1,48 +1,52 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import ViewEarningAndCommission from "../../../admin-app/src/pages/technician-dashboard/ViewEarningAndCommission";
-import TechnicianJobList from "../../../admin-app/src/pages/technician-dashboard/TechnicianJob";
-import ViewTechnicianProfile from "../../../admin-app/src/pages/technician-dashboard/TechnicianProfile";
-import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
+import AdminRoute from "./access/AdminRoute";
+import AdminLayout from "../components/layout/AdminLayout";
+import ReportManagement from "../pages/management/ReportManagement";
+import SystemReportManagement from "../pages/management/SystemReportManagement";
+import UserManagement from "../pages/management/UserManagement";
+import TechnicianManagement from "../pages/management/TechnicianManagement";
+import CouponManagement from "../pages/management/CouponManagement";
+import CouponUsageManagement from "../pages/management/CouponUsageManagement";
+import CategoryManagement from "../pages/management/CategoryManagement";
+import BookingManagement from "../pages/management/BookingManagement";
+import ViewEarningAndCommission from "../pages/technician-dashboard/ViewEarningAndCommission";
+import TechnicianJobList from "../pages/technician-dashboard/TechnicianJob";
+import ViewTechnicianProfile from "../pages/technician-dashboard/TechnicianProfile";
+import WarrantyManagement from "../pages/management/WarrantyManagement";
 
 
+//Định nghĩa các route, xác định trang nào sẽ render vào <Outlet /> của AdminLayout, quyết định trang nào là management page.
 export default function AppRoutes() {
   const dispatch = useDispatch();
- const {user, registrationData, loading } = useSelector((state) => state.auth);
+  const { user, registrationData, loading } = useSelector((state) => state.auth);
 
- if (loading) {
+  if (loading) {
+    return (
+      <div>...</div>
+    );
+  }
   return (
-    <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-      <div className="spinner-border text-warning" role="status">
-        <span className="visually-hidden">Loading...</span>
-      </div>
-      <p className="ms-3">Đang tải...</p>
-    </div>
+    <Routes>
+      {/* Technician routes */}
+      <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
+      <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
+      <Route path="/technician/:technicianId/booking/:bookingId" element={<TechnicianJobList />} />
+      <Route path="/technician/:technicianId/booking" element={<TechnicianJobList />} />
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="booking-management" element={<BookingManagement />} />
+        <Route path="coupon-management" element={<CouponManagement />} />
+        <Route path="coupon-usage-management" element={<CouponUsageManagement />} />
+        <Route path="report-management" element={<ReportManagement />} />
+        <Route path="system-report-management" element={<SystemReportManagement />} />
+        <Route path="user-management" element={<UserManagement />} />
+        <Route path="technician-management" element={<TechnicianManagement />} />
+        <Route path="category-management" element={<CategoryManagement/>} />
+        <Route path="warranty-management" element={<WarrantyManagement />} />
+        {/* ... các route khác nếu cần */}
+        <Route index element={<BookingManagement />} /> {/* Trang mặc định */}
+      </Route>
+      <Route path="*" element={<Navigate to="/admin/booking-management" replace />} />
+    </Routes>
   );
-}
-
-return (
-<Routes>
-  <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
-  <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
-  <Route path="/technician/:technicianId/booking/:bookingId" element={<TechnicianJobList />} />
-  <Route path="/technician/:technicianId/booking" element={<TechnicianJobList />} />
-  <Route path="*" element={<Navigate to="/" replace />} />
-</Routes>
- /* ================= ADMIN PROTECTED ROUTES ================= */
-      /* 
-          <Route
-              path="/admin/*"
-              element={
-                  <AdminRoute isAllowed={!!user && user.role.name === 'ADMIN'}>
-                      <Routes>
-                          <Route path="dashboard" element={<AdminDashboard />} />
-                          <Route path="users" element={<ManageUsersPage />} />
-                      </Routes>
-                  </AdminRoute>
-              }
-          /> 
-      */
-      
-);
 }

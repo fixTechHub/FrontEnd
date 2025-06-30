@@ -5,6 +5,7 @@ export const couponAPI = {
     getAll: async () => {
         try {
             const response = await ApiBE.get('/Coupon');
+            console.log('API raw response:', response);
             return response.data;
         } catch (error) {
             console.error('Get all coupons error:', error);

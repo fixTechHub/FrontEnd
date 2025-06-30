@@ -1,31 +1,29 @@
 import { configureStore } from '@reduxjs/toolkit';
 import technicianReducer from '../features/technician/technicianSlice';
-
-export const store = configureStore({
-  reducer: {
-    technician: technicianReducer,
-  }
-});
-
-export default store;
-import { configureStore } from '@reduxjs/toolkit';
 import bookingReducer from '../features/bookings/bookingSlice';
 import couponReducer from '../features/coupons/couponSlice';
 import couponUsageReducer from '../features/couponusages/couponUsageSlice';
 import userReducer from '../features/users/userSlice';
 import reportReducer from '../features/reports/reportSlice';
-import technicianReducer from '../features/technicians/technicianSlice';
+import techniciansReducer from '../features/technicians/technicianSlice';
 import systemReportReducer from '../features/systemReports/systemReportSlice';
+import authReducer from '../features/auth/authSlice';
+import categoryReducer from '../features/categories/categorySlice';
+import warrantyReducer from '../features/warranty/warrantySlice';
 
 const store = configureStore({
   reducer: {
+    technician: technicianReducer,
     bookings: bookingReducer,
     coupon: couponReducer,
     couponUsage: couponUsageReducer,
     users: userReducer,
     reports: reportReducer,
-    technicians: technicianReducer,
+    technicians: techniciansReducer,
     systemReports: systemReportReducer,
+    auth: authReducer,
+    categories: categoryReducer,
+    warranty: warrantyReducer,
   },
 });
 

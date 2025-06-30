@@ -160,3 +160,6 @@
     font-size: 1.05rem;
   }
   
+  
+  /* Ảnh hưởng trực tiếp đến giao diện, kích thước, padding, flex, màu nền... của toàn bộ layout.
+  Nếu muốn thay đổi chiều rộng, padding, hoặc flex của content/sidebar/header, bạn phải sửa file này. */
