@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllWarranties, updateWarrantyStatus } from '../../features/warranty/warrantySlice';
 import { Modal, Button, Select, Switch, message } from 'antd';
+import { userAPI } from "../../features/users/userAPI";
+import { technicianAPI } from "../../features/technicians/techniciansAPI";
 
 const statusOptions = [
   { value: 'PENDING', label: 'Pending' },
@@ -17,10 +19,32 @@ const WarrantyManagement = () => {
   const [selected, setSelected] = useState(null);
   const [editStatus, setEditStatus] = useState('');
   const [editReviewed, setEditReviewed] = useState(false);
+  const [userNames, setUserNames] = useState({});
+  const [technicianNames, setTechnicianNames] = useState({});
 
   useEffect(() => {
     dispatch(fetchAllWarranties());
   }, [dispatch]);
+
+  const fetchUserName = async (id) => {
+    if (!id || userNames[id]) return;
+    try {
+      const user = await userAPI.getById(id);
+      setUserNames(prev => ({ ...prev, [id]: user.fullName || user.email || id }));
+    } catch {
+      setUserNames(prev => ({ ...prev, [id]: id }));
+    }
+  };
+
+  const fetchTechnicianName = async (id) => {
+    if (!id || technicianNames[id]) return;
+    try {
+      const tech = await technicianAPI.getById(id);
+      setTechnicianNames(prev => ({ ...prev, [id]: tech.fullName || tech.email || id }));
+    } catch {
+      setTechnicianNames(prev => ({ ...prev, [id]: id }));
+    }
+  };
 
   const filtered = warranties.filter(w =>
     (w.id || '').toLowerCase().includes(searchText.toLowerCase()) ||
@@ -79,28 +103,30 @@ const WarrantyManagement = () => {
           <table className="table datatable">
             <thead className="thead-light">
               <tr>
-                <th>ID</th>
                 <th>Booking</th>
                 <th>Customer</th>
                 <th>Technician</th>
                 <th>Status</th>
                 <th>Under Warranty</th>
                 <th>Reviewed</th>
-                <th>Created At</th>
                 <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map(w => (
                 <tr key={w.id}>
-                  <td>{w.id}</td>
                   <td>{w.bookingId}</td>
-                  <td>{w.customerId}</td>
-                  <td>{w.technicianId}</td>
+                  <td>
+                    {userNames[w.customerId] || w.customerId}
+                    {!userNames[w.customerId] && w.customerId && fetchUserName(w.customerId)}
+                  </td>
+                  <td>
+                    {technicianNames[w.technicianId] || w.technicianId}
+                    {!technicianNames[w.technicianId] && w.technicianId && fetchTechnicianName(w.technicianId)}
+                  </td>
                   <td>{w.status}</td>
                   <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
                   <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
-                  <td>{w.createdAt ? new Date(w.createdAt).toLocaleString() : ''}</td>
                   <td>
                     <Button size="small" onClick={() => openEdit(w)}>
                       Update

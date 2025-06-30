@@ -26,6 +26,7 @@ import {
 import { reportAPI } from '../../features/reports/reportAPI';
 import { setReports, setSelectedReport, setFilters, clearFilters, setLoading, setError } from '../../features/reports/reportSlice';
 import { selectFilteredReports, selectReportFilters, selectReportStats } from '../../features/reports/reportSelectors';
+import { userAPI } from '../../features/users/userAPI';
 
 const { Option } = Select;
 
@@ -33,6 +34,7 @@ const ReportManagement = () => {
   const dispatch = useDispatch();
   const [selectedReport, setSelectedReport] = useState(null);
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [userMap, setUserMap] = useState({});
 
   // Redux selectors
   const filteredReports = useSelector(selectFilteredReports);
@@ -58,6 +60,27 @@ const ReportManagement = () => {
 
     fetchReports();
   }, [dispatch]);
+
+  useEffect(() => {
+    // Lấy tên user cho tất cả reportedUserId và reporterId
+    const fetchUserNames = async () => {
+      const userIds = Array.from(new Set((filteredReports || []).flatMap(r => [r.reportedUserId, r.reporterId])));
+      const userMapTemp = { ...userMap };
+      await Promise.all(userIds.map(async (id) => {
+        if (id && !userMapTemp[id]) {
+          try {
+            const user = await userAPI.getById(id);
+            userMapTemp[id] = user.fullName || user.email || id;
+          } catch {
+            userMapTemp[id] = id;
+          }
+        }
+      }));
+      setUserMap(userMapTemp);
+    };
+    if (filteredReports.length > 0) fetchUserNames();
+    // eslint-disable-next-line
+  }, [filteredReports]);
 
   const handleFilterChange = (filterType, value) => {
     dispatch(setFilters({ [filterType]: value }));
@@ -132,7 +155,7 @@ const ReportManagement = () => {
       render: (userId) => (
         <Space>
           <UserOutlined />
-          <span>{userId}</span>
+          <span>{userMap[userId] || userId}</span>
         </Space>
       ),
     },
@@ -143,7 +166,7 @@ const ReportManagement = () => {
       render: (userId) => (
         <Space>
           <UserOutlined />
-          <span>{userId}</span>
+          <span>{userMap[userId] || userId}</span>
         </Space>
       ),
     },

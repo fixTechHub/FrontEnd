@@ -20,6 +20,8 @@ const UserManagement = () => {
     const [roles, setRoles] = useState([]);
     const [lockReason, setLockReason] = useState('');
     const [unlockNote, setUnlockNote] = useState('');
+    const [roleMap, setRoleMap] = useState({});
+    const [showDetailModal, setShowDetailModal] = useState(false);
 
     const initialFormState = {
         fullName: '',
@@ -49,6 +51,9 @@ const UserManagement = () => {
         try {
             const rolesData = await roleAPI.getAll();
             setRoles(rolesData || []);
+            const map = {};
+            (rolesData || []).forEach(r => { map[r.id] = r.name; });
+            setRoleMap(map);
         } catch (err) {
             message.error('Failed to load roles.');
         }
@@ -227,7 +232,7 @@ const UserManagement = () => {
                                     </td>
                                     <td><p className="text-gray-9">{user.phone}</p></td>
                                     <td><p className="text-gray-9">{user.email}</p></td>
-                                    <td><p className="text-gray-9">{user.role}</p></td>
+                                    <td><p className="text-gray-9">{roleMap[user.role] || user.role}</p></td>
                                     <td>
                                         <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
                                             <i className={`ti ti-point-filled ${getStatusIconClass(user.status)} me-1`}></i>
@@ -235,8 +240,8 @@ const UserManagement = () => {
                                         </span>
                                     </td>
                                     <td>
-                                        <div className="btn-group" role="group">
-                                            <button className="btn btn-sm btn-primary me-1" onClick={() => handleEditUser(user)}>
+                                        <div className="d-flex align-items-center gap-2">
+                                            <button className="btn btn-sm btn-primary" onClick={() => handleEditUser(user)}>
                                                 <i className="ti ti-edit me-1"></i>Edit
                                             </button>
                                             {user.lockedReason ? (
@@ -248,6 +253,9 @@ const UserManagement = () => {
                                                     <i className="ti ti-lock me-1"></i>Lock
                                                 </button>
                                             )}
+                                            <button className="btn btn-sm btn-info" onClick={() => { setSelectedUser(user); setShowDetailModal(true); }}>
+                                                <i className="ti ti-eye me-1"></i>View Detail
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -256,85 +264,25 @@ const UserManagement = () => {
                     </table>
                 </div>
 
-                {/* Edit Modal */}
+                {/* Edit Modal chỉ cho phép chỉnh Role */}
                 {showEditModal && (
-                    <div
-                        className="modal fade show"
-                        style={{
-                            display: 'block',
-                            zIndex: 2000,
-                            background: 'rgba(0,0,0,0.2)',
-                            position: 'fixed',
-                            top: 0, left: 0, right: 0, bottom: 0
-                        }}
-                    >
+                    <div className="modal fade show" style={{ display: 'block', zIndex: 2000, background: 'rgba(0,0,0,0.2)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
                         <div className="modal-dialog modal-dialog-centered modal-md" style={{ zIndex: 2100 }}>
                             <div className="modal-content">
                                 <form onSubmit={handleSubmit}>
                                     <div className="modal-header">
-                                        <h5 className="mb-0">Edit User</h5>
+                                        <h5 className="mb-0">Edit User Role</h5>
                                         <button type="button" className="btn-close" onClick={() => setShowEditModal(false)} aria-label="Close"></button>
                                     </div>
                                     <div className="modal-body pb-1">
-                                        <div className="row">
-                                            <div className="col-md-12">
-                                                <div className="mb-3">
-                                                    <label className="form-label">Full Name <span className="text-danger">*</span></label>
-                                                    <input type="text" name="fullName" className="form-control" value={formData.fullName} onChange={handleChange} required />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-12">
-                                                <div className="mb-3">
-                                                    <label className="form-label">Email <span className="text-danger">*</span></label>
-                                                    <input type="email" name="email" className="form-control" value={formData.email} onChange={handleChange} required />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-12">
-                                                <div className="mb-3">
-                                                    <label className="form-label">Phone Number</label>
-                                                    <input type="text" name="phone" className="form-control" value={formData.phone || ''} onChange={handleChange} />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-12">
-                                                <div className="mb-3">
-                                                    <label className="form-label">Role <span className="text-danger">*</span></label>
-                                                    <select name="role" className="form-select" value={formData.role} onChange={handleChange} required>
-                                                        <option value="">Select Role</option>
-                                                        {roles.map(role => (
-                                                            <option key={role.id} value={role.id}>{role.name}</option>
-                                                        ))}
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div className="col-md-12">
-                                                <div className="mb-3">
-                                                    <label className="form-label">Status <span className="text-danger">*</span></label>
-                                                    <select name="status" className="form-select" value={formData.status} onChange={handleChange} required>
-                                                        <option value="ACTIVE">ACTIVE</option>
-                                                        <option value="INACTIVE">INACTIVE</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <div className="mb-3">
-                                                    <label className="form-label">New Password</label>
-                                                    <input type="password" name="password" className="form-control" value={formData.password} onChange={handleChange} placeholder="Leave blank to keep current" />
-                                                </div>
-                                            </div>
-                                            <div className="col-md-6">
-                                                <div className="mb-3">
-                                                    <label className="form-label">Confirm New Password</label>
-                                                    <input type="password" name="confirmPassword" className="form-control" value={formData.confirmPassword} onChange={handleChange} />
-                                                </div>
-                                            </div>
-                                            {selectedUser?.lockedReason && (
-                                                <div className="col-md-12">
-                                                    <div className="mb-3">
-                                                        <label className="form-label">Locked Reason</label>
-                                                        <textarea className="form-control" value={selectedUser.lockedReason} readOnly />
-                                                    </div>
-                                                </div>
-                                            )}
+                                        <div className="mb-3">
+                                            <label className="form-label">Role <span className="text-danger">*</span></label>
+                                            <select name="role" className="form-select" value={formData.role} onChange={handleChange} required>
+                                                <option value="">Select Role</option>
+                                                {roles.map(role => (
+                                                    <option key={role.id} value={role.id}>{role.name}</option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
                                     <div className="modal-footer">
@@ -439,6 +387,30 @@ const UserManagement = () => {
                                         </div>
                                     </div>
                                 </form>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal View Detail */}
+                {showDetailModal && selectedUser && (
+                    <div className="modal fade show" style={{ display: 'block', zIndex: 2000, background: 'rgba(0,0,0,0.2)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+                        <div className="modal-dialog modal-dialog-centered modal-md" style={{ zIndex: 2100 }}>
+                            <div className="modal-content">
+                                <div className="modal-header">
+                                    <h5 className="mb-0">User Detail</h5>
+                                    <button type="button" className="btn-close" onClick={() => setShowDetailModal(false)} aria-label="Close"></button>
+                                </div>
+                                <div className="modal-body pb-1">
+                                    <div><b>Full Name:</b> {selectedUser.fullName}</div>
+                                    <div><b>Email:</b> {selectedUser.email}</div>
+                                    <div><b>Phone:</b> {selectedUser.phone}</div>
+                                    <div><b>Role:</b> {roleMap[selectedUser.role] || selectedUser.role}</div>
+                                    <div><b>Status:</b> {selectedUser.status}</div>
+                                    {selectedUser.lockedReason && (
+                                        <div><b>Lock Reason:</b> {selectedUser.lockedReason}</div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

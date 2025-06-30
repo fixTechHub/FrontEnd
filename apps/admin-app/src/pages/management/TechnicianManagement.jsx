@@ -15,6 +15,7 @@ import {
   selectTechnicianLoading,
   selectTechnicianError,
 } from '../../features/technicians/technicianSelectors';
+import { categoryAPI } from "../../features/categories/categoryAPI";
 
 const TechnicianManagement = () => {
   const dispatch = useDispatch();
@@ -28,27 +29,42 @@ const TechnicianManagement = () => {
   const [selectedTechnician, setSelectedTechnician] = useState(null);
   const [statusData, setStatusData] = useState({ status: '', note: '' });
   const [showEditStatusModal, setShowEditStatusModal] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [categoryMap, setCategoryMap] = useState({});
+
+  const fetchTechnicians = async () => {
+    try {
+      dispatch(setLoading(true));
+      const data = await technicianAPI.getAll();
+      dispatch(setTechnicians(data || []));
+    } catch (err) {
+      dispatch(setError(err.message || 'Failed to load technicians.'));
+      message.error('Failed to load technicians.');
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
 
   useEffect(() => {
-    const fetchTechnicians = async () => {
-      try {
-        dispatch(setLoading(true));
-        const data = await technicianAPI.getAll();
-        console.log('Danh sách technician từ API:', data);
-        dispatch(setTechnicians(data || []));
-      } catch (err) {
-        dispatch(setError(err.message || 'Failed to load technicians.'));
-        message.error('Failed to load technicians.');
-      } finally {
-        dispatch(setLoading(false));
-      }
-    };
     fetchTechnicians();
   }, [dispatch]);
 
   useEffect(() => {
     dispatch(setFilters({ search: searchText }));
   }, [searchText, dispatch]);
+
+  useEffect(() => {
+    categoryAPI.getAll().then(data => {
+      setCategories(data || []);
+      const map = {};
+      (data || []).forEach(cat => { 
+        const key = cat._id?.$oid || cat._id || cat.id;
+        map[key] = cat.categoryName || cat.name;
+      });
+      setCategoryMap(map);
+      console.log("Categories:", data);
+    });
+  }, []);
 
   const handleOpenDetail = (technician) => {
     setSelectedTechnician(technician);
@@ -80,16 +96,19 @@ const TechnicianManagement = () => {
   const handleUpdateStatus = async (e) => {
     e.preventDefault();
     if (!selectedTechnician) return;
-    console.log('Gửi update cho technician id:', selectedTechnician.id, selectedTechnician);
     try {
       dispatch(setLoading(true));
-      const updated = await technicianAPI.updateStatus(selectedTechnician.id, statusData.status, statusData.note);
-      dispatch(updateTechnician(updated));
+      console.log('--- Bắt đầu update status ---');
+      await technicianAPI.updateStatus(selectedTechnician.id, statusData.status, statusData.note);
+      console.log('--- Update status thành công, fetch lại list ---');
+      await fetchTechnicians();
+      console.log('--- Fetch xong, show message và đóng modal ---');
       message.success('Technician status updated successfully!');
       handleCloseEditStatus();
     } catch (err) {
+      console.error('Update status error:', err);
       dispatch(setError(err.message || 'Failed to update status.'));
-      message.error('Failed to update status.');
+      message.error('Failed to update status: ' + (err.message || 'Unknown error'));
     } finally {
       dispatch(setLoading(false));
     }
@@ -135,7 +154,6 @@ const TechnicianManagement = () => {
                 <th>NAME</th>
                 <th>EMAIL</th>
                 <th>PHONE</th>
-                <th>SPECIALIZATION</th>
                 <th>STATUS</th>
                 <th>RATING</th>
                 <th>JOBS</th>
@@ -148,7 +166,6 @@ const TechnicianManagement = () => {
                   <td>{tech.fullName}</td>
                   <td>{tech.email}</td>
                   <td>{tech.phone}</td>
-                  <td>{tech.specialization}</td>
                   <td>
                     <span className={`badge badge-dark-transparent ${tech.status === 'APPROVED' ? 'text-success' : tech.status === 'REJECTED' ? 'text-danger' : 'text-warning'}`}>
                       <i className={`ti ti-point-filled ${tech.status === 'APPROVED' ? 'text-success' : tech.status === 'REJECTED' ? 'text-danger' : 'text-warning'} me-1`}></i>
@@ -158,22 +175,13 @@ const TechnicianManagement = () => {
                   <td>{tech.ratingAverage?.toFixed(1) ?? '-'}</td>
                   <td>{tech.jobCompleted ?? 0}</td>
                   <td>
-                    <div className="dropdown">
-                      <button className="btn btn-icon btn-sm" type="button" data-bs-toggle="dropdown">
-                        <i className="ti ti-dots-vertical"></i>
+                    <div className="d-flex align-items-center gap-2">
+                      <button className="btn btn-sm btn-primary" onClick={() => handleOpenEditStatus(tech)}>
+                        <i className="ti ti-edit me-1"></i>Edit Status
                       </button>
-                      <ul className="dropdown-menu dropdown-menu-end p-2">
-                        <li>
-                          <button className="dropdown-item rounded-1" onClick={() => handleOpenDetail(tech)}>
-                            <i className="ti ti-eye me-1"></i>View Detail
-                          </button>
-                        </li>
-                        <li>
-                          <button className="dropdown-item rounded-1" onClick={() => handleOpenEditStatus(tech)}>
-                            <i className="ti ti-edit me-1"></i>Edit Status
-                          </button>
-                        </li>
-                      </ul>
+                      <button className="btn btn-sm btn-info" onClick={() => handleOpenDetail(tech)}>
+                        <i className="ti ti-eye me-1"></i>View Detail
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -194,7 +202,20 @@ const TechnicianManagement = () => {
           <div><b>Name:</b> {selectedTechnician.fullName}</div>
           <div><b>Email:</b> {selectedTechnician.email}</div>
           <div><b>Phone:</b> {selectedTechnician.phone}</div>
-          <div><b>Specialization:</b> {selectedTechnician.specialization}</div>
+          <div><b>Specialization:</b>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {[...new Set(selectedTechnician.specialtiesCategories || [])].map(catIdRaw => {
+                let catId = catIdRaw && typeof catIdRaw === 'object' && catIdRaw.$oid
+                  ? catIdRaw.$oid
+                  : (catIdRaw.id || catIdRaw._id || catIdRaw).toString().trim();
+                return (
+                  <span key={catId} className="badge bg-secondary mb-1">
+                    {categoryMap[catId] || catId}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
           <div><b>Status:</b> {selectedTechnician.status}</div>
           <div><b>Rating:</b> {selectedTechnician.ratingAverage?.toFixed(1) ?? '-'}</div>
           <div><b>Jobs Completed:</b> {selectedTechnician.jobCompleted ?? 0}</div>
@@ -229,14 +250,7 @@ const TechnicianManagement = () => {
           </form>
         </Modal>
       )}
-      {/* Footer */}
-      <div className="footer d-sm-flex align-items-center justify-content-between bg-white p-3">
-        <p className="mb-0">
-          <a href="#">Privacy Policy</a>
-          <a href="#" className="ms-4">Terms of Use</a>
-        </p>
-        <p>&copy; 2025 Fix Tech, Made with <span className="text-danger">❤</span> by <a href="#" className="text-secondary">Fix Tech Team</a></p>
-      </div>
+      
     </div>
   );
 };

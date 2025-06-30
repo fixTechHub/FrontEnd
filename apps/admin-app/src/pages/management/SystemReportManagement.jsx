@@ -42,6 +42,7 @@ import {
   selectSystemReportFilters, 
   selectSystemReportStats 
 } from '../../features/systemReports/systemReportSelectors';
+import { userAPI } from '../../features/users/userAPI';
 
 const { Option } = Select;
 
@@ -52,6 +53,7 @@ const SystemReportManagement = () => {
   const [editingStatusId, setEditingStatusId] = useState(null);
   const [statusValue, setStatusValue] = useState('');
   const [showEditStatusModal, setShowEditStatusModal] = useState(false);
+  const [userMap, setUserMap] = useState({});
 
   // Redux selectors
   const filteredSystemReports = useSelector(selectFilteredSystemReports);
@@ -77,6 +79,27 @@ const SystemReportManagement = () => {
 
     fetchSystemReports();
   }, [dispatch]);
+
+  useEffect(() => {
+    // Lấy tên user cho tất cả submittedBy
+    const fetchUserNames = async () => {
+      const userIds = Array.from(new Set((filteredSystemReports || []).map(r => r.submittedBy)));
+      const userMapTemp = { ...userMap };
+      await Promise.all(userIds.map(async (id) => {
+        if (id && !userMapTemp[id]) {
+          try {
+            const user = await userAPI.getById(id);
+            userMapTemp[id] = user.fullName || user.email || id;
+          } catch {
+            userMapTemp[id] = id;
+          }
+        }
+      }));
+      setUserMap(userMapTemp);
+    };
+    if (filteredSystemReports.length > 0) fetchUserNames();
+    // eslint-disable-next-line
+  }, [filteredSystemReports]);
 
   const handleFilterChange = (filterType, value) => {
     dispatch(setFilters({ [filterType]: value }));
@@ -191,7 +214,7 @@ const SystemReportManagement = () => {
       render: (userId) => (
         <Space>
           <UserOutlined />
-          <span>{userId}</span>
+          <span>{userMap[userId] || userId}</span>
         </Space>
       ),
     },
