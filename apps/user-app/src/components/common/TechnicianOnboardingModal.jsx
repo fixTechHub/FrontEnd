@@ -37,9 +37,17 @@ const TechnicianOnboardingModal = () => {
     
     const needComplete = verificationStatus?.step === 'COMPLETE_PROFILE' && !profileCompleted && location.pathname !== '/technician/complete-profile';
 
-    if ((needVerify || needComplete) && location.pathname === '/profile') {
-      setMode(needVerify ? 'VERIFY' : 'COMPLETE');
-      setInternalHide(false); // reset nếu quay lại profile
+    if (needVerify || needComplete) {
+      // Khi cần hiển thị modal
+      if (location.pathname === '/profile') {
+        setMode(needVerify ? 'VERIFY' : 'COMPLETE');
+        setInternalHide(false); // reset nếu quay lại profile
+      }
+    } else {
+      // Đã hoàn tất mọi yêu cầu → bảo đảm modal không còn hiển thị
+      if (mode !== null) {
+        setMode(null);
+      }
     }
 
   }, [isAuthenticated, user, verificationStatus, technician, location.pathname]);

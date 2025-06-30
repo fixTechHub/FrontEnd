@@ -27,14 +27,30 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
     const redirectInfo = useMemo(() => {
         // Nếu không được phép truy cập
         if (!computedAllowed) {
-            // Với các trang verification flow, không hiển thị toast khi hoàn tất và tự rời trang
             const comingFromVerification = verificationPaths.some(p => location.pathname.startsWith(p));
 
             const defaultMsg = isAuthenticated ? 'Bạn không có quyền truy cập trang này' : 'Vui lòng đăng nhập để tiếp tục';
 
+            // Luôn hiển thị thông báo để người dùng biết lý do bị chuyển hướng
+            let redirectMessage;
+
+            if (comingFromVerification) {
+                // Vừa hoàn tất bước xác thực nên không còn được ở lại trang verify-*
+                redirectMessage = verificationStatus?.step === 'COMPLETED'
+                    ? 'Xác thực hoàn tất! Bạn có thể tiếp tục trải nghiệm.'
+                    : (unauthorizedMessage || defaultMsg);
+            } else {
+                redirectMessage = unauthorizedMessage || defaultMsg;
+            }
+
+            // Nếu người dùng đang cố truy cập video-call nhưng thiếu quyền/thiếu xác thực
+            if (location.pathname.includes('/video-call')) {
+                redirectMessage = (verificationStatus?.message || redirectMessage) + ' Bạn cần hoàn tất trước khi có thể gọi video.';
+            }
+
             return {
                 path: isAuthenticated ? '/' : '/login', // nếu đã login nhưng không đủ quyền -> về home
-                message: comingFromVerification ? null : (unauthorizedMessage || defaultMsg),
+                message: redirectMessage,
                 state: { from: location }
             };
         }
@@ -47,9 +63,15 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
             !location.pathname.includes('/verify-') &&
             !location.pathname.includes('/choose-role') &&
             !location.pathname.includes('/profile')) {
+
+            let msg = verificationStatus.message || 'Vui lòng hoàn thành xác thực (xem thông tin trong hồ sơ)';
+            if (location.pathname.includes('/video-call')) {
+                msg += ' Bạn cần hoàn tất trước khi có thể gọi video.';
+            }
+
             return {
                 path: '/',
-                message: verificationStatus.message || 'Vui lòng hoàn thành xác thực (xem thông tin trong hồ sơ)',
+                message: msg,
                 state: { from: location }
             };
         }
