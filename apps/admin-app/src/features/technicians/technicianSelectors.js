@@ -39,14 +39,14 @@ export const selectFilteredTechnicians = createSelector(
   (technicians, filters) => {
     let filteredTechnicians = [...technicians];
 
-    // Filter by search term
+    // Filter by search term (giống user)
     if (filters.search) {
       const searchTerm = filters.search.toLowerCase();
       filteredTechnicians = filteredTechnicians.filter(
         (technician) =>
-          technician.identification?.toLowerCase().includes(searchTerm) ||
-          technician.status?.toLowerCase().includes(searchTerm) ||
-          technician.availability?.toLowerCase().includes(searchTerm)
+          technician.fullName?.toLowerCase().includes(searchTerm) ||
+          technician.email?.toLowerCase().includes(searchTerm) ||
+          technician.phone?.toLowerCase().includes(searchTerm)
       );
     }
 

@@ -1,17 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchCouponUsages } from '../../features/couponusages/couponUsageSlice';
+import { fetchCouponUsages, setFilters } from '../../features/couponusages/couponUsageSlice';
 import { userAPI } from '../../features/users/userAPI';
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { Modal, Button } from 'antd';
 
 const CouponUsageManagement = () => {
   const dispatch = useDispatch();
-  const { usages = [], loading = false, error = null } = useSelector(state => state.couponUsage) || {};
+  const { usages = [], loading = false, error = null, filters = {} } = useSelector(state => state.couponUsage) || {};
   const [userMap, setUserMap] = useState({});
   const [couponMap, setCouponMap] = useState({});
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedUsage, setSelectedUsage] = useState(null);
+  const [search, setSearch] = useState('');
+  const [userSearch, setUserSearch] = useState('');
+  const [couponSearch, setCouponSearch] = useState('');
+  const [bookingIdSearch, setBookingIdSearch] = useState('');
 
   useEffect(() => {
     dispatch(fetchCouponUsages());
@@ -48,6 +52,38 @@ const CouponUsageManagement = () => {
     if (usages.length > 0) fetchDetails();
   }, [usages]);
 
+  const handleSearchChange = (e) => {
+    setSearch(e.target.value);
+    dispatch(setFilters({ search: e.target.value }));
+  };
+  const handleUserSearchChange = (e) => {
+    setUserSearch(e.target.value);
+    dispatch(setFilters({ user: e.target.value }));
+  };
+  const handleCouponSearchChange = (e) => {
+    setCouponSearch(e.target.value);
+    dispatch(setFilters({ coupon: e.target.value }));
+  };
+  const handleBookingIdSearchChange = (e) => {
+    setBookingIdSearch(e.target.value);
+    dispatch(setFilters({ bookingId: e.target.value }));
+  };
+
+  const filteredUsages = usages.filter((usage) => {
+    const userValue = userMap[usage.userId] || usage.userId || '';
+    const couponValue = couponMap[usage.couponId] || usage.couponId || '';
+    const bookingIdValue = usage.bookingId || '';
+    return (
+      (!filters.search ||
+        userValue.toLowerCase().includes(filters.search.toLowerCase()) ||
+        couponValue.toLowerCase().includes(filters.search.toLowerCase()) ||
+        bookingIdValue.toLowerCase().includes(filters.search.toLowerCase())) &&
+      (!filters.user || userValue.toLowerCase().includes(filters.user.toLowerCase())) &&
+      (!filters.coupon || couponValue.toLowerCase().includes(filters.coupon.toLowerCase())) &&
+      (!filters.bookingId || bookingIdValue.toLowerCase().includes(filters.bookingId.toLowerCase()))
+    );
+  });
+
   return (
     <div className="page-wrapper">
       <div className="content me-4">
@@ -62,7 +98,57 @@ const CouponUsageManagement = () => {
             </nav>
           </div>
         </div>
+        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
+                    <div className="top-search me-2">
+                        <div className="top-search-group">
+                            <span className="input-icon">
+                                <i className="ti ti-search"></i>
+                            </span>
+                            <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Search"
+                                value={search}
+                                onChange={handleSearchChange}
+                            />
+                        </div>
+                    </div>
+                </div>
         <div className="custom-datatable-filter table-responsive">
+          {/* <div className="mb-3 d-flex gap-2 flex-wrap">
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search (User, Coupon, Booking ID)"
+              value={search}
+              onChange={handleSearchChange}
+              style={{ maxWidth: 250 }}
+            />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="User"
+              value={userSearch}
+              onChange={handleUserSearchChange}
+              style={{ maxWidth: 180 }}
+            />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Coupon"
+              value={couponSearch}
+              onChange={handleCouponSearchChange}
+              style={{ maxWidth: 180 }}
+            />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Booking ID"
+              value={bookingIdSearch}
+              onChange={handleBookingIdSearchChange}
+              style={{ maxWidth: 180 }}
+            />
+          </div> */}
           <table className="table datatable">
             <thead className="thead-light">
               <tr>
@@ -74,7 +160,7 @@ const CouponUsageManagement = () => {
               </tr>
             </thead>
             <tbody>
-              {usages.map((usage) => (
+              {filteredUsages.map((usage) => (
                 <tr key={usage.id}>
                   <td>{userMap[usage.userId] || usage.userId}</td>
                   <td>{couponMap[usage.couponId] || usage.couponId}</td>

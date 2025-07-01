@@ -43,6 +43,7 @@ import {
   selectSystemReportStats 
 } from '../../features/systemReports/systemReportSelectors';
 import { userAPI } from '../../features/users/userAPI';
+import { selectReportStats } from '../../features/reports/reportSelectors';
 
 const { Option } = Select;
 
@@ -61,6 +62,7 @@ const SystemReportManagement = () => {
   const systemReportStats = useSelector(selectSystemReportStats);
   const loading = useSelector(state => state.systemReports.loading);
   const error = useSelector(state => state.systemReports.error);
+  const reportStats = useSelector(selectReportStats);
 
   // Load system reports on component mount
   useEffect(() => {
@@ -267,30 +269,30 @@ const SystemReportManagement = () => {
                 </div>
               </Card>
             </Col>
-            <Col span={6}>
-              <Card>
-                <div style={{ textAlign: 'center' }}>
-                  <h5>Pending</h5>
-                  <h3 style={{ color: '#faad14', margin: 0 }}>{systemReportStats.pending}</h3>
-                </div>
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <div style={{ textAlign: 'center' }}>
-                  <h5>Resolved</h5>
-                  <h3 style={{ color: '#52c41a', margin: 0 }}>{systemReportStats.resolved}</h3>
-                </div>
-              </Card>
-            </Col>
-            <Col span={6}>
-              <Card>
-                <div style={{ textAlign: 'center' }}>
-                  <h5>Rejected</h5>
-                  <h3 style={{ color: '#ff4d4f', margin: 0 }}>{systemReportStats.rejected}</h3>
-                </div>
-              </Card>
-            </Col>
+              <Col span={6}>
+                <Card>
+                  <div style={{ textAlign: 'center' }}>
+                    <h5>Pending</h5>
+                    <h3 style={{ color: '#faad14', margin: 0 }}>{systemReportStats.pending}</h3>
+                  </div>
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card>
+                  <div style={{ textAlign: 'center' }}>
+                    <h5>Resolved</h5>
+                    <h3 style={{ color: '#52c41a', margin: 0 }}>{systemReportStats.resolved}</h3>
+                  </div>
+                </Card>
+              </Col>
+              <Col span={6}>
+                <Card>
+                  <div style={{ textAlign: 'center' }}>
+                    <h5>Rejected</h5>
+                    <h3 style={{ color: '#ff4d4f', margin: 0 }}>{systemReportStats.rejected}</h3>
+                  </div>
+                </Card>
+              </Col>
           </Row>
 
           {/* Filter Controls */}

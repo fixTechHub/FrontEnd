@@ -31,6 +31,12 @@ const initialState = {
   loading: false,
   error: null,
   success: false,
+  filters: {
+    search: '',
+    user: '',
+    coupon: '',
+    bookingId: '',
+  },
 };
 
 const couponUsageSlice = createSlice({
@@ -41,7 +47,10 @@ const couponUsageSlice = createSlice({
       state.loading = false;
       state.error = null;
       state.success = false;
-    }
+    },
+    setFilters: (state, action) => {
+      state.filters = { ...state.filters, ...action.payload };
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -63,5 +72,5 @@ const couponUsageSlice = createSlice({
   }
 });
 
-export const { resetState } = couponUsageSlice.actions;
+export const { resetState, setFilters } = couponUsageSlice.actions;
 export default couponUsageSlice.reducer;

@@ -32,18 +32,18 @@ const TechnicianManagement = () => {
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState({});
 
-  const fetchTechnicians = async () => {
-    try {
-      dispatch(setLoading(true));
-      const data = await technicianAPI.getAll();
-      dispatch(setTechnicians(data || []));
-    } catch (err) {
-      dispatch(setError(err.message || 'Failed to load technicians.'));
-      message.error('Failed to load technicians.');
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
+    const fetchTechnicians = async () => {
+      try {
+        dispatch(setLoading(true));
+        const data = await technicianAPI.getAll();
+        dispatch(setTechnicians(data || []));
+      } catch (err) {
+        dispatch(setError(err.message || 'Failed to load technicians.'));
+        message.error('Failed to load technicians.');
+      } finally {
+        dispatch(setLoading(false));
+      }
+    };
 
   useEffect(() => {
     fetchTechnicians();
@@ -176,12 +176,14 @@ const TechnicianManagement = () => {
                   <td>{tech.jobCompleted ?? 0}</td>
                   <td>
                     <div className="d-flex align-items-center gap-2">
-                      <button className="btn btn-sm btn-primary" onClick={() => handleOpenEditStatus(tech)}>
-                        <i className="ti ti-edit me-1"></i>Edit Status
-                      </button>
+                      {tech.status === "PENDING" && (
+                        <button className="btn btn-sm btn-primary" onClick={() => handleOpenEditStatus(tech)}>
+                          <i className="ti ti-edit me-1"></i>Edit Status
+                        </button>
+                      )}
                       <button className="btn btn-sm btn-info" onClick={() => handleOpenDetail(tech)}>
-                        <i className="ti ti-eye me-1"></i>View Detail
-                      </button>
+                            <i className="ti ti-eye me-1"></i>View Detail
+                          </button>
                     </div>
                   </td>
                 </tr>

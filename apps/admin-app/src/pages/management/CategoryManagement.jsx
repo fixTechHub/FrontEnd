@@ -139,7 +139,7 @@ const CategoryManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {categories.map((cat) => (
+                {filteredCategories.map((cat) => (
                   <tr key={cat.id}>
                     <td>{cat.categoryName}</td>
                     <td>{cat.icon}</td>

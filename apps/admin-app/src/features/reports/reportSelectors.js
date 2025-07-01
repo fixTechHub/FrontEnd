@@ -82,9 +82,9 @@ export const selectReportStats = createSelector(
   [selectReports],
   (reports) => {
     const totalReports = reports.length;
-    const pendingReports = reports.filter((report) => report.status === 'pending').length;
-    const resolvedReports = reports.filter((report) => report.status === 'resolved').length;
-    const rejectedReports = reports.filter((report) => report.status === 'rejected').length;
+    const pendingReports = reports.filter((report) => report.status?.toUpperCase() === 'PENDING').length;
+    const resolvedReports = reports.filter((report) => report.status?.toUpperCase() === 'RESOLVED').length;
+    const rejectedReports = reports.filter((report) => report.status?.toUpperCase() === 'REJECTED').length;
 
     const typeStats = reports.reduce((acc, report) => {
       acc[report.type] = (acc[report.type] || 0) + 1;

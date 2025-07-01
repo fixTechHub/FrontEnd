@@ -46,11 +46,17 @@ const WarrantyManagement = () => {
     }
   };
 
-  const filtered = warranties.filter(w =>
-    (w.id || '').toLowerCase().includes(searchText.toLowerCase()) ||
-    (w.status || '').toLowerCase().includes(searchText.toLowerCase()) ||
-    (w.reportedIssue || '').toLowerCase().includes(searchText.toLowerCase())
-  );
+  const filtered = warranties.filter(w => {
+    const bookingId = (w.bookingId || '').toLowerCase();
+    const customer = (userNames[w.customerId] || w.customerId || '').toLowerCase();
+    const technician = (technicianNames[w.technicianId] || w.technicianId || '').toLowerCase();
+    const search = searchText.toLowerCase();
+    return (
+      bookingId.includes(search) ||
+      customer.includes(search) ||
+      technician.includes(search)
+    );
+  });
 
   const openEdit = (w) => {
     setSelected(w);

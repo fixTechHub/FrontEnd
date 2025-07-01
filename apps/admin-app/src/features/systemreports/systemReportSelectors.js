@@ -83,9 +83,9 @@ export const selectSystemReportStats = createSelector(
   [selectSystemReports],
   (systemReports) => {
     const totalReports = systemReports.length;
-    const pendingReports = systemReports.filter((report) => report.status === 'pending').length;
-    const resolvedReports = systemReports.filter((report) => report.status === 'resolved').length;
-    const rejectedReports = systemReports.filter((report) => report.status === 'rejected').length;
+    const pendingReports = systemReports.filter((report) => report.status?.toUpperCase() === 'PENDING').length;
+    const resolvedReports = systemReports.filter((report) => report.status?.toUpperCase() === 'RESOLVED').length;
+    const rejectedReports = systemReports.filter((report) => report.status?.toUpperCase() === 'REJECTED').length;
 
     const tagStats = systemReports.reduce((acc, report) => {
       acc[report.tag] = (acc[report.tag] || 0) + 1;
