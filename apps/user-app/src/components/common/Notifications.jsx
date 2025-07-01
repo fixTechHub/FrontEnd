@@ -7,13 +7,49 @@ import {
 import {
   fetchNotificationsThunk,
   markNotificationAsReadThunk,
+  clearAllNotificationsThunk,
+  fetchAllNotificationsThunk,
   addNotification,
   updateNotification,
+  clearNotifications,
 } from '../../features/notifications/notificationSlice';
+import { useNavigate } from 'react-router-dom';
+
+const styles = {
+  notificationMessage: {
+    padding: '10px 15px',
+    borderBottom: '1px solid #f0f0f0',
+    transition: 'background-color 0.2s',
+    cursor: 'default',
+  },
+  clickableNotification: {
+    cursor: 'pointer'
+  },
+  markAsReadBtn: {
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #dee2e6',
+    borderRadius: '4px',
+    color: '#6c757d',
+    fontSize: '0.75rem',
+    padding: '0.25rem 0.5rem',
+    marginLeft: '0.5rem',
+    whiteSpace: 'nowrap',
+    transition: 'all 0.2s',
+    ':hover': {
+      backgroundColor: '#e9ecef',
+      borderColor: '#dee2e6',
+      color: '#495057',
+    }
+  },
+  unreadNotification: {
+    backgroundColor: '#f8f9fa'
+  }
+};
 
 const Notifications = ({ userId }) => {
   const dispatch = useDispatch();
-  const { notifications } = useSelector((state) => state.notifications);
+  const navigate = useNavigate();
+  const { notifications, status } = useSelector((state) => state.notifications);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -35,16 +71,27 @@ const Notifications = ({ userId }) => {
     };
   }, [dispatch, userId]);
 
+  const handleNotificationClick = (notification) => {
+    if (notification.url) {
+      navigate(notification.url);
+      setIsOpen(false);
+    }
+  };
+
   const handleMarkNotificationRead = (notificationId) => {
     dispatch(markNotificationAsReadThunk(notificationId));
   };
 
   const handleClearAll = () => {
-    notifications.forEach((notification) => {
-      if (!notification.isRead) {
-        handleMarkNotificationRead(notification._id);
-      }
+    dispatch(clearAllNotificationsThunk()).then(() => {
+      dispatch(clearNotifications());
     });
+  };
+
+  const handleViewAllNotifications = () => {
+    dispatch(fetchAllNotificationsThunk({ limit: 50, skip: 0 }));
+    navigate('/notifications/all');
+    setIsOpen(false);
   };
 
   const getTimeAgo = (date) => {
@@ -63,10 +110,10 @@ const Notifications = ({ userId }) => {
     return Math.floor(seconds) + ' seconds ago';
   };
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
+  const unreadCount = notifications.filter((n) => !n.isRead && n.status === 'DISPLAY').length;
 
   return (
-    <li className="nav-item dropdown logged-item noti-nav noti-wrapper">
+    <div className="nav-item dropdown logged-item noti-nav noti-wrapper">
       <a
         href="#"
         className="dropdown-toggle nav-link"
@@ -84,7 +131,7 @@ const Notifications = ({ userId }) => {
       {isOpen && (
         <div className="dropdown-menu notifications show">
           <div className="topnav-dropdown-header">
-            <span className="notification-title">Notifications</span>
+            <span className="notification-title">Thông Báo</span>
             <a
               href="#"
               className="clear-noti"
@@ -93,66 +140,100 @@ const Notifications = ({ userId }) => {
                 handleClearAll();
               }}
             >
-              Clear All
+              Xóa tất cả
             </a>
           </div>
           <div className="noti-content">
             <ul className="notification-list">
-              {notifications.length === 0 ? (
+              {status === 'loading' ? (
                 <li className="notification-message">
                   <div className="media d-flex">
                     <div className="media-body flex-grow-1">
-                      <p className="noti-details">No notifications</p>
+                      <p className="noti-details">Đang tải...</p>
+                    </div>
+                  </div>
+                </li>
+              ) : notifications.length === 0 ? (
+                <li className="notification-message">
+                  <div className="media d-flex">
+                    <div className="media-body flex-grow-1">
+                      <p className="noti-details">Không có thông báo nào</p>
                     </div>
                   </div>
                 </li>
               ) : (
                 notifications.map((notification) => (
-                  <li key={notification._id} className="notification-message">
-                    <a
-                      href="#"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleMarkNotificationRead(notification._id);
+                  notification.status === 'DISPLAY' && (
+                    <li 
+                      key={notification._id} 
+                      className="notification-message"
+                      style={{
+                        ...styles.notificationMessage,
+                        ...(notification.isRead ? {} : styles.unreadNotification),
+                        ...(notification.url ? styles.clickableNotification : {})
                       }}
+                      onClick={() => handleNotificationClick(notification)}
                     >
-                      <div className="media d-flex">
-                        <span className="avatar avatar-lg flex-shrink-0">
-                          <img
-                            className="avatar-img rounded-circle"
-                            alt="User Image"
-                            src={
-                              notification.userAvatar ||
-                              '/img/profiles/avatar-01.jpg'
-                            }
-                          />
-                        </span>
-                        <div className="media-body flex-grow-1">
-                          <p className="noti-details">
-                            <span className="noti-title">
-                              {notification.title}
-                            </span>
-                            {notification.content}
-                          </p>
-                          <p className="noti-time">
-                            <span className="notification-time">
-                              {getTimeAgo(notification.createdAt)}
-                            </span>
-                          </p>
+                      <div className="media d-flex justify-content-between align-items-start">
+                        <div className="d-flex flex-grow-1">
+                          <span className="avatar avatar-lg flex-shrink-0">
+                            <img
+                              className="avatar-img rounded-circle"
+                              alt="User Image"
+                              src={
+                                notification.userAvatar ||
+                                '/img/profiles/avatar-01.jpg'
+                              }
+                            />
+                          </span>
+                          <div className="media-body">
+                            <p className="noti-details">
+                              <span className="noti-title">
+                                {notification.title}
+                              </span>
+                              {notification.content}
+                            </p>
+                            <p className="noti-time">
+                              <span className="notification-time">
+                                {getTimeAgo(notification.createdAt)}
+                              </span>
+                            </p>
+                          </div>
                         </div>
+                        {!notification.isRead && (
+                          <button
+                            className="btn btn-sm btn-light mark-as-read"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              handleMarkNotificationRead(notification._id);
+                            }}
+                            style={styles.markAsReadBtn}
+                          >
+                            Đánh dấu đã đọc
+                          </button>
+                        )}
                       </div>
-                    </a>
-                  </li>
+                    </li>
+                  )
                 ))
               )}
             </ul>
           </div>
           <div className="topnav-dropdown-footer">
-            <a href="#">View all Notifications</a>
+            <a
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handleViewAllNotifications();
+              }}
+            >
+              Xem tất cả thông báo
+            </a>
           </div>
         </div>
       )}
-    </li>
+    </div>
   );
 };
 

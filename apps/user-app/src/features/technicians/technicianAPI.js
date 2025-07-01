@@ -56,3 +56,4 @@ export const fetchCertificatesByTechnicianId = async (technicianId) => {
   return response.data.certificates;
 };
 
+export const sendQuotationAPI = (formData) => apiClient.post('/technicians/send-quotation', formData);

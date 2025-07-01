@@ -7,4 +7,10 @@ export const notificationAPI = {
   markAsRead: (id) => {
     return apiClient.patch(`/notifications/${id}/read`);
   },
+  clearAllNotifications: () => {
+    return apiClient.delete('/notifications/clear');
+  },
+  getAllUserNotifications: (params = {}) => {
+    return apiClient.get('/notifications/all', { params });
+  },
 };

@@ -6,14 +6,14 @@ import {
   updateTechnicianAvailability,
   getTechnicianJob,
   getJobDetails,
-  getTechnicians, completeTechnicianProfile, fetchCertificatesByTechnicianId 
+  getTechnicians, completeTechnicianProfile, fetchCertificatesByTechnicianId, sendQuotationAPI
 } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
   async (technicianId, thunkAPI) => {
     try {
-      const response  = await getTechnicianProfile(technicianId);
+      const response = await getTechnicianProfile(technicianId);
       console.log('--- FETCH TECHNICIAN PROFILE ---', response);
 
       return response.data; // giữ nguyên trả về { success, data }
@@ -52,6 +52,7 @@ export const fetchTechnicians = createAsyncThunk(
     }
   }
 )
+
 export const completeTechnicianProfileThunk = createAsyncThunk(
   'technician/completeProfile',
   async (technicianData, thunkAPI) => {
@@ -88,6 +89,22 @@ export const changeTechnicianAvailability = createAsyncThunk(
       return updated;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+    }
+  }
+);
+
+export const sendQuotation = createAsyncThunk(
+  'technician/sendQuotation',
+  async (formData, thunkAPI) => {
+    try {
+      const res = await sendQuotationAPI(formData);
+      console.log('--- SEND QUOTATION ---', res.data);
+
+      return res.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
@@ -140,6 +157,7 @@ const technicianSlice = createSlice({
     profile: null,
     earnings: null,
     availability: 'FREE',
+    quotations: [],
     loading: false,
     error: null,
     bookings: [],
@@ -259,6 +277,18 @@ const technicianSlice = createSlice({
       })
       .addCase(getCertificates.rejected, (state, action) => {
         state.loading = false;
+        })
+
+      // Send Quotation
+      .addCase(sendQuotation.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(sendQuotation.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.quotations.unshift(action.payload);
+      })
+      .addCase(sendQuotation.rejected, (state, action) => {
+        state.status = 'failed';
         state.error = action.payload;
       });
   }

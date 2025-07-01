@@ -12,7 +12,8 @@ import transactionReducer from '../features/transactions/transactionSlice'
 import adminReducer from '../features/admin/adminSlice';
 import notificationReducer from '../features/notifications/notificationSlice';
 import videoCallReducer from '../features/video-call/videoCallSlice';
-
+import quotationReducer from '../features/quotations/quotationSlice';
+import receiptReducer from '../features/receipts/receiptSlice';
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -27,25 +28,12 @@ export const store = configureStore({
     admin: adminReducer,
     notifications: notificationReducer,
     videoCall: videoCallReducer,
+    quotation: quotationReducer,
+    receipt: receiptReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: {
-        // Ignore these action types
-        ignoredActions: [
-          'videoCall/setLocalStream',
-          'videoCall/setRemoteStream',
-          'videoCall/setPeerConnection',
-        ],
-        // Ignore these field paths in all actions
-        ignoredActionPaths: ['payload'],
-        // Ignore these paths in the state
-        ignoredPaths: [
-          'videoCall.localStream',
-          'videoCall.remoteStream',
-          'videoCall.peerConnection',
-        ],
-      },
+      serializableCheck: false,
     }),
 });
 

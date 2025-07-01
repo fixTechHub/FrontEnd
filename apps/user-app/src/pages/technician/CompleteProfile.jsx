@@ -3,16 +3,22 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { completeTechnicianProfileThunk } from '../../features/technicians/technicianSlice';
+import { checkAuthThunk } from '../../features/auth/authSlice';
+import { fetchAllPublicCategories } from '../../features/categories/categorySlice';
+import apiClient from '../../services/apiClient';
+import Tesseract from 'tesseract.js';
 
 const CompleteProfile = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const { loading } = useSelector((state) => state.technician);
+    const categories = useSelector((state) => state.categories.categories);
+    const categoriesStatus = useSelector((state) => state.categories.status);
 
     const [formData, setFormData] = useState({
         identification: '',
-        specialties: '',
+        specialtiesCategories: '',
         experienceYears: 0,
         currentLocation: {
             type: 'Point',
@@ -27,8 +33,11 @@ const CompleteProfile = () => {
     });
 
     const [certificates, setCertificates] = useState([]);
-    const [categories, setCategories] = useState([]);
     const [selectedCategories, setSelectedCategories] = useState([]);
+    const [ocrLoading, setOcrLoading] = useState(false);
+    const [ocrError, setOcrError] = useState('');
+    const [frontImage, setFrontImage] = useState(null);
+    const [backImage, setBackImage] = useState(null);
 
     useEffect(() => {
         // Kiểm tra xem user có phải là technician không
@@ -36,41 +45,13 @@ const CompleteProfile = () => {
             navigate('/');
             return;
         }
+        // Lấy categories qua redux (giống HomePage)
+        dispatch(fetchAllPublicCategories());
 
-        // Load categories
-        fetchCategories();
-        
-        // Get current location
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    setFormData(prev => ({
-                        ...prev,
-                        currentLocation: {
-                            type: 'Point',
-                            coordinates: [position.coords.longitude, position.coords.latitude]
-                        }
-                    }));
-                },
-                (error) => {
-                    console.error('Error getting location:', error);
-                    toast.warning('Không thể lấy vị trí hiện tại. Vui lòng nhập thủ công.');
-                }
-            );
-        }
-    }, [user, navigate]);
-
-    const fetchCategories = async () => {
-        try {
-            const response = await fetch('/api/categories/public');
-            const data = await response.json();
-            if (data.success) {
-                setCategories(data.data);
-            }
-        } catch (error) {
-            console.error('Error fetching categories:', error);
-        }
-    };
+    // Log kiểm tra dữ liệu categories
+    useEffect(() => {
+        console.log('Categories in CompleteProfile:', categories);
+    }, [categories]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -118,46 +99,44 @@ const CompleteProfile = () => {
             return;
         }
 
-        if (selectedCategories.length === 0) {
-            toast.error('Vui lòng chọn ít nhất một chuyên môn');
-            return;
-        }
+        // if (selectedCategories.length === 0) {
+        //     toast.error('Vui lòng chọn ít nhất một chuyên môn');
+        //     return;
+        // }
 
-        if (certificates.length === 0) {
-            toast.error('Vui lòng upload ít nhất một chứng chỉ');
+      // Kiểm tra bắt buộc phải có chứng chỉ
+        // if (certificates.length === 0) {
+        //     toast.error('Vui lòng upload ít nhất một chứng chỉ');
+        //     return;
+        // }
+
+        if (!frontImage || !backImage) {
+            toast.error('Vui lòng tải lên cả hai mặt trước và sau của CCCD');
             return;
         }
 
         try {
-            // Upload certificates first
-            const uploadedCertificates = [];
-            for (const certificate of certificates) {
-                const formData = new FormData();
-                formData.append('certificate', certificate);
-                
-                const response = await fetch('/api/technicians/upload/certificate', {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'include'
-                });
-                
-                const data = await response.json();
-                if (data.success) {
-                    uploadedCertificates.push(data.fileUrl);
-                }
-            }
+            const formDataAll = new FormData();
+            // Append files
+            formDataAll.append('frontIdImage', frontImage);
+            formDataAll.append('backIdImage', backImage);
+            certificates.forEach(file => formDataAll.append('certificates', file));
 
-            // Complete technician profile
-            const technicianData = {
-                ...formData,
-                specialties: selectedCategories,
-                certificate: uploadedCertificates
-            };
+            // Append JSON fields
+            formDataAll.append('identification', formData.identification);
+            formDataAll.append('experienceYears', formData.experienceYears);
+            formDataAll.append('specialtiesCategories', JSON.stringify(selectedCategories));
+            formDataAll.append('bankAccount', JSON.stringify(formData.bankAccount));
 
-            await dispatch(completeTechnicianProfileThunk(technicianData)).unwrap();
-            
+            // Gọi endpoint duy nhất
+            await apiClient.post('/technicians/complete-profile', formDataAll, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+
+            // Refresh auth & điều hướng
+            await dispatch(checkAuthThunk());
             toast.success('Hoàn thành hồ sơ thành công! Hồ sơ đang chờ admin phê duyệt.');
-            navigate('/');
+            navigate('/', { replace: true });
         } catch (error) {
             toast.error(error.message || 'Có lỗi xảy ra khi hoàn thành hồ sơ');
         }
@@ -176,14 +155,14 @@ const CompleteProfile = () => {
                             <h4 className="mb-0">Hoàn thành hồ sơ kỹ thuật viên</h4>
                         </div>
                         <div className="card-body">
-                            <form onSubmit={handleSubmit}>
+                            <form>
                                 {/* Thông tin cá nhân */}
                                 <div className="mb-4">
                                     <h5>Thông tin cá nhân</h5>
                                     <div className="row">
                                         <div className="col-md-6">
                                             <div className="mb-3">
-                                                <label className="form-label">Số CMND/CCCD *</label>
+                                                <label className="form-label">Số CCCD *</label>
                                                 <input
                                                     type="text"
                                                     className="form-control"
@@ -211,10 +190,10 @@ const CompleteProfile = () => {
                                 </div>
 
                                 {/* Chuyên môn */}
-                                <div className="mb-4">
+                                {/* <div className="mb-4">
                                     <h5>Chuyên môn *</h5>
                                     <div className="row">
-                                        {categories.map((category) => (
+                                        {categories && categories.length > 0 ? categories.map((category) => (
                                             <div key={category._id} className="col-md-4 mb-2">
                                                 <div className="form-check">
                                                     <input
@@ -229,9 +208,9 @@ const CompleteProfile = () => {
                                                     </label>
                                                 </div>
                                             </div>
-                                        ))}
+                                        )) : <div className="col-12">Không có dữ liệu chuyên môn</div>}
                                     </div>
-                                </div>
+                                </div> */}
 
                                 {/* Chứng chỉ */}
                                 <div className="mb-4">
@@ -325,13 +304,82 @@ const CompleteProfile = () => {
                                     </div>
                                 </div>
 
+                                <div className="col-md-6 mb-2">
+                                    <label>Mặt trước CCCD *</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="form-control"
+                                        onChange={e => setFrontImage(e.target.files[0])}
+                                        required
+                                    />
+                                    {frontImage && (
+                                        <>
+                                            <img
+                                                src={URL.createObjectURL(frontImage)}
+                                                alt="Mặt trước CCCD"
+                                                style={{ width: 180, marginTop: 8, border: '1px solid #ccc' }}
+                                            />
+                                            <button
+                                                type="button"
+                                                className="btn btn-outline-success mt-2"
+                                                onClick={async () => {
+                                                    setOcrLoading(true);
+                                                    setOcrError('');
+                                                    try {
+                                                        const { data: { text } } = await Tesseract.recognize(
+                                                            frontImage,
+                                                            'eng+vie',
+                                                            { logger: m => console.log(m) }
+                                                        );
+                                                        const match = text.match(/\b\d{9}\b|\b\d{12}\b/);
+                                                        if (match) {
+                                                            setFormData(prev => ({ ...prev, identification: match[0] }));
+                                                        } else {
+                                                            setOcrError('Không nhận diện được số CCCD trong ảnh!');
+                                                        }
+                                                    } catch (err) {
+                                                        setOcrError('Có lỗi khi nhận diện ảnh!');
+                                                    }
+                                                    setOcrLoading(false);
+                                                }}
+                                                disabled={ocrLoading}
+                                            >
+                                                {ocrLoading ? 'Đang nhận diện...' : 'Nhận diện số CCCD từ ảnh'}
+                                            </button>
+                                            {ocrError && <div className="text-danger">{ocrError}</div>}
+                                        </>
+                                    )}
+                                </div>
+
+                                <div className="col-md-6 mb-2">
+                                    <label>Mặt sau CCCD *</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        className="form-control"
+                                        onChange={e => setBackImage(e.target.files[0])}
+                                        required
+                                    />
+                                    {backImage && (
+                                        <img
+                                            src={URL.createObjectURL(backImage)}
+                                            alt="Mặt sau CCCD"
+                                            style={{ width: 180, marginTop: 8, border: '1px solid #ccc' }}
+                                        />
+                                    )}
+                                </div>
+
                                 <div className="d-grid gap-2">
                                     <button
-                                        type="submit"
-                                        className="btn btn-primary"
-                                        disabled={loading}
+                                        type="button"
+                                        className="btn btn-primary w-100 btn-size"
+                                        onClick={handleSubmit}
+                                        disabled={loading || !selectedCategories.length || !formData.identification || !certificates.length}
                                     >
-                                        {loading ? 'Đang xử lý...' : 'Hoàn thành hồ sơ'}
+                                        {loading ? (
+                                            <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG HOÀN TẤT...</>
+                                        ) : 'HOÀN TẤT HỒ SƠ'}
                                     </button>
                                 </div>
                             </form>

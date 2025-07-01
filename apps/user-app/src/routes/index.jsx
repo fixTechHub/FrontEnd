@@ -2,6 +2,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { checkAuthThunk } from "../features/auth/authSlice";
+import React, { useEffect, useState } from 'react';
 import ProtectedRoute from "./access/PrivateRoute";
 import PrivateRoute from "./access/PrivateRoute";
 import HomePage from "../pages/home/HomePage";
@@ -13,7 +14,7 @@ import ChooseRole from "../pages/authentication/ChooseRole";
 import VerifyEmailPage from "../pages/authentication/VerifyEmailPage";
 import VerifyOTPPage from "../pages/authentication/VerifyOTPPage";
 import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
-import CompleteProfile from "../pages/technician/CompleteProfile";
+// import CompleteProfile from "../pages/technician/CompleteProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ChooseTechnician from '../pages/booking/ChooseTechnician';
@@ -29,20 +30,33 @@ import ViewEarningAndCommission from "../pages/technician/ViewEarningAndCommissi
 import TechnicianJobList from "../pages/technician/TechnicianJob";
 import TechnicianJob from "../pages/technician/TechnicianJobDetail";
 import CertificateList from "../pages/technician/Certificate";
+import SendQuotation from "../pages/technician/SendQuotation";
+import WaitingConfirm from "../pages/technician/WaitingConfirm";
 
+import VideoCallPage from "../pages/video-call/VideoCallPage";
+import NotificationsPage from "../pages/notifications/NotificationPage";
+import ReceiptPage from "../pages/receipt/ReceiptPage";
+// import { checkAuthThunk } from '../features/auth/authSlice';
 export default function AppRoutes() {
- const { user, registrationData, loading } = useSelector((state) => state.auth);
+  const { user, registrationData, loading } = useSelector((state) => state.auth);
+  // const [isAuthChecked, setIsAuthChecked] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-        <div className="spinner-border text-warning" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="ms-3">Đang tải...</p>
-      </div>
-    );
-  }
+  //   useEffect(() => {
+  //     dispatch(checkAuthThunk()).finally(() => {
+  //       setIsAuthChecked(true);
+  //     });
+  //   }, [dispatch]);
+
+  // if (!isAuthChecked) {
+  //     return (
+  //       <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+  //         <div className="spinner-border text-warning" role="status">
+  //           <span className="visually-hidden">Loading...</span>
+  //         </div>
+  //         <p className="ms-3">Đang tải...</p>
+  //       </div>
+  //     );
+  //   }
 
   return (
     <Routes>
@@ -72,6 +86,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route
         path="/verify-email"
         element={
@@ -83,6 +98,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route
         path="/verify-otp"
         element={
@@ -99,7 +115,8 @@ export default function AppRoutes() {
       <Route path="/technician/:technicianId/booking" element={< TechnicianJobList/>} />
       <Route path="/technician/:technicianId/booking/:bookingId" element={< TechnicianJob/>} />
       <Route path="/technician/:technicianId/certificate" element={< CertificateList/>} />
-      <Route
+      
+      {/* <Route
         path="/technician/complete-profile"
         element={
           <PrivateRoute
@@ -109,7 +126,7 @@ export default function AppRoutes() {
             <CompleteProfile />
           </PrivateRoute>
         }
-      />
+      /> */}
 
       {/* ================= USER PROTECTED ROUTES ================= */}
       <Route
@@ -120,50 +137,90 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route path="/contract/complete" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "TECHNICIAN"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <ContractComplete />
         </PrivateRoute>
 
       } />
-      <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user}>
+
+      <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+        redirectPath={user ? "/" : "/login"}
+      >
         <CheckoutPage />
       </PrivateRoute>} />
+      <Route path="/receipts" element={
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
+          <ReceiptPage />
+        </PrivateRoute>
+      } />
+
       <Route path="/payment-success" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentSuccess />
-        </PrivateRoute>} />
+        </PrivateRoute>
+      } />
+
       <Route path="/payment-failed" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentFail />
         </PrivateRoute>
       } />
+
       <Route path="/payment-cancel" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentCancel />
         </PrivateRoute>
       } />
+
+      <Route
+        path="/notifications/all"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <NotificationsPage />
+          </PrivateRoute>
+        }
+      />
       <Route
         path="/booking"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          // <PrivateRoute isAllowed={!!user}>
             <BookingPage />
-          </PrivateRoute>
+          // </PrivateRoute>
         }
       />
-       <Route
+      <Route
         path="/booking/choose-technician"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          // <PrivateRoute isAllowed={!!user}>
             <ChooseTechnician />
-          </PrivateRoute>
+          // </PrivateRoute>
         }
       />
-       <Route
+      <Route
         path="/booking/booking-processing"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          // <PrivateRoute isAllowed={!!user}>
             <BookingProcessing />
+          // </PrivateRoute>
+        }
+      />
+      <Route
+        path="/video-call/:bookingId"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <VideoCallPage />
           </PrivateRoute>
         }
       />
@@ -194,8 +251,29 @@ export default function AppRoutes() {
           /> 
           */}
 
+      {/* ================= TECHNICIAN PROTECTED ROUTES ================= */}
+      <Route
+        path="/technician/send-quotation"
+        element={
+          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <SendQuotation />
+          // </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/technician/waiting-confirm"
+        element={
+          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <WaitingConfirm />
+          // </PrivateRoute>
+        }
+      />
+
+
       {/* ================= FALLBACK ROUTE ================= */}
       <Route path="*" element={<Navigate to="/" replace />} />
+
     </Routes>
   );
 }
