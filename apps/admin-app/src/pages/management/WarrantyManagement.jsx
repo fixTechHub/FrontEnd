@@ -24,27 +24,18 @@ const WarrantyManagement = () => {
 
   useEffect(() => {
     dispatch(fetchAllWarranties());
+    // Lấy toàn bộ user và technician một lần
+    userAPI.getAll().then(users => {
+      const map = {};
+      users.forEach(u => { map[u.id] = u.fullName || u.email || u.id; });
+      setUserNames(map);
+    });
+    technicianAPI.getAll().then(techs => {
+      const map = {};
+      techs.forEach(t => { map[t.id] = t.fullName || t.email || t.id; });
+      setTechnicianNames(map);
+    });
   }, [dispatch]);
-
-  const fetchUserName = async (id) => {
-    if (!id || userNames[id]) return;
-    try {
-      const user = await userAPI.getById(id);
-      setUserNames(prev => ({ ...prev, [id]: user.fullName || user.email || id }));
-    } catch {
-      setUserNames(prev => ({ ...prev, [id]: id }));
-    }
-  };
-
-  const fetchTechnicianName = async (id) => {
-    if (!id || technicianNames[id]) return;
-    try {
-      const tech = await technicianAPI.getById(id);
-      setTechnicianNames(prev => ({ ...prev, [id]: tech.fullName || tech.email || id }));
-    } catch {
-      setTechnicianNames(prev => ({ ...prev, [id]: id }));
-    }
-  };
 
   const filtered = warranties.filter(w => {
     const bookingId = (w.bookingId || '').toLowerCase();
@@ -124,11 +115,9 @@ const WarrantyManagement = () => {
                   <td>{w.bookingId}</td>
                   <td>
                     {userNames[w.customerId] || w.customerId}
-                    {!userNames[w.customerId] && w.customerId && fetchUserName(w.customerId)}
                   </td>
                   <td>
                     {technicianNames[w.technicianId] || w.technicianId}
-                    {!technicianNames[w.technicianId] && w.technicianId && fetchTechnicianName(w.technicianId)}
                   </td>
                   <td>{w.status}</td>
                   <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
