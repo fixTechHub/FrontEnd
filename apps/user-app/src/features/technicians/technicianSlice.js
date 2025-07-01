@@ -6,7 +6,7 @@ import {
   updateTechnicianAvailability,
   getTechnicianJob,
   getJobDetails,
-  getTechnicians, completeTechnicianProfile, fetchCertificatesByTechnicianId, sendQuotationAPI
+  getTechnicians, completeTechnicianProfile, fetchCertificatesByTechnicianId, sendQuotationAPI, getTechnicianDepositLogs
 } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
@@ -150,6 +150,20 @@ export const getCertificates = createAsyncThunk(
   }
 );
 
+export const fetchTechnicianDepositLogs = createAsyncThunk(
+  'technician/fetchTechnicianDepositLogs',
+  async ({ limit, skip }, { rejectWithValue }) => {
+    try {
+      const response = await getTechnicianDepositLogs({ limit, skip });
+      console.log('Data', response.data);
+      return response.data.technicianDepositLogs;
+    } catch (error) {
+      console.error('Thunk Error:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch deposit logs');
+    }
+  }
+);
+
 
 const technicianSlice = createSlice({
   name: 'technician',
@@ -162,7 +176,8 @@ const technicianSlice = createSlice({
     error: null,
     bookings: [],
     jobDetail: null,
-    certificates: []
+    certificates: [],
+    logs: [],
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -289,6 +304,20 @@ const technicianSlice = createSlice({
       })
       .addCase(sendQuotation.rejected, (state, action) => {
         state.status = 'failed';
+        state.error = action.payload;
+      })
+
+       .addCase(fetchTechnicianDepositLogs.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnicianDepositLogs.fulfilled, (state, action) => {
+        state.loading = false;
+        
+        state.logs = action.payload;
+      })
+      .addCase(fetchTechnicianDepositLogs.rejected, (state, action) => {
+        state.loading = false;
         state.error = action.payload;
       });
   }
