@@ -354,3 +354,33 @@ body {
   /* Primary color for selection */
   box-shadow: 0 4px 15px rgba(25, 119, 243, 0.3);
 }
+
+.zoom-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  /* cao hơn sidebar */
+}
+
+.zoom-img {
+  max-width: 90%;
+  max-height: 90%;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #000;
+}
+
+.zoom-close {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  font-size: 40px;
+  color: #fff;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  line-height: 1;
+}
