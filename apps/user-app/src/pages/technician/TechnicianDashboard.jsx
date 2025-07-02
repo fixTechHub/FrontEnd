@@ -27,31 +27,7 @@ const BreadcrumbSection = () => (
     </div>
 );
 
-const StatusList = () => (
-    <ul className="status-lists">
-        <li className="approve-item">
-            <div className="status-info">
-                <span><i className="fa-solid fa-calendar-days" /></span>
-                <p>Your Booking has been Approved by admin</p>
-            </div>
-            <a href="#" className="view-detail">View Details</a>
-        </li>
-        <li>
-            <div className="status-info">
-                <span><i className="fa-solid fa-money-bill" /></span>
-                <p>Your Refund request has been approved by admin &amp; your payment will be updated in 3 days.</p>
-            </div>
-            <a href="#" className="close-link"><i className="feather-x" /></a>
-        </li>
-        <li className="bg-danger-light">
-            <div className="status-info">
-                <span><i className="fa-solid fa-money-bill" /></span>
-                <p>Your Refund request has been rejected by admin <a href="#">View Reason</a></p>
-            </div>
-            <a href="#" className="close-link"><i className="feather-x" /></a>
-        </li>
-    </ul>
-);
+
 
 // ---------- Widget Item component -----------
 const WidgetItem = ({ icon, title, value, color }) => (
@@ -100,61 +76,62 @@ function ViewEarningAndCommission() {
 
     if (loading) return <p>Đang tải...</p>;
     if (error) return <p>Lỗi: {error}</p>;
-    if (!earnings || earnings.length === 0) return <p>Không có dữ liệu thu nhập.</p>;
 
     return (
         <>
-        <div class="main-wrapper">
-            <div class="content dashboard-content">
-                <div class="container">
-                    <div class="row">
-                        <div className="col-lg-12 d-flex">
-                            <div className="card user-card flex-fill">
-                                <div className="card-header">
-                                    <div className="row align-items-center">
-                                        <div className="col-sm-5">
-                                            <h5>My Earnings</h5>
-                                        </div>
-                                        <div className="col-sm-7 text-sm-end">
-                                            
+            <div class="main-wrapper">
+                <div class="content dashboard-content">
+                    <div class="container">
+                        <div class="row">
+                            <div className="col-lg-12 d-flex">
+                                <div className="card user-card flex-fill">
+                                    <div className="card-header">
+                                        <div className="row align-items-center">
+                                            <div className="col-sm-5">
+                                                <h5>My Earnings</h5>
+                                            </div>
+                                            <div className="col-sm-7 text-sm-end">
+
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="card-body p-0">
-                                    <div className="table-responsive dashboard-table dashboard-table-info">
-                                        <table className="table">
-                                            <tbody>
-                                                {earnings.map((item, index) => (
-                                                    <tr key={item.bookingId ?? item._id ?? index}>
-                                                        <td>
-                                                            <h6>Khách Hàng</h6>
-                                                            <p>{item.bookingInfo?.customerName?.fullName ?? 'Không có'}</p>
-                                                        </td>
-                                                        <td>
-                                                            <h6>Dịch vụ</h6>
-                                                            <p>{item.bookingInfo?.service?.serviceName ?? 'Không có'}</p>
-                                                        </td>
-                                                        <td>
-                                                            <h6>Hoa hồng</h6>
-                                                            <p>{item.commissionAmount?.toLocaleString() ?? '0'} VNĐ</p>
-                                                        </td>
-                                                        <td>
-                                                            <h6>Giữ lại</h6>
-                                                            <p>{item.holdingAmount?.toLocaleString() ?? '0'} VNĐ</p>
-                                                        </td>
-                                                        <td>
-                                                            <h6>Thu nhập kỹ thuật viên</h6>
-                                                            <p>{item.technicianEarning?.toLocaleString() ?? '0'} VNĐ</p>
-                                                        </td>
-                                                        <td>
-                                                            <h6>Tổng tiền</h6>
-                                                            <h5 className="text-danger">{item.finalPrice?.toLocaleString() ?? '0'} VNĐ</h5>
-                                                        </td>
-
+                                    <div className="card-body p-0">
+                                        <div className="table-responsive dashboard-table dashboard-table-info">
+                                            <table className="table">
+                                                <thead className="thead-light">
+                                                    <tr>
+                                                        <th>
+                                                            Khách hàng
+                                                        </th>
+                                                        <th>Dịch vụ</th>
+                                                        <th>Tiền hoa hồng</th>
+                                                        <th>Tiền giữ lại</th>
+                                                        <th>Thu nhập</th>
+                                                        <th>Tổng tiền</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    {Array.isArray(earnings) && earnings.length > 0 ? (
+                                                        earnings.map((item, index) => (
+                                                            <tr key={item.bookingId ?? item._id ?? index}>
+                                                                <td>{item.bookingInfo?.customerName?.fullName ?? 'Không có'}</td>
+                                                                <td>{item.bookingInfo?.service?.serviceName ?? 'Không có'}</td>
+                                                                <td>{item.commissionAmount?.toLocaleString() ?? '0'} VNĐ</td>
+                                                                <td>{item.holdingAmount?.toLocaleString() ?? '0'} VNĐ</td>
+                                                                <td>{item.technicianEarning?.toLocaleString() ?? '0'} VNĐ</td>
+                                                                <td>{item.finalPrice?.toLocaleString() ?? '0'} VNĐ</td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan="6" className="text-center">
+                                                                Không có dữ liệu hoa hồng
+                                                            </td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -162,9 +139,6 @@ function ViewEarningAndCommission() {
                     </div>
                 </div>
             </div>
-        </div>
-            
-
 
         </>
     );
@@ -279,46 +253,56 @@ const TechnicianJobList = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {Array.isArray(bookings) && bookings.map((b) => (
-                                        <tr key={b.bookingId || b._id}>
-                                            <td>{b.bookingCode}</td>
-                                            <td>{b.customerName}</td>
-                                            <td>{b.serviceName}</td>
-                                            <td>{b.address}</td>
-                                            <td>{new Date(b.schedule).toLocaleString()}</td>
-                                            <td >
-                                                <span
-                                                    className={
-                                                        b.status === 'DONE'
-                                                            ? 'badge badge-light-success'
-                                                            : b.status === 'CANCELLED'
-                                                                ? 'badge badge-light-danger'
-                                                                : 'badge badge-light-warning'
-                                                    }>{b.status}</span></td>
-                                            <td className="text-end">
-                                                <div className="dropdown dropdown-action">
-                                                    <a
-                                                        href="javascript:void(0);"
-                                                        className="dropdown-toggle"
-                                                        data-bs-toggle="dropdown"
-                                                        aria-expanded="false"
-                                                    >
-                                                        <i className="fas fa-ellipsis-vertical"></i>
-                                                    </a>
-
-                                                </div>
-                                            </td>
-
+                                    {loading ? (
+                                        <tr>
+                                            <td colSpan="7" className="text-center">Đang tải...</td>
                                         </tr>
-                                    ))}
+                                    ) : error ? (
+                                        <tr>
+                                            <td colSpan="7" className="text-center text-danger">{error}</td>
+                                        </tr>
+                                    ) : !Array.isArray(bookings) || bookings.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="7" className="text-center">Không có đơn đặt lịch nào</td>
+                                        </tr>
+                                    ) : (
+                                        bookings.map((b) => (
+                                            <tr key={b.bookingId || b._id}>
+                                                <td>{b.bookingCode}</td>
+                                                <td>{b.customerName}</td>
+                                                <td>{b.serviceName}</td>
+                                                <td>{b.address}</td>
+                                                <td>{new Date(b.schedule).toLocaleString()}</td>
+                                                <td >
+                                                    <span
+                                                        className={
+                                                            b.status === 'DONE'
+                                                                ? 'badge badge-light-success'
+                                                                : b.status === 'CANCELLED'
+                                                                    ? 'badge badge-light-danger'
+                                                                    : 'badge badge-light-warning'
+                                                        }>{b.status}</span></td>
+                                                <td className="text-end">
+                                                    <div className="dropdown dropdown-action">
+                                                        <a
+                                                            href="javascript:void(0);"
+                                                            className="dropdown-toggle"
+                                                            data-bs-toggle="dropdown"
+                                                            aria-expanded="false"
+                                                        >
+                                                            <i className="fas fa-ellipsis-vertical"></i>
+                                                        </a>
+
+                                                    </div>
+                                                </td>
+
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-
                     </div>
-
-
-
                 </div>
             </div>
         </>
@@ -337,6 +321,7 @@ function TechnicianDashboard() {
     return (
         <>
             <div class="main-wrapper">
+                <Header />
 
                 <BreadcrumbSection />
 
@@ -377,7 +362,7 @@ function TechnicianDashboard() {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/user-wallet">
+                                            <Link to="/technician/deposit">
                                                 <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
                                                 <span>My Wallet</span>
                                             </Link>
@@ -403,14 +388,14 @@ function TechnicianDashboard() {
 
                 <div className="content dashboard-content">
                     <div className="container">
-                        <StatusList />
+
                         <div className="content-header">
                             <h4>Dashboard</h4>
                         </div>
                         <WidgetsRow />
                         <TechnicianJobList />
                         <CardsRow />
-                        
+
                     </div>
                 </div>
                 <Footer />

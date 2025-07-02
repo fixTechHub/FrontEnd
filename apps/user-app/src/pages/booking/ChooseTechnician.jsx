@@ -43,13 +43,13 @@ function ChooseTechnician() {
         dispatch(fetchBookingPriceInformation(quotationId));
     };
 
-    const handleComfirm = async (id, techId) => {
+    const handleComfirm = async (id) => {
         try {
             const res = await acceptQuotation(id);
             console.log('--- ACCEPT QUOTATION ---', res);
 
             if (res.data.success) {
-                navigate(`/booking/booking-processing?bookingId=${bookingId}&technicianId=${techId}`);
+                navigate(`/booking/booking-processing?bookingId=${bookingId}`);
             } else {
                 alert(res.data.message);
             }
@@ -133,7 +133,7 @@ function ChooseTechnician() {
                                                                     </button>
                                                                 </td>
                                                                 <td>
-                                                                    <button onClick={() => handleComfirm(quotation._id, quotation.technicianId._id)} className="btn btn-secondary">
+                                                                    <button onClick={() => handleComfirm(quotation._id)} className="btn btn-secondary">
                                                                         Xác nhận
                                                                     </button>
                                                                 </td>

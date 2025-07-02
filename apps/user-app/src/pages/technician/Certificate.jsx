@@ -5,12 +5,17 @@ import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
+import UploadCertificateForm from './UploadCer';
+import { useState } from 'react';
+
 
 const CertificateList = () => {
   const dispatch = useDispatch();
   const { technicianId } = useParams();
   const { certificates, loading, error } = useSelector((state) => state.technician);
   console.log("cer", certificates);
+  const [showUploadForm, setShowUploadForm] = useState(false);
+
   useEffect(() => {
     if (technicianId) {
       dispatch(getCertificates(technicianId));
@@ -19,6 +24,12 @@ const CertificateList = () => {
 
   if (loading) return <p>Đang tải chứng chỉ...</p>;
   if (error) return <p>Lỗi: {error}</p>;
+
+
+
+  const toggleUploadForm = () => {
+    setShowUploadForm(prev => !prev);
+  };
   return (
     <div className="main-wrapper">
       <Header />
@@ -74,6 +85,10 @@ const CertificateList = () => {
               <div className="settings-info">
                 <div className="settings-sub-heading">
                   <h4>Danh sách chứng chỉ:</h4>
+                  <button onClick={toggleUploadForm}>
+                    {showUploadForm ? 'Đóng' : 'Thêm chứng chỉ'}
+                  </button>
+                  {showUploadForm && <UploadCertificateForm />}
                 </div>
                 <div className="profile-info-grid">
                   <div class="card-body">

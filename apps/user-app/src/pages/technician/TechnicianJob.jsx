@@ -9,9 +9,8 @@ import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 
 const TechnicianJobList = () => {
     const dispatch = useDispatch();
+    const { profile, bookings, loading, error } = useSelector((state) => state.technician);
     const { technicianId } = useParams();
-    const { bookings, loading, error } = useSelector((state) => state.technician);
-
     useEffect(() => {
         if (technicianId) {
             dispatch(fetchTechnicianJobs(technicianId));
@@ -51,7 +50,7 @@ const TechnicianJobList = () => {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/user-reviews">
+                                            <Link to={`/technician/${technicianId}/feedback`}>
                                                 <img src="/public/img/icons/review-icon.svg" alt="Icon" />
                                                 <span>Reviews</span>
                                             </Link>
@@ -204,7 +203,7 @@ const TechnicianJobList = () => {
                                             <th>Địa chỉ</th>
                                             <th>Thời gian</th>
                                             <th>Trạng thái</th>
-                                            <th>Hành động</th>
+                                            <th></th>
                                         </tr>
                                     </thead>
                                     <tbody>

@@ -5,9 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { logoutThunk } from '../../features/auth/authSlice';
 import Swal from 'sweetalert2';
 import styled from '@emotion/styled';
-// import Notifications from './Notifications';
-
-// import Notifications from './Notifications';
+import Notifications from './Notifications';
 // Styled-components for the dropdown
 const UserMenuWrapper = styled.div`
     position: relative;
@@ -229,7 +227,7 @@ function Header() {
                                 </>
                             ) : (
                               <>
-                                {/* <li  className="nav-item"> <Notifications userId={user._id} /></li> */}
+                                <li  className="nav-item"> <Notifications userId={user._id} /></li>
                                 <li className="nav-item" ref={menuRef}>
                                     <UserMenuWrapper onClick={() => setDropdownOpen(!dropdownOpen)}>
                                         <UserInfo>

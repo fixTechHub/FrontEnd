@@ -1,35 +1,29 @@
-import { useDispatch, useSelector } from 'react-redux';
 import { useEffect } from 'react';
-import { fetchEarningAndCommission } from '../../features/technicians/technicianSlice';
-import { useParams } from 'react-router-dom';
-import BreadcrumbBar from '../../components/common/BreadcrumbBar';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchFeedbacks } from '../../features/technicians/technicianSlice';
 import Header from '../../components/common/Header';
+import BreadcrumbBar from '../../components/common/BreadcrumbBar';
+import { useParams } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
-
-function ViewEarningAndCommission() {
+const ListFeedback = () => {
     const dispatch = useDispatch();
     const { technicianId } = useParams();
-    console.log("tech:" + technicianId);
-
-    const { earnings, loading, error } = useSelector((state) => state.technician);
-    const { user,technician } = useSelector((state) => state.auth);
-    console.log(technician);
- 
-
+    const { feedbacks, loading, error } = useSelector((state) => state.technician);
+    console.log("feedback:", feedbacks);
+    
     useEffect(() => {
-        if (technicianId) {
-            dispatch(fetchEarningAndCommission(technicianId));
-        }
-    }, [dispatch, technicianId]);
+        dispatch(fetchFeedbacks(technicianId));
+    }, [dispatch])
 
-    if (loading) return <p>Đang tải...</p>;
-    if (error) return <p>Lỗi: {error}</p>;
+    // if (loading) return <p>Đang tải...</p>;
+    // if (error) return <p>Lỗi: {error}</p>;
 
 
     return (
         <>
             <div class="main-wrapper">
+
                 <Header />
 
                 <BreadcrumbBar />
@@ -95,7 +89,6 @@ function ViewEarningAndCommission() {
                     </div>
                 </div>
 
-
                 <div className="content">
                     <div className="container">
                         <div className="content-header d-flex align-items-center justify-content-between">
@@ -119,29 +112,27 @@ function ViewEarningAndCommission() {
                                     <thead className="thead-light">
                                         <tr>
                                             <th>Khách hàng</th>
-                                            <th>Dịch vụ</th>
-                                            <th>Tiền hoa hông</th>
-                                            <th>Tiền giữ lại</th>
-                                            <th>Thu nhập</th>
-                                            <th>Tổng tiền</th>
+                                            <th>Đánh giá</th>
+                                            <th>Chi tiết</th>
+                                            <th>Hình ảnh</th>
+                                            
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {Array.isArray(earnings) && earnings.length > 0 ? (
-                                            earnings.map((item, index) => (
-                                                <tr key={item.bookingId ?? item._id ?? index}>
-                                                    <td>{item.bookingInfo?.customerName?.fullName ?? 'Không có'}</td>
-                                                    <td>{item.bookingInfo?.service?.serviceName ?? 'Không có'}</td>
-                                                    <td>{item.commissionAmount?.toLocaleString() ?? '0'} VNĐ</td>
-                                                    <td>{item.holdingAmount?.toLocaleString() ?? '0'} VNĐ</td>
-                                                    <td>{item.technicianEarning?.toLocaleString() ?? '0'} VNĐ</td>
-                                                    <td>{item.finalPrice?.toLocaleString() ?? '0'} VNĐ</td>
+                                        {Array.isArray(feedbacks) && feedbacks.length > 0 ? (
+                                            feedbacks.map((item, index) => (
+                                                <tr >
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td> VNĐ</td>
+                                                    <td> VNĐ</td>
+                                                
                                                 </tr>
                                             ))
                                         ) : (
                                             <tr>
                                                 <td colSpan="6" className="text-center">
-                                                    Không có dữ liệu hoa hồng
+                                                    Không có dữ liệu đánh giá
                                                 </td>
                                             </tr>
                                         )}
@@ -153,11 +144,9 @@ function ViewEarningAndCommission() {
                     </div>
                 </div>
 
-
             </div>
 
         </>
-    );
+    )
 }
-
-export default ViewEarningAndCommission;
+export default ListFeedback;

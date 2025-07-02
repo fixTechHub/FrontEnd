@@ -6,17 +6,16 @@ import {
   updateTechnicianAvailability,
   getTechnicianJob,
   getJobDetails,
-  getTechnicians, completeTechnicianProfile, fetchCertificatesByTechnicianId, sendQuotationAPI, getTechnicianDepositLogs
+  getTechnicians, completeTechnicianProfile, fetchCertificatesByTechnicianId, sendQuotationAPI, getTechnicianDepositLogs, getListFeedback, uploadCertificateAPI
 } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
   async (technicianId, thunkAPI) => {
     try {
-      const response = await getTechnicianProfile(technicianId);
-      console.log('--- FETCH TECHNICIAN PROFILE ---', response);
-
-      return response.data; // giữ nguyên trả về { success, data }
+      const data = await getTechnicianProfile(technicianId); // response.data
+      console.log('--- FETCH TECHNICIAN PROFILE ---', data); // ✅ sẽ log ra { success, data }
+      return data.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
@@ -38,6 +37,7 @@ export const fetchEarningAndCommission = createAsyncThunk(
     }
   }
 );
+
 
 export const fetchTechnicians = createAsyncThunk(
   'technician/fetchList',
@@ -164,6 +164,33 @@ export const fetchTechnicianDepositLogs = createAsyncThunk(
   }
 );
 
+export const fetchFeedbacks = createAsyncThunk(
+  'feedback/fetchFeedbacks',
+  async (technicianData, { rejectWithValue }) => {
+    try {
+      const data = await getListFeedback(technicianData);
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Lỗi khi tải đánh giá'
+      );
+    }
+  }
+);
+
+export const uploadCertificate = createAsyncThunk(
+  'technician/uploadCertificate',
+  async (formData, thunkAPI) => {
+    try {
+      const data = await uploadCertificateAPI(formData);
+      return data; // trả về { success, message, fileUrl }
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Lỗi khi upload chứng chỉ'
+      );
+    }
+  }
+);
 
 const technicianSlice = createSlice({
   name: 'technician',
@@ -178,6 +205,14 @@ const technicianSlice = createSlice({
     jobDetail: null,
     certificates: [],
     logs: [],
+    feedbacks: [],
+    certificateUpload: {
+      success: false,
+      message: '',
+      fileUrl: '',
+      loading: false,
+      error: null,
+    },
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -189,8 +224,6 @@ const technicianSlice = createSlice({
       })
       .addCase(fetchTechnicianProfile.fulfilled, (state, action) => {
         state.loading = false;
-        const payload = action.payload;
-        console.log('Received payload:', payload);
         state.profile = action.payload;
       })
       .addCase(fetchTechnicianProfile.rejected, (state, action) => {
@@ -292,7 +325,7 @@ const technicianSlice = createSlice({
       })
       .addCase(getCertificates.rejected, (state, action) => {
         state.loading = false;
-        })
+      })
 
       // Send Quotation
       .addCase(sendQuotation.pending, (state) => {
@@ -307,18 +340,45 @@ const technicianSlice = createSlice({
         state.error = action.payload;
       })
 
-       .addCase(fetchTechnicianDepositLogs.pending, (state) => {
+      .addCase(fetchTechnicianDepositLogs.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchTechnicianDepositLogs.fulfilled, (state, action) => {
         state.loading = false;
-        
+
         state.logs = action.payload;
       })
       .addCase(fetchTechnicianDepositLogs.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(fetchFeedbacks.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchFeedbacks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.feedbacks = action.payload;
+      })
+      .addCase(fetchFeedbacks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(uploadCertificate.pending, (state) => {
+        state.certificateUpload.loading = true;
+        state.certificateUpload.error = null;
+      })
+      .addCase(uploadCertificate.fulfilled, (state, action) => {
+        state.certificateUpload.loading = false;
+        state.certificateUpload.success = true;
+        state.certificateUpload.message = action.payload.message;
+        state.certificateUpload.fileUrl = action.payload.fileUrl;
+      })
+      .addCase(uploadCertificate.rejected, (state, action) => {
+        state.certificateUpload.loading = false;
+        state.certificateUpload.error = action.payload;
       });
   }
 });

@@ -6,7 +6,8 @@ export const FETCH_AVAILABILITY_ERROR = 'FETCH_AVAILABILITY_ERROR';
 //   return apiClient.get('/technicians');
 export const getTechnicianProfile = async (technicianId) => {
   const response = await apiClient.get(`/technicians/${technicianId}`);
-  return response.data
+  console.log('GET TECHNICIAN PROFILE RESPONSE:', response.data);
+  return response.data;
 }
 
 export const getEarningAndCommission = async (technicianId) => {
@@ -69,4 +70,18 @@ export const getTechnicianDepositLogs = async ({ limit, skip }) => {
     console.error('API Error:', error.response?.data || error.message);
     throw error;
   }
+};
+
+export const getListFeedback = async (technicianData) => {
+  const response = await apiClient.post('/feedbacks', technicianData);
+  return response.data;
+};
+
+export const uploadCertificateAPI = async (formData) => {
+  const response = await apiClient.post('/upload/certificates', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
 };

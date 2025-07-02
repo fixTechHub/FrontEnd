@@ -5,7 +5,7 @@ import Peer from 'simple-peer';
 import { setCall, setCallAccepted, setCallEnded, setCurrentSessionId, initiateCall, answerCall, endCall, declineCall } from '../../features/video-call/videoCallSlice';
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { getSocket } from '../../services/socket';
-
+import './VideoCallPage.css'
 // Polyfill for process.nextTick if needed
 if (typeof process === 'undefined') {
   window.process = { nextTick: (fn) => setTimeout(fn, 0) };
@@ -109,22 +109,22 @@ const VideoCallPage = () => {
           connectionRef.current = null;
         }
         stopStream('call ended');
-        navigate(`/booking/booking-processing?bookingId=${bookingId}&technicianId=${booking.technicianId._id}`, { replace: true });
+        navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
         window.location.reload();
       }
     };
     const handleCallDeclined = (data) => {
-        console.log(`Call declined by user ${data.from}`);
-        if (connectionRef.current) {
-          connectionRef.current.destroy();
-          connectionRef.current = null;
-        }
-        stopStream('call declined');
-        dispatch(setCallEnded(true)); // Reset call state
-        hasCalled.current = false; // Allow initiating a new call
-        navigate(`/booking/booking-processing?bookingId=${bookingId}&technicianId=${booking.technicianId._id}`, { replace: true });
-        window.location.reload();
-      };
+      console.log(`Call declined by user ${data.from}`);
+      if (connectionRef.current) {
+        connectionRef.current.destroy();
+        connectionRef.current = null;
+      }
+      stopStream('call declined');
+      dispatch(setCallEnded(true)); // Reset call state
+      hasCalled.current = false; // Allow initiating a new call
+      navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
+      window.location.reload();
+    };
     socket.on('callUser', handleCallUser);
     socket.on('callEnded', handleCallEnded);
     socket.on('callDeclined', handleCallDeclined);
@@ -133,6 +133,54 @@ const VideoCallPage = () => {
       socket.off('callUser', handleCallUser);
       socket.off('callEnded', handleCallEnded);
       socket.off('callDeclined', handleCallDeclined);
+      if ((callAccepted && !callEnded) || connectionRef.current) {
+        console.log('Call active during cleanup - ending call');
+        if (connectionRef.current) {
+          connectionRef.current.destroy();
+          connectionRef.current = null;
+        }
+        stopStream('navigation away from call');
+        // End the call before cleanup
+        const socket = getSocket();
+        const otherUserId = call.from || (booking && (user._id === booking.customerId._id ? booking.technicianId.userId._id : booking.customerId._id));
+        if (socket && currentSessionId && otherUserId) {
+          dispatch(endCall({
+            sessionId: currentSessionId,
+            to: otherUserId
+          })).then(() => {
+            console.log('Call ended successfully via API');
+          }).catch((error) => {
+            console.error('Failed to end call via API, using socket fallback:', error);
+            // Fallback: directly emit to socket if API fails
+            socket.emit('endCall', {
+              to: otherUserId,
+              sessionId: currentSessionId,
+              from: user._id
+            });
+          });
+          dispatch(setCallEnded(true));
+        }
+      } else if (call.isReceivingCall && !callAccepted) {
+        // If it's an incoming call that wasn't accepted, decline it instead of ending
+        console.log('Declining incoming call due to navigation');
+        const socket = getSocket();
+        const otherUserId = call.from;
+
+        if (socket && otherUserId && currentSessionId) {
+          dispatch(declineCall({
+            sessionId: currentSessionId,
+            to: otherUserId
+          })).catch((error) => {
+            console.error('Failed to decline call via API:', error);
+            // Fallback: emit decline event directly
+            socket.emit('callDeclined', {
+              to: otherUserId,
+              from: user._id
+            });
+          });
+        }
+      }
+
       if (connectionRef.current) {
         connectionRef.current.destroy();
         connectionRef.current = null;
@@ -194,7 +242,7 @@ const VideoCallPage = () => {
           signalData: data,
           name: user.fullName
         })).unwrap();
-        
+
         console.log('Call initiated successfully with sessionId:', result.sessionId);
       } catch (error) {
         console.error('Failed to initiate call:', error);
@@ -259,7 +307,7 @@ const VideoCallPage = () => {
           signal: data,
           to: incomingCallData.from
         })).unwrap();
-        
+
         console.log('Call answered successfully');
       } catch (error) {
         console.error('Failed to answer call:', error);
@@ -308,7 +356,7 @@ const VideoCallPage = () => {
           sessionId: currentSessionId,
           to: otherUserId
         })).unwrap();
-        
+
         console.log('Call ended successfully');
       } catch (error) {
         console.error('Failed to end call:', error);
@@ -320,36 +368,60 @@ const VideoCallPage = () => {
       connectionRef.current = null;
     }
     stopStream('manual hang up');
-    setTimeout(() => {
-      stopStream('timeout fallback after manual hang up');
-    }, 3000); // Increased to 3 seconds for reliability
-    navigate(`/booking/booking-processing?bookingId=${bookingId}&technicianId=${booking.technicianId._id}`, { replace: true });
+    navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
     window.location.reload();
   };
+  useEffect(() => {
+    const handlePopState = (event) => {
+      if (callAccepted && !callEnded) {
+        leaveCall(); // End call and stop stream, then reload
+      }
+    };
 
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      if (callAccepted && !callEnded) {
+        leaveCall(); // Cleanup on unmount
+      }
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [callAccepted, callEnded]);
   return (
-    <div className="container">
-      <h1>Video Call</h1>
-      <div className="video-container" style={{ display: 'flex', justifyContent: 'center', gap: '20px' }}>
-        <div className="video">
-          <h3>You</h3>
-          {stream && <video playsInline muted ref={myVideo} autoPlay style={{ width: '400px', border: '1px solid black' }} />}
-        </div>
-        <div className="video">
-          <h3>{call.name || 'Remote User'}</h3>
+    <div className="custom-video-call-container">
+      <div className="custom-video-container">
+        <div className="custom-video-wrapper remote">
+          <span className="custom-video-label">{call.name || 'Remote User'}</span>
           {callAccepted && !callEnded ? (
-            <video playsInline ref={userVideo} autoPlay style={{ width: '400px', border: '1px solid black' }} />
+            <video
+              className="custom-video"
+              playsInline
+              ref={userVideo}
+              autoPlay
+            />
           ) : (
-            <div style={{ width: '400px', height: '300px', border: '1px solid black', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              Waiting for user to accept...
-            </div>
+            <div className="custom-waiting-message">Waiting for user to accept...</div>
+          )}
+        </div>
+        <div className="custom-video-wrapper local">
+          <span className="custom-video-label">You</span>
+          {stream ? (
+            <video
+              className="custom-video"
+              playsInline
+              muted
+              ref={myVideo}
+              autoPlay
+            />
+          ) : (
+            <div className="custom-waiting-message">Initializing your video...</div>
           )}
         </div>
       </div>
-      <div className="controls" style={{ textAlign: 'center', marginTop: '20px' }}>
+      <div className="custom-controls">
         {callAccepted && !callEnded && (
-          <button className="btn btn-danger" onClick={leaveCall}>
-            Hang Up
+          <button className="custom-btn-hangup" onClick={leaveCall}>
+            🛑
           </button>
         )}
       </div>

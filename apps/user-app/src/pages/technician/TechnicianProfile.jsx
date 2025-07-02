@@ -9,10 +9,10 @@ import { Link } from 'react-router-dom';
 
 function ViewTechnicianProfile() {
     const dispatch = useDispatch();
-    const { technicianId } = useParams();
-
     const { profile, loading, error } = useSelector(state => state.technician);
-    console.log(profile);
+    console.log("profile", profile);
+
+    const { technicianId } = useParams();
 
     useEffect(() => {
         if (technicianId) {
@@ -25,11 +25,10 @@ function ViewTechnicianProfile() {
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
     if (!profile) return <p>No profile data.</p>;
 
-    const technician = profile.technician;
-    const certificates = profile.certificates;
+    const [technician, certificates] = profile ?? []; 
 
-    const user = technician.userId ?? {};  // fallback nếu userId chưa có
-    const specialties = technician.specialtiesCategories ?? [];
+    const user = technician?.userId ?? {};
+    const specialties = technician?.specialtiesCategories ?? [];
 
     return (
         <>
@@ -37,6 +36,67 @@ function ViewTechnicianProfile() {
                 <Header />
 
                 <BreadcrumbBar />
+
+                <div className="dashboard-section">
+                    <div className="container">
+                        <div className="row">
+                            <div className="col-lg-12">
+                                <div className="dashboard-menu">
+                                    <ul>
+                                        <li>
+                                            <Link to={`/technician/${technicianId}`}>
+                                                <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
+                                                <span>Dashboard</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to={`/technician/${technicianId}/booking`} >
+                                                <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                                                <span>My Bookings</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/user-reviews">
+                                                <img src="/public/img/icons/review-icon.svg" alt="Icon" />
+                                                <span>Reviews</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/user-wishlist">
+                                                <img src="/public/img/icons/wishlist-icon.svg" alt="Icon" />
+                                                <span>Wishlist</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/user-messages">
+                                                <img src="/public/img/icons/message-icon.svg" alt="Icon" />
+                                                <span>Messages</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/technician/deposit">
+                                                <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
+                                                <span>My Wallet</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to={`/technician/${technicianId}/earning`} >
+                                                <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
+                                                <span>My Earnings</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to={`/technician/profile/${technicianId}`} className="active">
+                                                <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
+                                                <span>Settings</span>
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <div className="content">
                     <div className="container">

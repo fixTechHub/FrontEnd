@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getAcceptedBookingPriceThunk } from '../../features/booking-prices/bookingPriceSlice';
 import { finalizeBookingThunk } from '../../features/transactions/transactionSlice'
+import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { toast } from 'react-toastify';
 import Accordion from 'react-bootstrap/Accordion';
 import BookingWizard from "./common/BookingHeader";
@@ -10,25 +11,61 @@ import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
 import { useBookingParams } from '../../hooks/useBookingParams';
-
+import { checkOutCustomerAccess } from "../../hooks/checkBookingAccess";
 const CheckoutPage = () => {
-    const { bookingId, technicianId } = useParams();
     const dispatch = useDispatch();
     const { acceptedBookingPrice, bookingItem, userCoupons, loading, error } = useSelector(state => state.bookingPrice);
     const [isProcessing, setIsProcessing] = useState(false);
     const [selectedCouponId, setSelectedCouponId] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('PAYOS'); // Default to PayOS
-    const { stepsForCurrentUser } = useBookingParams();
-
+    const { bookingId, stepsForCurrentUser } = useBookingParams();
+    const { booking, status: bookingStatus, error: bookingError } = useSelector((state) => state.booking);
     const [showCouponDropdown, setShowCouponDropdown] = useState(false);
     const navigate = useNavigate();
+    const [isAuthorized, setIsAuthorized] = useState(null);
+    const [authError, setAuthError] = useState(null);
+    const { user } = useSelector((state) => state.auth);
+    const [isChecking, setIsChecking] = useState(true);
 
     useEffect(() => {
-        if (bookingId && technicianId) {
-            dispatch(getAcceptedBookingPriceThunk({ bookingId, technicianId }));
+        if (bookingId) {
+            dispatch(fetchBookingById(bookingId));
         }
-    }, [dispatch, bookingId, technicianId]);
+    }, [dispatch, bookingId]);
+
+    useEffect(() => {
+        const verifyAccess = async () => {
+            if (!bookingId || !user?._id) {
+                setAuthError("Missing booking ID or user information");
+                setIsAuthorized(false);
+                setIsChecking(true);
+                return;
+            }
+
+            const { booking,isAuthorized, error } = await checkOutCustomerAccess(dispatch, bookingId, user._id);
+            setIsAuthorized(isAuthorized);
+            setAuthError(error);
+            setIsChecking(true);
+        };
+
+        verifyAccess();
+    }, [dispatch, bookingId, user?._id]);
+
+    useEffect(() => {
+        if (isChecking) return; 
+        if (isAuthorized === false) {
+            // Redirect to the original page or default to '/'
+            const redirectPath = location.state?.from?.pathname || '/';
+            navigate(redirectPath, { replace: true });
+        }
+    }, [isAuthorized, isChecking, navigate]);
+
+    useEffect(() => {
+        if (bookingId && booking?.technicianId?._id) {
+            dispatch(getAcceptedBookingPriceThunk({ bookingId, technicianId: booking.technicianId._id }));
+        }
+    }, [dispatch, bookingId, booking?.technicianId?._id]);
 
     const itemsTotal = bookingItem.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
     const laborPrice = acceptedBookingPrice?.laborPrice || 0;
@@ -157,7 +194,7 @@ const CheckoutPage = () => {
         <>
             <Header />
 
-            <BreadcrumbBar title='Thanh toán' />
+            <BreadcrumbBar title='Thanh toán' subtitle={'Payment'} />
 
             <div className="booking-new-module">
                 <div className="container">

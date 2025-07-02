@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
 import { checkAuthThunk } from "../features/auth/authSlice";
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from "./access/PrivateRoute";
@@ -14,7 +13,7 @@ import ChooseRole from "../pages/authentication/ChooseRole";
 import VerifyEmailPage from "../pages/authentication/VerifyEmailPage";
 import VerifyOTPPage from "../pages/authentication/VerifyOTPPage";
 import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
-// import CompleteProfile from "../pages/technician/CompleteProfile";
+import CompleteProfile from "../pages/technician/CompleteProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ChooseTechnician from '../pages/booking/ChooseTechnician';
@@ -32,13 +31,19 @@ import TechnicianJob from "../pages/technician/TechnicianJobDetail";
 import CertificateList from "../pages/technician/Certificate";
 import SendQuotation from "../pages/technician/SendQuotation";
 import WaitingConfirm from "../pages/technician/WaitingConfirm";
-
+import CustomerDashboard from "../pages/customer/CustomerDashboard";
+import ListFeedback from "../pages/technician/ListFeedback";
 import VideoCallPage from "../pages/video-call/VideoCallPage";
 import NotificationsPage from "../pages/notifications/NotificationPage";
 import ReceiptPage from "../pages/receipt/ReceiptPage";
+import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
+import UploadCertificateForm from "../pages/technician/UploadCer";
+import SubmitFeedback from "../pages/feedback/SubmitFeedback";
+
 // import { checkAuthThunk } from '../features/auth/authSlice';
 export default function AppRoutes() {
-  const { user, registrationData, loading } = useSelector((state) => state.auth);
+  // const dispatch = useDispatch();
+  const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
   // const [isAuthChecked, setIsAuthChecked] = useState(false);
 
   //   useEffect(() => {
@@ -115,8 +120,17 @@ export default function AppRoutes() {
       <Route path="/technician/:technicianId/booking" element={< TechnicianJobList/>} />
       <Route path="/technician/:technicianId/booking/:bookingId" element={< TechnicianJob/>} />
       <Route path="/technician/:technicianId/certificate" element={< CertificateList/>} />
+      <Route path="/technician/:technicianId/feedback" element={< ListFeedback/>} />
+      <Route path="/technician/upload-certificate" element={<UploadCertificateForm />} />
+      <Route path="/feedback/submit/:bookingId" element={<SubmitFeedback />} />
+
+      {/* <Route path="/technician/deposit" element={
+        < TechnicianDeposit/>
+        } /> */}
+
       
       {/* <Route
+      <Route
         path="/technician/complete-profile"
         element={
           <PrivateRoute
@@ -126,7 +140,7 @@ export default function AppRoutes() {
             <CompleteProfile />
           </PrivateRoute>
         }
-      /> */}
+      />
 
       {/* ================= USER PROTECTED ROUTES ================= */}
       <Route
@@ -146,8 +160,15 @@ export default function AppRoutes() {
         </PrivateRoute>
 
       } />
+      <Route path="/technician/deposit" element={
+        // <PrivateRoute isAllowed={!!user && user.role?.name === "TECHNICIAN"}
+        //   redirectPath={user ? "/" : "/login"}
+        // >
+          <TechnicianDeposit />
+        // </PrivateRoute>
 
-      <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+      } />
+      <Route path="/checkout" element={<PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
         redirectPath={user ? "/" : "/login"}
       >
         <CheckoutPage />
@@ -270,6 +291,16 @@ export default function AppRoutes() {
         }
       />
 
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute
+            isAllowed={!!user && user.role?.name === 'CUSTOMER'}
+          >
+            <CustomerDashboard />
+          </PrivateRoute>
+        }
+      />
 
       {/* ================= FALLBACK ROUTE ================= */}
       <Route path="*" element={<Navigate to="/" replace />} />

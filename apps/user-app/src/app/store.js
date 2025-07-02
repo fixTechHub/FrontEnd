@@ -1,6 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from '../features/auth/authSlice';
-
 import categoryReducer from '../features/categories/categorySlice';
 import serviceReducer from '../features/services/serviceSlice';
 import technicianReducer from '../features/technicians/technicianSlice';
@@ -14,6 +13,10 @@ import notificationReducer from '../features/notifications/notificationSlice';
 import videoCallReducer from '../features/video-call/videoCallSlice';
 import quotationReducer from '../features/quotations/quotationSlice';
 import receiptReducer from '../features/receipts/receiptSlice';
+import roleReducer from '../features/roles/roleSlice';
+import warrantyReducer from '../features/booking-warranty/warrantySlice';
+import feedbackReducer from '../features/feedbacks/feedbackSlice';
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -29,7 +32,10 @@ export const store = configureStore({
     notifications: notificationReducer,
     videoCall: videoCallReducer,
     quotation: quotationReducer,
-    receipt: receiptReducer
+    receipt: receiptReducer,
+    roles: roleReducer,
+    warranty: warrantyReducer,
+    feedback: feedbackReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
