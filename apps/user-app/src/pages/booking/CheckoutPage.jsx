@@ -11,7 +11,6 @@ import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
-import { useBookingParams } from '../../hooks/useBookingParams';
 import { checkOutCustomerAccess } from "../../hooks/checkBookingAccess";
 const CheckoutPage = () => {
     const dispatch = useDispatch();
