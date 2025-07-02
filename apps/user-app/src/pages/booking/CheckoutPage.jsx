@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getAcceptedBookingPriceThunk } from '../../features/booking-prices/bookingPriceSlice';
 import { finalizeBookingThunk } from '../../features/transactions/transactionSlice'
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { toast } from 'react-toastify';
+import { useBookingParams } from '../../hooks/useBookingParams';
 import Accordion from 'react-bootstrap/Accordion';
 import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
-import { useBookingParams } from '../../hooks/useBookingParams';
 import { checkOutCustomerAccess } from "../../hooks/checkBookingAccess";
 const CheckoutPage = () => {
     const dispatch = useDispatch();
