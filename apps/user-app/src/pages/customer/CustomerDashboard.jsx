@@ -1,6 +1,8 @@
 import Header from "../../components/common/Header";
 import Footer from "../../components/common/Footer";
-import React from "react";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { getFavoritesThunk, removeFavoriteThunk } from '../../features/favorites/favoriteSlice';
 
 // ---------- Breadcrumb -----------
 const BreadcrumbSection = () => (
@@ -325,8 +327,60 @@ const CardsRow = () => (
 	</div>
 );
 
+// ---------- Favorite Technicians Section -----------
+const FavoriteTechniciansSection = ({ favorites, loading, onRemove }) => (
+	<div className="card user-card flex-fill mt-4">
+		<div className="card-header d-flex justify-content-between align-items-center">
+			<h5 className="mb-0">Kỹ thuật viên yêu thích</h5>
+			{/* Could add link to full list if needed */}
+		</div>
+		<div className="card-body">
+			{loading ? (
+				<p>Loading...</p>
+			) : favorites.length === 0 ? (
+				<p>Bạn chưa có kỹ thuật viên yêu thích.</p>
+			) : (
+				<div className="row">
+					{favorites.map(fav => {
+						const tech = fav.technicianId;
+						if (!tech) return null;
+						const user = tech.userId || {};
+						return (
+							<div className="col-md-4 mb-3" key={fav._id}>
+								<div className="border rounded p-3 h-100 d-flex flex-column">
+									<div className="d-flex align-items-center mb-2">
+										<img src={user.avatar} alt="avatar" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', marginRight: 12 }} />
+										<div className="flex-grow-1">
+											<h6 className="mb-0">{user.fullName}</h6>
+											<small>Kinh nghiệm: {tech.experienceYears} năm</small>
+										</div>
+									</div>
+									<button className="btn btn-outline-danger btn-sm mt-auto align-self-end" onClick={() => onRemove(tech._id)}>
+										Bỏ yêu thích
+									</button>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	</div>
+);
+
 // ---------- Main Page -----------
 function CustomerDashboard() {
+	const dispatch = useDispatch();
+	const { list: favorites, loading: favLoading } = useSelector(state => state.favorites);
+
+	const handleRemoveFavorite = (technicianId) => {
+		dispatch(removeFavoriteThunk(technicianId));
+	};
+
+	useEffect(() => {
+		dispatch(getFavoritesThunk());
+	}, [dispatch]);
+
 	return (
 		<>
 			<Header />
@@ -345,6 +399,8 @@ function CustomerDashboard() {
 					<WidgetsRow />
 
 					<CardsRow />
+
+					<FavoriteTechniciansSection favorites={favorites} loading={favLoading} onRemove={handleRemoveFavorite} />
 				</div>
 			</div>
 
