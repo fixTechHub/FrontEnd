@@ -429,13 +429,13 @@ const determineVerificationStatus = (user, technician) => {
   if (user.role?.name === 'TECHNICIAN') {
     const profileCompleted = (() => {
       if (!technician) return false;
-      // 1) Nếu backend có cờ profileCompleted
-      if (typeof technician.profileCompleted === 'boolean') return technician.profileCompleted;
-      // 2) Tự kiểm tra một số trường cơ bản
+      // Kiểm tra các trường bắt buộc thực tế có trong model
       const hasSpecialties = Array.isArray(technician.specialtiesCategories) && technician.specialtiesCategories.length > 0;
       const hasCertificates = Array.isArray(technician.certificate) && technician.certificate.length > 0;
-      const identityVerified = technician.identityVerified || false;
-      return hasSpecialties && hasCertificates && identityVerified;
+      const hasIdentification = technician.identification && technician.identification.trim() !== '';
+      const hasFrontIdImage = technician.frontIdImage && technician.frontIdImage.trim() !== '';
+      const hasBackIdImage = technician.backIdImage && technician.backIdImage.trim() !== '';
+      return hasSpecialties && hasCertificates && hasIdentification && hasFrontIdImage && hasBackIdImage;
     })();
 
     if (!profileCompleted) {
@@ -512,6 +512,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.technician = action.payload.technician;
+        
         state.verificationStatus = determineVerificationStatus(
           action.payload.user,
           action.payload.technician

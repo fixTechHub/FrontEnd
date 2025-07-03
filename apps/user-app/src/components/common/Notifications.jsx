@@ -258,7 +258,7 @@ const Notifications = ({ userId }) => {
                             }}
                             style={styles.markAsReadBtn}
                           >
-                            Đánh dấu đã đọc
+                            <i className='bx bx-check-double'></i>
                           </button>
                         )}
                       </div>

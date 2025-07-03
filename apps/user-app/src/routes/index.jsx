@@ -194,25 +194,25 @@ export default function AppRoutes() {
       <Route
         path="/booking"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <BookingPage />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
         path="/booking/choose-technician"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <ChooseTechnician />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
         path="/booking/booking-processing"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <BookingProcessing />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
