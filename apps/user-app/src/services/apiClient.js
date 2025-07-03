@@ -26,8 +26,13 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    // If unauthorized & not already retried
-    if (error.response && error.response.status === 401 && !originalRequest._retry) {
+    // If unauthorized & not already retried and not the refresh endpoint itself
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes('/auth/refresh-token')
+    ) {
       originalRequest._retry = true;
 
       try {
