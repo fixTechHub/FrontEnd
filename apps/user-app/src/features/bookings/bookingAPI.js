@@ -19,3 +19,5 @@ export const getBookingById = (bookingId) => apiClient.get(`/bookings/${bookingI
 
 export const getQuatationsByBookingId = (bookingId) => apiClient.get(`/booking-prices/booking/${bookingId}`);
 export const acceptQuotation = (quotationId) => apiClient.post(`/booking-prices/${quotationId}/accept`);
+
+export const getUserBookingHistory = ({ limit, skip }) => apiClient.get(`/bookings/user?limit=${limit}&skip=${skip}`);

@@ -31,12 +31,14 @@ function BookingProcessing() {
         const verifyAccess = async () => {
             if (!bookingId || !user?._id) {
                 // setAuthError("Missing booking ID or user information");
-                setIsAuthorized(false);
-                setIsChecking(true);
                 return;
             }
 
-            const { isAuthorized, error } = await checkBookingAccess(dispatch, bookingId, user._id, user.role.name);
+            const { isAuthorized, error } = await checkBookingAccess(
+                dispatch,
+                bookingId,
+                user._id,
+                user.role.name);
 
             setIsAuthorized(isAuthorized);
             setAuthError(error);
@@ -55,7 +57,7 @@ function BookingProcessing() {
             navigate(redirectPath, { replace: true });
         }
     }, [isAuthorized, isChecking, navigate]);
-    
+
     const handleComfirm = () => {
         if (!bookingId) {
             alert("Thiếu thông tin booking hoặc kỹ thuật viên!");
@@ -64,12 +66,10 @@ function BookingProcessing() {
 
         navigate(`/checkout?bookingId=${bookingId}`);
     };
-    if (isAuthorized === null) {
-        return <div>Loading...</div>;
-    }
+ 
 
     if (!isAuthorized) {
-        return <div>Error: {authError}</div>;
+        return authError ? <div>Error: {authError}</div> : null;
     }
     return (
         <>
@@ -102,7 +102,7 @@ function BookingProcessing() {
                     <div className="text-end my-4">
 
                         {user?.role?.name === 'CUSTOMER'
-                             && booking.status==='WAITING_CONFIRM'
+                            && booking.status === 'WAITING_CONFIRM'
                             && (
                                 <button
                                     className="btn btn-primary"

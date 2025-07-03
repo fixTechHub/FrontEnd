@@ -6,8 +6,7 @@ import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { setCallEnded, setCurrentSessionId, declineCall } from '../../features/video-call/videoCallSlice';
 import { onReceiveMessage, getSocket } from '../../services/socket';
 import './MessageBox.css'; // Import custom styles
-import { toast } from 'react-toastify';
-const MessageBox = ({ bookingId }) => {
+const MessageBox = ({ bookingId, bookingWarrantyId }) => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
@@ -44,7 +43,7 @@ const MessageBox = ({ bookingId }) => {
             if (cleanup) cleanup();
         };
     }, [dispatch, bookingId]);
-   
+
     useEffect(() => {
         const socket = getSocket();
         if (!socket) return;
@@ -83,6 +82,9 @@ const MessageBox = ({ bookingId }) => {
             fromUser: user._id,
             toUser: toUserId,
             type: 'SERVICE',
+            url: bookingWarrantyId
+                ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+                : `/booking/booking-processing?bookingId=${bookingId}`,
         };
 
         if (selectedFile) {
@@ -115,9 +117,27 @@ const MessageBox = ({ bookingId }) => {
         if (incomingCall.sessionId) {
             dispatch(setCurrentSessionId(incomingCall.sessionId));
         }
-        navigate(`/video-call/${bookingId}`, { state: { answerCall: true, incomingCall } });
+        navigate(`/video-call/${bookingId}`,
+            {
+                state:
+                {
+                    answerCall: true,
+                    incomingCall,
+                    bookingWarrantyId,
+                    fromMessageBox: true
+                }
+            });
         setIncomingCall(null); // Clear after navigation
     };
+
+    const handleVideoCallButtonClick = () => {
+        navigate(`/video-call/${bookingId}`, {
+          state: {
+            bookingWarrantyId,
+            fromMessageBox: true, // Add flag to indicate navigation from MessageBox
+          },
+        });
+      };
 
     const handleDecline = async () => {
         if (incomingCall) {
@@ -211,7 +231,8 @@ const MessageBox = ({ bookingId }) => {
                     <div className="chat-actions">
                         <button
                             className="video-call-btn"
-                            onClick={() => navigate(`/video-call/${bookingId}`)}
+                            // onClick={() => navigate(`/video-call/${bookingId}`, { state: { bookingWarrantyId } })}
+                            onClick={handleVideoCallButtonClick}
                             title="Start video call"
                         >
                             <i className="fas fa-video"></i>

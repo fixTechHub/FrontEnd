@@ -112,8 +112,15 @@ const Notifications = ({ userId }) => {
       if (!notification.isRead) {
         dispatch(markNotificationAsReadThunk(notification._id));
       }
-      navigate(notification.url);
-      setIsOpen(false);
+      const targetUrl = notification.url.startsWith('/')
+        ? notification.url
+        : `/${notification.url}`;
+      try {
+        navigate(targetUrl);
+        setIsOpen(false);
+      } catch (error) {
+        console.error('Navigation error:', error);
+      }
     }
   };
 
@@ -157,7 +164,7 @@ const Notifications = ({ userId }) => {
         href="#"
         className="dropdown-toggle nav-link"
         onClick={() => setIsOpen(!isOpen)}
-        data-bs-toggle="dropdown"
+      // data-bs-toggle="dropdown"
       >
         <span style={styles.bellIcon}>
           <img src="/img/icons/bell-icon.svg" alt="Bell" />
@@ -227,10 +234,12 @@ const Notifications = ({ userId }) => {
                           </span>
                           <div className="media-body">
                             <p className="noti-details">
-                              <span className="noti-title">
-                                {notification.title}
+                              {notification.title}
+                            </p>
+                            <p className="noti-details">
+                              <span style={{ fontSize: 13 }} className="noti-title">
+                                {notification.content}
                               </span>
-                              {notification.content}
                             </p>
                             <p className="noti-time">
                               <span className="notification-time">

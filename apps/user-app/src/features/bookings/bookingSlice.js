@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cancelBookingById, createBooking, getBookingById, getQuatationsByBookingId } from './bookingAPI';
+import { cancelBookingById, createBooking, getBookingById, getQuatationsByBookingId,getUserBookingHistory } from './bookingAPI';
 
 export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',
@@ -43,6 +43,19 @@ export const cancelBooking = createAsyncThunk(
             const message =
                 error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
             return rejectWithValue(message);
+        }
+    }
+);
+
+export const fetchUserBookingHistory = createAsyncThunk(
+    'bookingHistory/fetchUserBookingHistory',
+    async ({ limit, skip }, { rejectWithValue }) => {
+        try {
+            const response = await getUserBookingHistory({ limit, skip })
+            
+            return response;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || 'Failed to fetch booking history');
         }
     }
 );
@@ -103,6 +116,19 @@ const bookingSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.error.message;
             })
+            .addCase(fetchUserBookingHistory.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchUserBookingHistory.fulfilled, (state, action) => {
+                state.loading = false;
+                state.bookings = action.payload.data.bookings // Adjust based on API response structure
+                state.total = action.payload.total || state.bookings.length; // Adjust if API provides total
+            })
+            .addCase(fetchUserBookingHistory.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || 'An error occurred';
+            });
     }
 });
 

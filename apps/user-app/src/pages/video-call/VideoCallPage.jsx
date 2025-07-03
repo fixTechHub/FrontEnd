@@ -6,6 +6,9 @@ import { setCall, setCallAccepted, setCallEnded, setCurrentSessionId, initiateCa
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { getSocket } from '../../services/socket';
 import './VideoCallPage.css'
+import { MdCallEnd } from 'react-icons/md';
+import { toast } from 'react-toastify';
+
 // Polyfill for process.nextTick if needed
 if (typeof process === 'undefined') {
   window.process = { nextTick: (fn) => setTimeout(fn, 0) };
@@ -28,6 +31,44 @@ const VideoCallPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
   const hasStopped = useRef(false); // Flag to prevent multiple stops
+  const bookingWarrantyId = location.state?.bookingWarrantyId;
+
+  useEffect(() => {
+    // Redirect if not navigated from MessageBox
+    if (!location.state?.fromMessageBox) {
+      console.warn('Direct access to VideoCallPage detected, redirecting...');
+      toast.warn('Unauthorized access: Please start the video call from the message box.', {
+        position: 'top-right',
+        autoClose: 5000,
+      });
+      // const redirectPath = bookingWarrantyId
+      //   ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+      //   : `/booking/booking-processing?bookingId=${bookingId}`;
+      navigate(-1, { replace: true });
+      return;
+    }
+
+    // Fetch booking details to verify user participation
+    dispatch(fetchBookingById(bookingId));
+
+    // Verify user is part of the booking
+    if (booking && user) {
+      const isCustomer = booking.customerId?._id === user._id;
+      const isTechnician = booking.technicianId?.userId?._id === user._id;
+      if (!isCustomer && !isTechnician) {
+        console.warn('User not part of booking, redirecting...');
+        toast.warn('Access denied: You are not a participant in this booking.', {
+          position: 'top-right',
+          autoClose: 5000,
+        });
+        // const redirectPath = bookingWarrantyId
+        //   ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+        //   : `/booking/booking-processing?bookingId=${bookingId}`;
+        navigate(-1, { replace: true });
+      }
+    }
+  }, [dispatch, bookingId, navigate, booking, user, bookingWarrantyId, location.state]);
+
 
   const stopStream = (reason = 'unknown') => {
     if (stream && !hasStopped.current) {
@@ -109,7 +150,10 @@ const VideoCallPage = () => {
           connectionRef.current = null;
         }
         stopStream('call ended');
-        navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
+        const redirectPath = bookingWarrantyId
+          ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+          : `/booking/booking-processing?bookingId=${bookingId}`;
+        navigate(redirectPath, { replace: true });
         window.location.reload();
       }
     };
@@ -122,7 +166,10 @@ const VideoCallPage = () => {
       stopStream('call declined');
       dispatch(setCallEnded(true)); // Reset call state
       hasCalled.current = false; // Allow initiating a new call
-      navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
+      const redirectPath = bookingWarrantyId
+        ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+        : `/booking/booking-processing?bookingId=${bookingId}`;
+      navigate(redirectPath, { replace: true });
       window.location.reload();
     };
     socket.on('callUser', handleCallUser);
@@ -368,7 +415,10 @@ const VideoCallPage = () => {
       connectionRef.current = null;
     }
     stopStream('manual hang up');
-    navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
+    const redirectPath = bookingWarrantyId
+      ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+      : `/booking/booking-processing?bookingId=${bookingId}`;
+    navigate(redirectPath, { replace: true });
     window.location.reload();
   };
   useEffect(() => {
@@ -421,7 +471,7 @@ const VideoCallPage = () => {
       <div className="custom-controls">
         {callAccepted && !callEnded && (
           <button className="custom-btn-hangup" onClick={leaveCall}>
-            🛑
+            <MdCallEnd size={24} color="white" />
           </button>
         )}
       </div>

@@ -175,4 +175,19 @@ export const onNotificationsCleared = (callback) => {
   socket.on('notificationsCleared', callback);
   return () => socket.off('notificationsCleared', callback);
 };
+
+export const onWarrantyUpdated = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received warranty update:', data);
+      callback(data);
+    };
+    socket.on('warrantyUpdated', listener);
+    return () => {
+      if (socket) socket.off('warrantyUpdated', listener);
+      console.log('Removed warrantyUpdated listener');
+    };
+  }
+};
+
 export const getSocket = () => socket;
