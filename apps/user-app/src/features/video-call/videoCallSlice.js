@@ -1,140 +1,143 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { videoCallAPI } from './videoCallAPI';
 
-const initialState = {
-  // Call state
-  currentCall: null,
-  callStatus: 'idle', // idle, ringing, connecting, connected, ended
-  isIncomingCall: false,
-  incomingCallData: null,
-  
-  // WebRTC state
-  localStream: null,
-  remoteStream: null,
-  peerConnection: null,
-  
-  // Call participants
-  caller: null,
-  callee: null,
-  
-  // UI state
-  isVideoEnabled: true,
-  isAudioEnabled: true,
-  isScreenSharing: false,
-  
-  // Error state
-  error: null,
-  loading: false
-};
+export const getOnlineUsers = createAsyncThunk(
+    'videoCall/getOnlineUsers',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await videoCallAPI.getOnlineUsers();
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const initiateCall = createAsyncThunk(
+    'videoCall/initiateCall',
+    async (callData, { rejectWithValue }) => {
+        try {
+            const response = await videoCallAPI.initiateCall(callData);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const answerCall = createAsyncThunk(
+    'videoCall/answerCall',
+    async (answerData, { rejectWithValue }) => {
+        try {
+            const response = await videoCallAPI.answerCall(answerData);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const endCall = createAsyncThunk(
+    'videoCall/endCall',
+    async (endData, { rejectWithValue }) => {
+        try {
+            const response = await videoCallAPI.endCall(endData);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const declineCall = createAsyncThunk(
+    'videoCall/declineCall',
+    async (declineData, { rejectWithValue }) => {
+        try {
+            const response = await videoCallAPI.declineCall(declineData);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
+
+export const getCallHistory = createAsyncThunk(
+    'videoCall/getCallHistory',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const response = await videoCallAPI.getCallHistory(bookingId);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response.data);
+        }
+    }
+);
 
 const videoCallSlice = createSlice({
-  name: 'videoCall',
-  initialState,
-  reducers: {
-    // Call management
-    setCurrentCall: (state, action) => {
-      state.currentCall = action.payload;
+    name: 'videoCall',
+    initialState: {
+      onlineUsers: [],
+      callHistory: [],
+      status: 'idle',
+      error: null,
+      call: { isReceivingCall: false, from: null, name: null, signal: null }, // Structured initial state
+      callAccepted: false,
+      callEnded: false,
+      currentSessionId: null,
     },
-    
-    setCallStatus: (state, action) => {
-      state.callStatus = action.payload;
+    reducers: {
+      setCall: (state, action) => {
+        state.call = { ...state.call, ...action.payload }; // Merge payload with existing call state
+      },
+      setCallAccepted: (state, action) => {
+        state.callAccepted = action.payload;
+      },
+      setCallEnded: (state, action) => {
+        state.callEnded = action.payload;
+      },
+      setCurrentSessionId: (state, action) => {
+        state.currentSessionId = action.payload;
+      },
     },
-    
-    setIncomingCall: (state, action) => {
-      state.isIncomingCall = true;
-      state.incomingCallData = action.payload;
-      state.callStatus = 'ringing';
+    extraReducers: (builder) => {
+      builder
+        .addCase(getOnlineUsers.pending, (state) => {
+          state.status = 'loading';
+        })
+        .addCase(getOnlineUsers.fulfilled, (state, action) => {
+          state.status = 'succeeded';
+          state.onlineUsers = action.payload;
+        })
+        .addCase(getOnlineUsers.rejected, (state, action) => {
+          state.status = 'failed';
+          state.error = action.payload;
+        })
+        .addCase(initiateCall.fulfilled, (state, action) => {
+          state.currentSessionId = action.payload.sessionId;
+        })
+        .addCase(answerCall.fulfilled, (state, action) => {
+          // Handle successful call answer
+        })
+        .addCase(endCall.fulfilled, (state, action) => {
+          // Handle successful call end
+        })
+        .addCase(declineCall.fulfilled, (state, action) => {
+          // Handle successful call decline
+        })
+        .addCase(getCallHistory.pending, (state) => {
+          state.status = 'loading';
+        })
+        .addCase(getCallHistory.fulfilled, (state, action) => {
+          state.status = 'succeeded';
+          state.callHistory = action.payload;
+        })
+        .addCase(getCallHistory.rejected, (state, action) => {
+          state.status = 'failed';
+          state.error = action.payload;
+        });
     },
-    
-    clearIncomingCall: (state) => {
-      state.isIncomingCall = false;
-      state.incomingCallData = null;
-    },
-    
-    // WebRTC streams
-    setLocalStream: (state, action) => {
-      state.localStream = action.payload;
-    },
-    
-    setRemoteStream: (state, action) => {
-      state.remoteStream = action.payload;
-    },
-    
-    setPeerConnection: (state, action) => {
-      state.peerConnection = action.payload;
-    },
-    
-    // Participants
-    setCaller: (state, action) => {
-      state.caller = action.payload;
-    },
-    
-    setCallee: (state, action) => {
-      state.callee = action.payload;
-    },
-    
-    // Media controls
-    toggleVideo: (state) => {
-      state.isVideoEnabled = !state.isVideoEnabled;
-    },
-    
-    toggleAudio: (state) => {
-      state.isAudioEnabled = !state.isAudioEnabled;
-    },
-    
-    toggleScreenSharing: (state) => {
-      state.isScreenSharing = !state.isScreenSharing;
-    },
-    
-    // Error handling
-    setError: (state, action) => {
-      state.error = action.payload;
-    },
-    
-    clearError: (state) => {
-      state.error = null;
-    },
-    
-    setLoading: (state, action) => {
-      state.loading = action.payload;
-    },
-    
-    // Reset state
-    resetCallState: (state) => {
-      state.currentCall = null;
-      state.callStatus = 'idle';
-      state.isIncomingCall = false;
-      state.incomingCallData = null;
-      state.localStream = null;
-      state.remoteStream = null;
-      state.peerConnection = null;
-      state.caller = null;
-      state.callee = null;
-      state.isVideoEnabled = true;
-      state.isAudioEnabled = true;
-      state.isScreenSharing = false;
-      state.error = null;
-      state.loading = false;
-    }
-  }
-});
+  });
 
-export const {
-  setCurrentCall,
-  setCallStatus,
-  setIncomingCall,
-  clearIncomingCall,
-  setLocalStream,
-  setRemoteStream,
-  setPeerConnection,
-  setCaller,
-  setCallee,
-  toggleVideo,
-  toggleAudio,
-  toggleScreenSharing,
-  setError,
-  clearError,
-  setLoading,
-  resetCallState
-} = videoCallSlice.actions;
+export const { setCall, setCallAccepted, setCallEnded, setCurrentSessionId } = videoCallSlice.actions;
 
 export default videoCallSlice.reducer; 

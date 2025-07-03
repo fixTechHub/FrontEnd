@@ -1,25 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { addMessage, sendMessageThunk, fetchMessagesThunk } from '../../features/messages/messageSlice';
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
-import { onReceiveMessage } from '../../services/socket';
-import CallButton from '../video-call/CallButton';
-import { FaVideo } from 'react-icons/fa';
-
+import { setCallEnded, setCurrentSessionId, declineCall } from '../../features/video-call/videoCallSlice';
+import { onReceiveMessage, getSocket } from '../../services/socket';
+import './MessageBox.css'; // Import custom styles
+import { toast } from 'react-toastify';
 const MessageBox = ({ bookingId }) => {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const { booking, loading: bookingLoading, error: bookingError } = useSelector((state) => state.booking);
     const { messages, loading: messagesLoading, error: messagesError, sending } = useSelector((state) => state.messages);
     const [messageContent, setMessageContent] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const messagesEndRef = useRef(null);
-
+    const { callEnded } = useSelector((state) => state.videoCall);
+    const [incomingCall, setIncomingCall] = useState(null); // { from, name, signal, sessionId }
+    const [filePreview, setFilePreview] = useState(null);
+    const [previewImage, setPreviewImage] = useState(null); // already present
     const otherParticipant = user?.role?.name === 'TECHNICIAN'
         ? booking?.customerId
         : booking?.technicianId?.userId;
 
-    // Effect for fetching data when the bookingId changes
     useEffect(() => {
         if (bookingId) {
             dispatch(fetchBookingById(bookingId));
@@ -27,7 +31,6 @@ const MessageBox = ({ bookingId }) => {
         }
     }, [dispatch, bookingId]);
 
-    // Effect for setting up the real-time message listener
     useEffect(() => {
         if (!bookingId) return;
 
@@ -41,11 +44,31 @@ const MessageBox = ({ bookingId }) => {
             if (cleanup) cleanup();
         };
     }, [dispatch, bookingId]);
+   
+    useEffect(() => {
+        const socket = getSocket();
+        if (!socket) return;
 
-    // Effect for scrolling to the bottom when new messages are added
+        const handler = ({ from, name, signal, sessionId }) => {
+            console.log('Received callUser event in MessageBox:', { from, name, signal, sessionId });
+            if (!incomingCall) { // Only set if no current incoming call
+                setIncomingCall({ from, name, signal, sessionId });
+            }
+        };
+
+        socket.on('callUser', handler);
+        return () => socket.off('callUser', handler);
+    }, [incomingCall]); // Depend on incomingCall to avoid overwriting during answer
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
+
+    useEffect(() => {
+        if (callEnded) {
+            dispatch(setCallEnded(false));
+        }
+    }, [callEnded, dispatch]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
@@ -74,6 +97,7 @@ const MessageBox = ({ bookingId }) => {
         dispatch(sendMessageThunk(messageData)).then(() => {
             setMessageContent('');
             setSelectedFile(null);
+            setFilePreview(null);
         });
     };
 
@@ -86,170 +110,236 @@ const MessageBox = ({ bookingId }) => {
         });
     };
 
-    if (!bookingId) return null; // Don't render if there's no bookingId
-    if (bookingLoading === 'pending' || messagesLoading === 'pending') return <div>Loading...</div>;
-    if (bookingError) return <div>Error: {bookingError}</div>;
-    if (messagesError) return <div>Error: {messagesError}</div>;
+    const handleAnswer = () => {
+        // Store the sessionId in Redux state for the video call page
+        if (incomingCall.sessionId) {
+            dispatch(setCurrentSessionId(incomingCall.sessionId));
+        }
+        navigate(`/video-call/${bookingId}`, { state: { answerCall: true, incomingCall } });
+        setIncomingCall(null); // Clear after navigation
+    };
 
-    // Add a more robust check to ensure nested data is present
+    const handleDecline = async () => {
+        if (incomingCall) {
+            console.log(`Declining call from ${incomingCall.from}`);
+            try {
+                // Use REST API to decline call
+                await dispatch(declineCall({
+                    sessionId: incomingCall.sessionId,
+                    to: incomingCall.from
+                })).unwrap();
+
+                console.log('Call declined successfully');
+            } catch (error) {
+                console.error('Failed to decline call:', error);
+            }
+        }
+        setIncomingCall(null); // Clear incoming call state
+    };
+
+    if (!bookingId) return null;
+    if (bookingLoading === 'pending' || messagesLoading === 'pending') return <div className="message-loading">Loading...</div>;
+    if (bookingError) return <div className="message-error">Error: {bookingError}</div>;
+    if (messagesError) return <div className="message-error">Error: {messagesError}</div>;
+
     if (!booking || !booking.customerId?._id || !booking.technicianId?.userId?._id) {
-        return <div>Booking data is incomplete or still loading.</div>;
+        return <div className="message-incomplete">Booking data is incomplete or still loading.</div>;
     }
 
     return (
-        <div className="card" style={{ height: '85vh', display: 'flex', flexDirection: 'column', width: '100%', }}>
-            <div className="chat-window" style={{ flexGrow: 1, display: 'flex', width: '100%', }}>
-                <div className="chat-cont-right" style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', width: '100%'  }}>
-                    {/* Chat Header */}
-                    <div className="chat-header">
-                        <div className="notify-block d-flex align-items-center justify-content-between">
-                            <div className="d-flex align-items-center">
-                                <div className="media-img-wrap flex-shrink-0">
-                                    <div className="avatar avatar-online">
-                                        <img src={otherParticipant?.avatar || "/assets/img/profiles/default-avatar.jpg"} alt="User Image" className="avatar-img rounded-circle" />
-                                    </div>
-                                </div>
-                                <div className="media-body flex-grow-1 ms-3">
-                                    <div className="user-name">{otherParticipant?.fullName}</div>
-                                    <div className="user-status text-muted small">Online</div>
-                                </div>
-                            </div>
-                            {/* Video Call Button */}
-                            <div className="flex-shrink-0" style={{ position: 'relative' }}>
-                                <CallButton
-                                    calleeId={otherParticipant?._id}
-                                    calleeName={otherParticipant?.fullName}
-                                    bookingId={bookingId}
-                                    size="sm"
-                                    className="btn btn-outline-primary btn-sm"
-                                    style={{
-                                        borderRadius: '50%',
-                                        width: '40px',
-                                        height: '40px',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        border: '2px solid #007bff',
-                                        backgroundColor: 'transparent',
-                                        color: '#007bff',
-                                        transition: 'all 0.3s ease',
-                                        boxShadow: '0 2px 4px rgba(0,123,255,0.2)'
-                                    }}
-                                />
-                                {/* Tooltip */}
-                                <div 
-                                    className="position-absolute"
-                                    style={{
-                                        top: '-30px',
-                                        right: '0',
-                                        backgroundColor: '#333',
-                                        color: 'white',
-                                        padding: '4px 8px',
-                                        borderRadius: '4px',
-                                        fontSize: '12px',
-                                        whiteSpace: 'nowrap',
-                                        opacity: '0',
-                                        transition: 'opacity 0.3s ease',
-                                        pointerEvents: 'none'
-                                    }}
-                                    onMouseEnter={(e) => e.target.style.opacity = '1'}
-                                    onMouseLeave={(e) => e.target.style.opacity = '0'}
-                                >
-                                    Video Call {otherParticipant?.fullName}
-                                </div>
-                            </div>
+        <div className="message-box-container">
+            {incomingCall && (
+                <div className="incoming-call-overlay">
+                    <div className="incoming-call-modal">
+                        <div className="incoming-call-header">
+                            <h3 className="incoming-call-title">{incomingCall.name} is calling...</h3>
+                        </div>
+                        <div className="incoming-call-actions">
+                            <button className="btn btn-success btn-answer" onClick={handleAnswer}>
+                                <i className="fas fa-phone"></i> Answer
+                            </button>
+                            <button className="btn btn-danger btn-decline" onClick={handleDecline}>
+                                <i className="fas fa-phone-slash"></i> Decline
+                            </button>
                         </div>
                     </div>
+                </div>
+            )}
 
-                    {/* Chat Body */}
-
-                    <div className="chat-body" style={{ flexGrow: 1, overflowY: 'auto', minHeight: 0 }}>
-                        <div className="chat-scroll">
-                            <ul className="list-unstyled">
-                                {[...messages]
-                                    .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-                                    .map((msg) => {
-                                        const isSent = msg.fromUser === user._id;
-                                        const messageDate = new Date(msg.createdAt);
-                                        const timeString = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                                        return (
-                                            <li key={msg._id}
-                                                className={`notify-block ${isSent ? 'sent' : 'received'} d-flex`}>
-                                                {!isSent && (
-                                                    <div className="avatar flex-shrink-0">
-                                                        <img src={otherParticipant?.avatar || "/assets/img/profiles/default-avatar.jpg"}
-                                                            alt="User Image"
-                                                            className="avatar-img rounded-circle" />
-                                                    </div>
-                                                )}
-                                                <div className="media-body flex-grow-1">
-                                                    <div className="msg-box">
-                                                        <div>
-                                                            {msg.content && (msg.content.startsWith('data:image') || /\.(png|jpe?g|gif|webp)$/i.test(msg.content)) ? (
-                                                                <div className="chat-msg-attachments">
-                                                                    <div className="chat-attachment">
-                                                                        <img src={msg.content} alt="Attachment" />
-                                                                        <a href={msg.content} className="chat-attach-download" download>
-                                                                            <i className="fas fa-download"></i>
-                                                                        </a>
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                <p>{msg.content}</p>
-                                                            )}
-                                                            <ul className="chat-msg-info">
-                                                                <li>
-                                                                    <div className="chat-time">
-                                                                        <span>{timeString}</span>
-                                                                    </div>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        );
-                                    })}
-                            </ul>
-                            <div ref={messagesEndRef} />
-                        </div>
+            {previewImage && (
+                <div className="image-preview-overlay" onClick={() => setPreviewImage(null)}>
+                    <div className="image-preview-container">
+                        <button
+                            className="image-preview-close"
+                            onClick={() => setPreviewImage(null)}
+                        >
+                            <i className="fas fa-times"></i>
+                        </button>
+                        <img
+                            src={previewImage}
+                            alt="Preview"
+                            className="image-preview"
+                        />
                     </div>
+                </div>
+            )}
 
-                    {/* Chat Footer */}
-                    <div className="chat-footer">
-                        <form onSubmit={handleSendMessage}>
-                            <div className="input-group">
-                                <div className="btn-file btn">
-                                    <i className="fa fa-paperclip"></i>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={(e) => setSelectedFile(e.target.files[0])}
+            <div className="modern-chat-container">
+                <div className="chat-header-modern">
+                    <div className="chat-participant-info">
+                        <div className="participant-avatar-wrapper">
+                            <div className="participant-avatar online">
+                                {otherParticipant?.avatar ? (
+                                    <img
+                                        src={otherParticipant.avatar}
+                                        alt="User Image"
+                                        className="avatar-image"
                                     />
-                                </div>
-                                <input
-                                    type="text"
-                                    className="input-msg-send form-control rounded-pill"
-                                    placeholder="Type something"
-                                    value={messageContent}
-                                    onChange={(e) => setMessageContent(e.target.value)}
-                                    disabled={sending === 'pending'}
+                                ) : (
+                                    <div className="avatar-placeholder">
+
+                                    </div>
+                                )}
+                                <div className="online-indicator"></div>
+                            </div>
+                        </div>
+                        <div className="participant-details">
+                            <div className="participant-name">{otherParticipant?.fullName}</div>
+                            <div className="participant-status">Online</div>
+                        </div>
+                    </div>
+                    <div className="chat-actions">
+                        <button
+                            className="video-call-btn"
+                            onClick={() => navigate(`/video-call/${bookingId}`)}
+                            title="Start video call"
+                        >
+                            <i className="fas fa-video"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="chat-messages-container">
+                    <div className="chat-messages-scroll">
+                        <div className="messages-list">
+                            {[...messages]
+                                .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+                                .map((msg) => {
+                                    const isSent = msg.fromUser === user._id;
+                                    const messageDate = new Date(msg.createdAt);
+                                    const timeString = messageDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                                    return (
+                                        <div key={msg._id} className={`message-item ${isSent ? 'sent' : 'received'}`}>
+                                            {!isSent && (
+                                                <div className="message-avatar">
+                                                    <img
+                                                        src={otherParticipant?.avatar || "/assets/img/profiles/default-avatar.jpg"}
+                                                        alt="User Image"
+                                                        className="message-avatar-img"
+                                                    />
+                                                </div>
+                                            )}
+                                            <div className="message-content-wrapper">
+                                                <div className="message-bubble">
+                                                    {msg.content && (msg.content.startsWith('data:image') || /\.(png|jpe?g|gif|webp)$/i.test(msg.content)) ? (
+                                                        <div className="message-image-container">
+                                                            <div
+                                                                className="message-image"
+                                                                onClick={() => setPreviewImage(msg.content)}
+                                                            >
+                                                                <img
+                                                                    src={msg.content}
+                                                                    alt="Attachment"
+                                                                    className="message-img"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="message-text">{msg.content}</div>
+                                                    )}
+                                                    <div className="message-time">{timeString}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                        <div ref={messagesEndRef} />
+                    </div>
+                </div>
+
+                <div className="chat-input-container">
+                    {filePreview && (
+                        <div className="file-preview-container">
+                            <div className="file-preview-wrapper">
+                                <img
+                                    src={filePreview}
+                                    alt="Preview"
+                                    className="file-preview-image"
                                 />
-                                <button type="submit" className="btn msg-send-btn rounded-pill ms-2" disabled={sending === 'pending'}>
-                                    {sending === 'pending' ? (
-                                        <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                                    ) : (
-                                        <i className="fa-solid fa-paper-plane"></i>
-                                    )}
+                                <button
+                                    type="button"
+                                    className="file-preview-remove"
+                                    onClick={() => {
+                                        setSelectedFile(null);
+                                        setFilePreview(null);
+                                    }}
+                                >
+                                    <i className="fas fa-times"></i>
                                 </button>
                             </div>
-                        </form>
-                    </div>
+                        </div>
+                    )}
+
+                    <form onSubmit={handleSendMessage} className="message-form">
+                        <div className="message-input-group">
+                            <div className="file-input-wrapper">
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    id="file-input"
+                                    className="file-input"
+                                    onChange={(e) => {
+                                        const file = e.target.files[0];
+                                        setSelectedFile(file);
+                                        if (file) {
+                                            const previewUrl = URL.createObjectURL(file);
+                                            setFilePreview(previewUrl);
+                                        }
+                                    }}
+                                />
+                                <label htmlFor="file-input" className="file-input-btn">
+                                    <i className="fas fa-paperclip"></i>
+                                </label>
+                            </div>
+
+                            <input
+                                type="text"
+                                className="message-input"
+                                placeholder="Type your message..."
+                                value={messageContent}
+                                onChange={(e) => setMessageContent(e.target.value)}
+                                disabled={sending === 'pending'}
+                            />
+
+                            <button
+                                type="submit"
+                                className="send-btn"
+                                disabled={sending === 'pending'}
+                            >
+                                {sending === 'pending' ? (
+                                    <div className="sending-spinner"></div>
+                                ) : (
+                                    <i className="fas fa-paper-plane"></i>
+                                )}
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     );
 };
 
-export default MessageBox; 
+export default MessageBox;

@@ -1,13 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import {
-  getTechnicianProfile,
-  getEarningAndCommission,
-  getTechnicianAvailability,
-  updateTechnicianAvailability,
-  getTechnicianJob,
-  getJobDetails,
-  getTechnicians, completeTechnicianProfile
-} from '../technicians/technicianAPI';
+import { getTechnicianProfile, getTechnicians, completeTechnicianProfile, sendQuotationAPI, getTechnicianDepositLogs } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
@@ -25,51 +17,27 @@ export const fetchTechnicianProfile = createAsyncThunk(
   }
 );
 
-export const fetchEarningAndCommission = createAsyncThunk(
-  'technician/fetchEarningAndCommission',
-  async (technicianId, thunkAPI) => {
-    try {
-      const data = await getEarningAndCommission(technicianId);
-      return data;
-    } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
-      );
-    }
-  }
-);
 
 export const fetchTechnicians = createAsyncThunk(
   'technician/fetchList',
   async (thunkAPI) => {
     try {
       const data = await getTechnicians();
-      return data.data;}
-      catch (error){
-        return thunkAPI.rejectWithValue(
-          error.response?.data?.message || error.message)
-      }
+      return data.data;
     }
-  )
+    catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message)
+    }
+  }
+);
+
 export const completeTechnicianProfileThunk = createAsyncThunk(
   'technician/completeProfile',
   async (technicianData, thunkAPI) => {
     try {
       const data = await completeTechnicianProfile(technicianData);
-      return data.data;}
-      catch (error){
-        return thunkAPI.rejectWithValue(
-          error.response?.data?.message || error.message)
-      }
-    }
-  )
-
-export const fetchTechnicianAvailability = createAsyncThunk(
-  'technician/fetchAvailability',
-  async (technicianId, thunkAPI) => {
-    try {
-      const availability = await getTechnicianAvailability(technicianId);
-      return availability;
+      return data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
@@ -78,42 +46,32 @@ export const fetchTechnicianAvailability = createAsyncThunk(
   }
 );
 
-export const changeTechnicianAvailability = createAsyncThunk(
-  'technician/changeAvailability',
-  async ({ technicianId, status }, thunkAPI) => {
+export const sendQuotation = createAsyncThunk(
+  'technician/sendQuotation',
+  async (formData, thunkAPI) => {
     try {
-      const updated = await updateTechnicianAvailability(technicianId, status);
-      return updated;
+      const res = await sendQuotationAPI(formData);
+      console.log('--- SEND QUOTATION ---', res.data);
+
+      return res.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
     }
   }
 );
 
-export const fetchTechnicianJobDetails = createAsyncThunk(
-  'technician/fetchTechnicianJobDetails',
-  async ({ technicianId, bookingId }, { rejectWithValue }) => {
+export const fetchTechnicianDepositLogs = createAsyncThunk(
+  'technician/fetchTechnicianDepositLogs',
+  async ({ limit, skip }, { rejectWithValue }) => {
     try {
-      const data = await getJobDetails(technicianId, bookingId);
-      console.log(data);
-      return data;
-
-    } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
-    }
-  }
-);
-
-export const fetchTechnicianJobs = createAsyncThunk(
-  'technician/fetchTechnicianJobs',
-  async (technicianId, { rejectWithValue }) => {
-    try {
-      const data = await getTechnicianJob(technicianId);
-      console.log(data);
-      return data;
-
-    } catch (err) {
-      return rejectWithValue(err.response?.data || err.message);
+      const response = await getTechnicianDepositLogs({ limit, skip });
+      console.log('Data', response.data);
+      return response.data.technicianDepositLogs;
+    } catch (error) {
+      console.error('Thunk Error:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch deposit logs');
     }
   }
 );
@@ -122,12 +80,10 @@ const technicianSlice = createSlice({
   name: 'technician',
   initialState: {
     profile: null,
-    earnings: null,
-    availability: 'FREE',
+    quotations: [],
     loading: false,
     error: null,
-    bookings: [],
-    jobDetail: null,
+    logs: [],
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -233,6 +189,33 @@ const technicianSlice = createSlice({
         state.error = null;
       })
       .addCase(completeTechnicianProfileThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // Send Quotation
+      .addCase(sendQuotation.pending, (state) => {
+        state.status = 'loading';
+      })
+      .addCase(sendQuotation.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.quotations.unshift(action.payload);
+      })
+      .addCase(sendQuotation.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.payload;
+      })
+
+      .addCase(fetchTechnicianDepositLogs.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchTechnicianDepositLogs.fulfilled, (state, action) => {
+        state.loading = false;
+        
+        state.logs = action.payload;
+      })
+      .addCase(fetchTechnicianDepositLogs.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

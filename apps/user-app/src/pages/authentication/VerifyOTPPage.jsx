@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'react-toastify';
@@ -13,9 +13,17 @@ function VerifyOTPPage() {
     const isResetPassword = searchParams.get('type') === 'reset-password';
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [activeInput, setActiveInput] = useState(0);
-    const [timeLeft, setTimeLeft] = useState(0); // Bắt đầu với 0 để có thể gửi ngay
-    const [isResending, setIsResending] = useState(false);
-    const [codeExpiryTime, setCodeExpiryTime] = useState(300); // 5 phút cho mã xác thực
+    const STORAGE_PREFIX = 'verifyOTP_';
+    const identifier = user?.phone || localStorage.getItem('resetPasswordPhone') || 'unknown';
+    const storageKey = STORAGE_PREFIX + identifier;
+
+    const readTS = (key, def) => {
+        const v = localStorage.getItem(key);
+        return v ? parseInt(v, 10) : def;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(0);
+    const [codeExpiryTime, setCodeExpiryTime] = useState(300);
     const [isLoading, setIsLoading] = useState(false);
     const [resendDisabled, setResendDisabled] = useState(false);
     const [countdown, setCountdown] = useState(60);
@@ -30,44 +38,21 @@ function VerifyOTPPage() {
         }
     }, [verificationStatus, navigate]);
 
-    // Tạo timer cho thời gian chờ gửi lại
-    const startResendTimer = () => {
-        setTimeLeft(60); // 60 giây cho thời gian chờ gửi lại
-        return setInterval(() => {
-            setTimeLeft((prevTime) => {
-                if (prevTime <= 1) {
-                    return 0;
-                }
-                return prevTime - 1;
-            });
-        }, 1000);
-    };
-
-    // Tạo timer cho thời gian hết hạn mã
-    const startExpiryTimer = () => {
-        setCodeExpiryTime(300); // 5 phút cho mã xác thực
-        return setInterval(() => {
-            setCodeExpiryTime((prevTime) => {
-                if (prevTime <= 1) {
-                    return 0;
-                }
-                return prevTime - 1;
-            });
-        }, 1000);
-    };
-
+    // Khởi tạo timers từ localStorage
     useEffect(() => {
-        let timer;
-        if (resendDisabled && countdown > 0) {
-            timer = setInterval(() => {
-                setCountdown(prev => prev - 1);
-            }, 1000);
-        } else if (countdown === 0) {
-            setResendDisabled(false);
-            setCountdown(60);
-        }
-        return () => clearInterval(timer);
-    }, [resendDisabled, countdown]);
+        const now = Date.now();
+        const resendEnd = readTS(storageKey + '_resend', 0);
+        const expireEnd = readTS(storageKey + '_expire', now + 300000);
+
+        setTimeLeft(Math.max(0, Math.floor((resendEnd - now)/1000)));
+        setCodeExpiryTime(Math.max(0, Math.floor((expireEnd - now)/1000)));
+
+        const interval = setInterval(() => {
+            setTimeLeft(prev => (prev>0?prev-1:0));
+            setCodeExpiryTime(prev => (prev>0?prev-1:0));
+        },1000);
+        return ()=> clearInterval(interval);
+    }, [storageKey]);
 
     // Xử lý khi component unmount hoặc user không còn authenticated
     useEffect(() => {
@@ -149,8 +134,12 @@ function VerifyOTPPage() {
                     showConfirmButton: false
                 });
 
-                // Không cần clear verification status và navigate
-                // Logic verificationStatus sẽ tự động redirect
+                // Điều hướng tùy vai trò sau khi xác thực
+                if (result.verificationStatus?.step === 'COMPLETE_PROFILE' || (result.user?.role?.name === 'TECHNICIAN')) {
+                    navigate('/technician/complete-profile');
+                } else {
+                    navigate('/');
+                }
             }
         } catch (error) {
             console.error('OTP verification error:', error);
@@ -168,18 +157,31 @@ function VerifyOTPPage() {
         dispatch(clearVerificationStatus());
     };
 
-    const handleResendOTP = async () => {
-        if (resendDisabled) return;
+    const startResendTimer = useCallback(() => {
+        const end = Date.now() + 60 * 1000;
+        localStorage.setItem(storageKey + '_resend', end.toString());
+        setTimeLeft(60);
+    }, [storageKey]);
 
+    const startExpiryTimer = useCallback(() => {
+        const end = Date.now() + 300 * 1000;
+        localStorage.setItem(storageKey + '_expire', end.toString());
+        setCodeExpiryTime(300);
+    }, [storageKey]);
+
+    const handleResendOTP = async () => {
+        if (timeLeft>0) return;
         setIsLoading(true);
         try {
+            startResendTimer();
+            startExpiryTimer();
             const phone = localStorage.getItem('resetPasswordPhone');
             if (isResetPassword && phone) {
                 await authAPI.forgotPassword(phone);
-                toast.success('Đã gửi lại mã OTP');
+                toast.success('Mã xác thực mới đã được gửi');
             } else {
                 await authAPI.resendOTP();
-                toast.success('Đã gửi lại mã OTP');
+                toast.success('Mã xác thực mới đã được gửi');
             }
             setResendDisabled(true);
         } catch (error) {
@@ -200,6 +202,8 @@ function VerifyOTPPage() {
         if (!phone) return '';
         return `${phone.slice(0, 4)}***${phone.slice(-3)}`;
     };
+
+    const isCodeExpired = codeExpiryTime === 0;
 
     return (
         <div className="main-wrapper login-body">
@@ -254,7 +258,7 @@ function VerifyOTPPage() {
                                 <button 
                                     type="submit" 
                                     className="btn btn-primary w-100 mb-3"
-                                    disabled={isLoading}
+                                    disabled={isLoading || loading || otp.join('').length !== 6 || isCodeExpired}
                                 >
                                     {isLoading ? 'Đang xử lý...' : 'Xác nhận'}
                                 </button>
@@ -264,13 +268,17 @@ function VerifyOTPPage() {
                                         type="button"
                                         className="btn btn-link text-primary"
                                         onClick={handleResendOTP}
-                                        disabled={resendDisabled || isLoading}
+                                        disabled={timeLeft>0 || isLoading}
                                     >
-                                        {resendDisabled 
-                                            ? `Gửi lại mã sau ${countdown}s` 
-                                            : 'Gửi lại mã'}
+                                        {isCodeExpired && timeLeft===0 ? 'Gửi lại mã': timeLeft>0?`Gửi lại mã sau ${timeLeft}s`:'Gửi lại mã'}
                                     </button>
                                 </div>
+
+                                {isCodeExpired ? (
+                                    <p className="text-danger mt-2">Mã xác thực đã hết hạn. Vui lòng nhấn "Gửi lại mã".</p>
+                                ): timeLeft>0 && (
+                                    <p className="text-secondary mt-2">Bạn có thể gửi lại mã sau {timeLeft} giây</p>
+                                )}
                             </form>
                         </div>
                     </div>

@@ -1,43 +1,84 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { useMemo, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
+import { toast } from 'react-toastify';
 
-const ProtectedRoute = ({ children, isAllowed, redirectPath = '/login' }) => {
+// requiredRole: string | string[] | undefined => nếu truyền, route chỉ cho phép user có role tương ứng
+// isAllowed: boolean | undefined => giữ tương thích cũ; nếu undefined thì component tự tính dựa trên role & auth
+const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/login', unauthorizedMessage }) => {
     const location = useLocation();
-    const { verificationStatus } = useSelector((state) => state.auth);
+    const { verificationStatus, isAuthenticated, user } = useSelector((state) => state.auth);
     const prevPathRef = useRef(location.pathname);
+    const lastToastMessageRef = useRef('');
+
+    const verificationPaths = ['/choose-role','/verify-email','/verify-otp','/technician/complete-profile'];
+
+    // Tính toán quyền nếu prop isAllowed không truyền
+    let computedAllowed = isAllowed;
+    if (typeof isAllowed === 'undefined') {
+        const roleMatch = !requiredRole ? true : (
+            Array.isArray(requiredRole)
+                ? requiredRole.includes(user?.role?.name)
+                : user?.role?.name === requiredRole
+        );
+        computedAllowed = isAuthenticated && roleMatch;
+    }
 
     const redirectInfo = useMemo(() => {
         // Nếu không được phép truy cập
-        if (!isAllowed) {
+        if (!computedAllowed) {
+            const comingFromVerification = verificationPaths.some(p => location.pathname.startsWith(p));
+
+            const defaultMsg = isAuthenticated ? 'Bạn không có quyền truy cập trang này' : 'Vui lòng đăng nhập để tiếp tục';
+
+            // Luôn hiển thị thông báo để người dùng biết lý do bị chuyển hướng
+            let redirectMessage;
+
+            if (comingFromVerification) {
+                // Vừa hoàn tất bước xác thực nên không còn được ở lại trang verify-*
+                redirectMessage = verificationStatus?.step === 'COMPLETED'
+                    ? 'Xác thực hoàn tất! Bạn có thể tiếp tục trải nghiệm.'
+                    : (unauthorizedMessage || defaultMsg);
+            } else {
+                redirectMessage = unauthorizedMessage || defaultMsg;
+            }
+
+            // Nếu người dùng đang cố truy cập video-call nhưng thiếu quyền/thiếu xác thực
+            if (location.pathname.includes('/video-call')) {
+                redirectMessage = (verificationStatus?.message || redirectMessage) + ' Bạn cần hoàn tất trước khi có thể gọi video.';
+            }
+
             return {
-                path: redirectPath,
+                path: isAuthenticated ? '/' : '/login', // nếu đã login nhưng không đủ quyền -> về home
+                message: redirectMessage,
                 state: { from: location }
             };
         }
 
         // Nếu đang trong quá trình verification và không ở trang verification
-        // CHỈ redirect nếu user đang ở trang khác và cần verification
-        if (verificationStatus?.step && 
-            verificationStatus.step !== 'COMPLETED' && 
-            verificationStatus.redirectTo && 
+        if (verificationStatus?.step &&
+            verificationStatus.step !== 'COMPLETED' &&
+            verificationStatus.redirectTo &&
             location.pathname !== verificationStatus.redirectTo &&
-            // Thêm điều kiện: chỉ redirect nếu không phải đang ở trang verification
             !location.pathname.includes('/verify-') &&
             !location.pathname.includes('/choose-role') &&
-            !location.pathname.includes('/technician/complete-profile') &&
-            // Cho phép truy cập vào /profile ngay cả khi chưa hoàn thành verification
             !location.pathname.includes('/profile')) {
-            
+
+            let msg = verificationStatus.message || 'Vui lòng hoàn thành xác thực (xem thông tin trong hồ sơ)';
+            if (location.pathname.includes('/video-call')) {
+                msg += ' Bạn cần hoàn tất trước khi có thể gọi video.';
+            }
+
             return {
-                path: verificationStatus.redirectTo,
+                path: '/',
+                message: msg,
                 state: { from: location }
             };
         }
 
         // Không cần redirect
         return null;
-    }, [isAllowed, redirectPath, location, verificationStatus]);
+    }, [computedAllowed, requiredRole, redirectPath, location, verificationStatus, isAuthenticated, unauthorizedMessage]);
 
     // Cập nhật prevPathRef khi location thay đổi
     if (location.pathname !== prevPathRef.current) {
@@ -45,6 +86,21 @@ const ProtectedRoute = ({ children, isAllowed, redirectPath = '/login' }) => {
     }
 
     if (redirectInfo) {
+        if (redirectInfo.message && redirectInfo.message !== lastToastMessageRef.current) {
+            // Xây nội dung toast kèm link hành động nhanh (nếu có)
+            const defaultMsgs = ['Bạn không có quyền truy cập trang này','Vui lòng đăng nhập để tiếp tục'];
+            const showActionLink = verificationStatus?.step && verificationStatus.step !== 'COMPLETED' && !defaultMsgs.includes(redirectInfo.message);
+            const actionPath = showActionLink ? verificationStatus.redirectTo : null;
+            const content = actionPath ? (
+                <span>
+                    {redirectInfo.message}. &nbsp;
+                    <a href={actionPath} style={{ textDecoration: 'underline' }}>Hoàn thành ngay</a>
+                </span>
+            ) : redirectInfo.message;
+
+            toast.info(content, { autoClose: 5000 });
+            lastToastMessageRef.current = redirectInfo.message;
+        }
         return <Navigate to={redirectInfo.path} replace state={redirectInfo.state} />;
     }
 

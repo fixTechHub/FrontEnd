@@ -82,13 +82,13 @@ function LogInPage() {
       ...prev,
       [name]: value,
     }));
-    
+
     // Clear error for the field being edited
     if (errors[name]) {
-        setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
     if (errors.form) {
-        setErrors(prev => ({ ...prev, form: '' }));
+      setErrors(prev => ({ ...prev, form: '' }));
     }
   };
 
@@ -102,7 +102,7 @@ function LogInPage() {
 
   const validateForm = async () => {
     const newErrors = validateLoginForm(formData);
-    
+
     // Kiểm tra email tồn tại nếu email hợp lệ
     if (!newErrors.email && formData.email && validateEmail(formData.email)) {
       if (!emailExists) {
@@ -117,41 +117,41 @@ function LogInPage() {
   const handleServerError = (errorMessage) => {
     const newErrors = {};
     const lowerMessage = errorMessage.toLowerCase();
-    
+
     if (lowerMessage.includes('vô hiệu hóa bởi quản trị viên') || lowerMessage.includes('admin')) {
-        newErrors.form = 'Tài khoản của bạn đã bị vô hiệu hóa bởi quản trị viên. Vui lòng liên hệ với quản trị viên để được hỗ trợ.';
+      newErrors.form = 'Tài khoản của bạn đã bị vô hiệu hóa bởi quản trị viên. Vui lòng liên hệ với quản trị viên để được hỗ trợ.';
     } else if (lowerMessage.includes('không tồn tại trong hệ thống')) {
-        newErrors.email = 'Email không tồn tại trong hệ thống';
+      newErrors.email = 'Email không tồn tại trong hệ thống';
     } else if (lowerMessage.includes('mật khẩu không đúng')) {
-        newErrors.password = 'Mật khẩu không đúng';
+      newErrors.password = 'Mật khẩu không đúng';
     } else if (lowerMessage.includes('đăng ký bằng google')) {
-        newErrors.email = 'Tài khoản này được đăng ký bằng Google. Vui lòng sử dụng đăng nhập Google.';
+      newErrors.email = 'Tài khoản này được đăng ký bằng Google. Vui lòng sử dụng đăng nhập Google.';
     } else if (lowerMessage.includes('email hoặc mật khẩu không đúng')) {
-        newErrors.form = 'Email hoặc mật khẩu không đúng.';
+      newErrors.form = 'Email hoặc mật khẩu không đúng.';
     } else if (lowerMessage.includes('email') && lowerMessage.includes('not found')) {
-        newErrors.form = 'Tài khoản không tồn tại.';
+      newErrors.form = 'Tài khoản không tồn tại.';
     } else {
-        newErrors.form = 'Đăng nhập thất bại. Vui lòng thử lại.';
+      newErrors.form = 'Đăng nhập thất bại. Vui lòng thử lại.';
     }
-    
+
     setErrors(newErrors);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!(await validateForm())) return;
 
     setIsLoading(true);
     try {
       const result = await authAPI.login(formData);
-      
+
       // Dispatch authSuccess để cập nhật user vào Redux state
       dispatch(authSuccess({
         user: result.user,
         verificationStatus: result.verificationStatus
       }));
-      
+
       // Hiển thị thông báo thành công
       if (result.wasReactivated) {
         toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
@@ -159,15 +159,13 @@ function LogInPage() {
         toast.success("Đăng nhập thành công!");
       }
       
-      // Kiểm tra verificationStatus trước
-      if (result.verificationStatus && result.verificationStatus.redirectTo) {
-        navigate(result.verificationStatus.redirectTo, { replace: true });
-      } else if (result.user.role.name === "ADMIN") {
+      // Không tự động chuyển hướng tới trang xác thực; chỉ điều hướng theo vai trò.
+      if (result.user.role.name === "ADMIN") {
         navigate("/admin/dashboard", { replace: true });
       } else {
         navigate("/", { replace: true });
       }
-      
+
     } catch (error) {
       const errorMessage = error.message || "Đăng nhập thất bại. Vui lòng thử lại.";
       handleServerError(errorMessage);
@@ -204,9 +202,8 @@ function LogInPage() {
               toast.success("Đăng nhập thành công!");
             }
 
-            if (result.verificationStatus && result.verificationStatus.redirectTo) {
-              navigate(result.verificationStatus.redirectTo, { replace: true });
-            } else if (result.user.role.name === "ADMIN") {
+            // Không tự động chuyển hướng tới trang xác thực.
+            if (result.user.role.name === "ADMIN") {
               navigate("/admin/dashboard", { replace: true });
             } else {
               navigate("/", { replace: true });
@@ -227,7 +224,7 @@ function LogInPage() {
     } catch (error) {
       toast.error("Không thể khởi tạo đăng nhập Google");
       console.log("Google login error:", error);
-      
+
       setIsLoading(false);
     }
   };
@@ -250,7 +247,7 @@ function LogInPage() {
               </p>
 
               <form onSubmit={handleSubmit} className="needs-validation">
-                {errors.form && 
+                {errors.form &&
                   <div className="alert alert-danger" role="alert">
                     {errors.form}
                   </div>
@@ -378,7 +375,7 @@ function LogInPage() {
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                     <span className="d-flex justify-content-center align-items-center">
+                    <span className="d-flex justify-content-center align-items-center">
                       <span
                         className="spinner-border spinner-custom-sm me-2"
                         role="status"

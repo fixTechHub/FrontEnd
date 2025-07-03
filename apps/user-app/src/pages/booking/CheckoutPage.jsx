@@ -1,35 +1,75 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getAcceptedBookingPriceThunk } from '../../features/booking-prices/bookingPriceSlice';
 import { finalizeBookingThunk } from '../../features/transactions/transactionSlice'
-import { RingLoader } from 'react-spinners';
+import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { toast } from 'react-toastify';
+import { useBookingParams } from '../../hooks/useBookingParams';
 import Accordion from 'react-bootstrap/Accordion';
 import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
-
+import { checkOutCustomerAccess } from "../../hooks/checkBookingAccess";
 const CheckoutPage = () => {
-    const { bookingId, technicianId } = useParams();
     const dispatch = useDispatch();
-    const { bookingPrice, bookingItem, userCoupons, loading, error } = useSelector(state => state.bookingPrice);
+    const { acceptedBookingPrice, bookingItem, userCoupons, loading, error } = useSelector(state => state.bookingPrice);
     const [isProcessing, setIsProcessing] = useState(false);
     const [selectedCouponId, setSelectedCouponId] = useState('');
     const [appliedCoupon, setAppliedCoupon] = useState(null);
     const [paymentMethod, setPaymentMethod] = useState('PAYOS'); // Default to PayOS
+    const { bookingId, stepsForCurrentUser } = useBookingParams();
+    const { booking, status: bookingStatus, error: bookingError } = useSelector((state) => state.booking);
+    const [showCouponDropdown, setShowCouponDropdown] = useState(false);
     const navigate = useNavigate();
-    useEffect(() => {
-        if (bookingId && technicianId) {
-            dispatch(getAcceptedBookingPriceThunk({ bookingId, technicianId }));
-        }
-    }, [dispatch, bookingId, technicianId]);
+    const [isAuthorized, setIsAuthorized] = useState(null);
+    const [authError, setAuthError] = useState(null);
+    const { user } = useSelector((state) => state.auth);
+    const [isChecking, setIsChecking] = useState(true);
 
+    useEffect(() => {
+        if (bookingId) {
+            dispatch(fetchBookingById(bookingId));
+        }
+    }, [dispatch, bookingId]);
+
+    useEffect(() => {
+        const verifyAccess = async () => {
+            if (!bookingId || !user?._id) {
+                setAuthError("Missing booking ID or user information");
+                setIsAuthorized(false);
+                setIsChecking(true);
+                return;
+            }
+
+            const { booking,isAuthorized, error } = await checkOutCustomerAccess(dispatch, bookingId, user._id);
+            setIsAuthorized(isAuthorized);
+            setAuthError(error);
+            setIsChecking(true);
+        };
+
+        verifyAccess();
+    }, [dispatch, bookingId, user?._id]);
+
+    useEffect(() => {
+        if (isChecking) return; 
+        if (isAuthorized === false) {
+            // Redirect to the original page or default to '/'
+            const redirectPath = location.state?.from?.pathname || '/';
+            navigate(redirectPath, { replace: true });
+        }
+    }, [isAuthorized, isChecking, navigate]);
+
+    useEffect(() => {
+        if (bookingId && booking?.technicianId?._id) {
+            dispatch(getAcceptedBookingPriceThunk({ bookingId, technicianId: booking.technicianId._id }));
+        }
+    }, [dispatch, bookingId, booking?.technicianId?._id]);
 
     const itemsTotal = bookingItem.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
-    const laborPrice = bookingPrice?.laborPrice || 0;
-    const subTotal = bookingPrice?.finalPrice || (laborPrice + itemsTotal);
+    const laborPrice = acceptedBookingPrice?.laborPrice || 0;
+    const subTotal = acceptedBookingPrice?.finalPrice || (laborPrice + itemsTotal);
 
     const handleApplyCoupon = (e) => {
         e.preventDefault();
@@ -53,10 +93,24 @@ const CheckoutPage = () => {
         toast.info('Mã giảm giá đã được xóa.');
     };
 
+    const handlePaymentMethodChange = (method) => {
+        setPaymentMethod(method);
+        if (method === 'CASH') {
+            if (appliedCoupon) {
+                setAppliedCoupon(null);
+                setSelectedCouponId('');
+                toast.info('Mã giảm giá đã được gỡ bỏ vì không áp dụng cho thanh toán tiền mặt.');
+            } else if (selectedCouponId) {
+                setSelectedCouponId('');
+                toast.info('Lựa chọn mã giảm giá đã được hủy vì không áp dụng cho thanh toán tiền mặt.');
+            }
+        }
+    };
+
     const handleContinueBooking = async () => {
 
 
-        if (!bookingPrice || isProcessing) {
+        if (!acceptedBookingPrice || isProcessing) {
             console.log('Early return - bookingPrice or isProcessing check failed');
             return;
         }
@@ -77,16 +131,10 @@ const CheckoutPage = () => {
         const newFinalPrice = subTotal - discount;
 
         try {
-            console.log('Dispatching finalizeBookingThunk with:', {
-                bookingPriceId: bookingPrice._id,
-                couponCode: appliedCoupon ? appliedCoupon.code : null,
-                discountValue: discount,
-                finalPrice: newFinalPrice,
-                paymentMethod: paymentMethod
-            });
+
 
             const resultAction = await dispatch(finalizeBookingThunk({
-                bookingPriceId: bookingPrice._id,
+                bookingPriceId: acceptedBookingPrice._id,
                 couponCode: appliedCoupon ? appliedCoupon.code : null,
                 discountValue: discount,
                 finalPrice: newFinalPrice,
@@ -134,36 +182,24 @@ const CheckoutPage = () => {
 
     const estimatedTotal = subTotal - discount;
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center" style={{ minHeight: '80vh' }}>
-                <RingLoader color={"#1977F3"} loading={loading} size={100} />
-            </div>
-        );
-    }
+
 
     if (error) {
         return <div className="text-center py-5">Error: {error}</div>;
     }
 
-    // Debug section - remove this in production
-    const debugInfo = {
-        bookingPrice: !!bookingPrice,
-        paymentMethod: paymentMethod,
-        isProcessing: isProcessing,
-        buttonEnabled: !!bookingPrice && !!paymentMethod && !isProcessing
-    };
+
 
     return (
         <>
             <Header />
-            <BreadcrumbBar title='Thanh toán' />
 
-
+            <BreadcrumbBar title='Thanh toán' subtitle={'Payment'} />
 
             <div className="booking-new-module">
                 <div className="container">
-                    <BookingWizard activeStep={4} />
+                    <BookingWizard steps={stepsForCurrentUser} activeStep={4} />
+
                     <div className="booking-detail-info pt-0">
                         <div className="row">
                             <div className="col-lg-8">
@@ -209,30 +245,76 @@ const CheckoutPage = () => {
                                             <h5>Mã Giảm Giá</h5>
                                         </div>
                                         <div className="booking-info-body">
-                                            <form onSubmit={handleApplyCoupon}>
-                                                <div className="d-flex align-items-center">
-                                                    <div className="form-custom flex-fill">
-                                                        <select
-                                                            className="form-control mb-0"
-                                                            value={selectedCouponId}
-                                                            onChange={e => setSelectedCouponId(e.target.value)}
-                                                            disabled={!!appliedCoupon}
-                                                        >
-                                                            <option value="">Select a coupon</option>
-                                                            {userCoupons.map(coupon => (
-                                                                <option key={coupon._id} value={coupon._id}>
-                                                                    {coupon.code} - {coupon.type === 'PERCENT' ? `${coupon.value}%` : `$${coupon.value}`} {coupon.minOrderValue ? `(Min $${coupon.minOrderValue})` : ''}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    {!appliedCoupon ? (
-                                                        <button type="submit" className="btn btn-secondary apply-coupon-btn d-flex align-items-center ms-2">Sử dụng<i className="feather-arrow-right ms-2"></i></button>
-                                                    ) : (
-                                                        <button type="button" className="btn btn-danger ms-2" onClick={handleRemoveCoupon}>Gỡ</button>
-                                                    )}
+                                            {paymentMethod === 'CASH' ? (
+                                                <div className="alert alert-warning" role="alert">
+                                                    Mã giảm giá không áp dụng cho phương thức thanh toán tiền mặt.
                                                 </div>
-                                            </form>
+                                            ) : (
+                                                <>
+                                                    <div className="dropdown me-2 mb-2">
+                                                        <a
+                                                            href="#"
+                                                            className="dropdown-toggle btn  d-inline-flex align-items-center"
+                                                            data-bs-toggle="dropdown"
+                                                            onClick={e => {
+                                                                e.preventDefault();
+                                                                setShowCouponDropdown(!showCouponDropdown);
+                                                            }}
+                                                        >
+                                                            <i className="ti ti-filter me-2"></i>
+                                                            {appliedCoupon
+                                                                ? `${appliedCoupon.code}`
+                                                                : selectedCouponId
+                                                                    ? `${userCoupons.find(c => c._id === selectedCouponId)?.code}`
+                                                                    : 'Chọn mã giảm giá'}
+                                                        </a>
+                                                        <ul className={`dropdown-menu dropdown-menu-end p-2${showCouponDropdown ? ' show' : ''}`}>
+                                                            {userCoupons.length === 0 && (
+                                                                <li>
+                                                                    <span className="dropdown-item text-muted">Không có mã giảm giá nào khả dụng.</span>
+                                                                </li>
+                                                            )}
+                                                            {userCoupons.map(coupon => (
+                                                                <li key={coupon._id}>
+                                                                    <a
+                                                                        href="#"
+                                                                        className={`dropdown-item rounded-1${selectedCouponId === coupon._id ? ' active' : ''}`}
+                                                                        onClick={e => {
+                                                                            e.preventDefault();
+                                                                            if (!appliedCoupon) setSelectedCouponId(coupon._id);
+                                                                            setShowCouponDropdown(false);
+                                                                        }}
+                                                                    >
+                                                                        <span className="badge bg-primary me-2">{coupon.code}</span>
+                                                                        {coupon.type === 'PERCENT' ? `${coupon.value}%` : `₫${coupon.value}`}
+                                                                        {coupon.minOrderValue ? ` (Min ₫${coupon.minOrderValue})` : ''}
+                                                                    </a>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                    {/* Sử dụng/Gỡ button */}
+                                                    <div>
+                                                        {appliedCoupon ? (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-danger btn-sm mt-2"
+                                                                onClick={handleRemoveCoupon}
+                                                            >
+                                                                Gỡ
+                                                            </button>
+                                                        ) : selectedCouponId ? (
+                                                            <button
+                                                                type="button"
+                                                                className="btn btn-secondary btn-sm mt-2"
+                                                                onClick={handleApplyCoupon}
+                                                            >
+                                                                Sử dụng
+                                                            </button>
+                                                        ) : null}
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     <div className="booking-information-card">
@@ -243,9 +325,9 @@ const CheckoutPage = () => {
                                         <div className="booking-info-body">
                                             <div className="payment-method-options row">
                                                 <div className="col-md-6 mb-3">
-                                                    <div 
+                                                    <div
                                                         className={`card h-100 payment-card ${paymentMethod === 'PAYOS' ? 'selected' : ''}`}
-                                                        onClick={() => setPaymentMethod('PAYOS')}
+                                                        onClick={() => handlePaymentMethodChange('PAYOS')}
                                                     >
                                                         <div className="card-body text-center" style={{ padding: '1rem' }}>
                                                             <i className="bx bx-credit-card text-primary mb-3" style={{ fontSize: '2rem' }}></i>
@@ -255,26 +337,26 @@ const CheckoutPage = () => {
                                                     </div>
                                                 </div>
 
-                                                {bookingPrice?.bookingId?.status === 'WAITING_CONFIRM' && (
-                                                    <div className="col-md-6 mb-3">
-                                                        <div 
-                                                            className={`card h-100 payment-card ${paymentMethod === 'CASH' ? 'selected' : ''}`}
-                                                            onClick={() => setPaymentMethod('CASH')}
-                                                        >
-                                                            <div className="card-body text-center" style={{ padding: '1rem' }}>
-                                                                <i className="bx bx-money text-success mb-3" style={{ fontSize: '2rem' }}></i>
-                                                                <h6>Thanh toán tiền mặt</h6>
-                                                                <p className="small text-muted mb-0">Khi hoàn thành dịch vụ</p>
-                                                            </div>
+
+                                                <div className="col-md-6 mb-3">
+                                                    <div
+                                                        className={`card h-100 payment-card ${paymentMethod === 'CASH' ? 'selected' : ''}`}
+                                                        onClick={() => handlePaymentMethodChange('CASH')}
+                                                    >
+                                                        <div className="card-body text-center" style={{ padding: '1rem' }}>
+                                                            <i className="bx bx-money text-success mb-3" style={{ fontSize: '2rem' }}></i>
+                                                            <h6>Thanh toán tiền mặt</h6>
+                                                            <p className="small text-muted mb-0">Khi hoàn thành dịch vụ</p>
                                                         </div>
                                                     </div>
-                                                )}
+                                                </div>
+
                                             </div>
                                             <div className="booking-info-btns d-flex justify-content-end">
                                                 <a href="listing-details.html" className="btn btn-secondary">Trở về</a>
                                                 <button className="btn btn-primary continue-book-btn"
                                                     onClick={handleContinueBooking}
-                                                    disabled={!bookingPrice || isProcessing || (!paymentMethod)}
+                                                    disabled={!acceptedBookingPrice || isProcessing || (!paymentMethod)}
                                                     type="submit">{isProcessing ? 'Đang xử lý...' : 'Thanh Toán'}</button>
                                             </div>
 
@@ -296,10 +378,10 @@ const CheckoutPage = () => {
                                                 <Accordion.Body className="booking-sidebar-body">
                                                     <div className="booking-car-detail">
                                                         <span className="car-img">
-                                                            <img src={bookingPrice?.technicianId?.userId?.avatar || '/img/profiles/avatar-02.jpg'} className="img-fluid" alt="Thợ" />
+                                                            <img src={acceptedBookingPrice?.technicianId?.userId?.avatar || '/img/profiles/avatar-02.jpg'} className="img-fluid" alt="Thợ" />
                                                         </span>
                                                         <div className="care-more-info">
-                                                            <h5>{bookingPrice?.technicianId?.userId?.fullName || 'Tên Thợ'}</h5>
+                                                            <h5>{acceptedBookingPrice?.technicianId?.userId?.fullName || 'Tên Thợ'}</h5>
                                                         </div>
                                                     </div>
                                                 </Accordion.Body>
@@ -312,7 +394,7 @@ const CheckoutPage = () => {
                                                 </Accordion.Header>
                                                 <Accordion.Body className="booking-sidebar-body">
                                                     <ul className="location-address-info">
-                                                        {bookingPrice?.laborPrice > 0 && (
+                                                        {acceptedBookingPrice?.laborPrice > 0 && (
                                                             <li>
                                                                 <h6>Tiền Công</h6>
                                                                 <p>{laborPrice.toFixed(2)}</p>

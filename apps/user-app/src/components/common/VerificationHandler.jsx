@@ -24,11 +24,7 @@ const VerificationHandler = () => {
             return;
         }
 
-        // Nếu đường dẫn hiện tại khác với đường dẫn trước đó và cần redirect
-        if (location.pathname !== prevPathRef.current && verificationStatus.redirectTo) {
-            prevPathRef.current = verificationStatus.redirectTo;
-            navigate(verificationStatus.redirectTo, { replace: true });
-        }
+        // Không tự động redirect, chỉ cập nhật flag để UI khác có thể sử dụng.
     }, [isAuthenticated, verificationStatus]);
 
     // Cập nhật prevPathRef khi location thay đổi

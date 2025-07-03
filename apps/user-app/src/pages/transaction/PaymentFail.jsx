@@ -7,19 +7,25 @@ import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
 import BookingWizard from "../booking/common/BookingHeader";
-import { checkAuthThunk } from '../../features/auth/authSlice';
+import { checkAuthThunk,setAuthLoading } from '../../features/auth/authSlice';
+
 
 const PaymentFail = () => {
     const dispatch = useDispatch();
-    const { loading } = useSelector(state => state.auth);
+
+    const  { loading } = useSelector(state => state.auth.loading);
+  
+    useEffect(() => {
+        dispatch(setAuthLoading(true)); // Set loading to true immediately
+        dispatch(checkAuthThunk()).finally(() => {
+        });
+      }, [dispatch]);
+    
+     
     const [searchParams] = useSearchParams();
     const [errorMessage, setErrorMessage] = useState('');
 
     const error = searchParams.get('error');
-
-    useEffect(() => {
-        dispatch(checkAuthThunk());
-    }, [dispatch]);
 
     useEffect(() => {
         setErrorMessage(error || 'Thanh toán thất bại');
@@ -32,19 +38,13 @@ const PaymentFail = () => {
         // You could navigate back to checkout or implement retry logic
     };
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center" style={{ minHeight: '80vh' }}>
-                <RingLoader color={"#1977F3"} loading={loading} size={100} />
-            </div>
-        );
-    }
+
 
     return (
         <>
             <Header />
             <BreadcrumbBar title='Thanh toán thất bại' />
-            
+
             <div className="booking-new-module">
                 <div className="container">
                     <BookingWizard activeStep={5} />
@@ -132,7 +132,7 @@ const PaymentFail = () => {
                                             </div>
 
                                             <div className="action-buttons">
-                                                <button 
+                                                <button
                                                     onClick={handleRetryPayment}
                                                     className="btn btn-primary btn-lg me-3"
                                                 >

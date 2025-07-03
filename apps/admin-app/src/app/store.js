@@ -10,8 +10,11 @@ import systemReportReducer from '../features/systemReports/systemReportSlice';
 import authReducer from '../features/auth/authSlice';
 import categoryReducer from '../features/categories/categorySlice';
 import warrantyReducer from '../features/warranty/warrantySlice';
+import technicianReducer from '../features/technician/technicianSlice';
+import transactionReducer from '../features/technician/technicianSlice';
+import transactionReducer from '../features/transactions/transactionSlice';
 
-const store = configureStore({
+export const store = configureStore({
   reducer: {
     technician: technicianReducer,
     bookings: bookingReducer,
@@ -24,7 +27,14 @@ const store = configureStore({
     auth: authReducer,
     categories: categoryReducer,
     warranty: warrantyReducer,
+    reducer: {
+      technician: technicianReducer,
+      transaction: transactionReducer
+  },
+  middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware({
+          serializableCheck: false,
+      }),
   },
 });
 
-export default store;

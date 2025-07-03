@@ -9,31 +9,23 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchQuotationsByBookingId } from '../../features/bookings/bookingSlice';
 import { acceptQuotation } from '../../features/bookings/bookingAPI';
 import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
-
+import { fetchBookingPriceInformation } from '../../features/booking-prices/bookingPriceSlice';
+import { useBookingParams } from '../../hooks/useBookingParams';
 
 function ChooseTechnician() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const [bookingId, setBookingId] = useState(null);
     const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
     const [selectedQuotationId, setSelectedQuotationId] = useState(null);
     const { quotations, status: quotationsStatus } = useSelector((state) => state.booking);
     const { quotationDetail, status: quotationStatus } = useSelector((state) => state.bookingPrice);
     const { profile, loading, error } = useSelector(state => state.technician);
+    const { bookingId, stepsForCurrentUser } = useBookingParams();
 
     const technician = profile?.technician;
     const certificates = profile?.certificates;
     const user = technician?.userId ?? {};
     const specialties = technician?.specialtiesCategories ?? [];
-
-    useEffect(() => {
-        const id = searchParams.get('bookingId');
-        setBookingId(id);
-
-        console.log('--- CHOOSE TECHNICIAN ---', id);
-
-    }, [searchParams]);
 
     useEffect(() => {
         if (bookingId) {
@@ -51,13 +43,13 @@ function ChooseTechnician() {
         dispatch(fetchBookingPriceInformation(quotationId));
     };
 
-    const handleComfirm = async (id, techId) => {
+    const handleComfirm = async (id) => {
         try {
             const res = await acceptQuotation(id);
             console.log('--- ACCEPT QUOTATION ---', res);
 
             if (res.data.success) {
-                navigate(`/booking/booking-processing?bookingId=${bookingId}&technicianId=${techId}`);
+                navigate(`/booking/booking-processing?bookingId=${bookingId}`);
             } else {
                 alert(res.data.message);
             }
@@ -75,7 +67,7 @@ function ChooseTechnician() {
 
             <div className="booking-new-module">
                 <div className="container">
-                    <BookingWizard activeStep={2} />
+                    <BookingWizard steps={stepsForCurrentUser} activeStep={2} />
 
                     <div className="booking-detail-info">
                         <div className="row">
@@ -141,7 +133,7 @@ function ChooseTechnician() {
                                                                     </button>
                                                                 </td>
                                                                 <td>
-                                                                    <button onClick={() => handleComfirm(quotation._id, quotation.technicianId._id)} className="btn btn-secondary">
+                                                                    <button onClick={() => handleComfirm(quotation._id)} className="btn btn-secondary">
                                                                         Xác nhận
                                                                     </button>
                                                                 </td>

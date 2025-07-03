@@ -1,8 +1,12 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
+
 import { checkAuthThunk } from "../features/auth/authSlice";
 import ProtectedRoute from "./access/PrivateRoute";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
+import React, { useEffect, useState } from 'react';
+
 import PrivateRoute from "./access/PrivateRoute";
 import HomePage from "../pages/home/HomePage";
 import LoginPage from "../pages/authentication/LogInPage";
@@ -24,21 +28,36 @@ import CheckoutPage from '../pages/booking/CheckoutPage';
 import PaymentSuccess from "../pages/transaction/PaymentSuccess";
 import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
+import SendQuotation from "../pages/technician/SendQuotation";
+import WaitingConfirm from "../pages/technician/WaitingConfirm";
+import CustomerDashboard from "../pages/customer/CustomerDashboard";
 
+import VideoCallPage from "../pages/video-call/VideoCallPage";
+import NotificationsPage from "../pages/notifications/NotificationPage";
+import ReceiptPage from "../pages/receipt/ReceiptPage";
+import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
+// import { checkAuthThunk } from '../features/auth/authSlice';
 export default function AppRoutes() {
-  const dispatch = useDispatch();
- const { user, registrationData, loading } = useSelector((state) => state.auth);
+  // const dispatch = useDispatch();
+  const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
+  // const [isAuthChecked, setIsAuthChecked] = useState(false);
 
-  if (loading) {
-    return (
-      <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-        <div className="spinner-border text-warning" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-        <p className="ms-3">Đang tải...</p>
-      </div>
-    );
-  }
+  //   useEffect(() => {
+  //     dispatch(checkAuthThunk()).finally(() => {
+  //       setIsAuthChecked(true);
+  //     });
+  //   }, [dispatch]);
+
+  // if (!isAuthChecked) {
+  //     return (
+  //       <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+  //         <div className="spinner-border text-warning" role="status">
+  //           <span className="visually-hidden">Loading...</span>
+  //         </div>
+  //         <p className="ms-3">Đang tải...</p>
+  //       </div>
+  //     );
+  //   }
 
   return (
     <Routes>
@@ -68,6 +87,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route
         path="/verify-email"
         element={
@@ -79,6 +99,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route
         path="/verify-otp"
         element={
@@ -111,50 +132,97 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+
       <Route path="/contract/complete" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "TECHNICIAN"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <ContractComplete />
         </PrivateRoute>
 
       } />
-      <Route path="/checkout/:bookingId/:technicianId" element={<PrivateRoute isAllowed={!!user}>
+      <Route path="/technician/deposit" element={
+        <PrivateRoute isAllowed={!!user && user.role?.name === "TECHNICIAN"}
+          redirectPath={user ? "/" : "/login"}
+        >
+          <TechnicianDeposit />
+        </PrivateRoute>
+
+      } />
+      <Route path="/checkout" element={<PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+        redirectPath={user ? "/" : "/login"}
+      >
         <CheckoutPage />
       </PrivateRoute>} />
+      <Route path="/receipts" element={
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
+          <ReceiptPage />
+        </PrivateRoute>
+      } />
+
       <Route path="/payment-success" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentSuccess />
-        </PrivateRoute>} />
+        </PrivateRoute>
+      } />
+
       <Route path="/payment-failed" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentFail />
         </PrivateRoute>
       } />
+
       <Route path="/payment-cancel" element={
-        <PrivateRoute isAllowed={!!user}>
+        <PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
+          redirectPath={user ? "/" : "/login"}
+        >
           <PaymentCancel />
         </PrivateRoute>
       } />
+
+      <Route
+        path="/notifications/all"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <NotificationsPage />
+          </PrivateRoute>
+        }
+      />
       <Route
         path="/booking"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <BookingPage />
           </PrivateRoute>
         }
       />
-       <Route
+      <Route
         path="/booking/choose-technician"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <ChooseTechnician />
           </PrivateRoute>
         }
       />
-       <Route
+      <Route
         path="/booking/booking-processing"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <BookingProcessing />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/video-call/:bookingId"
+        element={
+          <PrivateRoute isAllowed={!!user}>
+            <VideoCallPage />
           </PrivateRoute>
         }
       />
@@ -185,8 +253,39 @@ export default function AppRoutes() {
           /> 
           */}
 
+      {/* ================= TECHNICIAN PROTECTED ROUTES ================= */}
+      <Route
+        path="/technician/send-quotation"
+        element={
+          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <SendQuotation />
+          // </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/technician/waiting-confirm"
+        element={
+          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <WaitingConfirm />
+          // </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard"
+        element={
+          <PrivateRoute
+            isAllowed={!!user && user.role?.name === 'CUSTOMER'}
+          >
+            <CustomerDashboard />
+          </PrivateRoute>
+        }
+      />
+
       {/* ================= FALLBACK ROUTE ================= */}
       <Route path="*" element={<Navigate to="/" replace />} />
+
     </Routes>
   );
 }

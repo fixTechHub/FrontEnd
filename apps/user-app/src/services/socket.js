@@ -25,12 +25,20 @@ export const initializeSocket = (userId) => {
   }
 
   console.log(`Initializing new socket for user: ${userId}`);
-  socket = io(SOCKET_URL, {
-    withCredentials: true,
-    transports: ['websocket'],
-    reconnection: false, // Turn off auto-reconnect to manage it manually
-    query: { userId },
-  });
+  socket = io(
+    SOCKET_URL 
+    // || '/'
+    , {
+      // path: '/socket.io',
+      withCredentials: true,
+      transports: ['websocket'],
+      reconnection: true,
+      // reconnectionAttempts: 5,     // Max attempts
+      // reconnectionDelay: 1000,     // Start with 1s delay
+      // reconnectionDelayMax: 5000,  // Cap the delay to 5s
+      // timeout: 10000,              // Timeout for each connection attempt
+      query: { userId },
+    });
 
   socket.on('connect', () => {
     console.log(`Socket connected: ${socket.id}`);
@@ -163,133 +171,8 @@ export const onUserNotifications = (callback) => {
     };
   }
 };
-
-// Video Call Socket Functions
-export const joinCallRoom = (callId) => {
-  if (socket && socket.connected) {
-    socket.emit('join_call_room', { callId });
-  }
+export const onNotificationsCleared = (callback) => {
+  socket.on('notificationsCleared', callback);
+  return () => socket.off('notificationsCleared', callback);
 };
-
-export const leaveCallRoom = (callId) => {
-  if (socket && socket.connected) {
-    socket.emit('leave_call_room', { callId });
-  }
-};
-
-export const sendOffer = (callId, offer, targetUserId) => {
-  if (socket && socket.connected) {
-    socket.emit('offer', { callId, offer, targetUserId });
-  }
-};
-
-export const sendAnswer = (callId, answer, targetUserId) => {
-  if (socket && socket.connected) {
-    socket.emit('answer', { callId, answer, targetUserId });
-  }
-};
-
-export const sendIceCandidate = (callId, candidate, targetUserId) => {
-  if (socket && socket.connected) {
-    socket.emit('ice_candidate', { callId, candidate, targetUserId });
-  }
-};
-
-// Video Call Event Listeners
-export const onIncomingCall = (callback) => {
-  if (socket) {
-    const listener = (callData) => {
-      console.log('Received incoming call:', callData);
-      callback(callData);
-    };
-    socket.on('incoming_call', listener);
-    return () => {
-      if (socket) socket.off('incoming_call', listener);
-      console.log('Removed incoming_call listener');
-    };
-  }
-};
-
-export const onCallAccepted = (callback) => {
-  if (socket) {
-    const listener = (data) => {
-      console.log('Call accepted:', data);
-      callback(data);
-    };
-    socket.on('call_accepted', listener);
-    return () => {
-      if (socket) socket.off('call_accepted', listener);
-      console.log('Removed call_accepted listener');
-    };
-  }
-};
-
-export const onCallRejected = (callback) => {
-  if (socket) {
-    const listener = (data) => {
-      console.log('Call rejected:', data);
-      callback(data);
-    };
-    socket.on('call_rejected', listener);
-    return () => {
-      if (socket) socket.off('call_rejected', listener);
-      console.log('Removed call_rejected listener');
-    };
-  }
-};
-
-export const onCallEnded = (callback) => {
-  if (socket) {
-    const listener = (data) => {
-      console.log('Call ended:', data);
-      callback(data);
-    };
-    socket.on('call_ended', listener);
-    return () => {
-      if (socket) socket.off('call_ended', listener);
-      console.log('Removed call_ended listener');
-    };
-  }
-};
-
-export const onOffer = (callback) => {
-  if (socket) {
-    const listener = (data) => {
-      console.log('Received offer:', data);
-      callback(data);
-    };
-    socket.on('offer', listener);
-    return () => {
-      if (socket) socket.off('offer', listener);
-      console.log('Removed offer listener');
-    };
-  }
-};
-
-export const onAnswer = (callback) => {
-  if (socket) {
-    const listener = (data) => {
-      console.log('Received answer:', data);
-      callback(data);
-    };
-    socket.on('answer', listener);
-    return () => {
-      if (socket) socket.off('answer', listener);
-      console.log('Removed answer listener');
-    };
-  }
-};
-
-export const onIceCandidate = (callback) => {
-  if (socket) {
-    const listener = (data) => {
-      console.log('Received ICE candidate:', data);
-      callback(data);
-    };
-    socket.on('ice_candidate', listener);
-    return () => {
-      if (socket) socket.off('ice_candidate', listener);
-      console.log('Removed ice_candidate listener');
-    };
-  }
-};
+export const getSocket = () => socket;
