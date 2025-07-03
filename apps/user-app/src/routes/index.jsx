@@ -210,7 +210,7 @@ export default function AppRoutes() {
       <Route
         path="/booking/booking-processing"
         element={
-          <PrivateRoute requiredRole="CUSTOMER">
+          <PrivateRoute>
             <BookingProcessing />
           </PrivateRoute>
         }
