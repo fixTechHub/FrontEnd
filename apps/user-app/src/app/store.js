@@ -16,6 +16,8 @@ import quotationReducer from '../features/quotations/quotationSlice';
 import receiptReducer from '../features/receipts/receiptSlice';
 import roleReducer from '../features/roles/roleSlice';
 import warrantyReducer from '../features/booking-warranty/warrantySlice'
+import favoritesReducer from '../features/favorites/favoriteSlice';
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -33,7 +35,8 @@ export const store = configureStore({
     quotation: quotationReducer,
     receipt: receiptReducer,
     roles: roleReducer,
-    warranty: warrantyReducer
+    warranty: warrantyReducer,
+    favorites: favoritesReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

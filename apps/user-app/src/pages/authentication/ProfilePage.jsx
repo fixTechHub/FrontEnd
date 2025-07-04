@@ -28,7 +28,7 @@ import ContractStatus from '../../components/contracts/ContractStatus';
 import ApproveTechnicianTest from '../../components/admin/ApproveTechnicianTest'
 import apiClient from "../../services/apiClient";
 import TechnicianOnboardingModal from "../../components/common/TechnicianOnboardingModal";
-import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle, FaUserCircle } from 'react-icons/fa';
 
 // ------- GLOBAL FLAG --------
 // Đánh dấu đã lấy thông tin technician thành công để tránh dispatch lặp
@@ -470,6 +470,7 @@ function ProfilePage() {
   const [deactivateOtp, setDeactivateOtp] = useState("");
   const [verificationMethod, setVerificationMethod] = useState("");
   const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarError, setAvatarError] = useState(false);
   const fileInputRef = useRef(null);
 
   // Delete account states
@@ -933,7 +934,11 @@ function ProfilePage() {
     <SettingsSidebar>
       <UserProfile>
         <AvatarWrapper onClick={handleAvatarClick}>
-          <Avatar src={avatarPreview || user?.avatar || "/img/profiles/avatar-01.jpg"} alt="Ảnh đại diện" />
+          {avatarPreview || (user?.avatar && !avatarError) ? (
+            <Avatar src={avatarPreview || user?.avatar} alt="Ảnh đại diện" onError={() => setAvatarError(true)} />
+          ) : (
+            <FaUserCircle size={120} color="#000" />
+          )}
           <UploadButton>
             <i className="bi bi-camera-fill"></i>
           </UploadButton>

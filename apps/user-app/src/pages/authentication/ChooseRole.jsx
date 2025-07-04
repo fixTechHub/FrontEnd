@@ -1,15 +1,16 @@
 import React, { useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { updateRegistrationData, finalizeRegistrationThunk, clearRegistrationData, checkAuthThunk } from '../../features/auth/authSlice';
+import { updateRegistrationData, finalizeRegistrationThunk, clearRegistrationData, checkAuthThunk, updateUserState } from '../../features/auth/authSlice';
 import { toast } from 'react-toastify';
 import { FaUser, FaTools, FaCheck } from 'react-icons/fa';
+import authAPI from '../../features/auth/authAPI';
 
 function ChooseRole() {
     const [selectedRole, setSelectedRole] = useState(null);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { loading } = useSelector((state) => state.auth);
+    const { loading, user } = useSelector((state) => state.auth);
     const { items: roles } = useSelector((state) => state.roles);
 
     const handleRoleSelect = (role) => {
@@ -22,10 +23,38 @@ function ChooseRole() {
             return;
         }
 
-        // Update the role in the Redux store
+        // Case 1: User đã đăng nhập (đăng ký Google) và cần cập nhật role
+        if (user && (user.role?.name === 'PENDING' || !user.role)) {
+            try {
+                const response = await authAPI.updateRole(selectedRole);
+
+                // 1. Cập nhật Redux state ngay lập tức với role mới
+                dispatch(updateUserState(response.user));
+
+                // 2. Xác định role mới để điều hướng sớm, tránh PrivateRoute của trang hiện tại can thiệp
+                const newRole = response.user.role?.name || selectedRole;
+
+                // 3. Điều hướng ngay sang trang tương ứng
+                if (newRole === 'TECHNICIAN') {
+                    navigate('/technician/complete-profile', { replace: true });
+                } else {
+                    navigate('/', { replace: true });
+                }
+
+                // 4. Sau khi đã điều hướng, đồng bộ lại với backend (lấy technician profile, v.v.)
+                await dispatch(checkAuthThunk());
+
+                // 5. Thông báo thành công
+                toast.success('Cập nhật vai trò thành công!');
+            } catch (error) {
+                toast.error(error.message || 'Cập nhật vai trò thất bại');
+            }
+            return;
+        }
+
+        // Case 2: Người dùng đang hoàn tất đăng ký thường (email/phone)
         dispatch(updateRegistrationData({ role: selectedRole }));
 
-        // Dispatch the final registration thunk
         try {
             const result = await dispatch(finalizeRegistrationThunk()).unwrap();
             
@@ -44,7 +73,6 @@ function ChooseRole() {
 
         } catch (error) {
             toast.error(`Đăng ký thất bại: ${error.message || 'Lỗi không xác định'}`);
-            // If it fails, maybe navigate back to the start
             navigate('/register');
         }
     };
