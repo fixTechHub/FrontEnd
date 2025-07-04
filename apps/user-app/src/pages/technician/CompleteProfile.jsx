@@ -129,7 +129,7 @@ const CompleteProfile = () => {
             formDataAll.append('bankAccount', JSON.stringify(formData.bankAccount));
 
             // Gọi endpoint duy nhất
-            await apiClient.post('/technicians/complete-profile', formDataAll, {
+            const response = await apiClient.post('/technicians/complete-profile', formDataAll, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
 
@@ -329,8 +329,7 @@ const CompleteProfile = () => {
                                                     try {
                                                         const { data: { text } } = await Tesseract.recognize(
                                                             frontImage,
-                                                            'eng+vie',
-                                                            { logger: m => console.log(m) }
+                                                            'eng+vie'
                                                         );
                                                         const match = text.match(/\b\d{9}\b|\b\d{12}\b/);
                                                         if (match) {

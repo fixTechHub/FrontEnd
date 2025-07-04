@@ -109,10 +109,7 @@ export default function AppRoutes() {
       <Route
         path="/technician/complete-profile"
         element={
-          <PrivateRoute
-            isAllowed={!!user && user.role?.name === "TECHNICIAN"}
-            redirectPath={user ? "/" : "/login"}
-          >
+          <PrivateRoute requiredRole="TECHNICIAN" redirectPath={user ? "/" : "/login"}>
             <CompleteProfile />
           </PrivateRoute>
         }
@@ -192,25 +189,25 @@ export default function AppRoutes() {
       <Route
         path="/booking"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <BookingPage />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
         path="/booking/choose-technician"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <ChooseTechnician />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
         path="/booking/booking-processing"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute>
             <BookingProcessing />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
@@ -252,9 +249,9 @@ export default function AppRoutes() {
       <Route
         path="/technician/send-quotation"
         element={
-          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+          <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
             <SendQuotation />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
 

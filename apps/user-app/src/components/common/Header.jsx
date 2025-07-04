@@ -6,6 +6,7 @@ import { logoutThunk } from '../../features/auth/authSlice';
 import Swal from 'sweetalert2';
 import styled from '@emotion/styled';
 import Notifications from './Notifications';
+import { FaUserCircle } from 'react-icons/fa';
 // Styled-components for the dropdown
 const UserMenuWrapper = styled.div`
     position: relative;
@@ -95,6 +96,7 @@ function Header() {
     const categoryStatus = useSelector((state) => state.categories.status);
     const serviceStatus = useSelector((state) => state.services.status);
     const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [avatarError, setAvatarError] = useState(false);
     const menuRef = useRef(null);
 
     // Close dropdown when clicking outside
@@ -231,7 +233,11 @@ function Header() {
                                 <li className="nav-item" ref={menuRef}>
                                     <UserMenuWrapper onClick={() => setDropdownOpen(!dropdownOpen)}>
                                         <UserInfo>
-                                            <Avatar src={user.avatar || '/img/profiles/avatar-01.jpg'} alt="Avatar" />
+                                            {user.avatar && !avatarError ? (
+                                                <Avatar src={user.avatar} alt="Avatar" onError={() => setAvatarError(true)} />
+                                            ) : (
+                                                <FaUserCircle size={36} color="#000" />
+                                            )}
                                             <UserName>{user.fullName || 'Tài khoản'}</UserName>
                                             <i className={`fas fa-chevron-${dropdownOpen ? 'up' : 'down'}`} style={{ fontSize: '12px' }}></i>
                                         </UserInfo>

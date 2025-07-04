@@ -10,7 +10,6 @@ import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
-import { useBookingParams } from '../../hooks/useBookingParams';
 import { checkOutCustomerAccess } from "../../hooks/checkBookingAccess";
 
 const CheckoutPage = () => {
@@ -195,7 +194,7 @@ const CheckoutPage = () => {
         <>
             <Header />
 
-            <BreadcrumbBar title='Thanh toán' />
+            <BreadcrumbBar title='Thanh toán' subtitle={'Payment'} />
 
             <div className="booking-new-module">
                 <div className="container">

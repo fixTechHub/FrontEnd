@@ -429,13 +429,13 @@ const determineVerificationStatus = (user, technician) => {
   if (user.role?.name === 'TECHNICIAN') {
     const profileCompleted = (() => {
       if (!technician) return false;
-      // 1) Nếu backend có cờ profileCompleted
-      if (typeof technician.profileCompleted === 'boolean') return technician.profileCompleted;
-      // 2) Tự kiểm tra một số trường cơ bản
+      // Kiểm tra các trường bắt buộc thực tế có trong model
       const hasSpecialties = Array.isArray(technician.specialtiesCategories) && technician.specialtiesCategories.length > 0;
       const hasCertificates = Array.isArray(technician.certificate) && technician.certificate.length > 0;
-      const identityVerified = technician.identityVerified || false;
-      return hasSpecialties && hasCertificates && identityVerified;
+      const hasIdentification = technician.identification && technician.identification.trim() !== '';
+      const hasFrontIdImage = technician.frontIdImage && technician.frontIdImage.trim() !== '';
+      const hasBackIdImage = technician.backIdImage && technician.backIdImage.trim() !== '';
+      return hasSpecialties && hasCertificates && hasIdentification && hasFrontIdImage && hasBackIdImage;
     })();
 
     if (!profileCompleted) {
@@ -477,6 +477,7 @@ const authSlice = createSlice({
     authSuccess: (state, action) => {
       const { user, verificationStatus } = action.payload;
       state.user = user;
+      state.technician = action.payload.technician;
       state.isAuthenticated = true;
       state.loading = false;
       state.error = null;
@@ -497,6 +498,7 @@ const authSlice = createSlice({
     },
     updateUserState: (state, action) => {
       state.user = action.payload;
+      state.technician = action.payload.technician;
       state.verificationStatus = determineVerificationStatus(action.payload, state.technician);
     },
   },
@@ -512,6 +514,7 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.technician = action.payload.technician;
+        
         state.verificationStatus = determineVerificationStatus(
           action.payload.user,
           action.payload.technician
@@ -536,6 +539,7 @@ const authSlice = createSlice({
       })
       .addCase(loginThunk.fulfilled, (state, action) => {
         state.user = action.payload.user;
+        state.technician = action.payload.technician;
         state.isAuthenticated = true;
         state.loading = false;
         state.error = null;
@@ -556,6 +560,7 @@ const authSlice = createSlice({
       })
       .addCase(googleLoginThunk.fulfilled, (state, action) => {
         state.user = action.payload.user;
+        state.technician = action.payload.technician;
         state.isAuthenticated = true;
         state.loading = false;
         state.error = null;
@@ -587,6 +592,7 @@ const authSlice = createSlice({
         // Nếu có user data (từ verifyEmail), set như bình thường
         if (action.payload.user) {
           state.user = action.payload.user;
+          state.technician = action.payload.technician;
           state.isAuthenticated = true;
           state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
             action.payload.user,
@@ -608,6 +614,7 @@ const authSlice = createSlice({
       .addCase(verifyEmailThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.technician = action.payload.technician;
         state.isAuthenticated = true;
         state.error = null;
         // Sử dụng verificationStatus từ backend nếu có, nếu không thì tính toán
@@ -628,6 +635,7 @@ const authSlice = createSlice({
       .addCase(verifyOTPThunk.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
+        state.technician = action.payload.technician;
         state.isAuthenticated = true; // Đảm bảo user được authenticated
         // Sử dụng verificationStatus từ backend nếu có, nếu không thì tính toán
         state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
@@ -714,6 +722,7 @@ const authSlice = createSlice({
         // Cập nhật cả user và profile với dữ liệu mới
         const updatedData = action.payload;
         state.user = updatedData;
+        state.technician = updatedData.technician;
         if (state.profile) {
           state.profile = {
             ...state.profile,
@@ -841,6 +850,7 @@ const authSlice = createSlice({
       .addCase(verifyPhoneChangeThunk.fulfilled, (state, action) => {
         state.updateLoading = false;
         state.user = action.payload.user;
+        state.technician = action.payload.technician;
       })
       .addCase(verifyPhoneChangeThunk.rejected, (state, action) => {
         state.updateLoading = false;
