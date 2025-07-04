@@ -22,4 +22,15 @@ export const bookingAPI = {
             throw error;
         }
     },
+
+    // Get booking count by month
+    getBookingCountByMonth: async (year, month) => {
+        try {
+            const response = await ApiBE.get(`/Dashboard/booking-count?year=${year}&month=${month}`);
+            return response.data;
+        } catch (error) {
+            console.error('Get booking count by month error:', error);
+            throw error;
+        }
+    },
 };

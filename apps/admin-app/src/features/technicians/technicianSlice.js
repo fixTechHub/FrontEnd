@@ -1,10 +1,25 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { technicianAPI } from './techniciansAPI';
+
+export const getTechnicianCountByMonth = createAsyncThunk(
+  'technicians/getTechnicianCountByMonth',
+  async ({ year, month }, thunkAPI) => {
+    try {
+      return await technicianAPI.getTechnicianCountByMonth(year, month);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
 
 const initialState = {
   technicians: [],
   selectedTechnician: null,
   loading: false,
   error: null,
+  technicianCount: null,
+  technicianCountLoading: false,
+  technicianCountError: null,
   filters: {
     search: '',
     status: '',
@@ -54,6 +69,21 @@ const technicianSlice = createSlice({
     removeTechnician: (state, action) => {
       state.technicians = state.technicians.filter(technician => technician.id !== action.payload);
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(getTechnicianCountByMonth.pending, (state) => {
+        state.technicianCountLoading = true;
+        state.technicianCountError = null;
+      })
+      .addCase(getTechnicianCountByMonth.fulfilled, (state, action) => {
+        state.technicianCountLoading = false;
+        state.technicianCount = action.payload;
+      })
+      .addCase(getTechnicianCountByMonth.rejected, (state, action) => {
+        state.technicianCountLoading = false;
+        state.technicianCountError = action.payload;
+      });
   },
 });
 

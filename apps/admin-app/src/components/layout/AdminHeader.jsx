@@ -3,9 +3,7 @@ import { FaBell, FaUserCircle, FaPlus, FaDownload, FaPrint } from 'react-icons/f
 
 const AdminHeader = () => (
   <header className="admin-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 16, background: '#fff', borderBottom: '1px solid #eee' }}>
-    <button className="btn btn-primary" style={{ background: '#FFA726', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 20px', fontWeight: 'bold', fontSize: 16 }}>
-      <FaPlus style={{ marginRight: 8 }} /> New Reservation
-    </button>
+    
     <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
       <button className="btn" style={{ background: '#f5f5f5', border: 'none', borderRadius: 6, padding: 8 }}><FaPrint /></button>
       <button className="btn" style={{ background: '#f5f5f5', border: 'none', borderRadius: 6, padding: 8 }}><FaDownload /> Export</button>

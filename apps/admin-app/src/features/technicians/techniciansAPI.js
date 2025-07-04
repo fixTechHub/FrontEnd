@@ -36,4 +36,15 @@ export const technicianAPI = {
             throw error;
         }
     },
+
+    // Get technician count by month
+    getTechnicianCountByMonth: async (year, month) => {
+        try {
+            const response = await ApiBE.get(`/Dashboard/technician-count?year=${year}&month=${month}`);
+            return response.data;
+        } catch (error) {
+            console.error('Get technician count by month error:', error);
+            throw error;
+        }
+    },
 };

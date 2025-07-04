@@ -6,17 +6,38 @@ import { Link } from 'react-router-dom';
 import Footer from '../common/Footer';
 
 
+
+
 const AdminLayout = () => (
-  <div className="admin-layout" style={{ display: 'flex', minHeight: '100vh' }}>
-    <Sidebar />
-    <div className="admin-main" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <AdminHeader />
-      <div className="admin-content" style={{ padding: 24, background: '#f8f9fa', flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Outlet />
-      </div>
-      <Footer />
-    </div>
-  </div>
+ <div className="container-fluid p-0 m-0">
+ <div className="row g-0 min-vh-100">
+   {/* Sidebar bên trái */}
+   <div className="col-2">
+     <Sidebar />
+   </div>
+   {/* Khu vực nội dung chính */}
+   <div className="col-10 d-flex flex-column">
+     {/* Header */}
+     <AdminHeader />
+
+
+     {/* Nội dung chính */}
+     <div className="admin-content flex-grow-1 p-3 bg-light">
+       <Outlet />
+     </div>
+
+
+     {/* Footer */}
+     <Footer />
+   </div>
+ </div>
+</div>
+
+
+
+
 );
 
+
 export default AdminLayout;
+

@@ -1,10 +1,25 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { bookingAPI } from './bookingAPI';
+
+export const getBookingCountByMonth = createAsyncThunk(
+  'bookings/getBookingCountByMonth',
+  async ({ year, month }, thunkAPI) => {
+    try {
+      return await bookingAPI.getBookingCountByMonth(year, month);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
 
 const initialState = {
   bookings: [],
   selectedBooking: null,
   loading: false,
   error: null,
+  bookingCount: null,
+  bookingCountLoading: false,
+  bookingCountError: null,
   filters: {
     search: '',
     status: '',
@@ -53,6 +68,21 @@ const bookingSlice = createSlice({
     removeBooking: (state, action) => {
       state.bookings = state.bookings.filter(booking => booking.id !== action.payload);
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(getBookingCountByMonth.pending, (state) => {
+        state.bookingCountLoading = true;
+        state.bookingCountError = null;
+      })
+      .addCase(getBookingCountByMonth.fulfilled, (state, action) => {
+        state.bookingCountLoading = false;
+        state.bookingCount = action.payload;
+      })
+      .addCase(getBookingCountByMonth.rejected, (state, action) => {
+        state.bookingCountLoading = false;
+        state.bookingCountError = action.payload;
+      });
   },
 });
 

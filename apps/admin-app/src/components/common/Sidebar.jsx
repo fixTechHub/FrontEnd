@@ -182,7 +182,6 @@ const Sidebar = () => {
                       style={currentPath === "/admin/coupon-management" ? customStyles.activeMenuItem : {}}>
                   <FaTag className="me-3" style={{width: '20px', ...(currentPath === "/admin/coupon-management" ? customStyles.activeIcon : {})}} />
                   <span>Coupon</span>
-                  <span className="ms-auto" style={customStyles.count}>5</span>
                 </Link>
               </li>
               <li>
@@ -197,6 +196,13 @@ const Sidebar = () => {
                       style={currentPath === "/admin/category-management" ? customStyles.activeMenuItem : {}}>
                   <FaListAlt className="me-3" style={{width: '20px', ...(currentPath === "/admin/category-management" ? customStyles.activeIcon : {})}} />
                   <span>Category</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/service-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/service-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/service-management" ? customStyles.activeMenuItem : {}}>
+                  <FaTag className="me-3" style={{width: '20px', ...(currentPath === "/admin/service-management" ? customStyles.activeIcon : {})}} />
+                  <span>Service</span>
                 </Link>
               </li>
             </ul>
