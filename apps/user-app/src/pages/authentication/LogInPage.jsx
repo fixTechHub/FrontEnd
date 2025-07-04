@@ -155,12 +155,17 @@ function LogInPage() {
       // Hiển thị thông báo thành công
       if (result.wasReactivated) {
         toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
+      } else if (result.user.role?.name === 'PENDING' || !result.user.role) {
+        toast.info("Vui lòng chọn vai trò để hoàn tất đăng ký.");
       } else {
         toast.success("Đăng nhập thành công!");
       }
       
-      // Không tự động chuyển hướng tới trang xác thực; chỉ điều hướng theo vai trò.
-      if (result.user.role.name === "ADMIN") {
+      // Điều hướng sau khi đăng nhập Google
+      if (result.user.role?.name === "PENDING" || !result.user.role) {
+        // Người dùng mới cần chọn vai trò
+        navigate('/choose-role', { replace: true });
+      } else if (result.user.role.name === "ADMIN") {
         navigate("/admin/dashboard", { replace: true });
       } else {
         navigate("/", { replace: true });
@@ -195,15 +200,20 @@ function LogInPage() {
               verificationStatus: result.verificationStatus
             }));
 
-            // Hiển thị thông báo thành công
+            // Thông báo tuỳ theo trạng thái
             if (result.wasReactivated) {
               toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
+            } else if (result.user.role?.name === 'PENDING' || !result.user.role) {
+              toast.info("Vui lòng chọn vai trò để hoàn tất đăng ký.");
             } else {
               toast.success("Đăng nhập thành công!");
             }
 
-            // Không tự động chuyển hướng tới trang xác thực.
-            if (result.user.role.name === "ADMIN") {
+            // Điều hướng sau khi đăng nhập Google
+            if (result.user.role?.name === "PENDING" || !result.user.role) {
+              // Người dùng mới cần chọn vai trò
+              navigate('/choose-role', { replace: true });
+            } else if (result.user.role.name === "ADMIN") {
               navigate("/admin/dashboard", { replace: true });
             } else {
               navigate("/", { replace: true });

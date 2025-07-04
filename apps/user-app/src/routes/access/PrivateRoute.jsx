@@ -48,6 +48,17 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
                 redirectMessage = (verificationStatus?.message || redirectMessage) + ' Bạn cần hoàn tất trước khi có thể gọi video.';
             }
 
+            // Trường hợp đặc biệt: user vừa chọn vai trò TECHNICIAN trên trang /choose-role
+            // Khi Redux đã cập nhật role nhưng vẫn còn ở trang /choose-role, cho phép chuyển
+            // thẳng sang trang hoàn thiện hồ sơ thay vì báo lỗi quyền truy cập.
+            if (location.pathname === '/choose-role' && user?.role?.name === 'TECHNICIAN') {
+                return {
+                    path: '/technician/complete-profile',
+                    message: null,
+                    state: { from: location }
+                };
+            }
+
             return {
                 path: isAuthenticated ? '/' : '/login', // nếu đã login nhưng không đủ quyền -> về home
                 message: redirectMessage,
@@ -78,7 +89,7 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
 
         // Không cần redirect
         return null;
-    }, [computedAllowed, requiredRole, redirectPath, location, verificationStatus, isAuthenticated, unauthorizedMessage]);
+    }, [computedAllowed, requiredRole, redirectPath, location, verificationStatus, isAuthenticated, unauthorizedMessage, user]);
 
     // Cập nhật prevPathRef khi location thay đổi
     if (location.pathname !== prevPathRef.current) {

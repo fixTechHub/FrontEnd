@@ -1,6 +1,9 @@
 import Header from "../../components/common/Header";
 import Footer from "../../components/common/Footer";
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from 'react-redux';
+import { getFavoritesThunk, removeFavoriteThunk } from '../../features/favorites/favoriteSlice';
+import { fetchNotificationsThunk } from '../../features/notifications/notificationSlice';
 
 // ---------- Breadcrumb -----------
 const BreadcrumbSection = () => (
@@ -8,11 +11,11 @@ const BreadcrumbSection = () => (
 		<div className="container">
 			<div className="row align-items-center text-center">
 				<div className="col-md-12 col-12">
-					<h2 className="breadcrumb-title">User Dashboard</h2>
+					<h2 className="breadcrumb-title">Bảng điều khiển</h2>
 					<nav aria-label="breadcrumb" className="page-breadcrumb">
 						<ol className="breadcrumb">
-							<li className="breadcrumb-item"><a href="/">Home</a></li>
-							<li className="breadcrumb-item active" aria-current="page">User Dashboard</li>
+							<li className="breadcrumb-item"><a href="/">Trang chủ</a></li>
+							<li className="breadcrumb-item active" aria-current="page">Bảng điều khiển</li>
 						</ol>
 					</nav>
 				</div>
@@ -22,7 +25,7 @@ const BreadcrumbSection = () => (
 );
 
 // ---------- Dashboard Menu -----------
-const DashboardMenu = () => (
+const DashboardMenu = ({ activeTab, onSelect }) => (
 	<div className="dashboard-section">
 		<div className="container">
 			<div className="row">
@@ -30,21 +33,28 @@ const DashboardMenu = () => (
 					<div className="dashboard-menu">
 						<ul>
 							{[
-								{ icon: "dashboard", text: "Dashboard", active: true },
-								{ icon: "booking", text: "My Bookings" },
-								{ icon: "review", text: "Reviews" },
-								{ icon: "wishlist", text: "Wishlist" },
-								{ icon: "message", text: "Messages" },
-								{ icon: "wallet", text: "My Wallet" },
-								{ icon: "payment", text: "Payments" },
-								{ icon: "settings", text: "Settings" },
+								{ icon: "dashboard", text: "Bảng điều khiển", section: 'DASHBOARD' },
+								{ icon: "booking", text: "Đặt lịch của tôi", section: 'BOOKINGS' },
+								{ icon: "tool", text: "Bảo hành", iconPath: "/img/icons/service-07.svg", section: 'WARRANTY' },
+								{ icon: "wishlist", text: "KTV yêu thích", section: 'FAVORITES' },
+								{ icon: "payment", text: "Phiếu giảm giá", section: 'COUPONS' },
 							].map((item) => (
 								<li key={item.text}>
 									<a
-										href="#" /* TODO: replace with React Router links */
-										className={item.active ? "active" : ""}
+										href="#" onClick={(e)=>{e.preventDefault();onSelect(item.section);}}
+										className={activeTab===item.section? "active" : ""}
 									>
-										<img src={`/img/icons/${item.icon}-icon.svg`} alt="icon" />
+										<img
+											src={item.iconPath || `/img/icons/${item.icon}-icon.svg`}
+											alt="icon"
+											style={{
+												width: 24,
+												height: 24,
+												filter: item.active
+													? 'brightness(0) invert(1)'
+													: 'brightness(0) saturate(0) invert(40%)',
+											}}
+										/>
 										<span>{item.text}</span>
 									</a>
 								</li>
@@ -63,21 +73,21 @@ const StatusList = () => (
 		<li className="approve-item">
 			<div className="status-info">
 				<span><i className="fa-solid fa-calendar-days" /></span>
-				<p>Your Booking has been Approved by admin</p>
+				<p>Đơn đặt lịch của bạn đã được quản trị viên phê duyệt</p>
 			</div>
-			<a href="#" className="view-detail">View Details</a>
+			<a href="#" className="view-detail">Xem chi tiết</a>
 		</li>
 		<li>
 			<div className="status-info">
 				<span><i className="fa-solid fa-money-bill" /></span>
-				<p>Your Refund request has been approved by admin &amp; your payment will be updated in 3 days.</p>
+				<p>Yêu cầu hoàn tiền của bạn đã được chấp nhận, số tiền sẽ được cập nhật trong 3 ngày.</p>
 			</div>
 			<a href="#" className="close-link"><i className="feather-x" /></a>
 		</li>
 		<li className="bg-danger-light">
 			<div className="status-info">
 				<span><i className="fa-solid fa-money-bill" /></span>
-				<p>Your Refund request has been rejected by admin <a href="#">View Reason</a></p>
+				<p>Yêu cầu hoàn tiền của bạn đã bị từ chối <a href="#">Xem lý do</a></p>
 			</div>
 			<a href="#" className="close-link"><i className="feather-x" /></a>
 		</li>
@@ -85,7 +95,7 @@ const StatusList = () => (
 );
 
 // ---------- Widget Item component -----------
-const WidgetItem = ({ icon, title, value, color }) => (
+const WidgetItem = ({ icon, title, value, color, iconPath }) => (
 	<div className="col-lg-3 col-md-6 d-flex">
 		<div className="widget-box flex-fill">
 			<div className="widget-header">
@@ -95,24 +105,23 @@ const WidgetItem = ({ icon, title, value, color }) => (
 				</div>
 				<div className="widget-icon">
 					<span className={color ? `bg-${color}` : ""}>
-						<img src={`/img/icons/${icon}-icon.svg`} alt="icon" />
+						<img src={iconPath || `/img/icons/${icon}-icon.svg`} alt="icon" style={{ filter: 'brightness(0) invert(1)' }} />
 					</span>
 				</div>
 			</div>
 			<a href="#" className="view-link">
-				View Details <i className="feather-arrow-right" />
+				Xem chi tiết <i className="feather-arrow-right" />
 			</a>
 		</div>
 	</div>
 );
 
 // ---------- Widgets Row -----------
-const WidgetsRow = () => (
+const WidgetsRow = ({ stats }) => (
 	<div className="row">
-		<WidgetItem icon="book" title="My Bookings" value="450" />
-		<WidgetItem icon="balance" title="Wallet Balance" value="$24,665" color="warning" />
-		<WidgetItem icon="transaction" title="Total Transactions" value="$15,210" color="success" />
-		<WidgetItem icon="cars" title="Wishlist Cars" value="24" color="danger" />
+		{stats.map((item) => (
+			<WidgetItem key={item.title} {...item} />
+		))}
 	</div>
 );
 
@@ -171,7 +180,7 @@ const LastBookingsCard = () => (
 			<div className="card-header">
 				<div className="row align-items-center">
 					<div className="col-sm-5">
-						<h5>Last 5 Bookings</h5>
+						<h5>Đơn đặt lịch gần đây</h5>
 					</div>
 					<div className="col-sm-7 text-sm-end">
 						<div className="booking-select">
@@ -180,7 +189,7 @@ const LastBookingsCard = () => (
 								<option>Last 7 Days</option>
 							</select>
 							<a href="#" className="view-link">
-								View all Bookings
+								Xem tất cả
 							</a>
 						</div>
 					</div>
@@ -204,15 +213,15 @@ const LastBookingsCard = () => (
 										</div>
 									</td>
 									<td>
-										<h6>Start date</h6>
+										<h6>Ngày bắt đầu</h6>
 										<p>{b.start}</p>
 									</td>
 									<td>
-										<h6>End Date</h6>
+										<h6>Ngày kết thúc</h6>
 										<p>{b.end}</p>
 									</td>
 									<td>
-										<h6>Price</h6>
+										<h6>Giá</h6>
 										<h5 className="text-danger">{b.price}</h5>
 									</td>
 									<td>
@@ -266,7 +275,7 @@ const RecentTransactionsCard = () => (
 			<div className="card-header">
 				<div className="row align-items-center">
 					<div className="col-sm-6">
-						<h5>Recent Transaction</h5>
+						<h5>Mã giảm giá hiện có</h5>
 					</div>
 					<div className="col-sm-6 text-sm-end">
 						<div className="booking-select">
@@ -292,7 +301,7 @@ const RecentTransactionsCard = () => (
 												</a>
 												<div className="table-head-name flex-grow-1">
 													<a href="#">{t.name}</a>
-													<p>Rent Type : {t.rentType}</p>
+													<p>Loại thuê : {t.rentType}</p>
 												</div>
 											</div>
 										</td>
@@ -303,7 +312,7 @@ const RecentTransactionsCard = () => (
 									<tr>
 										<td colSpan={2} className="pt-0 pb-0 border-0">
 											<div className="status-box">
-												<p><span>Status : </span>{t.detail}</p>
+												<p><span>Trạng thái : </span>{t.detail}</p>
 											</div>
 										</td>
 									</tr>
@@ -325,26 +334,115 @@ const CardsRow = () => (
 	</div>
 );
 
+// ---------- Favorite Technicians Section -----------
+const FavoriteTechniciansSection = ({ favorites, loading, onRemove }) => (
+	<div className="card user-card flex-fill mt-4">
+		<div className="card-header d-flex justify-content-between align-items-center">
+			<h5 className="mb-0">Kỹ thuật viên yêu thích</h5>
+			{/* Could add link to full list if needed */}
+		</div>
+		<div className="card-body">
+			{loading ? (
+				<p>Loading...</p>
+			) : favorites.length === 0 ? (
+				<p>Bạn chưa có kỹ thuật viên yêu thích.</p>
+			) : (
+				<div className="row">
+					{favorites.map(fav => {
+						const tech = fav.technicianId;
+						if (!tech) return null;
+						const user = tech.userId || {};
+						return (
+							<div className="col-md-4 mb-3" key={fav._id}>
+								<div className="border rounded p-3 h-100 d-flex flex-column">
+									<div className="d-flex align-items-center mb-2">
+										<img src={user.avatar} alt="avatar" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', marginRight: 12 }} />
+										<div className="flex-grow-1">
+											<h6 className="mb-0">{user.fullName}</h6>
+											<small>Kinh nghiệm: {tech.experienceYears} năm</small>
+										</div>
+									</div>
+									<button className="btn btn-outline-danger btn-sm mt-auto align-self-end" onClick={() => onRemove(tech._id)}>
+										Bỏ yêu thích
+									</button>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	</div>
+);
+
 // ---------- Main Page -----------
 function CustomerDashboard() {
+	const dispatch = useDispatch();
+	const { list: favorites, loading: favLoading } = useSelector(state => state.favorites);
+	const bookingsCount = useSelector(state => state.booking.bookings?.length || 0);
+	const warrantyState = useSelector(state => state.warranty);
+	const warrantyCount = warrantyState?.warranty ? 1 : 0; // Hiện tại chỉ có 1 bản ghi khi yêu cầu, sau này có thể thay bằng mảng
+	const couponsCount = useSelector(state => state.bookingPrice?.userCoupons?.length || 0);
+
+	const favoritesCount = favorites?.length || 0;
+
+	const [activeTab, setActiveTab] = useState('DASHBOARD');
+
+	const handleRemoveFavorite = (technicianId) => {
+		dispatch(removeFavoriteThunk(technicianId));
+	};
+
+	useEffect(() => {
+		dispatch(getFavoritesThunk());
+		dispatch(fetchNotificationsThunk());
+	}, [dispatch]);
+
 	return (
 		<>
 			<Header />
 
 			<BreadcrumbSection />
-			<DashboardMenu />
+			<DashboardMenu activeTab={activeTab} onSelect={setActiveTab} />
 
 			<div className="content dashboard-content">
 				<div className="container">
 					<StatusList />
 
 					<div className="content-header">
-						<h4>Dashboard</h4>
+						<h4>Bảng điều khiển</h4>
 					</div>
 
-					<WidgetsRow />
+					{activeTab==='DASHBOARD' && (
+						<>
+							{(() => {
+								const widgetsData = [
+									{ icon: 'book', title: 'Đơn đã đặt', value: bookingsCount },
+									{ icon: 'tool', title: 'Đơn đã bảo hành', value: warrantyCount, color: 'primary', iconPath: '/img/icons/service-07.svg', size: 32 },
+									{ icon: 'wishlist', title: 'KTV yêu thích', value: favoritesCount, color: 'danger' },
+									{ icon: 'payment', title: 'Phiếu giảm giá', value: couponsCount, color: 'info' },
+								];
+								return <WidgetsRow stats={widgetsData} />;
+							})()}
 
-					<CardsRow />
+							<CardsRow />
+						</>
+					)}
+
+					{activeTab==='BOOKINGS' && (
+						<LastBookingsCard />
+					)}
+
+					{activeTab==='WARRANTY' && (
+						<div className="mt-4"><h5>Danh sách bảo hành (đang phát triển)</h5></div>
+					)}
+
+					{activeTab==='FAVORITES' && (
+						<FavoriteTechniciansSection favorites={favorites} loading={favLoading} onRemove={handleRemoveFavorite} />
+					)}
+
+					{activeTab==='COUPONS' && (
+						<div className="mt-4"><h5>Phiếu giảm giá (đang phát triển)</h5></div>
+					)}
 				</div>
 			</div>
 
