@@ -114,7 +114,7 @@ const BookingHistory = () => {
                 `Yêu cầu bảo hành thành công, Vui lòng đợi trong vòng 24h để thợ phản hồi`
             );
             handleWarrantyModalClose();
-            navigate(`/warranty?bookingWarrantyId=${result._id}`);
+            // navigate(`/warranty?bookingWarrantyId=${result._id}`);
             dispatch(resetWarrantyState());
         } catch (err) {
             setWarrantyReasonError(err || 'Đã xảy ra lỗi khi yêu cầu bảo hành');

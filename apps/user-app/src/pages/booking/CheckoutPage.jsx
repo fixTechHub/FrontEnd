@@ -157,7 +157,7 @@ const CheckoutPage = () => {
                 // For cash payments, the backend already handles everything
                 // Just show success message and redirect
                 toast.success('Đặt hàng thành công! Vui lòng thanh toán bằng tiền mặt.');
-                navigate('/payment-success');
+                navigate('/feedback');
             }
 
         } catch (err) {
@@ -184,10 +184,13 @@ const CheckoutPage = () => {
 
 
 
-    if (error) {
-        return <div className="text-center py-5">Error: {error}</div>;
-    }
-
+    useEffect(() => {
+        if (error) {
+          toast.error("Bạn không có quyền truy cập trang này.");
+          const redirectPath = location.state?.from?.pathname || '/';
+          navigate(redirectPath, { replace: true });
+        }
+      }, [error, navigate]);
 
 
     return (

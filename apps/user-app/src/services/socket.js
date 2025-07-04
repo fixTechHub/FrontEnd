@@ -17,7 +17,7 @@ export const initializeSocket = (userId) => {
     console.log(`Socket already connected: ${socket.id}`);
     return;
   }
-  
+
   // If a socket instance exists but is disconnected, disconnect it fully
   // to ensure a clean slate before creating a new one.
   if (socket) {
@@ -26,7 +26,7 @@ export const initializeSocket = (userId) => {
 
   console.log(`Initializing new socket for user: ${userId}`);
   socket = io(
-    SOCKET_URL 
+    SOCKET_URL
     // || '/'
     , {
       // path: '/socket.io',
@@ -67,20 +67,71 @@ export const sendMessage = (message) => {
   }
 };
 
-export const onReceiveMessage = (callback) => {
-  if (socket) {
+// export const onReceiveMessage = (callback) => {
+//   if (socket) {
+//     const listener = (message) => {
+//       console.log('Received message:', message);
+//       callback(message);
+//     };
+//     socket.on('receiveMessage', listener);
+//     // return () => {
+//     //   if (socket) socket.off('receiveMessage', listener);
+//     //   console.log('Removed receiveMessage listener');
+//     // };
+//     const room = socket.bookingWarrantyId
+//             ? `warranty:${socket.bookingWarrantyId}:user:${socket.userId}`
+//             : socket.bookingId
+//                 ? `booking:${socket.bookingId}:user:${socket.userId}`
+//                 : `user:${socket.userId}`;
+//         socket.emit('joinChatRoom', room);
+
+//         return () => {
+//             if (socket) {
+//                 socket.off('receiveMessage', listener);
+//                 socket.emit('leaveRoom', room);
+//                 console.log('Removed receiveMessage listener and left room:', room);
+//             }
+//         };
+//   }
+// };
+export const onReceiveMessage = ({
+  socket,
+  userId,
+  bookingId = null,
+  bookingWarrantyId = null,
+  callback,
+}) => {
+  if (socket && userId) {
+    // 1️⃣ Prepare listener
     const listener = (message) => {
       console.log('Received message:', message);
       callback(message);
     };
     socket.on('receiveMessage', listener);
+
+    // 2️⃣ Build room name
+    const room = bookingWarrantyId
+      ? `warranty:${bookingWarrantyId}:user:${userId}`
+      : bookingId
+        ? `booking:${bookingId}:user:${userId}`
+        : `user:${userId}`; // fallback, but you probably won’t use this for messages
+
+    // 3️⃣ Join room
+    socket.emit('joinChatRoom', {
+      type: bookingWarrantyId ? 'warranty' : 'booking',
+      bookingId,
+      warrantyId: bookingWarrantyId,
+    });
+    console.log('Joined room:', room);
+
+    // 4️⃣ Cleanup
     return () => {
-      if (socket) socket.off('receiveMessage', listener);
-      console.log('Removed receiveMessage listener');
+      socket.off('receiveMessage', listener);
+      socket.emit('leaveRoom', { room });
+      console.log('Removed listener & left room:', room);
     };
   }
 };
-
 export const onReceiveNotification = (callback) => {
   if (socket) {
     const listener = (notification) => {

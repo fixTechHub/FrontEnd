@@ -127,7 +127,10 @@ const VideoCallPage = () => {
 
     const handleCallUser = (data) => {
       console.log('Received callUser event:', data);
-      if (!callAccepted && !hasCalled.current) {
+      const { from, name, signal, sessionId, bookingId: incomingBookingId, warrantyId: incomingWarrantyId } = data;
+      const isValidCall = (incomingBookingId && incomingBookingId === bookingId) ||
+        (incomingWarrantyId && incomingWarrantyId === bookingWarrantyId);
+      if (isValidCall && !callAccepted && !hasCalled.current) {
         // Reset hasCalled if not in a call
         hasCalled.current = false;
         setStream(null); // Clear stream to force reinitialization
@@ -150,6 +153,7 @@ const VideoCallPage = () => {
           connectionRef.current = null;
         }
         stopStream('call ended');
+        hasCalled.current = false;
         const redirectPath = bookingWarrantyId
           ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
           : `/booking/booking-processing?bookingId=${bookingId}`;
@@ -166,6 +170,8 @@ const VideoCallPage = () => {
       stopStream('call declined');
       dispatch(setCallEnded(true)); // Reset call state
       hasCalled.current = false; // Allow initiating a new call
+      socket.emit('callDeclined', { to: data.from, from: user._id, sessionId: currentSessionId }); // Ensure notification
+      toast.info(`Call declined by ${data.from}`, { position: 'top-right', autoClose: 3000 });
       const redirectPath = bookingWarrantyId
         ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
         : `/booking/booking-processing?bookingId=${bookingId}`;
@@ -222,7 +228,8 @@ const VideoCallPage = () => {
             // Fallback: emit decline event directly
             socket.emit('callDeclined', {
               to: otherUserId,
-              from: user._id
+              from: user._id,
+              sessionId: currentSessionId
             });
           });
         }
@@ -287,9 +294,17 @@ const VideoCallPage = () => {
           bookingId,
           to: id,
           signalData: data,
-          name: user.fullName
+          name: user.fullName,
+          warrantyId: bookingWarrantyId || null
         })).unwrap();
-
+        socket.emit('callUser', {
+          userToCall: id,
+          signalData: data,
+          from: user._id,
+          name: user.fullName,
+          bookingId: bookingWarrantyId ? null : bookingId,
+          warrantyId: bookingWarrantyId || null
+        });
         console.log('Call initiated successfully with sessionId:', result.sessionId);
       } catch (error) {
         console.error('Failed to initiate call:', error);
@@ -330,8 +345,12 @@ const VideoCallPage = () => {
       dispatch(setCallAccepted(true));
       peer.signal(signal);
     });
-
+  
     connectionRef.current = peer;
+    return () => {
+      socket.off('callAccepted');
+      
+    };
   };
 
   const answerIncomingCall = (incomingCallData) => {
@@ -403,10 +422,11 @@ const VideoCallPage = () => {
           sessionId: currentSessionId,
           to: otherUserId
         })).unwrap();
-
+        socket.emit('callEnded', { to: otherUserId, sessionId: currentSessionId });
         console.log('Call ended successfully');
       } catch (error) {
         console.error('Failed to end call:', error);
+        socket.emit('callEnded', { to: otherUserId, sessionId: currentSessionId });
       }
     }
 
@@ -469,11 +489,9 @@ const VideoCallPage = () => {
         </div>
       </div>
       <div className="custom-controls">
-        {callAccepted && !callEnded && (
-          <button className="custom-btn-hangup" onClick={leaveCall}>
-            <MdCallEnd size={24} color="white" />
-          </button>
-        )}
+        <button className="custom-btn-hangup" onClick={leaveCall}>
+          <MdCallEnd size={24} color="white" />
+        </button>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import { useBookingParams } from "../../hooks/useBookingParams";
 import { checkBookingAccess } from "../../hooks/checkBookingAccess";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchBookingById } from "../../features/bookings/bookingSlice";
+import { toast } from 'react-toastify';
 function BookingProcessing() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -68,9 +69,13 @@ function BookingProcessing() {
     };
  
 
-    if (!isAuthorized) {
-        return authError ? <div>Error: {authError}</div> : null;
-    }
+    useEffect(() => {
+        if (error) {
+          toast.error("Bạn không có quyền truy cập trang này.");
+          const redirectPath = location.state?.from?.pathname || '/';
+          navigate(redirectPath, { replace: true });
+        }
+      }, [error, navigate]);
     return (
         <>
             <Header />
@@ -102,7 +107,7 @@ function BookingProcessing() {
                     <div className="text-end my-4">
 
                         {user?.role?.name === 'CUSTOMER'
-                            && booking.status === 'WAITING_CONFIRM'
+                            && booking?.status === 'WAITING_CONFIRM'
                             && (
                                 <button
                                     className="btn btn-primary"

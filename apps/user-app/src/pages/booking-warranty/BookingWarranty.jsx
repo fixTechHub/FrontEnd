@@ -55,7 +55,7 @@ function BookingWarranty() {
         if (isChecking) return;
         if (isAuthorized === false) {
             const redirectPath = location.state?.from?.pathname || '/';
-            toast.warn(`Access denied: ${authError || 'You are not authorized to view this warranty.'}`, {
+            toast.warn(`Từ chối : ${authError || 'Bạn không có quyền được vào trang này.'}`, {
                 position: 'top-right',
                 autoClose: 5000,
             });
@@ -70,7 +70,7 @@ function BookingWarranty() {
             if (data.bookingWarrantyId === bookingWarrantyId) {
                 console.log('Warranty updated via socket, refetching data:', data);
                 dispatch(getWarrantyInformationThunk(bookingWarrantyId));
-                toast.info(`Warranty status updated to ${data.status || 'unknown'}.`, {
+                toast.info(`Trạng thái bảo hành : ${data.status || 'unknown'}.`, {
                     position: 'top-right',
                     autoClose: 5000,
                 });

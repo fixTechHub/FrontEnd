@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { addMessage, sendMessageThunk, fetchMessagesThunk } from '../../features/messages/messageSlice';
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { setCallEnded, setCurrentSessionId, declineCall } from '../../features/video-call/videoCallSlice';
-import { onReceiveMessage, getSocket } from '../../services/socket';
+import { onReceiveMessage, getSocket, initializeSocket } from '../../services/socket';
+import { getWarrantyInformationThunk } from '../../features/booking-warranty/warrantySlice';
 import './MessageBox.css'; // Import custom styles
 const MessageBox = ({ bookingId, bookingWarrantyId }) => {
     const dispatch = useDispatch();
@@ -12,6 +13,7 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
     const { user } = useSelector((state) => state.auth);
     const { booking, loading: bookingLoading, error: bookingError } = useSelector((state) => state.booking);
     const { messages, loading: messagesLoading, error: messagesError, sending } = useSelector((state) => state.messages);
+    const { warranty, loading: warrantyLoading } = useSelector((state) => state.warranty);
     const [messageContent, setMessageContent] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
     const messagesEndRef = useRef(null);
@@ -19,38 +21,97 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
     const [incomingCall, setIncomingCall] = useState(null); // { from, name, signal, sessionId }
     const [filePreview, setFilePreview] = useState(null);
     const [previewImage, setPreviewImage] = useState(null); // already present
-    const otherParticipant = user?.role?.name === 'TECHNICIAN'
-        ? booking?.customerId
-        : booking?.technicianId?.userId;
+    const otherParticipant = bookingWarrantyId && warranty
+        ? user?.role?.name === 'TECHNICIAN'
+            ? warranty?.customerId
+            : warranty?.technicianId?.userId
+        : booking
+            ? user?.role?.name === 'TECHNICIAN'
+                ? booking?.customerId
+                : booking?.technicianId?.userId
+            : null;
 
+    // useEffect(() => {
+    //     if (bookingId) {
+    //         dispatch(fetchBookingById(bookingId));
+    //         dispatch(fetchMessagesThunk(bookingId));
+    //     }
+    // }, [dispatch, bookingId]);
     useEffect(() => {
+        const idToUse = bookingId || bookingWarrantyId;
+        if (!idToUse) return;
+
         if (bookingId) {
             dispatch(fetchBookingById(bookingId));
-            dispatch(fetchMessagesThunk(bookingId));
+            dispatch(fetchMessagesThunk({ bookingId, bookingWarrantyId }));
+        } else if (bookingWarrantyId) {
+            dispatch(getWarrantyInformationThunk(bookingWarrantyId)); // Fetch warranty data
+            dispatch(fetchMessagesThunk({ bookingId, bookingWarrantyId }));
         }
-    }, [dispatch, bookingId]);
+    }, [dispatch, bookingId, bookingWarrantyId]);
 
+    // useEffect(() => {
+    //     if (!bookingId) return;
+
+    //     const cleanup = onReceiveMessage((newMessage) => {
+    //         if (newMessage.bookingId.toString() === bookingId) {
+    //             dispatch(addMessage(newMessage));
+    //         }
+    //     });
+
+    //     return () => {
+    //         if (cleanup) cleanup();
+    //     };
+    // }, [dispatch, bookingId]);
     useEffect(() => {
-        if (!bookingId) return;
+        const idToUse = bookingId || bookingWarrantyId;
+        // if (!idToUse) return;
 
-        const cleanup = onReceiveMessage((newMessage) => {
-            if (newMessage.bookingId.toString() === bookingId) {
-                dispatch(addMessage(newMessage));
-            }
+        // const cleanup = onReceiveMessage((newMessage) => {
+        //     if ((newMessage.bookingId && newMessage.bookingId.toString() === bookingId) ||
+        //         (newMessage.bookingWarrantyId && newMessage.bookingWarrantyId.toString() === bookingWarrantyId)) {
+        //         dispatch(addMessage(newMessage));
+        //     }
+        // });
+
+        // return () => {
+        //     if (cleanup) cleanup();
+        // };
+        if (!idToUse || !user?._id) return;
+
+        initializeSocket(user._id);
+
+        const socket = getSocket();
+        if (!socket) return;
+
+       
+
+           const cleanup = onReceiveMessage({
+            socket,
+            userId: user._id,
+            bookingId,
+            bookingWarrantyId,
+            callback: (newMessage) => {
+                console.log('Message received in MessageBox:', newMessage);
+                if ((newMessage.bookingId && newMessage.bookingId.toString() === bookingId) ||
+                    (newMessage.bookingWarrantyId && newMessage.bookingWarrantyId.toString() === bookingWarrantyId)) {
+                    dispatch(addMessage(newMessage));
+                }
+            },
         });
-
         return () => {
             if (cleanup) cleanup();
         };
-    }, [dispatch, bookingId]);
+    }, [dispatch, bookingId, bookingWarrantyId]);
 
     useEffect(() => {
         const socket = getSocket();
         if (!socket) return;
 
-        const handler = ({ from, name, signal, sessionId }) => {
-            console.log('Received callUser event in MessageBox:', { from, name, signal, sessionId });
-            if (!incomingCall) { // Only set if no current incoming call
+        const handler = ({ from, name, signal, sessionId, bookingId, warrantyId }) => {
+            console.log('Received callUser event in MessageBox:', { from, name, signal, sessionId,bookingId, warrantyId });
+            const isValidCall = (bookingId && bookingId === bookingId) || (warrantyId && warrantyId === bookingWarrantyId);
+            if (isValidCall && !incomingCall) { // Only set if no current incoming call
                 setIncomingCall({ from, name, signal, sessionId });
             }
         };
@@ -58,7 +119,7 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
         socket.on('callUser', handler);
         return () => socket.off('callUser', handler);
     }, [incomingCall]); // Depend on incomingCall to avoid overwriting during answer
-
+   
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -71,14 +132,24 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
-        if ((!messageContent.trim() && !selectedFile) || !user || !booking) return;
+        if ((!messageContent.trim() && !selectedFile) || !user || (!booking && !warranty)) return;
 
-        const toUserId = user._id === booking.customerId._id
-            ? booking.technicianId.userId._id
-            : booking.customerId._id;
-
+        // const toUserId = user._id === booking.customerId._id
+        //     ? booking.technicianId.userId._id
+        //     : booking.customerId._id;
+        const toUserId = bookingWarrantyId && warranty
+            ? user._id === warranty.customerId._id
+                ? warranty.technicianId.userId._id
+                : warranty.customerId._id
+            : booking
+                ? user._id === booking.customerId._id
+                    ? booking.technicianId.userId._id
+                    : booking.customerId._id
+                : null;
+        if (!toUserId) return;
         const messageData = {
             bookingId,
+            bookingWarrantyId: bookingWarrantyId || null,
             fromUser: user._id,
             toUser: toUserId,
             type: 'SERVICE',
@@ -132,12 +203,12 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
 
     const handleVideoCallButtonClick = () => {
         navigate(`/video-call/${bookingId}`, {
-          state: {
-            bookingWarrantyId,
-            fromMessageBox: true, // Add flag to indicate navigation from MessageBox
-          },
+            state: {
+                bookingWarrantyId,
+                fromMessageBox: true, // Add flag to indicate navigation from MessageBox
+            },
         });
-      };
+    };
 
     const handleDecline = async () => {
         if (incomingCall) {
