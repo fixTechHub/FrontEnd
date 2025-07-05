@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import ApiBE from '../../services/ApiBE';
-import { Modal, Button } from 'antd';
+import { Modal, Button, Select } from 'antd';
 
 
 const BookingManagement = () => {
@@ -14,6 +14,8 @@ const BookingManagement = () => {
  const [selectedBooking, setSelectedBooking] = useState(null);
  const [currentPage, setCurrentPage] = useState(1);
  const bookingsPerPage = 10;
+ const [sortField, setSortField] = useState('createdAt');
+const [sortOrder, setSortOrder] = useState('desc');
 
 
  useEffect(() => {
@@ -58,12 +60,85 @@ const BookingManagement = () => {
  );
  const indexOfLastBooking = currentPage * bookingsPerPage;
  const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
- const currentBookings = filteredBookings.slice(indexOfFirstBooking, indexOfLastBooking);
+ const sortedBookings = [...filteredBookings].sort((a, b) => {
+  if (sortField === 'id') {
+    if (!a.id) return 1;
+    if (!b.id) return -1;
+    if (sortOrder === 'asc') {
+      return (a.id || '').localeCompare(b.id || '');
+    } else {
+      return (b.id || '').localeCompare(a.id || '');
+    }
+  } else if (sortField === 'customer') {
+    const nameA = (userMap[a.customerId] || '').toLowerCase();
+    const nameB = (userMap[b.customerId] || '').toLowerCase();
+    if (sortOrder === 'asc') {
+      return nameA.localeCompare(nameB);
+    } else {
+      return nameB.localeCompare(nameA);
+    }
+  } else if (sortField === 'service') {
+    const nameA = (serviceMap[a.serviceId] || '').toLowerCase();
+    const nameB = (serviceMap[b.serviceId] || '').toLowerCase();
+    if (sortOrder === 'asc') {
+      return nameA.localeCompare(nameB);
+    } else {
+      return nameB.localeCompare(nameA);
+    }
+  } else if (sortField === 'createdAt') {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    if (sortOrder === 'asc') {
+      return dateA - dateB;
+    } else {
+      return dateB - dateA;
+    }
+  }
+  return 0;
+});
+const currentBookings = sortedBookings.slice(indexOfFirstBooking, indexOfLastBooking);
  const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
 
 
  const handlePageChange = (pageNumber) => {
    setCurrentPage(pageNumber);
+ };
+
+const handleSortChange = (value) => {
+  if (value === 'lasted') {
+    setSortField('createdAt');
+    setSortOrder('desc');
+  } else if (value === 'oldest') {
+    setSortField('createdAt');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortById = () => {
+  if (sortField === 'id') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('id');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortByCustomer = () => {
+  if (sortField === 'customer') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('customer');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortByService = () => {
+  if (sortField === 'service') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('service');
+    setSortOrder('asc');
+  }
  };
 
 
@@ -96,17 +171,50 @@ const BookingManagement = () => {
              />
            </div>
          </div>
+         <div className="d-flex align-items-center">
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <Select
+             value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
+             style={{ width: 120 }}
+             onChange={handleSortChange}
+             options={[
+               { value: 'lasted', label: 'Lasted' },
+               { value: 'oldest', label: 'Oldest' },
+             ]}
+           />
+         </div>
        </div>
        <div className="custom-datatable-filter table-responsive">
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
-               <th>ID</th>
-               <th>Customer</th>
-               <th>Service</th>
-               <th>Status</th>
-               <th>Created At</th>
-               <th>Action</th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortById}>
+                 ID
+                 {sortField === 'id' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByCustomer}>
+                 CUSTOMER
+                 {sortField === 'customer' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByService}>
+                 SERVICE
+                 {sortField === 'service' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th>STATUS</th>
+               <th>CREATED AT</th>
+               <th>ACTION</th>
              </tr>
            </thead>
            <tbody>
@@ -117,6 +225,11 @@ const BookingManagement = () => {
                  <td>{serviceMap[b.serviceId] || b.serviceId}</td>
                  <td>{b.status}</td>
                  <td>{b.createdAt ? new Date(b.createdAt).toLocaleString() : ''}</td>
+                 <td>
+                   {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
+                     ? `${new Date(b.schedule.startTime).toLocaleString()} - ${b.schedule.endTime ? new Date(b.schedule.endTime).toLocaleString() : ''}`
+                     : ''}
+                 </td>
                  <td>
                    <Button size="small" onClick={() => { setSelectedBooking(b); setShowDetailModal(true); }}>
                      View Detail

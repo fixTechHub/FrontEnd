@@ -4,7 +4,7 @@ import { fetchCouponUsages, setFilters } from '../../features/couponusages/coupo
 import { userAPI } from '../../features/users/userAPI';
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
-import { Modal, Button } from 'antd';
+import { Modal, Button, Select } from 'antd';
 
 
 const CouponUsageManagement = () => {
@@ -19,6 +19,9 @@ const CouponUsageManagement = () => {
  const [selectedUsage, setSelectedUsage] = useState(null);
  const [currentPage, setCurrentPage] = useState(1);
  const couponsPerPage = 10;
+ const [sortField, setSortField] = useState('');
+const [sortOrder, setSortOrder] = useState('desc');
+const [hasSorted, setHasSorted] = useState(false);
 
 
  // Fetch usages + bookings
@@ -63,16 +66,28 @@ const CouponUsageManagement = () => {
          try {
            const user = await userAPI.getById(id);
            userMapTemp[id] = user.fullName || user.email || id;
-         } catch {
-           userMapTemp[id] = id;
+         } catch (err) {
+           if (err.response && err.response.status === 404) {
+             // User not found, do not log error
+             userMapTemp[id] = id;
+           } else {
+             console.error('Get user by ID error:', err);
+             userMapTemp[id] = id;
+           }
          }
        })),
        Promise.all(couponIds.map(async (id) => {
          try {
            const coupon = await couponAPI.getById(id);
            couponMapTemp[id] = coupon.code || id;
-         } catch {
-           couponMapTemp[id] = id;
+         } catch (err) {
+           if (err.response && err.response.status === 404) {
+             // Coupon not found, do not log error
+             couponMapTemp[id] = id;
+           } else {
+             console.error('Get coupon by ID error:', err);
+             couponMapTemp[id] = id;
+           }
          }
        }))
      ]);
@@ -107,7 +122,43 @@ const CouponUsageManagement = () => {
  // Phân trang
  const indexOfLast = currentPage * couponsPerPage;
  const indexOfFirst = indexOfLast - couponsPerPage;
- const currentPageData = filteredUsages.slice(indexOfFirst, indexOfLast);
+ const sortedUsages = [...filteredUsages].sort((a, b) => {
+  if (sortField === 'user') {
+    const nameA = (userMap[a.userId] || '').toLowerCase();
+    const nameB = (userMap[b.userId] || '').toLowerCase();
+    if (sortOrder === 'asc') {
+      return nameA.localeCompare(nameB);
+    } else {
+      return nameB.localeCompare(nameA);
+    }
+  } else if (sortField === 'coupon') {
+    const codeA = (couponMap[a.couponId] || '').toLowerCase();
+    const codeB = (couponMap[b.couponId] || '').toLowerCase();
+    if (sortOrder === 'asc') {
+      return codeA.localeCompare(codeB);
+    } else {
+      return codeB.localeCompare(codeA);
+    }
+  } else if (sortField === 'booking') {
+    const codeA = (bookingMap[a.bookingId] || '').toLowerCase();
+    const codeB = (bookingMap[b.bookingId] || '').toLowerCase();
+    if (sortOrder === 'asc') {
+      return codeA.localeCompare(codeB);
+    } else {
+      return codeB.localeCompare(codeA);
+    }
+  } else if (sortField === 'usedAt') {
+    const dateA = new Date(a.usedAt);
+    const dateB = new Date(b.usedAt);
+    if (sortOrder === 'asc') {
+      return dateA - dateB;
+    } else {
+      return dateB - dateA;
+    }
+  }
+  return 0;
+});
+const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
  const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
 
 
@@ -119,6 +170,56 @@ const CouponUsageManagement = () => {
  const handleSearchChange = (e) => {
    dispatch(setFilters({ search: e.target.value }));
  };
+
+
+ const handleSortByUser = () => {
+  setHasSorted(true);
+  if (sortField === 'user') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('user');
+    setSortOrder('asc');
+  }
+};
+const handleSortByCoupon = () => {
+  setHasSorted(true);
+  if (sortField === 'coupon') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('coupon');
+    setSortOrder('asc');
+  }
+};
+const handleSortByBooking = () => {
+  setHasSorted(true);
+  if (sortField === 'booking') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('booking');
+    setSortOrder('asc');
+  }
+};
+const handleSortByUsedAt = () => {
+  setHasSorted(true);
+  if (sortField === 'usedAt') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('usedAt');
+    setSortOrder('desc');
+  }
+};
+
+
+ const handleSortChange = (value) => {
+  setHasSorted(true);
+  if (value === 'lasted') {
+    setSortField('usedAt');
+    setSortOrder('desc');
+  } else if (value === 'oldest') {
+    setSortField('usedAt');
+    setSortOrder('asc');
+  }
+};
 
 
  return (
@@ -144,11 +245,23 @@ const CouponUsageManagement = () => {
              <input
                type="text"
                className="form-control"
-               placeholder="Search"
+               placeholder="Search user, coupon, code"
                value={filters.search || ''}
                onChange={handleSearchChange}
              />
            </div>
+         </div>
+         <div className="d-flex align-items-center">
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <Select
+             value={sortField === 'usedAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
+             style={{ width: 120 }}
+             onChange={handleSortChange}
+             options={[
+               { value: 'lasted', label: 'Lasted' },
+               { value: 'oldest', label: 'Oldest' },
+             ]}
+           />
          </div>
        </div>
 
@@ -157,10 +270,38 @@ const CouponUsageManagement = () => {
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
-               <th>USER</th>
-               <th>COUPON</th>
-               <th>BOOKING CODE</th>
-               <th>USED AT</th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByUser}>
+                 USER
+                 {sortField === 'user' && hasSorted && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByCoupon}>
+                 COUPON
+                 {sortField === 'coupon' && hasSorted && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByBooking}>
+                 BOOKING CODE
+                 {sortField === 'booking' && hasSorted && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByUsedAt}>
+                 USED AT
+                 {sortField === 'usedAt' && hasSorted && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
                <th>ACTION</th>
              </tr>
            </thead>
@@ -169,7 +310,7 @@ const CouponUsageManagement = () => {
                <tr key={usage.id}>
                  <td>{userMap[usage.userId] || usage.userId}</td>
                  <td>{couponMap[usage.couponId] || usage.couponId}</td>
-                 <td>{bookingMap[usage.bookingId] || usage.bookingId}</td>
+                 <td>{bookingMap[usage.bookingId] || ''}</td>
                  <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
                  <td>
                    <Button size="small" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>

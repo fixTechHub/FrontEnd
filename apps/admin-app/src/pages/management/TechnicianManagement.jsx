@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button } from 'antd';
+import { message, Modal, Button, Select } from 'antd';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
 import {
  setTechnicians,
@@ -35,13 +35,66 @@ const TechnicianManagement = () => {
  const [categoryMap, setCategoryMap] = useState({});
  const [currentPage, setCurrentPage] = useState(1);
  const techniciansPerPage = 10;
-
+ const [sortField, setSortField] = useState('createdAt');
+const [sortOrder, setSortOrder] = useState('desc');
 
 
 
  const indexOfLastTechnician = currentPage * techniciansPerPage;
  const indexOfFirstTechnician = indexOfLastTechnician - techniciansPerPage;
- const currentTechnicians = technicians.slice(indexOfFirstTechnician, indexOfLastTechnician);
+ const sortedTechnicians = [...technicians].sort((a, b) => {
+  if (sortField === 'fullName') {
+    if (!a.fullName) return 1;
+    if (!b.fullName) return -1;
+    if (sortOrder === 'asc') {
+      return a.fullName.localeCompare(b.fullName);
+    } else {
+      return b.fullName.localeCompare(a.fullName);
+    }
+  } else if (sortField === 'email') {
+    if (!a.email) return 1;
+    if (!b.email) return -1;
+    if (sortOrder === 'asc') {
+      return a.email.localeCompare(b.email);
+    } else {
+      return b.email.localeCompare(a.email);
+    }
+  } else if (sortField === 'phone') {
+    if (!a.phone) return 1;
+    if (!b.phone) return -1;
+    if (sortOrder === 'asc') {
+      return a.phone.localeCompare(b.phone);
+    } else {
+      return b.phone.localeCompare(a.phone);
+    }
+  } else if (sortField === 'rating') {
+    const aRating = Number(a.ratingAverage) || 0;
+    const bRating = Number(b.ratingAverage) || 0;
+    if (sortOrder === 'asc') {
+      return aRating - bRating;
+    } else {
+      return bRating - aRating;
+    }
+  } else if (sortField === 'jobs') {
+    const aJobs = Number(a.jobCompleted) || 0;
+    const bJobs = Number(b.jobCompleted) || 0;
+    if (sortOrder === 'asc') {
+      return aJobs - bJobs;
+    } else {
+      return bJobs - aJobs;
+    }
+  } else if (sortField === 'createdAt') {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    if (sortOrder === 'asc') {
+      return dateA - dateB;
+    } else {
+      return dateB - dateA;
+    }
+  }
+  return 0;
+});
+const currentTechnicians = sortedTechnicians.slice(indexOfFirstTechnician, indexOfLastTechnician);
 
 
  const totalPages = Math.ceil(technicians.length / techniciansPerPage);
@@ -144,6 +197,60 @@ const TechnicianManagement = () => {
  };
 
 
+ const handleSortChange = (value) => {
+  if (value === 'lasted') {
+    setSortField('createdAt');
+    setSortOrder('desc');
+  } else if (value === 'oldest') {
+    setSortField('createdAt');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortByName = () => {
+  if (sortField === 'fullName') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('fullName');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortByEmail = () => {
+  if (sortField === 'email') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('email');
+    setSortOrder('asc');
+  }
+};
+const handleSortByPhone = () => {
+  if (sortField === 'phone') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('phone');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortByRating = () => {
+  if (sortField === 'rating') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('rating');
+    setSortOrder('asc');
+  }
+};
+const handleSortByJobs = () => {
+  if (sortField === 'jobs') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('jobs');
+    setSortOrder('asc');
+  }
+};
+
+
  return (
    <div className="modern-page-wrapper">
      <div className="modern-content-card">
@@ -159,21 +266,47 @@ const TechnicianManagement = () => {
            </nav>
          </div>
        </div>
-       {/* Search */}
+       {/* Search & Filters */}
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
-         <div className="top-search me-2">
-           <div className="top-search-group">
-             <span className="input-icon">
-               <i className="ti ti-search"></i>
-             </span>
-             <input
-               type="text"
-               className="form-control"
-               placeholder="Search technicians"
-               value={searchText}
-               onChange={e => setSearchText(e.target.value)}
-             />
+         <div className="d-flex align-items-center gap-2">
+           <div className="top-search">
+             <div className="top-search-group">
+               <span className="input-icon">
+                 <i className="ti ti-search"></i>
+               </span>
+               <input
+                 type="text"
+                 className="form-control"
+                 placeholder="Search name, email, phone"
+                 value={searchText}
+                 onChange={e => setSearchText(e.target.value)}
+               />
+             </div>
            </div>
+           {/* Status Filter */}
+           <Select
+             allowClear
+             placeholder="Status"
+             style={{ width: 130 }}
+             onChange={value => dispatch(setFilters({ status: value }))}
+             options={[
+               { value: 'APPROVED', label: 'APPROVED' },
+               { value: 'PENDING', label: 'PENDING' },
+               { value: 'REJECTED', label: 'REJECTED' },
+             ]}
+           />
+         </div>
+         <div className="d-flex align-items-center" style={{ gap: 12 }}>
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <Select
+             value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
+             style={{ width: 120 }}
+             onChange={handleSortChange}
+             options={[
+               { value: 'lasted', label: 'Lasted' },
+               { value: 'oldest', label: 'Oldest' },
+             ]}
+           />
          </div>
        </div>
        {/* Table */}
@@ -181,12 +314,47 @@ const TechnicianManagement = () => {
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
-               <th>NAME</th>
-               <th>EMAIL</th>
-               <th>PHONE</th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByName}>
+                 NAME
+                 {sortField === 'fullName' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByEmail}>
+                 EMAIL
+                 {sortField === 'email' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByPhone}>
+                 PHONE
+                 {sortField === 'phone' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
                <th>STATUS</th>
-               <th>RATING</th>
-               <th>JOBS</th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByRating}>
+                 RATING
+                 {sortField === 'rating' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByJobs}>
+                 JOBS
+                 {sortField === 'jobs' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
                <th></th>
              </tr>
            </thead>

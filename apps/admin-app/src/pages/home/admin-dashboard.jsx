@@ -241,7 +241,7 @@ const AdminDashboard = () => {
                     percentChange < 0 ? `${percentChange.toFixed(0)}%` : '0%'}
                 </div>
               </div>
-              <div style={{fontSize: '0.55rem', color: '#666'}}>So với tháng trước</div>
+              <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
               <div style={{height: '60px', marginTop: '2px'}}>
                 <Line data={{
                   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -274,7 +274,7 @@ const AdminDashboard = () => {
                     percentRevenueChange < 0 ? `${percentRevenueChange.toFixed(0)}%` : '0%'}
                 </div>
               </div>
-              <div style={{fontSize: '0.55rem', color: '#666'}}>So với tháng trước</div>
+              <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
               <div style={{height: '60px', marginTop: '2px'}}>
                 <Line data={{
                   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -307,7 +307,7 @@ const AdminDashboard = () => {
                     percentTechnicianChange < 0 ? `${percentTechnicianChange.toFixed(0)}%` : '0%'}
                 </div>
               </div>
-              <div style={{fontSize: '0.55rem', color: '#666'}}>So với tháng trước</div>
+              <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
               <div style={{height: '60px', marginTop: '2px'}}>
                 <Line data={{
                   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -488,11 +488,11 @@ display: true,
                     <i className="bi bi-car-front text-primary" style={{fontSize: '0.5rem'}}></i>
                   </div>
                   <div>
-                    <div style={{fontSize: '0.65rem'}}>Luxury Cars</div>
-                    <div className="text-muted" style={{fontSize: '0.55rem'}}>145 Reservations</div>
+                    <div style={{fontSize: '0.65rem'}}>Technician Name</div>
+                    <div className="text-muted" style={{fontSize: '0.55rem'}}>Technician Jobs</div>
                   </div>
                 </div>
-                <div style={{fontSize: '0.65rem'}}>32%</div>
+                <div style={{fontSize: '0.65rem'}}>Technician Rating</div>
               </div>
               
               <div className="d-flex justify-content-between align-items-center mb-2">

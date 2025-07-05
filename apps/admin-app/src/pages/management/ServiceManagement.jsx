@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin } from 'antd';
+import { message, Modal, Button, Spin, Select } from 'antd';
 import {
   fetchServices,
   createService,
@@ -32,6 +32,10 @@ const ServiceManagement = () => {
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const servicesPerPage = 10;
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [filterStatus, setFilterStatus] = useState();
+  const [filterCategory, setFilterCategory] = useState();
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -58,8 +62,38 @@ const ServiceManagement = () => {
   }, [error, success, dispatch]);
 
   const filteredServices = services.filter(svc =>
-    svc.serviceName?.toLowerCase().includes(searchText.toLowerCase())
+    svc.serviceName?.toLowerCase().includes(searchText.toLowerCase()) &&
+    (!filterStatus || (filterStatus === 'ACTIVE' ? svc.isActive : !svc.isActive)) &&
+    (!filterCategory || svc.categoryId === filterCategory)
   );
+
+  const handleSortChange = (value) => {
+    if (value === 'lasted') {
+      setSortField('createdAt');
+      setSortOrder('desc');
+    } else if (value === 'oldest') {
+      setSortField('createdAt');
+      setSortOrder('asc');
+    }
+  };
+
+  const handleSortByName = () => {
+    if (sortField === 'serviceName') {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField('serviceName');
+      setSortOrder('asc');
+    }
+  };
+
+  const handleSortByCategory = () => {
+    if (sortField === 'category') {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField('category');
+      setSortOrder('asc');
+    }
+  };
 
   const handleAddService = () => {
     setFormData(initialFormState);
@@ -90,7 +124,35 @@ const ServiceManagement = () => {
 
   const indexOfLastService = currentPage * servicesPerPage;
   const indexOfFirstService = indexOfLastService - servicesPerPage;
-  const currentServices = filteredServices.slice(indexOfFirstService, indexOfLastService);
+  const sortedServices = [...filteredServices].sort((a, b) => {
+    if (sortField === 'serviceName') {
+      if (!a.serviceName) return 1;
+      if (!b.serviceName) return -1;
+      if (sortOrder === 'asc') {
+        return a.serviceName.localeCompare(b.serviceName);
+      } else {
+        return b.serviceName.localeCompare(a.serviceName);
+      }
+    } else if (sortField === 'category') {
+      const catA = (categories.find(cat => cat.id === a.categoryId)?.categoryName || '').toLowerCase();
+      const catB = (categories.find(cat => cat.id === b.categoryId)?.categoryName || '').toLowerCase();
+      if (sortOrder === 'asc') {
+        return catA.localeCompare(catB);
+      } else {
+        return catB.localeCompare(catA);
+      }
+    } else if (sortField === 'createdAt') {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      if (sortOrder === 'asc') {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    }
+    return 0;
+  });
+  const currentServices = sortedServices.slice(indexOfFirstService, indexOfLastService);
 
   const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
   const handleChange = (e) => {
@@ -123,22 +185,57 @@ const ServiceManagement = () => {
               </ol>
             </nav>
           </div>
-          <Button type="primary" onClick={handleAddService}>Thêm dịch vụ</Button>
+          <Button type="primary" onClick={handleAddService}>Add Service</Button>
         </div>
         <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
-          <div className="top-search me-2">
-            <div className="top-search-group">
-              <span className="input-icon">
-                <i className="ti ti-search"></i>
-              </span>
-              <input
-                type="text"
-                className="form-control"
-                placeholder="Tìm kiếm dịch vụ"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
-            </div>
+          <div className="d-flex align-items-center gap-2">
+            <div className="top-search">
+              <div className="top-search-group">
+                <span className="input-icon">
+                  <i className="ti ti-search"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Search name"
+                  value={searchText}
+                  onChange={e => setSearchText(e.target.value)}
+                />
+              </div>
+            </div>            
+            <Select
+              placeholder="Category"
+              value={filterCategory || undefined}
+              onChange={value => setFilterCategory(value)}
+              style={{ width: 150 }}
+              allowClear
+            >
+              {categories.map(cat => (
+                <Select.Option key={cat.id} value={cat.id}>{cat.categoryName}</Select.Option>
+              ))}
+            </Select>
+            <Select
+              placeholder="Status"
+              value={filterStatus || undefined}
+              onChange={value => setFilterStatus(value)}
+              style={{ width: 130 }}
+              allowClear
+            >
+              <Select.Option value="ACTIVE">ACTIVE</Select.Option>
+              <Select.Option value="INACTIVE">INACTIVE</Select.Option>
+            </Select>
+          </div>
+          <div className="d-flex align-items-center">
+            <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+            <Select
+              value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
+              style={{ width: 120 }}
+              onChange={handleSortChange}
+              options={[
+                { value: 'lasted', label: 'Lasted' },
+                { value: 'oldest', label: 'Oldest' },
+              ]}
+            />
           </div>
         </div>
         {loading ? <Spin /> : (
@@ -146,11 +243,25 @@ const ServiceManagement = () => {
             <table className="table datatable">
               <thead className="thead-light">
                 <tr>
-                  <th>Tên dịch vụ</th>
-                  <th>Danh mục</th>
-                  <th>Icon</th>
-                  <th>Trạng thái</th>
-                  <th>Hành động</th>
+                  <th style={{ cursor: 'pointer' }} onClick={handleSortByName}>
+                    SERVICE NAME
+                    {sortField === 'serviceName' && (
+                      <span style={{ marginLeft: 4 }}>
+                        {sortOrder === 'asc' ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </th>
+                  <th style={{ cursor: 'pointer' }} onClick={handleSortByCategory}>
+                    CATEGORY
+                    {sortField === 'category' && (
+                      <span style={{ marginLeft: 4 }}>
+                        {sortOrder === 'asc' ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </th>
+                  <th>ICON</th>
+                  <th>STATUS</th>
+                  <th>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -163,12 +274,12 @@ const ServiceManagement = () => {
                       <td>{svc.icon}</td>
                       <td>
                         <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
-                          {svc.isActive ? 'Active' : 'Inactive'}
+                          {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
                         </span>
                       </td>
                       <td>
-                        <Button size="small" onClick={() => handleEditService(svc)} style={{ marginRight: 8 }}>Sửa</Button>
-                        <Button size="small" danger onClick={() => handleDeleteService(svc)}>Xóa</Button>
+                        <Button size="small" onClick={() => handleEditService(svc)} style={{ marginRight: 8 }}>Edit</Button>
+                        <Button size="small" danger onClick={() => handleDeleteService(svc)}>Delete</Button>
                       </td>
                     </tr>
                   );
@@ -196,7 +307,7 @@ const ServiceManagement = () => {
       </div>
       {/* Modal Thêm/Sửa */}
       <Modal
-        title={showAddModal ? 'Thêm dịch vụ' : 'Sửa dịch vụ'}
+        title={showAddModal ? 'Add service' : 'Update service'}
         open={showAddModal || showEditModal}
         onCancel={() => {
           setShowAddModal(false);
@@ -207,7 +318,7 @@ const ServiceManagement = () => {
       >
         <form onSubmit={handleSubmit}>
           <div className="mb-3">
-            <label className="form-label">Tên dịch vụ</label>
+            <label className="form-label">Service Name</label>
             <input
               type="text"
               className="form-control"
@@ -218,7 +329,7 @@ const ServiceManagement = () => {
             />
           </div>
           <div className="mb-3">
-            <label className="form-label">Danh mục</label>
+            <label className="form-label">Category</label>
             <select
               className="form-control"
               name="categoryId"
@@ -226,7 +337,7 @@ const ServiceManagement = () => {
               onChange={handleChange}
               required
             >
-              <option value="">Chọn danh mục</option>
+              <option value="">Choose category</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.id}>{cat.categoryName}</option>
               ))}
@@ -243,35 +354,36 @@ const ServiceManagement = () => {
             />
           </div>
           <div className="mb-3">
-            <label className="form-label">Trạng thái</label>
+            <label className="form-label">Status:</label>
+            <br></br>
             <input
               type="checkbox"
               name="isActive"
               checked={formData.isActive}
               onChange={handleChange}
-            /> Hoạt động
+            /> Active
           </div>
           <div className="d-flex justify-content-end">
             <Button onClick={() => {
               setShowAddModal(false);
               setShowEditModal(false);
             }} style={{ marginRight: 8 }}>
-              Hủy
+              Cancel
             </Button>
             <Button type="primary" htmlType="submit">
-              {showAddModal ? 'Thêm' : 'Lưu'}
+              {showAddModal ? 'Add' : 'Save'}
             </Button>
           </div>
         </form>
       </Modal>
       {/* Modal Xóa */}
       <Modal
-        title="Xóa dịch vụ"
+        title="Delete service"
         open={showDeleteModal}
         onCancel={() => setShowDeleteModal(false)}
         onOk={confirmDelete}
-        okText="Xóa"
-        cancelText="Hủy"
+        okText="Delete"
+        cancelText="Cancel"
         okButtonProps={{ danger: true }}
         destroyOnClose
       >

@@ -60,7 +60,7 @@ export const selectFilteredReports = createSelector(
     // Filter by status
     if (filters.status) {
       filteredReports = filteredReports.filter(
-        (report) => report.status === filters.status
+        (report) => report.status?.toLowerCase() === filters.status.toLowerCase()
       );
     }
 

@@ -57,6 +57,8 @@ const SystemReportManagement = () => {
  const [statusValue, setStatusValue] = useState('');
  const [showEditStatusModal, setShowEditStatusModal] = useState(false);
  const [userMap, setUserMap] = useState({});
+ const [sortField, setSortField] = useState('createdAt');
+ const [sortOrder, setSortOrder] = useState('desc');
 
 
  // Redux selectors
@@ -179,6 +181,17 @@ const SystemReportManagement = () => {
      await handleUpdateStatus(editingStatusId, statusValue.toUpperCase());
      setShowEditStatusModal(false);
      setEditingStatusId(null);
+   }
+ };
+
+
+ const handleSortChange = (value) => {
+   if (value === 'lasted') {
+     setSortField('createdAt');
+     setSortOrder('desc');
+   } else if (value === 'oldest') {
+     setSortField('createdAt');
+     setSortOrder('asc');
    }
  };
 
@@ -313,48 +326,59 @@ const SystemReportManagement = () => {
 
 
          {/* Filter Controls */}
-         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-           <Col span={8}>
-             <Input
-               placeholder="Search system reports..."
-               prefix={<SearchOutlined />}
-               value={filters.search}
-               onChange={(e) => handleFilterChange('search', e.target.value)}
-               allowClear
-             />
-           </Col>
-           <Col span={5}>
+         <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
+           <div className="d-flex align-items-center gap-2">
+             <div className="top-search">
+               <div className="top-search-group">
+                 <span className="input-icon">
+                   <i className="ti ti-search"></i>
+                 </span>
+                 <input
+                   type="text"
+                   className="form-control"
+                   placeholder="Search title, description"
+                   value={filters.search || ''}
+                   onChange={e => handleFilterChange('search', e.target.value)}
+                 />
+               </div>
+             </div>
              <Select
-               value={filters.tag}
-               onChange={(value) => handleFilterChange('tag', value)}
-               style={{ width: '100%' }}
-               placeholder="Filter by Tag"
+               placeholder="Tag"
+               value={filters.tag || undefined}
+               onChange={value => handleFilterChange('tag', value)}
+               style={{ width: 130 }}
                allowClear
              >
-               <Option value="bug">Bug</Option>
-               <Option value="feature">Feature</Option>
-               <Option value="improvement">Improvement</Option>
+               <Option value="BUG">BUG</Option>
+               <Option value="FEATURE">FEATURE</Option>
+               <Option value="IMPROVEMENT">IMPROVEMENT</Option>
+               <Option value="UI">UI</Option>
              </Select>
-           </Col>
-           <Col span={5}>
              <Select
-               value={filters.status}
-               onChange={(value) => handleFilterChange('status', value)}
-               style={{ width: '100%' }}
-               placeholder="Filter by Status"
+               placeholder="Status"
+               value={filters.status || undefined}
+               onChange={value => handleFilterChange('status', value)}
+               style={{ width: 130 }}
                allowClear
              >
                <Option value="PENDING">PENDING</Option>
                <Option value="RESOLVED">RESOLVED</Option>
                <Option value="REJECTED">REJECTED</Option>
              </Select>
-           </Col>
-           <Col span={6}>
-             <Space>
-               <Button onClick={handleClearFilters}>Clear Filters</Button>
-             </Space>
-           </Col>
-         </Row>
+           </div>
+           <div className="d-flex align-items-center" style={{ gap: 12 }}>
+             <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sort by:</span>
+             <Select
+               value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
+               style={{ width: 120 }}
+               onChange={handleSortChange}
+               options={[
+                 { value: 'lasted', label: 'Lasted' },
+                 { value: 'oldest', label: 'Oldest' },
+               ]}
+             />
+           </div>
+         </div>
 
 
          {/* System Reports Table */}

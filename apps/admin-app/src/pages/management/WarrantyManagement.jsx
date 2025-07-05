@@ -8,9 +8,9 @@ import { bookingAPI } from '../../features/bookings/bookingAPI';
 
 
 const statusOptions = [
- { value: 'PENDING', label: 'Pending' },
- { value: 'APPROVED', label: 'Approved' },
- { value: 'REJECTED', label: 'Rejected' },
+ { value: 'PENDING', label: 'PENDING' },
+ { value: 'APPROVED', label: 'APPROVED' },
+ { value: 'REJECTED', label: 'REJECTED' },
 ];
 
 
@@ -27,6 +27,11 @@ const WarrantyManagement = () => {
  const [currentPage, setCurrentPage] = useState(1);
  const warrantiesPerPage = 10;
  const [bookingMap, setBookingMap] = useState({});
+ const [sortField, setSortField] = useState('createdAt');
+const [sortOrder, setSortOrder] = useState('desc');
+const [filterStatus, setFilterStatus] = useState();
+const [filterUnderWarranty, setFilterUnderWarranty] = useState();
+const [filterReviewed, setFilterReviewed] = useState();
 
 
  useEffect(() => {
@@ -65,14 +70,51 @@ const WarrantyManagement = () => {
    const technician = (technicianNames[w.technicianId] || w.technicianId || '').toLowerCase();
    const search = searchText.toLowerCase();
    return (
-     bookingId.includes(search) ||
-     customer.includes(search) ||
-     technician.includes(search)
+     (bookingId.includes(search) || customer.includes(search) || technician.includes(search)) &&
+     (!filterStatus || w.status === filterStatus) &&
+     (!filterUnderWarranty || (filterUnderWarranty === 'Yes' ? w.isUnderWarranty : !w.isUnderWarranty)) &&
+     (!filterReviewed || (filterReviewed === 'Yes' ? w.isReviewedByAdmin : !w.isReviewedByAdmin))
    );
  });
  const indexOfLast = currentPage * warrantiesPerPage;
  const indexOfFirst = indexOfLast - warrantiesPerPage;
- const currentWarranties = filtered.slice(indexOfFirst, indexOfLast);
+ const sorted = [...filtered].sort((a, b) => {
+  if (sortField === 'bookingId') {
+    if (!a.bookingId) return 1;
+    if (!b.bookingId) return -1;
+    if (sortOrder === 'asc') {
+      return (a.bookingId || '').localeCompare(b.bookingId || '');
+    } else {
+      return (b.bookingId || '').localeCompare(a.bookingId || '');
+    }
+  } else if (sortField === 'customer') {
+    const nameA = (userNames[a.customerId] || '').toLowerCase();
+    const nameB = (userNames[b.customerId] || '').toLowerCase();
+    if (sortOrder === 'asc') {
+      return nameA.localeCompare(nameB);
+    } else {
+      return nameB.localeCompare(nameA);
+    }
+  } else if (sortField === 'technician') {
+    const nameA = (technicianNames[a.technicianId] || '').toLowerCase();
+    const nameB = (technicianNames[b.technicianId] || '').toLowerCase();
+    if (sortOrder === 'asc') {
+      return nameA.localeCompare(nameB);
+    } else {
+      return nameB.localeCompare(nameA);
+    }
+  } else if (sortField === 'createdAt') {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+    if (sortOrder === 'asc') {
+      return dateA - dateB;
+    } else {
+      return dateB - dateA;
+    }
+  }
+  return 0;
+});
+const currentWarranties = sorted.slice(indexOfFirst, indexOfLast);
  const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
 
 
@@ -100,6 +142,44 @@ const WarrantyManagement = () => {
  };
 
 
+ const handleSortChange = (value) => {
+  if (value === 'lasted') {
+    setSortField('createdAt');
+    setSortOrder('desc');
+  } else if (value === 'oldest') {
+    setSortField('createdAt');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortByBooking = () => {
+  if (sortField === 'bookingId') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('bookingId');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortByCustomer = () => {
+  if (sortField === 'customer') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('customer');
+    setSortOrder('asc');
+  }
+};
+
+const handleSortByTechnician = () => {
+  if (sortField === 'technician') {
+    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+  } else {
+    setSortField('technician');
+    setSortOrder('asc');
+  }
+};
+
+
  return (
    <div className="modern-page-wrapper">
      <div className="modern-content-card">
@@ -115,32 +195,98 @@ const WarrantyManagement = () => {
          </div>
        </div>
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
-         <div className="top-search me-2">
-           <div className="top-search-group">
-             <span className="input-icon">
-               <i className="ti ti-search"></i>
-             </span>
-             <input
-               type="text"
-               className="form-control"
-               placeholder="Search warranties"
-               value={searchText}
-               onChange={e => setSearchText(e.target.value)}
-             />
-           </div>
+         <div className="d-flex align-items-center gap-2">
+           <div className="top-search">
+             <div className="top-search-group">
+               <span className="input-icon">
+                 <i className="ti ti-search"></i>
+               </span>
+               <input
+                 type="text"
+                 className="form-control"
+                 placeholder="Search booking, customer, technician"
+                 value={searchText}
+                 onChange={e => setSearchText(e.target.value)}
+               />
+             </div>
+           </div>           
+           <Select
+             placeholder="Under Warranty"
+             value={filterUnderWarranty || undefined}
+             onChange={value => setFilterUnderWarranty(value)}
+             style={{ width: 150 }}
+             allowClear
+           >
+             <Select.Option value="Yes">Yes</Select.Option>
+             <Select.Option value="No">No</Select.Option>
+           </Select>
+           <Select
+             placeholder="Reviewed"
+             value={filterReviewed || undefined}
+             onChange={value => setFilterReviewed(value)}
+             style={{ width: 130 }}
+             allowClear
+           >
+             <Select.Option value="Yes">Yes</Select.Option>
+             <Select.Option value="No">No</Select.Option>
+           </Select>
+           <Select
+             placeholder="Status"
+             value={filterStatus || undefined}
+             onChange={value => setFilterStatus(value)}
+             style={{ width: 130 }}
+             allowClear
+           >
+             <Select.Option value="PENDING">PENDING</Select.Option>
+             <Select.Option value="APPROVED">APPROVED</Select.Option>
+             <Select.Option value="REJECTED">REJECTED</Select.Option>
+           </Select>
+         </div>
+         <div className="d-flex align-items-center">
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <Select
+             value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
+             style={{ width: 120 }}
+             onChange={handleSortChange}
+             options={[
+               { value: 'lasted', label: 'Lasted' },
+               { value: 'oldest', label: 'Oldest' },
+             ]}
+           />
          </div>
        </div>
        <div className="custom-datatable-filter table-responsive">
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
-               <th>Booking</th>
-               <th>Customer</th>
-               <th>Technician</th>
-               <th>Status</th>
-               <th>Under Warranty</th>
-               <th>Reviewed</th>
-               <th>Action</th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByBooking}>
+                 BOOKING
+                 {sortField === 'bookingId' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByCustomer}>
+                 CUSTOMER
+                 {sortField === 'customer' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th style={{ cursor: 'pointer' }} onClick={handleSortByTechnician}>
+                 TECHNICIAN
+                 {sortField === 'technician' && (
+                   <span style={{ marginLeft: 4 }}>
+                     {sortOrder === 'asc' ? '▲' : '▼'}
+                   </span>
+                 )}
+               </th>
+               <th>STATUS</th>
+               <th>UNDER WARRANTY</th>
+               <th>REVIEWED</th>
+               <th>ACTION</th>
              </tr>
            </thead>
            <tbody>
@@ -158,7 +304,7 @@ const WarrantyManagement = () => {
                  <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
                  <td>
                    <Button size="small" onClick={() => openEdit(w)}>
-                     Update
+                     Edit
                    </Button>
                  </td>
                </tr>
@@ -189,12 +335,12 @@ const WarrantyManagement = () => {
        open={showModal}
        onCancel={() => setShowModal(false)}
        onOk={handleUpdate}
-       title="Cập nhật trạng thái bảo hành"
-       okText="Cập nhật"
+       title="Update warranty"
+       okText="Update"
        confirmLoading={loading}
      >
        <div style={{ marginBottom: 16 }}>
-         <b>Trạng thái:</b>
+         <b>Status:</b>
          <Select
            value={editStatus}
            onChange={setEditStatus}
@@ -203,7 +349,7 @@ const WarrantyManagement = () => {
          />
        </div>
        <div>
-         <b>Đã duyệt bởi admin:</b>
+         <b>Admin reviewed: </b>
          <Switch checked={editReviewed} onChange={setEditReviewed} />
        </div>
      </Modal>

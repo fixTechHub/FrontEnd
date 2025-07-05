@@ -37,6 +37,8 @@ const ReportManagement = () => {
  const [selectedReport, setSelectedReport] = useState(null);
  const [isModalVisible, setIsModalVisible] = useState(false);
  const [userMap, setUserMap] = useState({});
+ const [sortField, setSortField] = useState('createdAt');
+ const [sortOrder, setSortOrder] = useState('desc');
 
 
  // Redux selectors
@@ -102,6 +104,17 @@ const ReportManagement = () => {
  const handleViewReportDetails = (report) => {
    setSelectedReport(report);
    setIsModalVisible(true);
+ };
+
+
+ const handleSortChange = (value) => {
+   if (value === 'lasted') {
+     setSortField('createdAt');
+     setSortOrder('desc');
+   } else if (value === 'oldest') {
+     setSortField('createdAt');
+     setSortOrder('asc');
+   }
  };
 
 
@@ -251,46 +264,56 @@ const ReportManagement = () => {
 
 
          {/* Filter Controls */}
-         <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-           <Col span={8}>
-             <Input
-               placeholder="Search reports..."
-               prefix={<SearchOutlined />}
-               value={filters.search}
-               onChange={(e) => handleFilterChange('search', e.target.value)}
+         <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
+           <div className="d-flex align-items-center gap-2">
+             <div className="top-search">
+               <div className="top-search-group">
+                 <span className="input-icon">
+                   <i className="ti ti-search"></i>
+                 </span>
+                 <input
+                   type="text"
+                   className="form-control"
+                   placeholder="Search description"
+                   value={filters.search || ''}
+                   onChange={e => handleFilterChange('search', e.target.value)}
+                 />
+               </div>
+             </div>
+             <Select
+               placeholder="Type"
+               value={filters.type || undefined}
+               onChange={value => handleFilterChange('type', value)}
+               style={{ width: 130 }}
                allowClear
+             >
+               <Option value="REPORT">REPORT</Option>
+             </Select>
+             <Select
+               placeholder="Status"
+               value={filters.status || undefined}
+               onChange={value => handleFilterChange('status', value)}
+               style={{ width: 130 }}
+               allowClear
+             >
+               <Option value="PENDING">PENDING</Option>
+               <Option value="RESOLVED">RESOLVED</Option>
+               <Option value="REJECTED">REJECTED</Option>
+             </Select>
+           </div>
+           <div className="d-flex align-items-center" style={{ gap: 12 }}>
+             <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sort by:</span>
+             <Select
+               value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
+               style={{ width: 120 }}
+               onChange={handleSortChange}
+               options={[
+                 { value: 'lasted', label: 'Lasted' },
+                 { value: 'oldest', label: 'Oldest' },
+               ]}
              />
-           </Col>
-           <Col span={5}>
-             <Select
-               value={filters.type}
-               onChange={(value) => handleFilterChange('type', value)}
-               style={{ width: '100%' }}
-               placeholder="Filter by Type"
-               allowClear
-             >
-               <Option value="REPORT">Report</Option>
-             </Select>
-           </Col>
-           <Col span={5}>
-             <Select
-               value={filters.status}
-               onChange={(value) => handleFilterChange('status', value)}
-               style={{ width: '100%' }}
-               placeholder="Filter by Status"
-               allowClear
-             >
-               <Option value="pending">Pending</Option>
-               <Option value="resolved">Resolved</Option>
-               <Option value="rejected">Rejected</Option>
-             </Select>
-           </Col>
-           <Col span={6}>
-             <Space>
-               <Button onClick={handleClearFilters}>Clear Filters</Button>
-             </Space>
-           </Col>
-         </Row>
+           </div>
+         </div>
 
 
          {/* Reports Table */}
