@@ -82,6 +82,15 @@ const [filterStatus, setFilterStatus] = useState();
    }
  };
 
+ const handleSortByMaxDiscount = () => {
+   if (sortField === 'maxDiscount') {
+     setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+   } else {
+     setSortField('maxDiscount');
+     setSortOrder('asc');
+   }
+ };
+
  const filteredCoupons = coupons.filter(coupon =>
    coupon.code?.toLowerCase().includes(searchText.toLowerCase()) &&
    (!filterType || coupon.type === filterType) &&
@@ -104,6 +113,14 @@ const [filterStatus, setFilterStatus] = useState();
        return a.value - b.value;
      } else {
        return b.value - a.value;
+     }
+   } else if (sortField === 'maxDiscount') {
+     if (a.maxDiscount == null) return 1;
+     if (b.maxDiscount == null) return -1;
+     if (sortOrder === 'asc') {
+       return a.maxDiscount - b.maxDiscount;
+     } else {
+       return b.maxDiscount - a.maxDiscount;
      }
    } else if (sortField === 'createdAt') {
      const dateA = new Date(a.createdAt);
@@ -210,19 +227,38 @@ const [filterStatus, setFilterStatus] = useState();
 
  const handleChange = (e) => {
    const { name, value, type, checked } = e.target;
-   setFormData(prev => ({
-     ...prev,
-     [name]: type === 'checkbox' ? checked : value
-   }));
+   setFormData(prev => {
+     let newForm = {
+       ...prev,
+       [name]: type === 'checkbox' ? checked : value
+     };
+     // Nếu đổi type thì reset trường không liên quan
+     if (name === 'type') {
+       if (value === 'PERCENT') {
+         newForm.value = '';
+       } else if (value === 'FIXED') {
+         newForm.maxDiscount = '';
+       }
+     }
+     return newForm;
+   });
  };
 
 
  const handleSubmit = (e) => {
    e.preventDefault();
+   let dataToSend = {
+     ...formData,
+     value: formData.value !== '' ? Number(formData.value) : null,
+     maxDiscount: formData.maxDiscount !== '' ? Number(formData.maxDiscount) : null,
+     minOrderValue: formData.minOrderValue !== '' ? Number(formData.minOrderValue) : null,
+     totalUsageLimit: formData.totalUsageLimit !== '' ? Number(formData.totalUsageLimit) : null,
+   };
+   // Xử lý loại bỏ trường không cần thiết như hướng dẫn ở trên
    if (showAddModal) {
-     dispatch(createCoupon(formData));
+     dispatch(createCoupon(dataToSend));
    } else if (showEditModal && selectedCoupon) {
-     dispatch(updateCoupon({ id: selectedCoupon.id, couponData: formData }));
+     dispatch(updateCoupon({ id: selectedCoupon.id, couponData: dataToSend }));
    }
  };
 
@@ -246,7 +282,7 @@ const [filterStatus, setFilterStatus] = useState();
          </div>
          <div className="d-flex">
            <Button type="primary" onClick={handleAddCoupon} style={{ marginRight: 8 }}>Add coupon</Button>
-           <Button type="success" onClick={() => setShowRestoreModal(true)}>Restore</Button>
+           <Button type="default" onClick={() => setShowRestoreModal(true)}>Restore</Button>
          </div>
        </div>
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
@@ -322,6 +358,14 @@ const [filterStatus, setFilterStatus] = useState();
                      </span>
                    )}
                  </th>
+                 <th style={{ cursor: 'pointer' }} onClick={handleSortByMaxDiscount}>
+                   MAX DISCOUNT
+                   {sortField === 'maxDiscount' && (
+                     <span style={{ marginLeft: 4 }}>
+                       {sortOrder === 'asc' ? '▲' : '▼'}
+                     </span>
+                   )}
+                 </th>
                  <th>STATUS</th>
                  <th>ACTION</th>
                </tr>
@@ -333,6 +377,7 @@ const [filterStatus, setFilterStatus] = useState();
                    <td>{coupon.description}</td>
                    <td>{coupon.type}</td>
                    <td>{coupon.value}</td>
+                   <td>{coupon.maxDiscount}</td>
                    <td>
                      <span className={`badge ${coupon.isActive ? 'bg-success' : 'bg-danger'}`}>
                        {coupon.isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -416,27 +461,32 @@ const [filterStatus, setFilterStatus] = useState();
              <option value="FIXED">FIXED</option>
            </select>
          </div>
-         <div className="mb-3">
-           <label className="form-label">Value</label>
-           <input
-             type="number"
-             name="value"
-             className="form-control"
-             value={formData.value}
-             onChange={handleChange}
-             required
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Max Discount</label>
-           <input
-             type="number"
-             name="maxDiscount"
-             className="form-control"
-             value={formData.maxDiscount}
-             onChange={handleChange}
-           />
-         </div>
+         {formData.type === 'FIXED' && (
+           <div className="mb-3">
+             <label className="form-label">Value</label>
+             <input
+               type="number"
+               name="value"
+               className="form-control"
+               value={formData.value}
+               onChange={handleChange}
+               required={formData.type === 'FIXED'}
+             />
+           </div>
+         )}
+         {formData.type === 'PERCENT' && (
+           <div className="mb-3">
+             <label className="form-label">Max Discount</label>
+             <input
+               type="number"
+               name="maxDiscount"
+               className="form-control"
+               value={formData.maxDiscount}
+               onChange={handleChange}
+               required={formData.type === 'PERCENT'}
+             />
+           </div>
+         )}
          <div className="mb-3">
            <label className="form-label">Min Order Value</label>
            <input
@@ -539,27 +589,32 @@ const [filterStatus, setFilterStatus] = useState();
              <option value="FIXED">FIXED</option>
            </select>
          </div>
-         <div className="mb-3">
-           <label className="form-label">Value</label>
-           <input
-             type="number"
-             name="value"
-             className="form-control"
-             value={formData.value}
-             onChange={handleChange}
-             required
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Max Discount</label>
-           <input
-             type="number"
-             name="maxDiscount"
-             className="form-control"
-             value={formData.maxDiscount}
-             onChange={handleChange}
-           />
-         </div>
+         {formData.type === 'FIXED' && (
+           <div className="mb-3">
+             <label className="form-label">Value</label>
+             <input
+               type="number"
+               name="value"
+               className="form-control"
+               value={formData.value}
+               onChange={handleChange}
+               required={formData.type === 'FIXED'}
+             />
+           </div>
+         )}
+         {formData.type === 'PERCENT' && (
+           <div className="mb-3">
+             <label className="form-label">Max Discount</label>
+             <input
+               type="number"
+               name="maxDiscount"
+               className="form-control"
+               value={formData.maxDiscount}
+               onChange={handleChange}
+               required={formData.type === 'PERCENT'}
+             />
+           </div>
+         )}
          <div className="mb-3">
            <label className="form-label">Min Order Value</label>
            <input

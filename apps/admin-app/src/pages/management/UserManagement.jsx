@@ -402,9 +402,9 @@ const UserManagement = () => {
                                    </td>
                                    <td>
                                        <div className="d-flex align-items-center gap-2">
-                                           <button className="btn btn-sm btn-primary" onClick={() => handleEditUser(user)}>
+                                           {/* <button className="btn btn-sm btn-primary" onClick={() => handleEditUser(user)}>
                                                <i className="ti ti-edit me-1"></i>Edit
-                                           </button>
+                                           </button> */}
                                            {user.lockedReason ? (
                                                <button className="btn btn-sm btn-success" onClick={() => handleUnlockUser(user)}>
                                                    <i className="ti ti-unlock me-1"></i>Unlock

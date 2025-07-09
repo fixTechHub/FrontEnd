@@ -16,6 +16,9 @@ const BookingManagement = () => {
  const bookingsPerPage = 10;
  const [sortField, setSortField] = useState('createdAt');
 const [sortOrder, setSortOrder] = useState('desc');
+const [filterService, setFilterService] = useState('');
+const [filterStatus,  setFilterStatus] = useState('');
+const [allServices, setAllServices] = useState([]);
 
 
  useEffect(() => {
@@ -41,7 +44,7 @@ const [sortOrder, setSortOrder] = useState('desc');
      await Promise.all(serviceIds.map(async (id) => {
        try {
          const res = await ApiBE.get(`/Dashboard/services/${id}`);
-         serviceMapTemp[id] = res.data.name || id;
+         serviceMapTemp[id] = res.data.serviceName || id;
        } catch {
          serviceMapTemp[id] = id;
        }
@@ -51,13 +54,43 @@ const [sortOrder, setSortOrder] = useState('desc');
    fetchData();
  }, []);
 
+useEffect(() => {
+  // Gọi API lấy tất cả service
+  const fetchAllServices = async () => {
+    try {
+      const res = await ApiBE.get('/Dashboard/services'); // hoặc endpoint đúng của bạn
+      setAllServices(res.data || []);
+    } catch {
+      setAllServices([]);
+    }
+  };
+  fetchAllServices();
+}, []);
 
- const filteredBookings = bookings.filter(b =>
-   (userMap[b.customerId] || '').toLowerCase().includes(searchText.toLowerCase()) ||
-   (serviceMap[b.serviceId] || '').toLowerCase().includes(searchText.toLowerCase()) ||
-   (b.status || '').toLowerCase().includes(searchText.toLowerCase()) ||
-   (b.id || '').toLowerCase().includes(searchText.toLowerCase())
- );
+useEffect(() => {
+  setCurrentPage(1);
+}, [filterService, filterStatus]);
+
+
+ const filteredBookings = bookings.filter(b => {
+  const bookingCode = (b.bookingCode || '').toLowerCase();
+  const customer = (userMap[b.customerId] || '').toLowerCase();
+  const service = (serviceMap[b.serviceId] || '').toLowerCase();
+  const status = (b.status || '').toLowerCase();
+  const id = (b.id || '').toLowerCase();
+  const search = searchText.toLowerCase();
+
+  return (
+    (bookingCode.includes(search) ||
+     customer.includes(search) ||
+     service.includes(search) ||
+     status.includes(search) ||
+     id.includes(search)
+    ) &&
+    (!filterService || b.serviceId === filterService) &&
+    (!filterStatus || b.status === filterStatus)
+  );
+});
  const indexOfLastBooking = currentPage * bookingsPerPage;
  const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
  const sortedBookings = [...filteredBookings].sort((a, b) => {
@@ -125,7 +158,7 @@ const handleSortById = () => {
 
 const handleSortByCustomer = () => {
   if (sortField === 'customer') {
-    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
   } else {
     setSortField('customer');
     setSortOrder('asc');
@@ -134,17 +167,17 @@ const handleSortByCustomer = () => {
 
 const handleSortByService = () => {
   if (sortField === 'service') {
-    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
   } else {
     setSortField('service');
     setSortOrder('asc');
   }
- };
+};
 
 
  return (
    <div className="modern-page-wrapper">
-     <div className="moder-content-card">
+     <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
            <h4 className="mb-1">Bookings</h4>
@@ -157,19 +190,45 @@ const handleSortByService = () => {
          </div>
        </div>
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
-         <div className="top-search me-2">
-           <div className="top-search-group">
-             <span className="input-icon">
-               <i className="ti ti-search"></i>
-             </span>
-             <input
-               type="text"
-               className="form-control"
-               placeholder="Search bookings"
-               value={searchText}
-               onChange={e => setSearchText(e.target.value)}
-             />
+         <div className="d-flex align-items-center gap-2">
+           <div className="top-search">
+             <div className="top-search-group">
+               <span className="input-icon">
+                 <i className="ti ti-search"></i>
+               </span>
+               <input
+                 type="text"
+                 className="form-control"
+                 placeholder="Search bookings"
+                 value={searchText}
+                 onChange={e => setSearchText(e.target.value)}
+               />
+             </div>
            </div>
+           <Select
+             placeholder="Service"
+             value={filterService || undefined}
+             onChange={value => setFilterService(value)}
+             style={{ width: 150, marginRight: 8 }}
+             allowClear
+           >
+             {allServices.map(s => (
+               <Select.Option key={s.id} value={s.id}>{s.serviceName}</Select.Option>
+             ))}
+           </Select>
+           <Select
+             placeholder="Status"
+             value={filterStatus || undefined}
+             onChange={value => setFilterStatus(value)}
+             style={{ width: 130, marginRight: 8 }}
+             allowClear
+           >
+             <Select.Option value="PENDING">PENDING</Select.Option>
+             <Select.Option value="CANCELLED">CANCELLED</Select.Option>
+             <Select.Option value="WAITING_CONFIRM">WAITING CONFIRM</Select.Option>
+             <Select.Option value="IN_PROGRESS">IN PROGRESS</Select.Option>
+             <Select.Option value="DONE">DONE</Select.Option>
+           </Select>
          </div>
          <div className="d-flex align-items-center">
            <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
@@ -189,7 +248,7 @@ const handleSortByService = () => {
            <thead className="thead-light">
              <tr>
                <th style={{ cursor: 'pointer' }} onClick={handleSortById}>
-                 ID
+                 BOOKING CODE
                  {sortField === 'id' && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -213,18 +272,17 @@ const handleSortByService = () => {
                  )}
                </th>
                <th>STATUS</th>
-               <th>CREATED AT</th>
+               <th>TIME</th>
                <th>ACTION</th>
              </tr>
            </thead>
            <tbody>
              {currentBookings.map(b => (
                <tr key={b.id}>
-                 <td>{b.id}</td>
+                 <td>{b.bookingCode || b.id}</td>
                  <td>{userMap[b.customerId] || b.customerId}</td>
-                 <td>{serviceMap[b.serviceId] || b.serviceId}</td>
+                 <td>{serviceMap[b.serviceId] || ''}</td>
                  <td>{b.status}</td>
-                 <td>{b.createdAt ? new Date(b.createdAt).toLocaleString() : ''}</td>
                  <td>
                    {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
                      ? `${new Date(b.schedule.startTime).toLocaleString()} - ${b.schedule.endTime ? new Date(b.schedule.endTime).toLocaleString() : ''}`
@@ -256,8 +314,6 @@ const handleSortByService = () => {
            </ul>
          </nav>
        </div>
-
-
      </div>
      {showDetailModal && selectedBooking && (
        <Modal
@@ -272,8 +328,6 @@ const handleSortByService = () => {
          <div><b>Status:</b> {selectedBooking.status}</div>
          <div><b>Created At:</b> {selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : ''}</div>
          <div><b>Schedule:</b> {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''} - {selectedBooking.schedule?.endTime ? new Date(selectedBooking.schedule.endTime).toLocaleString() : ''}</div>
-
-
        </Modal>
      )}
    </div>

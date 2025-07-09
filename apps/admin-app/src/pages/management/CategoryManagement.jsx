@@ -7,6 +7,8 @@ import {
  updateCategory,
  deleteCategory,
  resetState,
+ fetchDeletedCategories,
+ restoreCategory,
 } from '../../features/categories/categorySlice';
 
 
@@ -34,6 +36,7 @@ const CategoryManagement = () => {
  const [sortField, setSortField] = useState('createdAt');
 const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
 const [filterStatus, setFilterStatus] = useState();
+const [showRestoreModal, setShowRestoreModal] = useState(false);
 
 
  const handlePageChange = (page) => {
@@ -43,6 +46,7 @@ const [filterStatus, setFilterStatus] = useState();
 
  useEffect(() => {
    dispatch(fetchCategories());
+   dispatch(fetchDeletedCategories());
  }, [dispatch]);
 
 
@@ -158,6 +162,18 @@ const confirmDelete = () => {
   }
 };
 
+const deletedCategories = useSelector((state) => state.categories.deletedCategories) || [];
+
+const handleRestoreCategory = async (id) => {
+  await dispatch(restoreCategory(id));
+  setShowRestoreModal(false);
+};
+
+const handleOpenRestoreModal = () => {
+  dispatch(fetchDeletedCategories());
+  setShowRestoreModal(true);
+};
+
 
  console.log('categories:', categories);
 
@@ -175,7 +191,10 @@ const confirmDelete = () => {
              </ol>
            </nav>
          </div>
-         <Button type="primary" onClick={handleAddCategory}>Add Category</Button>
+         <div>
+           <Button type="primary" onClick={handleAddCategory}>Add Category</Button>
+           <Button type="default" onClick={handleOpenRestoreModal} style={{ marginLeft: 8 }}>Restore</Button>
+         </div>
        </div>
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
          <div className="d-flex align-items-center gap-2">
@@ -393,6 +412,49 @@ const confirmDelete = () => {
            <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
            <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
          </div>
+       </div>
+     </Modal>
+
+     {/* Restore Modal */}
+     <Modal
+       open={showRestoreModal}
+       onCancel={() => setShowRestoreModal(false)}
+       footer={null}
+       title="Restore Category"
+       width={800}
+     >
+       <div className="custom-datatable-filter table-responsive">
+         <table className="table datatable">
+           <thead className="thead-light">
+             <tr>
+               <th>NAME</th>
+               <th>ICON</th>
+               <th>STATUS</th>
+               <th>ACTION</th>
+             </tr>
+           </thead>
+           <tbody>
+             {deletedCategories.map((cat) => (
+               <tr key={cat.id}>
+                 <td>{cat.categoryName}</td>
+                 <td>{cat.icon}</td>
+                 <td>
+                   <span className={`badge ${cat.isActive ? 'bg-success' : 'bg-danger'}`}>
+                     {cat.isActive ? 'Active' : 'Inactive'}
+                   </span>
+                 </td>
+                 <td>
+                   <Button size="small" type="primary" onClick={() => handleRestoreCategory(cat.id)}>
+                     Restore
+                   </Button>
+                 </td>
+               </tr>
+             ))}
+           </tbody>
+         </table>
+       </div>
+       <div className="d-flex justify-content-end mt-3">
+         <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
        </div>
      </Modal>
    </div>

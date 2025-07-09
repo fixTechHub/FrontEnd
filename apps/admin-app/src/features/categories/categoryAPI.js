@@ -26,4 +26,14 @@ export const categoryAPI = {
     const res = await ApiBE.delete(`/Category/${id}`);
     return res.data;
   },
+  // Lấy danh sách category đã xóa
+  getDeleted: async () => {
+    const res = await ApiBE.get('/Category/deleted');
+    return res.data;
+  },
+  // Khôi phục category
+  restore: async (id) => {
+    const res = await ApiBE.post(`/Category/${id}/restore`);
+    return res.data;
+  },
 }; 

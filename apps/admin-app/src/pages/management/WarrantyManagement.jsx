@@ -53,7 +53,7 @@ const [filterReviewed, setFilterReviewed] = useState();
        const bookings = await bookingAPI.getAll();
        const map = {};
        bookings.forEach(b => {
-         map[b.id] = b.bookingCode || b.id;
+         map[b.id] = b.bookingCode || '';
        });
        setBookingMap(map);
      } catch {
@@ -260,7 +260,7 @@ const handleSortByTechnician = () => {
            <thead className="thead-light">
              <tr>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByBooking}>
-                 BOOKING
+                 BOOKING CODE
                  {sortField === 'bookingId' && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -292,7 +292,7 @@ const handleSortByTechnician = () => {
            <tbody>
              {currentWarranties.map(w => (
                <tr key={w.id}>
-                 <td>{bookingMap[w.bookingId] || w.bookingId}</td>
+                 <td>{bookingMap[w.bookingId] || ''}</td>
                  <td>
                    {userNames[w.customerId] || w.customerId}
                  </td>

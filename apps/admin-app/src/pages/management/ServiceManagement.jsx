@@ -7,6 +7,8 @@ import {
   updateService,
   deleteService,
   resetServiceState,
+  fetchDeletedServices,
+  restoreService,
 } from '../../features/service/serviceSlice';
 import { fetchCategories } from '../../features/categories/categorySlice';
 
@@ -36,6 +38,7 @@ const ServiceManagement = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterStatus, setFilterStatus] = useState();
   const [filterCategory, setFilterCategory] = useState();
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -43,6 +46,7 @@ const ServiceManagement = () => {
 
   useEffect(() => {
     dispatch(fetchServices());
+    dispatch(fetchDeletedServices());
     dispatch(fetchCategories());
   }, [dispatch]);
 
@@ -122,6 +126,17 @@ const ServiceManagement = () => {
     }
   };
 
+  const deletedServices = useSelector((state) => state.service.deletedServices) || [];
+
+  const handleRestoreService = async (id) => {
+    await dispatch(restoreService(id));
+    setShowRestoreModal(false);
+  };
+  const handleOpenRestoreModal = () => {
+    dispatch(fetchDeletedServices());
+    setShowRestoreModal(true);
+  };
+
   const indexOfLastService = currentPage * servicesPerPage;
   const indexOfFirstService = indexOfLastService - servicesPerPage;
   const sortedServices = [...filteredServices].sort((a, b) => {
@@ -185,7 +200,10 @@ const ServiceManagement = () => {
               </ol>
             </nav>
           </div>
-          <Button type="primary" onClick={handleAddService}>Add Service</Button>
+          <div>
+            <Button type="primary" onClick={handleAddService}>Add Service</Button>
+            <Button type="default" onClick={handleOpenRestoreModal} style={{ marginLeft: 8 }}>Restore</Button>
+          </div>
         </div>
         <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
           <div className="d-flex align-items-center gap-2">
@@ -388,6 +406,50 @@ const ServiceManagement = () => {
         destroyOnClose
       >
         <p>Bạn có chắc chắn muốn xóa dịch vụ này?</p>
+      </Modal>
+      {/* Restore Modal */}
+      <Modal
+        open={showRestoreModal}
+        onCancel={() => setShowRestoreModal(false)}
+        footer={null}
+        title="Restore Service"
+        width={800}
+      >
+        <div className="custom-datatable-filter table-responsive">
+          <table className="table datatable">
+            <thead className="thead-light">
+              <tr>
+                <th>NAME</th>
+                <th>CATEGORY</th>
+                <th>ICON</th>
+                <th>STATUS</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              {deletedServices.map((svc) => (
+                <tr key={svc.id}>
+                  <td>{svc.serviceName}</td>
+                  <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || ''}</td>
+                  <td>{svc.icon}</td>
+                  <td>
+                    <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
+                      {svc.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td>
+                    <Button size="small" type="primary" onClick={() => handleRestoreService(svc.id)}>
+                      Restore
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="d-flex justify-content-end mt-3">
+          <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
+        </div>
       </Modal>
     </div>
   );

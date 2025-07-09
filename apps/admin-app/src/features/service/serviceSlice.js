@@ -53,6 +53,32 @@ export const deleteService = createAsyncThunk(
   }
 );
 
+export const fetchDeletedServices = createAsyncThunk(
+  'service/fetchDeletedServices',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await serviceAPI.getDeleted();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const restoreService = createAsyncThunk(
+  'service/restoreService',
+  async (id, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await serviceAPI.restore(id);
+      dispatch(fetchServices());
+      dispatch(fetchDeletedServices());
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 const initialState = {
   services: [],
   selectedService: null,
@@ -126,6 +152,30 @@ const serviceSlice = createSlice({
         state.success = true;
       })
       .addCase(deleteService.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchDeletedServices.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDeletedServices.fulfilled, (state, action) => {
+        state.loading = false;
+        state.deletedServices = action.payload;
+      })
+      .addCase(fetchDeletedServices.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(restoreService.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(restoreService.fulfilled, (state) => {
+        state.loading = false;
+        state.success = true;
+      })
+      .addCase(restoreService.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

@@ -53,6 +53,32 @@ export const deleteCategory = createAsyncThunk(
   }
 );
 
+export const fetchDeletedCategories = createAsyncThunk(
+  'category/fetchDeletedCategories',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await categoryAPI.getDeleted();
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
+export const restoreCategory = createAsyncThunk(
+  'category/restoreCategory',
+  async (id, { dispatch, rejectWithValue }) => {
+    try {
+      const response = await categoryAPI.restore(id);
+      dispatch(fetchCategories());
+      dispatch(fetchDeletedCategories());
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || error.message);
+    }
+  }
+);
+
 const initialState = {
   categories: [],
   deletedCategories: [],
@@ -127,6 +153,30 @@ const categorySlice = createSlice({
         state.success = true;
       })
       .addCase(deleteCategory.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(fetchDeletedCategories.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDeletedCategories.fulfilled, (state, action) => {
+        state.loading = false;
+        state.deletedCategories = action.payload;
+      })
+      .addCase(fetchDeletedCategories.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(restoreCategory.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(restoreCategory.fulfilled, (state) => {
+        state.loading = false;
+        state.success = true;
+      })
+      .addCase(restoreCategory.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

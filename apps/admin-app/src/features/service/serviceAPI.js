@@ -26,4 +26,14 @@ export const serviceAPI = {
     const res = await ApiBE.delete(`/Service/${id}`);
     return res.data;
   },
+  // Lấy danh sách service đã xóa
+  getDeleted: async () => {
+    const res = await ApiBE.get('/Service/deleted');
+    return res.data;
+  },
+  // Khôi phục service
+  restore: async (id) => {
+    const res = await ApiBE.post(`/Service/${id}/restore`);
+    return res.data;
+  },
 }; 
