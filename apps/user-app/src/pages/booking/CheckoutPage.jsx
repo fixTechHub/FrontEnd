@@ -12,6 +12,7 @@ import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
 import { checkOutCustomerAccess } from "../../hooks/checkBookingAccess";
+import { formatCurrency } from '../../utils/formatDuration';
 const CheckoutPage = () => {
     const dispatch = useDispatch();
     const { acceptedBookingPrice, bookingItem, userCoupons, loading, error } = useSelector(state => state.bookingPrice);
@@ -229,7 +230,7 @@ const CheckoutPage = () => {
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <span className="adon-price">{(item.price * (item.quantity || 1)).toFixed(2)}</span>
+                                                            <span className="adon-price">{formatCurrency(item.price * (item.quantity || 1))}</span>
                                                         </div>
                                                         {item.description && (
                                                             <div className="more-adon-info">
@@ -400,17 +401,17 @@ const CheckoutPage = () => {
                                                         {acceptedBookingPrice?.laborPrice > 0 && (
                                                             <li>
                                                                 <h6>Tiền Công</h6>
-                                                                <p>{laborPrice.toFixed(2)}</p>
+                                                                <p>{formatCurrency(laborPrice)}</p>
                                                             </li>
                                                         )}
                                                         <li>
                                                             <h6>Tổng Tiền</h6>
-                                                            <p>{subTotal.toFixed(2)}</p>
+                                                            <p>{formatCurrency(subTotal)}</p>
                                                         </li>
                                                         {appliedCoupon && (
                                                             <li className="text-success">
                                                                 <h6>Mã Giảm Giá: {appliedCoupon.code} <small>({appliedCoupon.type === 'PERCENT' ? `${appliedCoupon.value}%` : `$${appliedCoupon.value}`})</small></h6>
-                                                                <p className='text-success'>- {discount.toFixed(2)}</p>
+                                                                <p className='text-success'>- {formatCurrency(discount)}</p>
                                                             </li>
                                                         )}
                                                     </ul>
@@ -421,7 +422,7 @@ const CheckoutPage = () => {
                                     <div className="total-rate-card">
                                         <div className="vehicle-total-price">
                                             <h5>Tổng Tạm Tính</h5>
-                                            <h6>{estimatedTotal.toFixed(2)}</h6>
+                                            <h6>{formatCurrency(estimatedTotal)}</h6>
                                         </div>
                                     </div>
                                 </div>

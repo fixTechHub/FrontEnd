@@ -42,3 +42,8 @@ export const formatDurationMMSS = (seconds) => {
 
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }; 
+
+
+export const formatCurrency = (number) => {
+    return Math.round(number).toLocaleString('vi-VN');
+};
