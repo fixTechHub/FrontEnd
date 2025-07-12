@@ -8,6 +8,7 @@ import AppProvider from './app/AppProvider';
 import React, { useState } from 'react';
 import { checkAuthThunk } from './features/auth/authSlice';
 import { fetchAllRoles } from './features/roles/roleSlice';
+import { fetchTopBookedServices } from './features/bookings/bookingSlice';
 
 function App() {
     const dispatch = useDispatch();
@@ -24,6 +25,7 @@ function App() {
     useEffect(() => {
         dispatch(fetchAllPublicCategories());
         dispatch(fetchAllPublicServices());
+        dispatch(fetchTopBookedServices())
         dispatch(fetchAllRoles());
         // Logic checkAuth đã được chuyển sang main.jsx
     }, [dispatch]);

@@ -384,3 +384,93 @@ body {
   cursor: pointer;
   line-height: 1;
 }
+
+/* Ví dụ đặt trong file CSS/SCSS chung */
+.specialty-tags {
+  display: flex;
+  flex-wrap: wrap;
+  /* tự xuống dòng khi dài */
+  gap: 8px;
+  /* khoảng cách giữa các tag */
+  margin-top: 14px;
+}
+
+.specialty-tag {
+  display: inline-block;
+  padding: 4px 10px;
+  background: #f1f1f1;
+  /* xám nhạt */
+  border: 1px solid #d0d0d0;
+  border-radius: 4px;
+  /* bo góc nhẹ cho đẹp */
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  /* không xuống dòng bên trong tag */
+}
+
+/* Container để chứa các nút */
+.button-container {
+  display: flex;
+  /* Bật Flexbox để các item con nằm trên một hàng */
+  gap: 15px;
+  /* Tạo khoảng cách 15px giữa các nút */
+  margin-top: 20px;
+  /* Tạo khoảng cách với nội dung phía trên */
+}
+
+/* Kiểu dáng chung cho nút chính */
+.custom-button {
+  flex-grow: 1;
+  /* Cho phép nút co giãn để lấp đầy không gian */
+  padding: 7px 7px;
+  /* Tăng khoảng đệm bên trong nút */
+  background-color: #201F1D;
+  /* Màu nền xanh dương */
+  color: #ffffff;
+  /* Màu chữ trắng */
+  text-align: center;
+  /* Căn giữa nội dung chữ */
+  text-decoration: none;
+  /* Bỏ gạch chân của thẻ <a> */
+  border-radius: 5px;
+  /* Bo tròn các góc */
+  font-weight: 600;
+  /* Tăng độ đậm của chữ */
+  border: none;
+  /* Bỏ đường viền mặc định */
+  cursor: pointer;
+  /* Biến con trỏ thành hình bàn tay khi di chuột */
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  /* Hiệu ứng chuyển động mượt mà */
+}
+
+/* Hiệu ứng khi di chuột vào nút chính */
+.custom-button:hover {
+  color: #ffffff;
+  background-color: rgb(18, 115, 132);
+}
+
+/* Kiểu dáng cho nút phụ (nút "Liên Hệ") */
+.custom-button-secondary {
+  flex-grow: 1;
+  padding: 7px 7px;
+  background-color: #201F1D;
+  /* Màu nền xám nhạt */
+  color: #ffffff;
+  /* Màu chữ đen */
+  text-align: center;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: 600;
+  border: none;
+  /* Thêm đường viền */
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Hiệu ứng khi di chuột vào nút phụ */
+.custom-button-secondary:hover {
+  background-color: rgb(18, 115, 132);
+  color: #ffffff;
+}

@@ -11,6 +11,7 @@ import { acceptQuotation } from '../../features/bookings/bookingAPI';
 import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
 import { fetchBookingPriceInformation } from '../../features/booking-prices/bookingPriceSlice';
 import { useBookingParams } from '../../hooks/useBookingParams';
+import { onBookingQuotation } from '../../services/socket';
 
 function ChooseTechnician() {
     const dispatch = useDispatch();
@@ -32,6 +33,16 @@ function ChooseTechnician() {
             dispatch(fetchQuotationsByBookingId(bookingId));
         }
     }, [dispatch, bookingId]);
+
+    useEffect(() => {
+        if (!bookingId) return;
+        const unsubscribe = onBookingQuotation((data) => {
+            if (data.bookingId === bookingId) {
+                dispatch(fetchQuotationsByBookingId(bookingId));
+            }
+        });
+        return unsubscribe;
+    }, [bookingId, dispatch]);
 
     const handleShowTechnicianInfo = (id) => {
         setSelectedTechnicianId(id);

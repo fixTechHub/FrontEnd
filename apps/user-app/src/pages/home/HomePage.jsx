@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import AOS from "aos";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
+import Services from "./Services";
 
 function HomePage() {
   const { user, isAuthenticated, verificationStatus } = useSelector(
@@ -161,6 +162,8 @@ function HomePage() {
         <Banner />
 
         <Categories />
+
+        <Services />
 
         <section className="more-boats-info-sec">
           <div className="container-fluid">

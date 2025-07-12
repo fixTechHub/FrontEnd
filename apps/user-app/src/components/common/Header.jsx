@@ -180,11 +180,11 @@ function Header() {
                                 </a>
                             </div>
                             <ul className="main-nav">
-                                <li className="has-submenu megamenu active">
-                                    <a href="/">TRANG CHỦ </a>
+                                <li className="has-submenu megamenu">
+                                    <Link to="/">TRANG CHỦ </Link>
                                 </li>
 
-                                <li className="has-submenu">
+                                {/* <li className="has-submenu">
                                     <a href="#">DANH MỤC <i className="fas fa-chevron-down"></i></a>
                                     <ul className="submenu">
                                         {Array.isArray(categories) && categories.map((category) => (
@@ -202,6 +202,10 @@ function Header() {
                                             </li>
                                         ))}
                                     </ul>
+                                </li> */}
+
+                                <li>
+                                    <Link to="/services">DỊCH VỤ</Link>
                                 </li>
 
                                 <li>

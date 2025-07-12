@@ -1,23 +1,29 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { cancelBooking, fetchBookingById } from "../../../features/bookings/bookingSlice";
-import { formatDate } from "../../../utils/formatDate";
+import { cancelBooking, fetchDetailsBookingById, setLastCancelBy } from "../../../features/bookings/bookingSlice";
+import { formatDateOnly, formatTimeOnly } from "../../../utils/formatDate";
 import { BOOKING_STATUS_CONFIG } from "../../../constants/bookingConstants";
 import { useNavigate } from "react-router-dom";
+import { Image } from "react-bootstrap";
 
 function BookingDetails({ bookingId }) {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { booking, status: bookingStatus } = useSelector((state) => state.booking);
-    // console.log('--- BOOKING DETAILS ---', booking);
+    const { user } = useSelector((state) => state.auth);
+    const [selectedImage, setSelectedImage] = useState(null);
+    const { detailsBooking, status: bookingStatusState } = useSelector((state) => state.booking);
+    // console.log('--- BOOKING DETAILS ---', detailsBooking);
+    // console.log('--- USER ---', user);
 
     useEffect(() => {
         if (bookingId) {
-            dispatch(fetchBookingById(bookingId));
+            dispatch(fetchDetailsBookingById(bookingId));
         }
     }, [dispatch, bookingId]);
 
-    const statusConfig = BOOKING_STATUS_CONFIG[booking?.status] || BOOKING_STATUS_CONFIG.default;
+    console.log('--- BOOKING DETAILS ---', detailsBooking);
+
+    const statusConfig = BOOKING_STATUS_CONFIG[detailsBooking?.booking?.status] || BOOKING_STATUS_CONFIG.default;
     // console.log('--- IMAGE BOOKING DETAIL ---', booking?.images);
 
     const handleCancel = async () => {
@@ -29,10 +35,8 @@ function BookingDetails({ bookingId }) {
             return;
         }
 
-        // const confirmCancel = window.confirm("Bạn có chắc chắn muốn huỷ đơn này?");
-        // if (!confirmCancel) return;
-
         try {
+            dispatch(setLastCancelBy(user._id));
             const res = await dispatch(cancelBooking({ bookingId, reason })).unwrap();
 
             alert(res.message);
@@ -54,50 +58,104 @@ function BookingDetails({ bookingId }) {
                 </div>
                 <div className="booking-sidebar-body">
                     <div className="booking-car-detail">
-                        {booking?.images?.map((image) => (
-                            <span key={image} className="car-img">
-                                <img src={image} className="img-fluid" alt="booking-image" />
-                            </span>
-                        ))}
-
-                        <span className="car-img">
-                            <img src={"/img/car-list-4.jpg"} className="img-fluid" alt="Car" />
-                        </span>
-
-                        {/* <div className="care-more-info">
-                            <h5>Chevrolet Camaro</h5>
-                            <p>Miami St, Destin, FL 32550, USA</p>
-                            <a href="listing-details.html">View Car Details</a>
-                        </div> */}
+                        <div
+                            className="d-flex flex-nowrap overflow-auto py-2"
+                            style={{ gap: "0.5rem" }}
+                        >
+                            {detailsBooking?.booking?.images?.map((image) => (
+                                <Image
+                                    key={image}
+                                    src={image}
+                                    thumbnail
+                                    onClick={() => setSelectedImage(image)}
+                                    style={{ maxHeight: 120, width: "auto", objectFit: "contain" }}
+                                />
+                            ))}
+                        </div>
                     </div>
 
                     <div className="booking-vehicle-rates">
                         <ul>
                             <li>
-                                <h6><span>Loại dịch vụ:</span> {booking?.serviceId?.serviceName || 'Refundable Deposit'}</h6>
+                                <h6><span>Loại dịch vụ:</span> {detailsBooking?.booking?.serviceId?.serviceName || 'Đang cập nhật..'}</h6>
                             </li>
                             <li>
-                                <h6><span>Địa chỉ:</span> {booking?.location?.address || 'Refundable Deposit'}</h6>
+                                <h6><span>Địa chỉ:</span> {detailsBooking?.booking?.location?.address || 'Đang cập nhật..'}</h6>
                             </li>
                             <li>
-                                <h6><span>Tình trạng:</span> {booking?.description || 'Trip Protection Fees'}</h6>
+                                <h6><span>Tình trạng:</span> {detailsBooking?.booking?.description || 'Đang cập nhật..'}</h6>
                             </li>
                             <li>
-                                <h6><span>Lịch đặt:</span> {formatDate(booking?.schedule) || 'Convenience Fees'}</h6>
+                                <h6><span>Ngày đặt lịch:</span> {formatDateOnly(detailsBooking?.booking?.schedule?.startTime) || 'Đang cập nhật..'}</h6>
                             </li>
+                            <li>
+                                <h6><span>Thời gian:</span> {detailsBooking?.booking?.schedule?.startTime && detailsBooking?.booking?.schedule?.endTime
+                                    ? `${formatTimeOnly(detailsBooking?.booking?.schedule?.startTime)} - ${formatTimeOnly(detailsBooking?.booking?.schedule?.endTime)}`
+                                    : 'Thời gian không hợp lệ'}
+                                </h6>
+                            </li>
+
+                            {detailsBooking?.booking?.status === 'IN_PROGRESS' && (
+                                <>
+                                    <li>
+                                        <h6><span>Giá công: </span> {detailsBooking?.bookingPrice?.laborPrice.toLocaleString() || 'Đang cập nhật..'} VNĐ</h6>
+                                    </li>
+                                    <li>
+                                        <h6>
+                                            <span>Giá thiết bị: </span>
+                                            {detailsBooking?.bookingItems?.length > 0
+                                                ? detailsBooking.bookingItems.reduce(
+                                                    (total, item) => total + item.price * item.quantity,
+                                                    0
+                                                ).toLocaleString() + ' VNĐ'
+                                                : "Đang cập nhật.."}
+                                        </h6>
+                                    </li>
+                                    <li>
+                                        <h6><span>Thời gian bảo hành: </span> {detailsBooking?.bookingPrice?.warrantiesDuration || 'Đang cập nhật..'}</h6>
+                                    </li>
+                                </>
+                            )}
+
                             <li>
                                 <h6><span>Trạng thái: </span>
                                     <span className={`status-badge ${statusConfig.className}`}>
-                                        {statusConfig.text}
+                                        {statusConfig.text || 'Đang cập nhật..'}
                                     </span>
                                 </h6>
                             </li>
+
+                            {detailsBooking?.booking?.status === 'IN_PROGRESS' && (
+                                <li className="total-rate">
+                                    <h5><span>Tổng tạm tính: </span> {detailsBooking?.bookingPrice?.finalPrice.toLocaleString() || 'Đang cập nhật..'} VNĐ</h5>
+                                </li>
+                            )}
                         </ul>
                     </div>
                 </div>
             </div>
-            {booking?.status !== 'DONE' && (
+            {detailsBooking?.booking?.status !== 'DONE' && (
                 <button onClick={handleCancel} className="btn btn-outline-danger" style={{ width: '100%', marginTop: -5 }}>Hủy đơn hàng</button>
+            )}
+
+            {selectedImage && (
+                <div
+                    className="zoom-overlay"
+                    onClick={() => setSelectedImage(null)}      // click nền để tắt
+                >
+                    <img
+                        src={selectedImage}
+                        className="zoom-img"
+                        alt="zoom"
+                        onClick={(e) => e.stopPropagation()}     // ngăn sự kiện nổi bọt
+                    />
+                    <button
+                        className="zoom-close"
+                        onClick={() => setSelectedImage(null)}
+                    >
+                        &times;
+                    </button>
+                </div>
             )}
         </div>
     );

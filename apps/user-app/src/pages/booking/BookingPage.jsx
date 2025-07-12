@@ -11,11 +11,13 @@ import { useNavigate } from "react-router-dom";
 import { createNewBooking } from "../../features/bookings/bookingSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { useBookingParams } from "../../hooks/useBookingParams";
+import { validateBookingData } from "../../validations/bookingValidation";
 
 function BookingPage() {
     const { categories, status: categoryStatus } = useSelector((state) => state.categories);
     const { services, status: serviceStatus } = useSelector((state) => state.services);
     const { stepsForCurrentUser } = useBookingParams();
+    const [errors, setErrors] = useState({});
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -31,7 +33,8 @@ function BookingPage() {
         service: '',
         description: '',
         scheduleDate: '',
-        scheduleTime: '',
+        startTime: '',
+        endTime: '',
         images: []
     });
 
@@ -75,19 +78,31 @@ function BookingPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!addressInput || !geoJson || !bookingData.service) {
-            alert('Vui lòng nhập địa chỉ, chọn vị trí trên bản đồ và chọn dịch vụ cần sửa chữa');
+        const newErrors = validateBookingData(bookingData, addressInput, geoJson);
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
             return;
         }
+
+        const startDateTime = new Date(`${bookingData.scheduleDate}T${bookingData.startTime}`);
+        const endDateTime = new Date(`${bookingData.scheduleDate}T${bookingData.endTime}`);
+
         const formData = new FormData();
         formData.append('serviceId', bookingData.service?._id);
         formData.append('address', addressInput); // địa chỉ khách nhập
         formData.append('geoJson', JSON.stringify(geoJson)); // vị trí marker
         formData.append('description', bookingData.description);
-        formData.append('schedule', `${bookingData.scheduleDate}T${bookingData.scheduleTime}`);
-        for (const file of bookingData.images) {
-            formData.append('images', file);
+        formData.append('startTime', startDateTime.toISOString());
+        formData.append('endTime', endDateTime.toISOString());
+        // for (const file of bookingData.images) {
+        //     formData.append('images', file);
+        // }
+        if (bookingData.images && bookingData.images.length > 0) {
+            bookingData.images.forEach(file => {
+                formData.append('images', file); // key phải là 'images'
+            });
         }
+        console.log('Files to upload:', bookingData.images);
 
         try {
             console.log("Đang gửi FormData đến backend...", formData);
@@ -157,7 +172,9 @@ function BookingPage() {
                                                             <i className="bx bxs-map-alt me-2"></i>Tìm trên bản đồ
                                                         </a>
                                                     </div>
-
+                                                    {errors.addressInput && (
+                                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2, marginLeft: 10 }}>{errors.addressInput}</div>
+                                                    )}
                                                 </div>
                                                 <div style={{ marginTop: 20 }}>
                                                     <Map
@@ -191,6 +208,9 @@ function BookingPage() {
                                         onServiceChange={handleServiceChange}
                                         selectedServiceName={bookingData.service?.serviceName}
                                     />
+                                    {errors.service && (
+                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.service}</div>
+                                    )}
                                 </div>
 
                                 <div className="input-block">
@@ -206,43 +226,70 @@ function BookingPage() {
                                             onChange={handleInputChange}
                                         />
                                     </div>
+                                    {errors.description && (
+                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.description}</div>
+                                    )}
                                 </div>
 
                                 <div className="input-block">
                                     <label className="form-label">
-                                        Chọn ngày <span className="text-danger">*</span>
+                                        Ngày đặt lịch <span className="text-danger">*</span>
                                     </label>
                                     <div className="group-img">
                                         <input
                                             name="scheduleDate"
                                             type="date"
                                             className="form-control"
-                                            placeholder="Choose Date"
                                             value={bookingData.scheduleDate}
                                             onChange={handleInputChange}
                                         />
                                         {/* <span className="input-cal-icon"><i className="bx bx-calendar"></i></span> */}
                                     </div>
+                                    {errors.scheduleDate && (
+                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.scheduleDate}</div>
+                                    )}
                                 </div>
+
                                 <div className="input-block">
                                     <label className="form-label">
-                                        Chọn thời gian <span className="text-danger">*</span>
+                                        Thời gian bắt đầu <span className="text-danger">*</span>
                                     </label>
                                     <div className="group-img">
                                         <input
-                                            name="scheduleTime"
+                                            name="startTime"
                                             type="time"
-                                            step="1"
                                             className="form-control"
-                                            placeholder="Choose Time"
-                                            value={bookingData.scheduleTime}
+                                            value={bookingData.startTime}
                                             onChange={handleInputChange}
                                         />
-                                        {/* <span className="input-cal-icon"><i className="bx bx-time"></i></span> */}
                                     </div>
+                                    {errors.startTime && (
+                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.startTime}</div>
+                                    )}
+                                </div>
+
+                                <div className="input-block">
+                                    <label className="form-label">
+                                        Thời gian kết thúc <span className="text-danger">*</span>
+                                    </label>
+                                    <div className="group-img">
+                                        <input
+                                            name="endTime"
+                                            type="time"
+                                            className="form-control"
+                                            value={bookingData.endTime}
+                                            onChange={handleInputChange}
+                                        />
+                                    </div>
+                                    {errors.endTime && (
+                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.endTime}</div>
+                                    )}
                                 </div>
 
                                 <ImageUploader onFilesSelect={handleFilesSelect} />
+                                {errors.images && (
+                                    <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.images}</div>
+                                )}
 
                                 <div style={{ position: 'relative', bottom: 0 }} className="booking-info-btns d-flex justify-content-end">
                                     <button type="submit" className="btn btn-primary continue-book-btn">Đặt dịch vụ</button>

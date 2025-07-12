@@ -1,21 +1,11 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cancelBookingById, createBooking, getBookingById, getQuatationsByBookingId } from './bookingAPI';
+import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, } from './bookingAPI';
 
 export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',
     async (bookingId) => {
         const res = await getBookingById(bookingId);
-        // console.log('--- FETCH BOOKING ---', res);
-
-        return res.data.data;
-    }
-);
-
-export const fetchQuotationsByBookingId = createAsyncThunk(
-    'booking/fetchQuotationsByBookingId',
-    async (bookingId) => {
-        const res = await getQuatationsByBookingId(bookingId);
-        // console.log('--- FETCH QUOTATIONS ---', res);
+        // console.log('--- FETCH BOOKING ---', res.data.data);
 
         return res.data.data;
     }
@@ -47,16 +37,31 @@ export const cancelBooking = createAsyncThunk(
     }
 );
 
+export const fetchTopBookedServices = createAsyncThunk(
+    'booking/fetchTopBookedServices',
+    async () => {
+        const res = await getTopBookedServices();
+        // console.log('--- FETCH TOP SERVICE BOOKING ---', res.data);
+        
+        return res.data.data;
+    }
+);
+
 const bookingSlice = createSlice({
     name: 'booking',
     initialState: {
         bookings: [],
         booking: null,
-        quotations: [],
+        detailsBooking: null,
+        topBookedServices: [],
         status: 'idle',
         error: null,
     },
-    reducers: {},
+    reducers: {
+        setLastCancelBy: (state, action) => {
+            state.lastCancelBy = action.payload;
+        },
+    },
     extraReducers: (builder) => {
         builder
             .addCase(fetchBookingById.pending, (state) => {
@@ -70,17 +75,7 @@ const bookingSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.error.message;
             })
-            .addCase(fetchQuotationsByBookingId.pending, (state) => {
-                state.status = 'loading';
-            })
-            .addCase(fetchQuotationsByBookingId.fulfilled, (state, action) => {
-                state.status = 'succeeded';
-                state.quotations = action.payload;
-            })
-            .addCase(fetchQuotationsByBookingId.rejected, (state, action) => {
-                state.status = 'failed';
-                state.error = action.error.message;
-            })
+
             .addCase(createNewBooking.pending, (state) => {
                 state.status = 'loading';
             })
@@ -92,6 +87,7 @@ const bookingSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.error.message;
             })
+
             .addCase(cancelBooking.pending, (state) => {
                 state.status = 'loading';
             })
@@ -103,7 +99,20 @@ const bookingSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.error.message;
             })
+
+            .addCase(fetchTopBookedServices.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchTopBookedServices.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.topBookedServices = action.payload;
+            })
+            .addCase(fetchTopBookedServices.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.error.message;
+            })
     }
 });
 
+export const { setLastCancelBy } = bookingSlice.actions;
 export default bookingSlice.reducer;
