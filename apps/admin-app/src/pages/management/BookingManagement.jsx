@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import ApiBE from '../../services/ApiBE';
-import { Modal, Button, Select } from 'antd';
+import { Modal, Button, Select, Descriptions } from 'antd';
 
 
 const BookingManagement = () => {
@@ -321,13 +321,20 @@ const handleSortByService = () => {
          onCancel={() => setShowDetailModal(false)}
          footer={null}
          title="Booking Detail"
+         width={600}
        >
-         <div><b>ID:</b> {selectedBooking.id}</div>
-         <div><b>Customer:</b> {userMap[selectedBooking.customerId] || selectedBooking.customerId}</div>
-         <div><b>Service:</b> {serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}</div>
-         <div><b>Status:</b> {selectedBooking.status}</div>
-         <div><b>Created At:</b> {selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : ''}</div>
-         <div><b>Schedule:</b> {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''} - {selectedBooking.schedule?.endTime ? new Date(selectedBooking.schedule.endTime).toLocaleString() : ''}</div>
+         <Descriptions bordered column={1} size="middle">
+           <Descriptions.Item label="Booking Code">{selectedBooking.bookingCode || selectedBooking.id}</Descriptions.Item>
+           <Descriptions.Item label="Customer">{userMap[selectedBooking.customerId] || selectedBooking.customerId}</Descriptions.Item>
+           <Descriptions.Item label="Service">{serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}</Descriptions.Item>
+           <Descriptions.Item label="Status">{selectedBooking.status}</Descriptions.Item>
+           <Descriptions.Item label="Created At">{selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : ''}</Descriptions.Item>
+           <Descriptions.Item label="Schedule">
+             {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
+             {selectedBooking.schedule?.endTime ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}` : ''}
+           </Descriptions.Item>
+           {/* Thêm các trường khác nếu cần */}
+         </Descriptions>
        </Modal>
      )}
    </div>

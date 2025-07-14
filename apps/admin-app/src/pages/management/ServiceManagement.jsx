@@ -17,6 +17,9 @@ const initialFormState = {
   categoryId: '',
   icon: '',
   isActive: true,
+  serviceType: 'FIXED',
+  estimatedMarketPrice: { min: '', max: '' },
+  description: '',
 };
 
 const ServiceManagement = () => {
@@ -111,6 +114,9 @@ const ServiceManagement = () => {
       categoryId: service.categoryId || '',
       icon: service.icon || '',
       isActive: service.isActive ?? true,
+      serviceType: service.serviceType || 'FIXED',
+      estimatedMarketPrice: service.estimatedMarketPrice || { min: '', max: '' },
+      description: service.description || '',
     });
     setShowEditModal(true);
   };
@@ -172,18 +178,75 @@ const ServiceManagement = () => {
   const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    if (name === 'serviceType') {
+      setFormData(prev => ({
+        ...prev,
+        serviceType: value,
+        estimatedMarketPrice: value === 'FIXED' ? { min: '', max: '' } : prev.estimatedMarketPrice
+      }));
+    } else if (name === 'min' || name === 'max') {
+      setFormData(prev => ({
+        ...prev,
+        estimatedMarketPrice: {
+          ...prev.estimatedMarketPrice,
+          [name]: value
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    // Chỉ validate required trường cơ bản
+    if (!formData.serviceName || !formData.categoryId) {
+      message.error('Vui lòng nhập đầy đủ tên dịch vụ và chọn danh mục!');
+      return;
+    }
+    // Chuẩn bị data gửi lên BE
+    const dataToSend = { ...formData };
+    if (formData.serviceType === 'COMPLEX') {
+      dataToSend.estimatedMarketPrice = {
+        min: Number(formData.estimatedMarketPrice.min),
+        max: Number(formData.estimatedMarketPrice.max)
+      };
+    } else {
+      // Nếu là FIXED, xóa hoàn toàn trường estimatedMarketPrice khỏi payload
+      delete dataToSend.estimatedMarketPrice;
+    }
+    console.log('Data gửi lên BE:', dataToSend);
     if (showAddModal) {
-      dispatch(createService(formData));
+      dispatch(createService(dataToSend)).then((action) => {
+        if (action.error && action.error.message) {
+          const err = action.error;
+          if (err && err.response && err.response.data) {
+            console.error('API error detail:', err.response.data);
+            message.error(err.response.data.title || JSON.stringify(err.response.data));
+          } else {
+            message.error(err.message);
+          }
+        }
+      }).catch(error => {
+        console.log("API Error:", error.response?.data || error.message);
+      });
     } else if (showEditModal && selectedService) {
-      dispatch(updateService({ id: selectedService.id, serviceData: formData }));
+      dispatch(updateService({ id: selectedService.id, serviceData: dataToSend })).then((action) => {
+        if (action.error && action.error.message) {
+          const err = action.error;
+          if (err && err.response && err.response.data) {
+            console.error('API error detail:', err.response.data);
+            message.error(err.response.data.title || JSON.stringify(err.response.data));
+          } else {
+            message.error(err.message);
+          }
+        }
+      }).catch(error => {
+        console.log("API Error:", error.response?.data || error.message);
+      });
     }
   };
 
@@ -380,6 +443,55 @@ const ServiceManagement = () => {
               checked={formData.isActive}
               onChange={handleChange}
             /> Active
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Loại dịch vụ</label>
+            <select
+              name="serviceType"
+              className="form-control"
+              value={formData.serviceType}
+              onChange={handleChange}
+            >
+              <option value="FIXED">FIXED</option>
+              <option value="COMPLEX">COMPLEX</option>
+            </select>
+          </div>
+          {formData.serviceType === 'COMPLEX' && (
+            <>
+              <div className="mb-3">
+                <label className="form-label">Giá thị trường tối thiểu (min)</label>
+                <input
+                  type="number"
+                  name="min"
+                  className="form-control"
+                  value={formData.estimatedMarketPrice.min}
+                  onChange={handleChange}
+                  min={1}
+                  required={formData.serviceType === 'COMPLEX'}
+                />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Giá thị trường tối đa (max)</label>
+                <input
+                  type="number"
+                  name="max"
+                  className="form-control"
+                  value={formData.estimatedMarketPrice.max}
+                  onChange={handleChange}
+                  min={1}
+                  required={formData.serviceType === 'COMPLEX'}
+                />
+              </div>
+            </>
+          )}
+          <div className="mb-3">
+            <label className="form-label">Mô tả</label>
+            <textarea
+              className="form-control"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+            />
           </div>
           <div className="d-flex justify-content-end">
             <Button onClick={() => {

@@ -12,9 +12,12 @@
   "dependencies": {
     "antd": "^5.26.2",
     "aos": "^2.3.4",
+    "apexcharts": "^5.2.0",
     "bootstrap": "^5.3.7",
+    "dayjs": "^1.11.13",
     "owl.carousel": "^2.3.4",
     "react": "^19.1.0",
+    "react-apexcharts": "^1.7.0",
     "react-dom": "^19.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.6.2",

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Card, Button } from 'react-bootstrap';
-import { Line } from 'react-chartjs-2';
+import { Line, Bar } from 'react-chartjs-2';
+import ReactApexChart from 'react-apexcharts';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -10,13 +11,18 @@ import {
   Title,
   Tooltip,
   Legend,
+  BarElement,
 } from 'chart.js';
 import axios from 'axios';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
+import { useNavigate } from 'react-router-dom';
+import { Modal } from 'antd';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
+import { userAPI } from '../../features/users/userAPI';
 import { useDispatch, useSelector } from 'react-redux';
 import { getBookingCountByMonth } from "../../features/bookings/bookingSlice";
 import { getMonthlyRevenue } from "../../features/statistics/statisticSlice";
+import { fetchMonthlyRevenue } from "../../features/statistics/statisticAPI";
 import { getTechnicianCountByMonth } from "../../features/technicians/technicianSlice";
 // Add Bootstrap CSS import
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -30,10 +36,36 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  BarElement
 );
 
-
+const ReservationStatistics = ({ data, labels }) => (
+  <Bar
+    data={{
+      labels: labels,
+      datasets: [
+        {
+          label: "Số lượng đặt chỗ",
+          data: data,
+          backgroundColor: "#127384",
+        },
+      ],
+    }}
+    options={{
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+      },
+      scales: {
+        x: { title: { display: true, text: "Ngày" } },
+        y: { title: { display: true, text: "Số lượng" }, beginAtZero: true },
+      },
+    }}
+    height={360}
+  />
+);
 
 const AdminDashboard = () => {
 
@@ -61,53 +93,53 @@ const AdminDashboard = () => {
     },
   };
 
-  const recentReservations = [
-    {
-      id: 1,
-      days: 3,
-      car: 'Ford Endeavour',
-      route: 'Newyork → Vegas',
-      date: '15 Jan 2025',
-      price: 280,
-      status: 'Active',
-    },
-    {
-      id: 2,
-      days: 4,
-      car: 'Ferrari 458 MM',
-      route: 'Chicago → Houston',
-      date: '07 Feb 2025',
-      price: 225,
-      status: 'Active',
-    },
-    {
-      id: 3,
-      days: 5,
-      car: 'Ford Mustang',
-      route: 'LA → New York',
-      date: '14 Feb 2025',
-      price: 259,
-      status: 'Pending',
-    },
-    {
-      id: 4,
-      days: 6,
-      car: 'Toyota Tacoma',
-      route: 'Phoenix → Antonio',
-      date: '08 Jan 2025',
-      price: 180,
-      status: 'Active',
-    },
-    {
-      id: 5,
-      days: 7,
-      car: 'Chevrolet Truck',
-      route: 'Newyork → Chicago',
-      date: '17 Feb 2025',
-      price: 300,
-      status: 'Completed',
-    },
-  ];
+  // const recentReservations = [
+  //   {
+  //     id: 1,
+  //     days: 3,
+  //     car: 'Ford Endeavour',
+  //     route: 'Newyork → Vegas',
+  //     date: '15 Jan 2025',
+  //     price: 280,
+  //     status: 'Active',
+  //   },
+  //   {
+  //     id: 2,
+  //     days: 4,
+  //     car: 'Ferrari 458 MM',
+  //     route: 'Chicago → Houston',
+  //     date: '07 Feb 2025',
+  //     price: 225,
+  //     status: 'Active',
+  //   },
+  //   {
+  //     id: 3,
+  //     days: 5,
+  //     car: 'Ford Mustang',
+  //     route: 'LA → New York',
+  //     date: '14 Feb 2025',
+  //     price: 259,
+  //     status: 'Pending',
+  //   },
+  //   {
+  //     id: 4,
+  //     days: 6,
+  //     car: 'Toyota Tacoma',
+  //     route: 'Phoenix → Antonio',
+  //     date: '08 Jan 2025',
+  //     price: 180,
+  //     status: 'Active',
+  //   },
+  //   {
+  //     id: 5,
+  //     days: 7,
+  //     car: 'Chevrolet Truck',
+  //     route: 'Newyork → Chicago',
+  //     date: '17 Feb 2025',
+  //     price: 300,
+  //     status: 'Completed',
+  //   },
+  // ];
 
   const dispatch = useDispatch();
   const { bookingCount, bookingCountLoading } = useSelector(state => state.bookings);
@@ -125,7 +157,20 @@ const AdminDashboard = () => {
   const [lastMonthBookingCount, setLastMonthBookingCount] = useState(null);
   const [lastMonthTechnicianCount, setLastMonthTechnicianCount] = useState(null);
   const [lastMonthRevenue, setLastMonthRevenue] = useState(0);
+  const [recentBookings, setRecentBookings] = useState([]);
+  const [recentBookingsLoading, setRecentBookingsLoading] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [topTechnicians, setTopTechnicians] = useState([]);
+  const [topTechniciansLoading, setTopTechniciansLoading] = useState(false);
+  const navigate = useNavigate();
+  const [revenueThisYear, setRevenueThisYear] = useState(Array(12).fill(0));
+  const [revenueLastYear, setRevenueLastYear] = useState(Array(12).fill(0));
+  const [revenueChartLoading, setRevenueChartLoading] = useState(false);
 
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const lastYear = currentYear - 1;
   useEffect(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -189,7 +234,9 @@ const AdminDashboard = () => {
         dispatch(getBookingCountByMonth({ year, month: i + 1 }))
       )
     ).then(results => {
-      setBookingCounts(results.map(r => r.payload?.count || 0));
+      const counts = results.map(r => r.payload?.count || 0);
+      console.log('BookingCounts:', counts);
+      setBookingCounts(counts);
     });
     // Revenue chart
     Promise.all(
@@ -207,10 +254,94 @@ const AdminDashboard = () => {
     ).then(results => {
       setTechnicianCounts(results.map(r => r.payload?.count || 0));
     });
-  }, [dispatch]);
+
+    setRecentBookingsLoading(true);
+    bookingAPI.getAll()
+      .then((data) => {
+        // Sắp xếp theo CreatedAt giảm dần, lấy 5 booking mới nhất
+        const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setRecentBookings(sorted.slice(0, 5));
+      })
+      .catch(() => setRecentBookings([]))
+      .finally(() => setRecentBookingsLoading(false));
+
+    setTopTechniciansLoading(true);   
+    technicianAPI.getAll()
+      .then(async (data) => {
+        // Sắp xếp theo ratingAverage giảm dần, lấy top 4
+        const sorted = [...data].sort((a, b) => b.ratingAverage - a.ratingAverage).slice(0, 4);
+        // Lấy thông tin user cho từng technician, nếu lỗi thì trả về user mặc định
+        const users = await Promise.all(sorted.map(async t => {
+          try {
+            return await userAPI.getById(t.userId);
+          } catch {
+            return { fullName: 'Unknown', email: '', avatarUrl: '' };
+          }
+        }));
+        const withUser = sorted.map((t, i) => ({ ...t, user: users[i] }));
+        setTopTechnicians(withUser);
+      })
+      .catch(() => setTopTechnicians([]))
+      .finally(() => setTopTechniciansLoading(false));
+
+    // Lấy doanh thu từng tháng cho 2 năm
+    async function fetchYearlyRevenue(year) {
+      const results = await Promise.all(
+        Array.from({ length: 12 }, (_, i) =>
+          fetchMonthlyRevenue(year, i + 1).then(res => res.revenue || 0).catch(() => 0)
+        )
+      );
+      return results;
+    }
+    setRevenueChartLoading(true);
+    Promise.all([
+      fetchYearlyRevenue(currentYear),
+      fetchYearlyRevenue(lastYear)
+    ]).then(([dataThisYear, dataLastYear]) => {
+      setRevenueThisYear(dataThisYear);
+      setRevenueLastYear(dataLastYear);
+    }).finally(() => setRevenueChartLoading(false));
+  }, [dispatch, currentYear, lastYear]);
+
+  // Tính tổng booking của tháng hiện tại
+  const nowForBooking = new Date();
+  const currentMonthIndex = nowForBooking.getMonth(); // 0-based
+  const totalBookings = bookingCounts[currentMonthIndex] || 0;
+
+  // Tính tổng technician của tháng hiện tại
+  const nowForTechnician = new Date();
+  const currentMonthIndexTechnician = nowForTechnician.getMonth(); // 0-based
+  const totalTechnicians = technicianCounts[currentMonthIndexTechnician] || 0;
+
+  // Heatmap options và series mẫu
+  // const heatmapOptions = {
+  //   chart: {
+  //     type: 'heatmap',
+  //     toolbar: { show: false }
+  //   },
+  //   dataLabels: { enabled: false },
+  //   xaxis: {
+  //     categories: ["25 Jan", "26 Jan", "27 Jan", "28 Jan", "29 Jan", "30 Jan"]
+  //   },
+  //   yaxis: {
+  //     categories: ["10 PM", "08 PM", "06 PM", "04 PM", "02 PM", "12 PM", "10 AM", "08 AM"]
+  //   },
+  //   colors: ["#127384"],
+  //   grid: { show: false },
+  // };
+  // const heatmapSeries = [
+  //   { name: "10 PM", data: [0, 0, 0, 0, 3, 3] },
+  //   { name: "08 PM", data: [0, 4, 0, 0, 0, 1] },
+  //   { name: "06 PM", data: [2, 0, 0, 0, 3, 0] },
+  //   { name: "04 PM", data: [2, 0, 0, 0, 3, 0] },
+  //   { name: "02 PM", data: [0, 1, 0, 5, 0, 0] },
+  //   { name: "12 PM", data: [0, 0, 3, 0, 0, 2] },
+  //   { name: "10 AM", data: [2, 0, 4, 3, 0, 0] },
+  //   { name: "08 AM", data: [0, 0, 2, 0, 0, 3] },
+  // ];
 
   return (
-    <div className="modern-page-wrapper">
+    <div className="modern-page-  wrapper">
       <div className="modern-content-card">
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
@@ -231,7 +362,7 @@ const AdminDashboard = () => {
               <div className="text-muted small mb-0">Total Bookings</div>
               <div className="d-flex justify-content-between align-items-center">
                 <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {bookingCountLoading ? '...' : bookingCount?.count}
+                  {bookingCountLoading ? '...' : totalBookings}
                 </div>
                 <div className={
                   `px-1 rounded ${percentChange > 0 ? 'bg-success text-white' : percentChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
@@ -297,7 +428,7 @@ const AdminDashboard = () => {
               <div className="text-muted small mb-0">Total Technicians</div>
               <div className="d-flex justify-content-between align-items-center">
                 <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {technicianCountLoading ? '...' : technicianCount?.count}
+                  {technicianCountLoading ? '...' : totalTechnicians}
                 </div>
                 <div className={
                   `px-1 rounded ${percentTechnicianChange > 0 ? 'bg-success text-white' : percentTechnicianChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
@@ -340,51 +471,52 @@ const AdminDashboard = () => {
 					</div>
 					<!-- /Reservation Statistics --> */}
 
-        {/* Recent Reservations Table */}
+        {/* Recent Bookings Table */}
         <div className="mb-3" style={{minWidth: '680px'}}>
           <Card style={{border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
             <div className="py-2 px-2 border-bottom d-flex justify-content-between align-items-center position-sticky top-0 bg-white" style={{zIndex: 10}}>
-              <span className="fw-medium small">Recent Reservations</span>
-              <Button variant="outline-primary" size="sm" className="py-0 px-1" style={{fontSize: '0.6rem'}}>View</Button>
+              <span className="fw-medium small">Recent Bookings</span>
+              <Button variant="outline-primary" size="sm" className="py-0 px-1" style={{fontSize: '0.6rem'}} onClick={() => navigate('/admin/booking-management')}>View</Button>
             </div>
             <div className="table-responsive">
               <table className="table table-hover small mb-0">
                 <thead className="position-sticky top-0 bg-white" style={{zIndex: 5}}>
                   <tr>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>Car</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>Days</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>Route</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>Date</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>Price</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>Status</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', textAlign: 'right', fontWeight: 'normal', color: '#666'}}>Act</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>CODE</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>DESCRIPTION</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>ADDRESS</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>START TIME</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>STATUS</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>PAYMENT</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', textAlign: 'right', fontWeight: 'normal', color: '#666'}}>ACTION</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {recentReservations.map((reservation) => (
-                    <tr key={reservation.id}>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{reservation.car}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{reservation.days}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{reservation.route}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{reservation.date}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>${reservation.price}</td>
+                  {recentBookingsLoading ? (
+                    <tr><td colSpan={7} className="text-center">Loading...</td></tr>
+                  ) : recentBookings.length === 0 ? (
+                    <tr><td colSpan={7} className="text-center">No bookings found</td></tr>
+                  ) : recentBookings.map((booking) => (
+                    <tr key={booking.id}>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.bookingCode}</td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.description}</td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.location?.address}</td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.schedule ? new Date(booking.schedule.startTime).toLocaleString() : ''}</td>
                       <td style={{padding: '0.5rem'}}>
                         <span className={`badge rounded-pill ${
-                          reservation.status === 'Active' ? 'bg-success' : 
-                          reservation.status === 'Pending' ? 'bg-warning' : 
+                          booking.status === 'Active' ? 'bg-success' : 
+                          booking.status === 'Pending' ? 'bg-warning' : 
                           'bg-info'}`} 
                           style={{fontSize: '0.55rem', padding: '3px 6px'}}>
-                          {reservation.status}
+                          {booking.status}
                         </span>
                       </td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.paymentStatus}</td>
                       <td style={{padding: '0.5rem', textAlign: 'right'}}>
                         <button className="btn btn-light btn-sm p-0 me-1" 
-                               style={{width: "20px", height: "20px"}}>
+                               style={{width: "20px", height: "20px"}}
+                               onClick={() => { setSelectedBooking(booking); setShowDetailModal(true); }}>
                           <i className="bi bi-eye" style={{fontSize: '0.6rem'}}></i>
-                        </button>
-                        <button className="btn btn-light btn-sm p-0" 
-                               style={{width: "20px", height: "20px"}}>
-                          <i className="bi bi-pencil" style={{fontSize: '0.6rem'}}></i>
                         </button>
                       </td>
                     </tr>
@@ -395,7 +527,26 @@ const AdminDashboard = () => {
         </Card>
         </div>
 
-        {/* Revenue Chart and Categories */}
+        {/* Modal chi tiết booking */}
+        {showDetailModal && selectedBooking && (
+          <Modal
+            open={showDetailModal}
+            onCancel={() => setShowDetailModal(false)}
+            footer={null}
+            title="Booking Detail"
+          >
+            <div><b>ID:</b> {selectedBooking.id}</div>
+            <div><b>Booking Code:</b> {selectedBooking.bookingCode}</div>
+            <div><b>Description:</b> {selectedBooking.description}</div>
+            <div><b>Status:</b> {selectedBooking.status}</div>
+            <div><b>Created At:</b> {selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : ''}</div>
+            <div><b>Schedule:</b> {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''} - {selectedBooking.schedule?.endTime ? new Date(selectedBooking.schedule.endTime).toLocaleString() : ''}</div>
+            <div><b>Address:</b> {selectedBooking.location?.address}</div>
+            <div><b>Payment Status:</b> {selectedBooking.paymentStatus}</div>
+          </Modal>
+        )}
+
+        {/* Revenue and technician rating*/}
         <div className="d-flex" style={{gap: '8px', minWidth: '680px'}}>
           <Card style={{flex: '2', minWidth: '440px', border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
             <div className="py-2 px-2 border-bottom position-sticky top-0 bg-white" style={{zIndex: 10}}>
@@ -403,26 +554,29 @@ const AdminDashboard = () => {
             </div>
             <Card.Body className="p-2">
               <div style={{ height: '120px', position: 'relative', width: '100%' }}>
-                <Line
+                <Bar
                   data={{
                     labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
                     datasets: [
                       {
-                        label: '2024',
-                        data: [30000, 45000, 38000, 55000, 48000, 62000, 59000, 68000, 64000, 72000, 68000, 76000],
+                        label: `${currentYear}`,
+                        data: revenueThisYear,
+                        backgroundColor: '#4CAF50',
                         borderColor: '#4CAF50',
-                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-                        tension: 0.4,
                         borderWidth: 1.5,
+                        borderRadius: 4,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.5,
                       },
                       {
-                        label: '2023',
-                        data: [22000, 28000, 25000, 35000, 32000, 40000, 45000, 50000, 48000, 55000, 52000, 60000],
+                        label: `${lastYear}`,
+                        data: revenueLastYear,
+                        backgroundColor: '#9E9E9E',
                         borderColor: '#9E9E9E',
-                        backgroundColor: 'rgba(158, 158, 158, 0.1)',
-                        borderDash: [3, 3],
-                        tension: 0.4,
                         borderWidth: 1.5,
+                        borderRadius: 4,
+                        barPercentage: 0.6,
+                        categoryPercentage: 0.5,
                       },
                     ],
                   }}
@@ -472,6 +626,7 @@ display: true,
                     },
                   }}
                 />
+                {revenueChartLoading && <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'rgba(255,255,255,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2}}><span>Loading...</span></div>}
               </div>
             </Card.Body>
           </Card>
@@ -481,64 +636,54 @@ display: true,
               <span className="fw-medium small">Top Technicians Rating</span>
             </div>
             <Card.Body className="p-2">
-              <div className="d-flex justify-content-between align-items-center mb-2">
+              {topTechniciansLoading ? (
+                <div>Loading...</div>
+              ) : topTechnicians.length === 0 ? (
+                <div>No data</div>
+              ) : topTechnicians.map((tech, idx) => (
+                <div className="d-flex justify-content-between align-items-center mb-2" key={tech.id}>
                 <div className="d-flex align-items-center">
                   <div className="d-flex align-items-center justify-content-center rounded-circle me-2 bg-primary-subtle" 
-                      style={{width: "16px", height: "16px"}}>
-                    <i className="bi bi-car-front text-primary" style={{fontSize: '0.5rem'}}></i>
+                        style={{width: "28px", height: "28px", overflow: 'hidden'}}>
+                      {tech.user?.avatarUrl ? (
+                        <img src={tech.user.avatarUrl} alt="avatar" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                      ) : (
+                        <i className="bi bi-person" style={{fontSize: '1.2rem', color: '#888'}}></i>
+                      )}
                   </div>
                   <div>
-                    <div style={{fontSize: '0.65rem'}}>Technician Name</div>
-                    <div className="text-muted" style={{fontSize: '0.55rem'}}>Technician Jobs</div>
+                      <div style={{fontSize: '0.85rem', fontWeight: 500}}>{tech.user?.fullName || tech.user?.email || 'Technician'}</div>
+                      <div className="text-muted" style={{fontSize: '0.7rem'}}>Jobs: {tech.jobCompleted}</div>
+              </div>
+                  </div>
+                  <div style={{fontSize: '0.85rem', fontWeight: 500}}>
+                    <i className="bi bi-star-fill text-warning" style={{marginRight: 2}}></i>
+                    {tech.ratingAverage?.toFixed(2) ?? '0.00'}
                   </div>
                 </div>
-                <div style={{fontSize: '0.65rem'}}>Technician Rating</div>
-              </div>
-              
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="d-flex align-items-center">
-                  <div className="d-flex align-items-center justify-content-center rounded-circle me-2 bg-success-subtle" 
-                      style={{width: "16px", height: "16px"}}>
-                    <i className="bi bi-truck text-success" style={{fontSize: '0.5rem'}}></i>
-                  </div>
-                  <div>
-                    <div style={{fontSize: '0.65rem'}}>SUVs</div>
-                    <div className="text-muted" style={{fontSize: '0.55rem'}}>120 Reservations</div>
-                  </div>
-                </div>
-                <div style={{fontSize: '0.65rem'}}>28%</div>
-              </div>
-              
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <div className="d-flex align-items-center">
-                  <div className="d-flex align-items-center justify-content-center rounded-circle me-2 bg-warning-subtle" 
-                      style={{width: "16px", height: "16px"}}>
-                    <i className="bi bi-car-front-fill text-warning" style={{fontSize: '0.5rem'}}></i>
-                  </div>
-                  <div>
-                    <div style={{fontSize: '0.65rem'}}>Sports Cars</div>
-<div className="text-muted" style={{fontSize: '0.55rem'}}>98 Reservations</div>
-                  </div>
-                </div>
-                <div style={{fontSize: '0.65rem'}}>22%</div>
-              </div>
-              
-              <div className="d-flex justify-content-between align-items-center">
-                <div className="d-flex align-items-center">
-                  <div className="d-flex align-items-center justify-content-center rounded-circle me-2 bg-info-subtle" 
-                      style={{width: "16px", height: "16px"}}>
-                    <i className="bi bi-minecart text-info" style={{fontSize: '0.5rem'}}></i>
-                  </div>
-                  <div>
-                    <div style={{fontSize: '0.65rem'}}>Economy Cars</div>
-                    <div className="text-muted" style={{fontSize: '0.55rem'}}>82 Reservations</div>
-                  </div>
-                </div>
-                <div style={{fontSize: '0.65rem'}}>18%</div>
-              </div>
+              ))}
             </Card.Body>
           </Card>
         </div>
+
+        {/* <div className="col-xl-4 d-flex">
+          <div className="card flex-fill">
+            <div className="card-body pb-0">
+              <div className="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-3">
+                <h5 className="mb-1">Reservation Statistics</h5>
+                <a href="/admin/reservations" className="text-decoration-underline fw-medium mb-1">View All</a>
+              </div>
+              <div style={{ minHeight: 375 }}>
+                <ReactApexChart
+                  options={heatmapOptions}
+                  series={heatmapSeries}
+                  type="heatmap"
+                  height={360}
+                />
+              </div>
+            </div>
+          </div>
+        </div> */}
 
         {/* <!-- /Recent Invoices -->*/}
         <div className="col-md-12">

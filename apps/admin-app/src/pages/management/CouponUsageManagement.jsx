@@ -4,7 +4,7 @@ import { fetchCouponUsages, setFilters } from '../../features/couponusages/coupo
 import { userAPI } from '../../features/users/userAPI';
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
-import { Modal, Button, Select } from 'antd';
+import { Modal, Button, Select, Descriptions } from 'antd';
 
 
 const CouponUsageManagement = () => {
@@ -310,7 +310,7 @@ const handleSortByUsedAt = () => {
                <tr key={usage.id}>
                  <td>{userMap[usage.userId] || usage.userId}</td>
                  <td>{couponMap[usage.couponId] || usage.couponId}</td>
-                 <td>{bookingMap[usage.bookingId] || ''}</td>
+                 <td>{bookingMap[usage.bookingId] || 'Unknown'}</td>
                  <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
                  <td>
                    <Button size="small" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>
@@ -344,12 +344,15 @@ const handleSortByUsedAt = () => {
          onCancel={() => setShowDetailModal(false)}
          footer={null}
          title="Coupon Usage Detail"
+         width={600}
        >
-         <div><b>ID:</b> {selectedUsage.id}</div>
-         <div><b>User:</b> {userMap[selectedUsage.userId] || selectedUsage.userId}</div>
-         <div><b>Coupon:</b> {couponMap[selectedUsage.couponId] || selectedUsage.couponId}</div>
-         <div><b>Booking Code:</b> {bookingMap[selectedUsage.bookingId] || selectedUsage.bookingId}</div>
-         <div><b>Used At:</b> {selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : ''}</div>
+         <Descriptions bordered column={1} size="middle">
+           <Descriptions.Item label="User">{userMap[selectedUsage.userId] || selectedUsage.userId}</Descriptions.Item>
+           <Descriptions.Item label="Coupon">{couponMap[selectedUsage.couponId] || selectedUsage.couponId}</Descriptions.Item>
+           <Descriptions.Item label="Booking Code">{bookingMap[selectedUsage.bookingId] || 'Unknown'}</Descriptions.Item>
+           <Descriptions.Item label="Used At">{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : ''}</Descriptions.Item>
+           {/* Thêm các trường khác nếu cần */}
+         </Descriptions>
        </Modal>
      )}
    </div>

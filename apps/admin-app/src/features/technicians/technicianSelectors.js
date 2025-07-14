@@ -33,6 +33,25 @@ export const selectTechnicianPagination = createSelector(
   (technicianState) => technicianState.pagination
 );
 
+// Thêm hàm chuyển đổi status giống như ở TechnicianManagement.jsx
+const TECHNICIAN_STATUS_MAP = {
+  0: 'PENDING',
+  1: 'APPROVED',
+  2: 'REJECTED',
+  3: 'INACTIVE',
+  4: 'PENDING_DELETION',
+  5: 'DELETED',
+  'PENDING': 'PENDING',
+  'APPROVED': 'APPROVED',
+  'REJECTED': 'REJECTED',
+  'INACTIVE': 'INACTIVE',
+  'PENDING_DELETION': 'PENDING_DELETION',
+  'DELETED': 'DELETED'
+};
+function getTechnicianStatus(status) {
+  return TECHNICIAN_STATUS_MAP[status] || status || 'Chưa cập nhật';
+}
+
 // Derived selectors
 export const selectFilteredTechnicians = createSelector(
   [selectTechnicians, selectTechnicianFilters],
@@ -53,7 +72,7 @@ export const selectFilteredTechnicians = createSelector(
     // Filter by status
     if (filters.status) {
       filteredTechnicians = filteredTechnicians.filter(
-        (technician) => technician.status === filters.status
+        (technician) => getTechnicianStatus(technician.status) === filters.status
       );
     }
 

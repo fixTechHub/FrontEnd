@@ -59,6 +59,7 @@ const SystemReportManagement = () => {
  const [userMap, setUserMap] = useState({});
  const [sortField, setSortField] = useState('createdAt');
  const [sortOrder, setSortOrder] = useState('desc');
+ const [submittedByUser, setSubmittedByUser] = useState(null);
 
 
  // Redux selectors
@@ -110,6 +111,15 @@ const SystemReportManagement = () => {
    if (filteredSystemReports.length > 0) fetchUserNames();
    // eslint-disable-next-line
  }, [filteredSystemReports]);
+
+
+ useEffect(() => {
+   if (selectedSystemReport?.submittedBy) {
+     userAPI.getById(selectedSystemReport.submittedBy)
+       .then(user => setSubmittedByUser(user))
+       .catch(() => setSubmittedByUser(null));
+   }
+ }, [selectedSystemReport?.submittedBy]);
 
 
  const handleFilterChange = (filterType, value) => {
@@ -349,10 +359,11 @@ const SystemReportManagement = () => {
                style={{ width: 130 }}
                allowClear
              >
-               <Option value="BUG">BUG</Option>
-               <Option value="FEATURE">FEATURE</Option>
-               <Option value="IMPROVEMENT">IMPROVEMENT</Option>
+               <Option value="SYSTEM">SYSTEM</Option>
+               <Option value="PAYMENT">PAYMENT</Option>
                <Option value="UI">UI</Option>
+               <Option value="OTHER">OTHER</Option>
+               
              </Select>
              <Select
                placeholder="Status"
@@ -412,33 +423,19 @@ const SystemReportManagement = () => {
          width={800}
        >
          {selectedSystemReport && (
-           <Descriptions bordered column={1}>
+           <Descriptions bordered column={1} size="middle">
              <Descriptions.Item label="ID">{selectedSystemReport.id}</Descriptions.Item>
-             <Descriptions.Item label="Title">
-               {selectedSystemReport.title}
-             </Descriptions.Item>
-             <Descriptions.Item label="Tag">
-               <Tag color={getTagColor(selectedSystemReport.tag)}>
-                 {selectedSystemReport.tag?.toUpperCase()}
-               </Tag>
-             </Descriptions.Item>
-             <Descriptions.Item label="Status">
-               <Tag color={getStatusColor(selectedSystemReport.status)}>
-                 {selectedSystemReport.status?.toUpperCase()}
-               </Tag>
-             </Descriptions.Item>
+             <Descriptions.Item label="Title">{selectedSystemReport.title}</Descriptions.Item>
+             <Descriptions.Item label="Tag">{selectedSystemReport.tag?.toUpperCase()}</Descriptions.Item>
+             <Descriptions.Item label="Status">{selectedSystemReport.status?.toUpperCase()}</Descriptions.Item>
              <Descriptions.Item label="Submitted By">
-               {selectedSystemReport.submittedBy}
+               {submittedByUser
+                 ? `${submittedByUser.fullName} (${submittedByUser.email})`
+                 : selectedSystemReport.submittedBy}
              </Descriptions.Item>
-             <Descriptions.Item label="Description">
-               {selectedSystemReport.description}
-             </Descriptions.Item>
-             <Descriptions.Item label="Created At">
-               {new Date(selectedSystemReport.createdAt).toLocaleString()}
-             </Descriptions.Item>
-             <Descriptions.Item label="Updated At">
-               {new Date(selectedSystemReport.updatedAt).toLocaleString()}
-             </Descriptions.Item>
+             <Descriptions.Item label="Description">{selectedSystemReport.description}</Descriptions.Item>
+             <Descriptions.Item label="Created At">{new Date(selectedSystemReport.createdAt).toLocaleString()}</Descriptions.Item>
+             <Descriptions.Item label="Updated At">{new Date(selectedSystemReport.updatedAt).toLocaleString()}</Descriptions.Item>
            </Descriptions>
          )}
        </Modal>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Select } from 'antd';
+import { message, Modal, Button, Select, Descriptions } from 'antd';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
 import {
  setTechnicians,
@@ -250,6 +250,25 @@ const handleSortByJobs = () => {
   }
 };
 
+const TECHNICIAN_STATUS_MAP = {
+  0: 'PENDING',
+  1: 'APPROVED',
+  2: 'REJECTED',
+  3: 'INACTIVE',
+  4: 'PENDING_DELETION',
+  5: 'DELETED',
+  'PENDING': 'PENDING',
+  'APPROVED': 'APPROVED',
+  'REJECTED': 'REJECTED',
+  'INACTIVE': 'INACTIVE',
+  'PENDING_DELETION': 'PENDING_DELETION',
+  'DELETED': 'DELETED'
+};
+
+function getTechnicianStatus(status) {
+  return TECHNICIAN_STATUS_MAP[status] || status || 'Chưa cập nhật';
+}
+
 
  return (
    <div className="modern-page-wrapper">
@@ -365,9 +384,9 @@ const handleSortByJobs = () => {
                  <td>{tech.email}</td>
                  <td>{tech.phone}</td>
                  <td>
-                   <span className={`badge badge-dark-transparent ${tech.status === 'APPROVED' ? 'text-success' : tech.status === 'REJECTED' ? 'text-danger' : 'text-warning'}`}>
-                     <i className={`ti ti-point-filled ${tech.status === 'APPROVED' ? 'text-success' : tech.status === 'REJECTED' ? 'text-danger' : 'text-warning'} me-1`}></i>
-                     {tech.status}
+                   <span className={`badge badge-dark-transparent ${getTechnicianStatus(tech.status) === 'APPROVED' ? 'text-success' : getTechnicianStatus(tech.status) === 'REJECTED' ? 'text-danger' : 'text-warning'}`}>
+                     <i className={`ti ti-point-filled ${getTechnicianStatus(tech.status) === 'APPROVED' ? 'text-success' : getTechnicianStatus(tech.status) === 'REJECTED' ? 'text-danger' : 'text-warning'} me-1`}></i>
+                     {getTechnicianStatus(tech.status)}
                    </span>
                  </td>
                  <td>{tech.ratingAverage?.toFixed(1) ?? '-'}</td>
@@ -417,29 +436,67 @@ const handleSortByJobs = () => {
          onCancel={handleCloseDetail}
          footer={null}
          title="Technician Detail"
+         width={800}
        >
-         <div><b>ID:</b> {selectedTechnician.id}</div>
-         <div><b>Name:</b> {selectedTechnician.fullName}</div>
-         <div><b>Email:</b> {selectedTechnician.email}</div>
-         <div><b>Phone:</b> {selectedTechnician.phone}</div>
-         <div><b>Specialization:</b>
-           <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-             {[...new Set(selectedTechnician.specialtiesCategories || [])].map(catIdRaw => {
-               let catId = catIdRaw && typeof catIdRaw === 'object' && catIdRaw.$oid
-                 ? catIdRaw.$oid
-                 : (catIdRaw.id || catIdRaw._id || catIdRaw).toString().trim();
-               return (
-                 <span key={catId} className="badge bg-secondary mb-1">
-                   {categoryMap[catId] || catId}
-                 </span>
-               );
-             })}
-           </div>
-         </div>
-         <div><b>Status:</b> {selectedTechnician.status}</div>
-         <div><b>Rating:</b> {selectedTechnician.ratingAverage?.toFixed(1) ?? '-'}</div>
-         <div><b>Jobs Completed:</b> {selectedTechnician.jobCompleted ?? 0}</div>
-         <div><b>Note:</b> {selectedTechnician.note || '-'}</div>
+         {selectedTechnician && (
+           <Descriptions bordered column={2} size="small">
+             <Descriptions.Item label="Họ tên" span={1}>{selectedTechnician.fullName || 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Email" span={1}>{selectedTechnician.email || 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Số điện thoại" span={1}>{selectedTechnician.phone || 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Trạng thái" span={1}>{getTechnicianStatus(selectedTechnician.status)}</Descriptions.Item>
+             <Descriptions.Item label="Kinh nghiệm (năm)" span={1}>{selectedTechnician.experienceYears ?? 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Số job hoàn thành" span={1}>{selectedTechnician.jobCompleted ?? 0}</Descriptions.Item>
+             <Descriptions.Item label="Rating trung bình" span={1}>{selectedTechnician.ratingAverage ?? 0}</Descriptions.Item>
+             <Descriptions.Item label="Specialization">
+             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+               {[...new Set(selectedTechnician.specialtiesCategories || [])].map(catIdRaw => {
+                 let catId = catIdRaw && typeof catIdRaw === 'object' && catIdRaw.$oid
+                   ? catIdRaw.$oid
+                   : (catIdRaw.id || catIdRaw._id || catIdRaw).toString().trim();
+                 return (
+                   <span key={catId} className="badge bg-secondary mb-1">
+                     {categoryMap[catId] || catId}
+                   </span>
+                 );
+               })}
+             </div>
+           </Descriptions.Item>
+             <Descriptions.Item label="Chứng chỉ" span={2}>{(selectedTechnician.certificate && selectedTechnician.certificate.length > 0) ? selectedTechnician.certificate.join(', ') : 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Tài khoản ngân hàng" span={2}>
+               {selectedTechnician.bankAccount ? (
+                 <>
+                   <div>Ngân hàng: {selectedTechnician.bankAccount.bankName}</div>
+                   <div>Số TK: {selectedTechnician.bankAccount.accountNumber}</div>
+                   <div>Chủ TK: {selectedTechnician.bankAccount.accountHolder}</div>
+                   <div>Chi nhánh: {selectedTechnician.bankAccount.branch}</div>
+                 </>
+               ) : 'Chưa cập nhật'}
+             </Descriptions.Item>
+             <Descriptions.Item label="Số dư" span={1}>{selectedTechnician.balance ?? 0}</Descriptions.Item>
+             <Descriptions.Item label="Tổng thu nhập" span={1}>{selectedTechnician.totalEarning ?? 0}</Descriptions.Item>
+             <Descriptions.Item label="Tổng hoa hồng đã trả" span={1}>{selectedTechnician.totalCommissionPaid ?? 0}</Descriptions.Item>
+             <Descriptions.Item label="Tổng giữ lại" span={1}>{selectedTechnician.totalHoldingAmount ?? 0}</Descriptions.Item>
+             <Descriptions.Item label="Tổng đã rút" span={1}>{selectedTechnician.totalWithdrawn ?? 0}</Descriptions.Item>
+             <Descriptions.Item label="Đơn giá kiểm tra" span={1}>{selectedTechnician.rates?.inspectionFee ?? 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Đơn giá công (tier1)" span={1}>{selectedTechnician.rates?.laborTiers?.tier1 ?? 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Đơn giá công (tier2)" span={1}>{selectedTechnician.rates?.laborTiers?.tier2 ?? 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Đơn giá công (tier3)" span={1}>{selectedTechnician.rates?.laborTiers?.tier3 ?? 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Ảnh mặt trước CCCD" span={1}>{selectedTechnician.frontIdImage ? <img src={selectedTechnician.frontIdImage} alt="frontId" style={{ maxWidth: 120 }} /> : 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Ảnh mặt sau CCCD" span={1}>{selectedTechnician.backIdImage ? <img src={selectedTechnician.backIdImage} alt="backId" style={{ maxWidth: 120 }} /> : 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Vị trí hiện tại" span={2}>
+               {selectedTechnician.currentLocation ? (
+                 <>
+                   <div>Type: {selectedTechnician.currentLocation.type}</div>
+                   <div>Toạ độ: {selectedTechnician.currentLocation.coordinates?.join(', ')}</div>
+                 </>
+               ) : 'Chưa cập nhật'}
+             </Descriptions.Item>
+             <Descriptions.Item label="Ngày chờ xoá" span={1}>{selectedTechnician.pendingDeletionAt ? new Date(selectedTechnician.pendingDeletionAt).toLocaleString() : 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Ngày xoá" span={1}>{selectedTechnician.deletedAt ? new Date(selectedTechnician.deletedAt).toLocaleString() : 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Ngày cập nhật giá" span={1}>{selectedTechnician.pricesLastUpdatedAt ? new Date(selectedTechnician.pricesLastUpdatedAt).toLocaleString() : 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Ghi chú" span={2}>{selectedTechnician.note || 'Không có'}</Descriptions.Item>
+           </Descriptions>
+         )}
        </Modal>
      )}
      {/* Edit Status Modal */}

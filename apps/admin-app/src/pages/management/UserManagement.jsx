@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Select } from 'antd';
+import { message, Select, Descriptions, Modal } from 'antd';
 import { userAPI } from '../../features/users/userAPI';
 import { roleAPI } from '../../features/roles/roleAPI';
 import { setUsers, setLoading, setError, setFilters } from '../../features/users/userSlice';
@@ -576,26 +576,24 @@ const UserManagement = () => {
 
                {/* Modal View Detail */}
                {showDetailModal && selectedUser && (
-                   <div className="modal fade show" style={{ display: 'block', zIndex: 2000, background: 'rgba(0,0,0,0.2)', position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
-                       <div className="modal-dialog modal-dialog-centered modal-md" style={{ zIndex: 2100 }}>
-                           <div className="modal-content">
-                               <div className="modal-header">
-                                   <h5 className="mb-0">User Detail</h5>
-                                   <button type="button" className="btn-close" onClick={() => setShowDetailModal(false)} aria-label="Close"></button>
-                               </div>
-                               <div className="modal-body pb-1">
-                                   <div><b>Full Name:</b> {selectedUser.fullName}</div>
-                                   <div><b>Email:</b> {selectedUser.email}</div>
-                                   <div><b>Phone:</b> {selectedUser.phone}</div>
-                                   <div><b>Role:</b> {roleMap[selectedUser.role] || selectedUser.role}</div>
-                                   <div><b>Status:</b> {selectedUser.status}</div>
-                                   {selectedUser.lockedReason && (
-                                       <div><b>Lock Reason:</b> {selectedUser.lockedReason}</div>
-                                   )}
-                               </div>
-                           </div>
-                       </div>
-                   </div>
+                   <Modal
+                       open={showDetailModal}
+                       onCancel={() => setShowDetailModal(false)}
+                       footer={null}
+                       title="User Detail"
+                       width={600}
+                   >
+                       <Descriptions bordered column={1} size="middle">
+                           <Descriptions.Item label="Full Name">{selectedUser.fullName}</Descriptions.Item>
+                           <Descriptions.Item label="Email">{selectedUser.email}</Descriptions.Item>
+                           <Descriptions.Item label="Phone">{selectedUser.phone}</Descriptions.Item>
+                           <Descriptions.Item label="Role">{roleMap[selectedUser.role] || selectedUser.role}</Descriptions.Item>
+                           <Descriptions.Item label="Status">{selectedUser.status}</Descriptions.Item>
+                           {selectedUser.lockedReason && (
+                               <Descriptions.Item label="Lock Reason">{selectedUser.lockedReason}</Descriptions.Item>
+                           )}
+                       </Descriptions>
+                   </Modal>
                )}
            </div>
        </div>

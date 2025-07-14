@@ -347,33 +347,15 @@ const ReportManagement = () => {
          width={800}
        >
          {selectedReport && (
-           <Descriptions bordered column={1}>
+           <Descriptions bordered column={1} size="middle">
              <Descriptions.Item label="ID">{selectedReport.id}</Descriptions.Item>
-             <Descriptions.Item label="Type">
-               <Tag color={getTypeColor(selectedReport.type)}>
-                 {selectedReport.type}
-               </Tag>
-             </Descriptions.Item>
-             <Descriptions.Item label="Status">
-               <Tag color={getStatusColor(selectedReport.status)}>
-                 {selectedReport.status?.toUpperCase()}
-               </Tag>
-             </Descriptions.Item>
-             <Descriptions.Item label="Reported User ID">
-               {selectedReport.reportedUserId}
-             </Descriptions.Item>
-             <Descriptions.Item label="Reporter ID">
-               {selectedReport.reporterId}
-             </Descriptions.Item>
-             <Descriptions.Item label="Description">
-               {selectedReport.description}
-             </Descriptions.Item>
-             <Descriptions.Item label="Created At">
-               {new Date(selectedReport.createdAt).toLocaleString()}
-             </Descriptions.Item>
-             <Descriptions.Item label="Updated At">
-               {new Date(selectedReport.updatedAt).toLocaleString()}
-             </Descriptions.Item>
+             <Descriptions.Item label="Type">{selectedReport.type}</Descriptions.Item>
+             <Descriptions.Item label="Status">{selectedReport.status?.toUpperCase()}</Descriptions.Item>
+             <Descriptions.Item label="Reported User">{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId}</Descriptions.Item>
+             <Descriptions.Item label="Reporter">{userMap[selectedReport.reporterId] || selectedReport.reporterId}</Descriptions.Item>
+             <Descriptions.Item label="Description">{selectedReport.description}</Descriptions.Item>
+             <Descriptions.Item label="Created At">{new Date(selectedReport.createdAt).toLocaleString()}</Descriptions.Item>
+             <Descriptions.Item label="Updated At">{new Date(selectedReport.updatedAt).toLocaleString()}</Descriptions.Item>
            </Descriptions>
          )}
        </Modal>

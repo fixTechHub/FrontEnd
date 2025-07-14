@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, DatePicker, InputNumber, Switch } from 'antd';
+import dayjs from 'dayjs';
 import {
  fetchCoupons,
  createCoupon,
@@ -10,6 +11,7 @@ import {
  fetchDeletedCoupons,
 } from '../../features/coupons/couponSlice';
 import { couponAPI } from '../../features/coupons/couponAPI';
+import { userAPI } from '../../features/users/userAPI';
 
 
 const initialFormState = {
@@ -48,6 +50,9 @@ const [sortOrder, setSortOrder] = useState('desc');
 
  const [filterType, setFilterType] = useState();
 const [filterStatus, setFilterStatus] = useState();
+const [users, setUsers] = useState([]);
+const [allUsers, setAllUsers] = useState([]);
+const [loadingUsers, setLoadingUsers] = useState(false);
 
 
 
@@ -240,8 +245,43 @@ const [filterStatus, setFilterStatus] = useState();
          newForm.maxDiscount = '';
        }
      }
+     // Nếu đổi audience thì reset userIds
+     if (name === 'audience' && value !== 'SPECIFIC_USERS') {
+       newForm.userIds = [];
+     }
      return newForm;
    });
+ };
+
+ // Khi audience là SPECIFIC_USERS, lấy toàn bộ user về 1 lần
+ useEffect(() => {
+   if (formData.audience === 'SPECIFIC_USERS') {
+     setLoadingUsers(true);
+     userAPI.getAll().then(data => {
+       setAllUsers(data);
+       setUsers(data);
+     }).finally(() => setLoadingUsers(false));
+   }
+ }, [formData.audience]);
+
+ // Sửa lại handleUserSearch: chỉ filter trên allUsers
+ const handleUserSearch = (searchText) => {
+   if (!searchText) {
+     setUsers(allUsers);
+     return;
+   }
+   const filtered = allUsers.filter(user =>
+     (user.fullName && user.fullName.toLowerCase().includes(searchText.toLowerCase())) ||
+     (user.email && user.email.toLowerCase().includes(searchText.toLowerCase()))
+   );
+   setUsers(filtered);
+ };
+
+ const handleUserSelect = (selectedUserIds) => {
+   setFormData(prev => ({
+     ...prev,
+     userIds: selectedUserIds
+   }));
  };
 
 
@@ -254,11 +294,41 @@ const [filterStatus, setFilterStatus] = useState();
      minOrderValue: formData.minOrderValue !== '' ? Number(formData.minOrderValue) : null,
      totalUsageLimit: formData.totalUsageLimit !== '' ? Number(formData.totalUsageLimit) : null,
    };
-   // Xử lý loại bỏ trường không cần thiết như hướng dẫn ở trên
+
+   // Luôn gửi userIds, nếu không phải SPECIFIC_USERS thì là mảng rỗng
+   if (dataToSend.audience !== 'SPECIFIC_USERS') {
+     dataToSend.userIds = [];
+   } else if (!dataToSend.userIds || dataToSend.userIds.length === 0) {
+     message.error('Bạn phải chọn ít nhất 1 user khi audience là SPECIFIC_USERS');
+     return;
+   }
+
+   console.log('Data gửi lên BE:', dataToSend);
+
    if (showAddModal) {
-     dispatch(createCoupon(dataToSend));
+     dispatch(createCoupon(dataToSend)).then((action) => {
+       if (action.error && action.error.message) {
+         const err = action.error;
+         if (err && err.response && err.response.data) {
+           console.error('API error detail:', err.response.data);
+           message.error(err.response.data.title || JSON.stringify(err.response.data));
+         } else {
+           message.error(err.message);
+         }
+       }
+     });
    } else if (showEditModal && selectedCoupon) {
-     dispatch(updateCoupon({ id: selectedCoupon.id, couponData: dataToSend }));
+     dispatch(updateCoupon({ id: selectedCoupon.id, couponData: dataToSend })).then((action) => {
+       if (action.error && action.error.message) {
+         const err = action.error;
+         if (err && err.response && err.response.data) {
+           console.error('API error detail:', err.response.data);
+           message.error(err.response.data.title || JSON.stringify(err.response.data));
+         } else {
+           message.error(err.message);
+         }
+       }
+     });
    }
  };
 
@@ -425,254 +495,401 @@ const [filterStatus, setFilterStatus] = useState();
        open={showAddModal}
        onCancel={() => setShowAddModal(false)}
        footer={null}
-       title="Add coupon"
+       title="Add Coupon"
+       width={800}
      >
-       <form onSubmit={handleSubmit}>
-         <div className="mb-3">
-           <label className="form-label">Code</label>
-           <input
-             type="text"
-             name="code"
-             className="form-control"
-             value={formData.code}
-             onChange={handleChange}
-             required
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Description</label>
-           <textarea
+       <Form layout="vertical" onSubmit={handleSubmit}>
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Code" required>
+               <Input
+                 name="code"
+                 value={formData.code}
+                 onChange={handleChange}
+                 placeholder="Enter coupon code"
+               />
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="Type">
+               <Select
+                 name="type"
+                 value={formData.type}
+                 onChange={(value) => handleChange({ target: { name: 'type', value } })}
+               >
+                 <Select.Option value="PERCENT">PERCENT</Select.Option>
+                 <Select.Option value="FIXED">FIXED</Select.Option>
+               </Select>
+             </Form.Item>
+           </Col>
+         </Row>
+
+         <Form.Item label="Description">
+           <Input.TextArea
              name="description"
-             className="form-control"
              value={formData.description}
              onChange={handleChange}
-             rows="3"
+             rows={3}
+             placeholder="Enter description"
            />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Type</label>
-           <select
-             name="type"
-             className="form-control"
-             value={formData.type}
-             onChange={handleChange}
-           >
-             <option value="PERCENT">PERCENT</option>
-             <option value="FIXED">FIXED</option>
-           </select>
-         </div>
-         {formData.type === 'FIXED' && (
-           <div className="mb-3">
-             <label className="form-label">Value</label>
-             <input
-               type="number"
-               name="value"
-               className="form-control"
-               value={formData.value}
-               onChange={handleChange}
-               required={formData.type === 'FIXED'}
-             />
-           </div>
-         )}
-         {formData.type === 'PERCENT' && (
-           <div className="mb-3">
-             <label className="form-label">Max Discount</label>
-             <input
-               type="number"
-               name="maxDiscount"
-               className="form-control"
-               value={formData.maxDiscount}
-               onChange={handleChange}
-               required={formData.type === 'PERCENT'}
-             />
-           </div>
-         )}
-         <div className="mb-3">
-           <label className="form-label">Min Order Value</label>
-           <input
-             type="number"
-             name="minOrderValue"
-             className="form-control"
-             value={formData.minOrderValue}
-             onChange={handleChange}
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Total Usage Limit</label>
-           <input
-             type="number"
-             name="totalUsageLimit"
-             className="form-control"
-             value={formData.totalUsageLimit}
-             onChange={handleChange}
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Start Date</label>
-           <input
-             type="date"
-             name="startDate"
-             className="form-control"
-             value={formData.startDate}
-             onChange={handleChange}
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">End Date</label>
-           <input
-             type="date"
-             name="endDate"
-             className="form-control"
-             value={formData.endDate}
-             onChange={handleChange}
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Status</label>
-           <div>
-             <input
-               type="checkbox"
-               name="isActive"
-               checked={formData.isActive}
-               onChange={handleChange}
-               id="isActiveSwitch"
-             />
-             <label htmlFor="isActiveSwitch" style={{ marginLeft: 8 }}>{formData.isActive ? 'Active' : 'Inactive'}</label>
-           </div>
-         </div>
-         <div className="d-flex justify-content-end">
-           <button type="button" className="btn btn-light me-2" onClick={() => setShowAddModal(false)}>Cancel</button>
-           <button type="submit" className="btn btn-primary">Save</button>
-         </div>
-       </form>
-     </Modal>
+         </Form.Item>
 
+         <Row gutter={16}>
+           {formData.type === 'PERCENT' && (
+             <>
+               <Col span={12}>
+                 <Form.Item label="Value (%)" required>
+                   <InputNumber
+                     name="value"
+                     value={formData.value}
+                     onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
+                     min={1}
+                     max={100}
+                     style={{ width: '100%' }}
+                     placeholder="Enter percentage"
+                   />
+                 </Form.Item>
+               </Col>
+               <Col span={12}>
+                 <Form.Item label="Max Discount (VND)" required>
+                   <InputNumber
+                     name="maxDiscount"
+                     value={formData.maxDiscount}
+                     onChange={(value) => handleChange({ target: { name: 'maxDiscount', value: value?.toString() || '' } })}
+                     min={1}
+                     style={{ width: '100%' }}
+                     placeholder="Enter max discount"
+                   />
+                 </Form.Item>
+               </Col>
+             </>
+           )}
+           {formData.type === 'FIXED' && (
+             <Col span={12}>
+               <Form.Item label="Value (VND)" required>
+                 <InputNumber
+                   name="value"
+                   value={formData.value}
+                   onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
+                   min={1}
+                   style={{ width: '100%' }}
+                   placeholder="Enter fixed amount"
+                 />
+               </Form.Item>
+             </Col>
+           )}
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Min Order Value">
+               <InputNumber
+                 name="minOrderValue"
+                 value={formData.minOrderValue}
+                 onChange={(value) => handleChange({ target: { name: 'minOrderValue', value: value?.toString() || '' } })}
+                 min={0}
+                 style={{ width: '100%' }}
+                 placeholder="Enter min order value"
+               />
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="Total Usage Limit">
+               <InputNumber
+                 name="totalUsageLimit"
+                 value={formData.totalUsageLimit}
+                 onChange={(value) => handleChange({ target: { name: 'totalUsageLimit', value: value?.toString() || '' } })}
+                 min={1}
+                 style={{ width: '100%' }}
+                 placeholder="Enter usage limit"
+               />
+             </Form.Item>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Start Date">
+               <DatePicker
+                 value={formData.startDate ? dayjs(formData.startDate) : null}
+                 onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
+                 style={{ width: '100%' }}
+                 placeholder="Select start date"
+               />
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="End Date">
+               <DatePicker
+                 value={formData.endDate ? dayjs(formData.endDate) : null}
+                 onChange={(date, dateString) => handleChange({ target: { name: 'endDate', value: dateString } })}
+                 style={{ width: '100%' }}
+                 placeholder="Select end date"
+               />
+             </Form.Item>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Audience">
+               <Select
+                 name="audience"
+                 value={formData.audience}
+                 onChange={(value) => handleChange({ target: { name: 'audience', value } })}
+               >
+                 <Select.Option value="ALL">Tất cả người dùng (ALL)</Select.Option>
+                 <Select.Option value="NEW_USER">Chỉ user chưa có booking nào (NEW_USER)</Select.Option>
+                 <Select.Option value="EXISTING_USER">Chỉ user đang hoạt động (EXISTING_USER)</Select.Option>
+                 <Select.Option value="SPECIFIC_USERS">Chỉ user được chọn (SPECIFIC_USERS)</Select.Option>
+               </Select>
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="Status">
+               <Switch
+                 name="isActive"
+                 checked={formData.isActive}
+                 onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                 checkedChildren="Active"
+                 unCheckedChildren="Inactive"
+               />
+             </Form.Item>
+           </Col>
+         </Row>
+
+         {formData.audience === 'SPECIFIC_USERS' && (
+           <Form.Item label="Select Users">
+             <Select
+               mode="multiple"
+               placeholder="Search and select users"
+               value={formData.userIds}
+               onChange={handleUserSelect}
+               onSearch={handleUserSearch}
+               loading={loadingUsers}
+               filterOption={false}
+               showSearch
+               style={{ width: '100%' }}
+             >
+               {users.map(user => (
+                 <Select.Option key={user.id} value={user.id}>
+                   {user.fullName} ({user.email})
+                 </Select.Option>
+               ))}
+             </Select>
+           </Form.Item>
+         )}
+
+         <div className="d-flex justify-content-end">
+           <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
+             Cancel
+           </Button>
+           <Button type="primary" onClick={handleSubmit}>
+             Save
+           </Button>
+         </div>
+       </Form>
+     </Modal>
 
      {/* Edit Modal */}
      <Modal
        open={showEditModal}
        onCancel={() => setShowEditModal(false)}
        footer={null}
-       title="Update coupon"
+       title="Update Coupon"
+       width={800}
      >
-       <form onSubmit={handleSubmit}>
-         <div className="mb-3">
-           <label className="form-label">Code</label>
-           <input
-             type="text"
-             name="code"
-             className="form-control"
-             value={formData.code}
-             onChange={handleChange}
-             required
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Description</label>
-           <textarea
+       <Form layout="vertical" onSubmit={handleSubmit}>
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Code" required>
+               <Input
+                 name="code"
+                 value={formData.code}
+                 onChange={handleChange}
+                 placeholder="Enter coupon code"
+               />
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="Type">
+               <Select
+                 name="type"
+                 value={formData.type}
+                 onChange={(value) => handleChange({ target: { name: 'type', value } })}
+               >
+                 <Select.Option value="PERCENT">PERCENT</Select.Option>
+                 <Select.Option value="FIXED">FIXED</Select.Option>
+               </Select>
+             </Form.Item>
+           </Col>
+         </Row>
+
+         <Form.Item label="Description">
+           <Input.TextArea
              name="description"
-             className="form-control"
              value={formData.description}
              onChange={handleChange}
-             rows="3"
+             rows={3}
+             placeholder="Enter description"
            />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Type</label>
-           <select
-             name="type"
-             className="form-control"
-             value={formData.type}
-             onChange={handleChange}
-           >
-             <option value="PERCENT">PERCENT</option>
-             <option value="FIXED">FIXED</option>
-           </select>
-         </div>
-         {formData.type === 'FIXED' && (
-           <div className="mb-3">
-             <label className="form-label">Value</label>
-             <input
-               type="number"
-               name="value"
-               className="form-control"
-               value={formData.value}
-               onChange={handleChange}
-               required={formData.type === 'FIXED'}
-             />
-           </div>
+         </Form.Item>
+
+         <Row gutter={16}>
+           {formData.type === 'PERCENT' && (
+             <>
+               <Col span={12}>
+                 <Form.Item label="Value (%)" required>
+                   <InputNumber
+                     name="value"
+                     value={formData.value}
+                     onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
+                     min={1}
+                     max={100}
+                     style={{ width: '100%' }}
+                     placeholder="Enter percentage"
+                   />
+                 </Form.Item>
+               </Col>
+               <Col span={12}>
+                 <Form.Item label="Max Discount (VND)" required>
+                   <InputNumber
+                     name="maxDiscount"
+                     value={formData.maxDiscount}
+                     onChange={(value) => handleChange({ target: { name: 'maxDiscount', value: value?.toString() || '' } })}
+                     min={1}
+                     style={{ width: '100%' }}
+                     placeholder="Enter max discount"
+                   />
+                 </Form.Item>
+               </Col>
+             </>
+           )}
+           {formData.type === 'FIXED' && (
+             <Col span={12}>
+               <Form.Item label="Value (VND)" required>
+                 <InputNumber
+                   name="value"
+                   value={formData.value}
+                   onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
+                   min={1}
+                   style={{ width: '100%' }}
+                   placeholder="Enter fixed amount"
+                 />
+               </Form.Item>
+             </Col>
+           )}
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Min Order Value">
+               <InputNumber
+                 name="minOrderValue"
+                 value={formData.minOrderValue}
+                 onChange={(value) => handleChange({ target: { name: 'minOrderValue', value: value?.toString() || '' } })}
+                 min={0}
+                 style={{ width: '100%' }}
+                 placeholder="Enter min order value"
+               />
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="Total Usage Limit">
+               <InputNumber
+                 name="totalUsageLimit"
+                 value={formData.totalUsageLimit}
+                 onChange={(value) => handleChange({ target: { name: 'totalUsageLimit', value: value?.toString() || '' } })}
+                 min={1}
+                 style={{ width: '100%' }}
+                 placeholder="Enter usage limit"
+               />
+             </Form.Item>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Start Date">
+               <DatePicker
+                 value={formData.startDate ? dayjs(formData.startDate) : null}
+                 onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
+                 style={{ width: '100%' }}
+                 placeholder="Select start date"
+               />
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="End Date">
+               <DatePicker
+                 value={formData.endDate ? dayjs(formData.endDate) : null}
+                 onChange={(date, dateString) => handleChange({ target: { name: 'endDate', value: dateString } })}
+                 style={{ width: '100%' }}
+                 placeholder="Select end date"
+               />
+             </Form.Item>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Audience">
+               <Select
+                 name="audience"
+                 value={formData.audience}
+                 onChange={(value) => handleChange({ target: { name: 'audience', value } })}
+               >
+                 <Select.Option value="ALL">Tất cả người dùng (ALL)</Select.Option>
+                 <Select.Option value="NEW_USER">Chỉ user chưa có booking nào (NEW_USER)</Select.Option>
+                 <Select.Option value="EXISTING_USER">Chỉ user đang hoạt động (EXISTING_USER)</Select.Option>
+                 <Select.Option value="SPECIFIC_USERS">Chỉ user được chọn (SPECIFIC_USERS)</Select.Option>
+               </Select>
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="Status">
+               <Switch
+                 name="isActive"
+                 checked={formData.isActive}
+                 onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                 checkedChildren="Active"
+                 unCheckedChildren="Inactive"
+               />
+             </Form.Item>
+           </Col>
+         </Row>
+
+         {formData.audience === 'SPECIFIC_USERS' && (
+           <Form.Item label="Select Users">
+             <Select
+               mode="multiple"
+               placeholder="Search and select users"
+               value={formData.userIds}
+               onChange={handleUserSelect}
+               onSearch={handleUserSearch}
+               loading={loadingUsers}
+               filterOption={false}
+               showSearch
+               style={{ width: '100%' }}
+             >
+               {users.map(user => (
+                 <Select.Option key={user.id} value={user.id}>
+                   {user.fullName} ({user.email})
+                 </Select.Option>
+               ))}
+             </Select>
+           </Form.Item>
          )}
-         {formData.type === 'PERCENT' && (
-           <div className="mb-3">
-             <label className="form-label">Max Discount</label>
-             <input
-               type="number"
-               name="maxDiscount"
-               className="form-control"
-               value={formData.maxDiscount}
-               onChange={handleChange}
-               required={formData.type === 'PERCENT'}
-             />
-           </div>
-         )}
-         <div className="mb-3">
-           <label className="form-label">Min Order Value</label>
-           <input
-             type="number"
-             name="minOrderValue"
-             className="form-control"
-             value={formData.minOrderValue}
-             onChange={handleChange}
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Total Usage Limit</label>
-           <input
-             type="number"
-             name="totalUsageLimit"
-             className="form-control"
-             value={formData.totalUsageLimit}
-             onChange={handleChange}
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Start Date</label>
-           <input
-             type="date"
-             name="startDate"
-             className="form-control"
-             value={formData.startDate}
-             onChange={handleChange}
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">End Date</label>
-           <input
-             type="date"
-             name="endDate"
-             className="form-control"
-             value={formData.endDate}
-             onChange={handleChange}
-           />
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Status</label>
-           <div>
-             <input
-               type="checkbox"
-               name="isActive"
-               checked={formData.isActive}
-               onChange={handleChange}
-               id="isActiveSwitchEdit"
-             />
-             <label htmlFor="isActiveSwitchEdit" style={{ marginLeft: 8 }}>{formData.isActive ? 'Active' : 'Inactive'}</label>
-           </div>
-         </div>
+
          <div className="d-flex justify-content-end">
-           <button type="button" className="btn btn-light me-2" onClick={() => setShowEditModal(false)}>Cancel</button>
-           <button type="submit" className="btn btn-primary">Save</button>
+           <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
+             Cancel
+           </Button>
+           <Button type="primary" onClick={handleSubmit}>
+             Save
+           </Button>
          </div>
-       </form>
+       </Form>
      </Modal>
 
 

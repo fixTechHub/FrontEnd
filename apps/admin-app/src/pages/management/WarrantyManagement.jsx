@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllWarranties, updateWarrantyStatus } from '../../features/warranty/warrantySlice';
-import { Modal, Button, Select, Switch, message } from 'antd';
+import { Modal, Button, Select, Switch, message, Descriptions } from 'antd';
 import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
@@ -32,6 +32,8 @@ const [sortOrder, setSortOrder] = useState('desc');
 const [filterStatus, setFilterStatus] = useState();
 const [filterUnderWarranty, setFilterUnderWarranty] = useState();
 const [filterReviewed, setFilterReviewed] = useState();
+const [showDetailModal, setShowDetailModal] = useState(false);
+const [selectedWarranty, setSelectedWarranty] = useState(null);
 
 
  useEffect(() => {
@@ -292,7 +294,7 @@ const handleSortByTechnician = () => {
            <tbody>
              {currentWarranties.map(w => (
                <tr key={w.id}>
-                 <td>{bookingMap[w.bookingId] || ''}</td>
+                 <td>{bookingMap[w.bookingId] || 'Unknown'}</td>
                  <td>
                    {userNames[w.customerId] || w.customerId}
                  </td>
@@ -303,8 +305,11 @@ const handleSortByTechnician = () => {
                  <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
                  <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
                  <td>
-                   <Button size="small" onClick={() => openEdit(w)}>
+                   <Button size="small" onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
                      Edit
+                   </Button>
+                   <Button size="small" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
+                     View
                    </Button>
                  </td>
                </tr>
@@ -352,6 +357,27 @@ const handleSortByTechnician = () => {
          <b>Admin reviewed: </b>
          <Switch checked={editReviewed} onChange={setEditReviewed} />
        </div>
+     </Modal>
+     {/* View Detail Modal */}
+     <Modal
+       open={showDetailModal}
+       onCancel={() => setShowDetailModal(false)}
+       footer={null}
+       title="Warranty Detail"
+       width={600}
+     >
+       {selectedWarranty && (
+         <Descriptions bordered column={1} size="middle">
+           <Descriptions.Item label="Booking Code">{bookingMap[selectedWarranty.bookingId] || 'Unknown'}</Descriptions.Item>
+           <Descriptions.Item label="Customer">{userNames[selectedWarranty.customerId] || selectedWarranty.customerId}</Descriptions.Item>
+           <Descriptions.Item label="Technician">{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId}</Descriptions.Item>
+           <Descriptions.Item label="Status">{selectedWarranty.status}</Descriptions.Item>
+           <Descriptions.Item label="Under Warranty">{selectedWarranty.isUnderWarranty ? 'Yes' : 'No'}</Descriptions.Item>
+           <Descriptions.Item label="Reviewed">{selectedWarranty.isReviewedByAdmin ? 'Yes' : 'No'}</Descriptions.Item>
+           <Descriptions.Item label="Created At">{selectedWarranty.createdAt ? new Date(selectedWarranty.createdAt).toLocaleString() : ''}</Descriptions.Item>
+           {/* Thêm các trường khác nếu cần */}
+         </Descriptions>
+       )}
      </Modal>
    </div>
  );
