@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import ApiBE from '../../services/ApiBE';
-import { Modal, Button, Select, Descriptions } from 'antd';
+import { Modal, Button, Select, Descriptions, Spin } from 'antd';
 
 
 const BookingManagement = () => {
@@ -28,30 +28,35 @@ const [allServices, setAllServices] = useState([]);
      // Lấy tất cả customerId và serviceId duy nhất
      const customerIds = Array.from(new Set((data || []).map(b => b.customerId)));
      const serviceIds = Array.from(new Set((data || []).map(b => b.serviceId)));
-     // Lấy tên customer
-     const userMapTemp = {};
+     // Lấy tên customer (chỉ fetch nếu chưa có trong userMap)
+     const userMapTemp = { ...userMap };
      await Promise.all(customerIds.map(async (id) => {
-       try {
-         const user = await userAPI.getById(id);
-         userMapTemp[id] = user.fullName || user.email || id;
-       } catch {
-         userMapTemp[id] = id;
+       if (id && !userMapTemp[id]) {
+         try {
+           const user = await userAPI.getById(id);
+           userMapTemp[id] = user.fullName || user.email || id;
+         } catch {
+           userMapTemp[id] = id;
+         }
        }
      }));
      setUserMap(userMapTemp);
-     // Lấy tên service
-     const serviceMapTemp = {};
+     // Lấy tên service (chỉ fetch nếu chưa có trong serviceMap)
+     const serviceMapTemp = { ...serviceMap };
      await Promise.all(serviceIds.map(async (id) => {
-       try {
-         const res = await ApiBE.get(`/Dashboard/services/${id}`);
-         serviceMapTemp[id] = res.data.serviceName || id;
-       } catch {
-         serviceMapTemp[id] = id;
+       if (id && !serviceMapTemp[id]) {
+         try {
+           const res = await ApiBE.get(`/Dashboard/services/${id}`);
+           serviceMapTemp[id] = res.data.serviceName || id;
+         } catch {
+           serviceMapTemp[id] = id;
+         }
        }
      }));
      setServiceMap(serviceMapTemp);
    };
    fetchData();
+   // eslint-disable-next-line
  }, []);
 
 useEffect(() => {
@@ -174,6 +179,10 @@ const handleSortByService = () => {
   }
 };
 
+const isUserMapReady = bookings.every(b => !b.customerId || userMap[b.customerId]);
+const isServiceMapReady = bookings.every(b => !b.serviceId || serviceMap[b.serviceId]);
+const isDataReady = isUserMapReady && isServiceMapReady;
+
 
  return (
    <div className="modern-page-wrapper">
@@ -277,24 +286,30 @@ const handleSortByService = () => {
              </tr>
            </thead>
            <tbody>
-             {currentBookings.map(b => (
-               <tr key={b.id}>
-                 <td>{b.bookingCode || b.id}</td>
-                 <td>{userMap[b.customerId] || b.customerId}</td>
-                 <td>{serviceMap[b.serviceId] || ''}</td>
-                 <td>{b.status}</td>
-                 <td>
-                   {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
-                     ? `${new Date(b.schedule.startTime).toLocaleString()} - ${b.schedule.endTime ? new Date(b.schedule.endTime).toLocaleString() : ''}`
-                     : ''}
-                 </td>
-                 <td>
-                   <Button size="small" onClick={() => { setSelectedBooking(b); setShowDetailModal(true); }}>
-                     View Detail
-                   </Button>
-                 </td>
+             {!isDataReady ? (
+               <tr>
+                 <td><Spin /></td>
                </tr>
-             ))}
+             ) : (
+               currentBookings.map(b => (
+                 <tr key={b.id}>
+                   <td>{b.bookingCode || b.id}</td>
+                   <td>{userMap[b.customerId]}</td>
+                   <td>{serviceMap[b.serviceId]}</td>
+                   <td>{b.status}</td>
+                   <td>
+                     {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
+                       ? `${new Date(b.schedule.startTime).toLocaleString()} - ${b.schedule.endTime ? new Date(b.schedule.endTime).toLocaleString() : ''}`
+                       : ''}
+                   </td>
+                   <td>
+                     <Button size="small" onClick={() => { setSelectedBooking(b); setShowDetailModal(true); }}>
+                       View Detail
+                     </Button>
+                   </td>
+                 </tr>
+               ))
+             )}
            </tbody>
          </table>
        </div>

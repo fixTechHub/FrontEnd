@@ -294,6 +294,9 @@ const SystemReportManagement = () => {
  ];
 
 
+ const isUserMapReady = filteredSystemReports.every(r => !r.submittedBy || userMap[r.submittedBy]);
+
+
  return (
    <div className="modern-page-wrapper">
      <div className="modern-content-card">
@@ -395,9 +398,9 @@ const SystemReportManagement = () => {
          {/* System Reports Table */}
          <Table
            columns={columns}
-           dataSource={filteredSystemReports}
+           dataSource={isUserMapReady ? filteredSystemReports : []}
            rowKey="id"
-           loading={loading}
+           loading={loading || !isUserMapReady}
            pagination={{
              total: filteredSystemReports.length,
              pageSize: 10,

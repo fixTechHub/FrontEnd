@@ -70,7 +70,7 @@ const ReportManagement = () => {
 
 
  useEffect(() => {
-   // Lấy tên user cho tất cả reportedUserId và reporterId
+   let timeout;
    const fetchUserNames = async () => {
      const userIds = Array.from(new Set((filteredReports || []).flatMap(r => [r.reportedUserId, r.reporterId])));
      const userMapTemp = { ...userMap };
@@ -86,7 +86,10 @@ const ReportManagement = () => {
      }));
      setUserMap(userMapTemp);
    };
-   if (filteredReports.length > 0) fetchUserNames();
+   if (filteredReports.length > 0) {
+     timeout = setTimeout(fetchUserNames, 100); // debounce 100ms
+   }
+   return () => clearTimeout(timeout);
    // eslint-disable-next-line
  }, [filteredReports]);
 
@@ -222,6 +225,9 @@ const ReportManagement = () => {
  ];
 
 
+ const isUserMapReady = filteredReports.every(r => (!r.reportedUserId || userMap[r.reportedUserId]) && (!r.reporterId || userMap[r.reporterId]));
+
+
  return (
    <div className="modern-page-wrapper">
      <div className="modern-content-card">
@@ -319,9 +325,9 @@ const ReportManagement = () => {
          {/* Reports Table */}
          <Table
            columns={columns}
-           dataSource={filteredReports}
+           dataSource={isUserMapReady ? filteredReports : []}
            rowKey="id"
-           loading={loading}
+           loading={loading || !isUserMapReady}
            pagination={{
              total: filteredReports.length,
              pageSize: 10,

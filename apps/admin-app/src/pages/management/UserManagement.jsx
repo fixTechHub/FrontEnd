@@ -385,10 +385,10 @@ const UserManagement = () => {
                                <tr key={user.id}>
                                    <td>
                                        <div className="d-flex align-items-center">
-                                           <a href="#" className="avatar me-2 flex-shrink-0">
+                                           <p className="avatar me-2 flex-shrink-0">
                                                <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} className="rounded-circle" alt="" />
-                                           </a>
-                                           <h6><a href="#" className="fs-14 fw-semibold">{user.fullName}</a></h6>
+                                           </p>
+                                           <h6><p className="fs-14 fw-semibold">{user.fullName}</p></h6>
                                        </div>
                                    </td>
                                    <td><p className="text-gray-9">{user.email}</p></td>

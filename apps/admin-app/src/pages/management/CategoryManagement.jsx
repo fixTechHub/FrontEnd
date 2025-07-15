@@ -177,6 +177,7 @@ const handleOpenRestoreModal = () => {
 
  console.log('categories:', categories);
 
+const isDataReady = categories.length > 0;
 
  return (
    <div className="modern-page-wrapper">
@@ -255,21 +256,27 @@ const handleOpenRestoreModal = () => {
                </tr>
              </thead>
              <tbody>
-               {currentCategories.map((cat) => (
-                 <tr key={cat.id}>
-                   <td>{cat.categoryName}</td>
-                   <td>{cat.icon}</td>
-                   <td>
-                     <span className={`badge ${cat.isActive ? 'bg-success' : 'bg-danger'}`}>
-                       {cat.isActive ? 'Active' : 'Inactive'}
-                     </span>
-                   </td>
-                   <td>
-                     <Button size="small" onClick={() => handleEditCategory(cat)} style={{ marginRight: 8 }}>Edit</Button>
-                     <Button size="small" danger onClick={() => handleDeleteCategory(cat)}>Delete</Button>
-                   </td>
+               {!isDataReady ? (
+                 <tr>
+                   <td colSpan={4} className="text-center">Loading...</td>
                  </tr>
-               ))}
+               ) : (
+                 currentCategories.map((cat) => (
+                   <tr key={cat.id}>
+                     <td>{cat.categoryName}</td>
+                     <td>{cat.icon}</td>
+                     <td>
+                       <span className={`badge ${cat.isActive ? 'bg-success' : 'bg-danger'}`}>
+                         {cat.isActive ? 'Active' : 'Inactive'}
+                       </span>
+                     </td>
+                     <td>
+                       <Button size="small" onClick={() => handleEditCategory(cat)} style={{ marginRight: 8 }}>Edit</Button>
+                       <Button size="small" danger onClick={() => handleDeleteCategory(cat)}>Delete</Button>
+                     </td>
+                   </tr>
+                 ))
+               )}
              </tbody>
            </table>
          </div>

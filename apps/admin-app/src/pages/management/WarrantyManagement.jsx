@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllWarranties, updateWarrantyStatus } from '../../features/warranty/warrantySlice';
-import { Modal, Button, Select, Switch, message, Descriptions } from 'antd';
+import { Modal, Button, Select, Switch, message, Descriptions, Spin } from 'antd';
 import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
@@ -258,64 +258,65 @@ const handleSortByTechnician = () => {
          </div>
        </div>
        <div className="custom-datatable-filter table-responsive">
-         <table className="table datatable">
-           <thead className="thead-light">
-             <tr>
-               <th style={{ cursor: 'pointer' }} onClick={handleSortByBooking}>
-                 BOOKING CODE
-                 {sortField === 'bookingId' && (
-                   <span style={{ marginLeft: 4 }}>
-                     {sortOrder === 'asc' ? '▲' : '▼'}
-                   </span>
-                 )}
-               </th>
-               <th style={{ cursor: 'pointer' }} onClick={handleSortByCustomer}>
-                 CUSTOMER
-                 {sortField === 'customer' && (
-                   <span style={{ marginLeft: 4 }}>
-                     {sortOrder === 'asc' ? '▲' : '▼'}
-                   </span>
-                 )}
-               </th>
-               <th style={{ cursor: 'pointer' }} onClick={handleSortByTechnician}>
-                 TECHNICIAN
-                 {sortField === 'technician' && (
-                   <span style={{ marginLeft: 4 }}>
-                     {sortOrder === 'asc' ? '▲' : '▼'}
-                   </span>
-                 )}
-               </th>
-               <th>STATUS</th>
-               <th>UNDER WARRANTY</th>
-               <th>REVIEWED</th>
-               <th>ACTION</th>
-             </tr>
-           </thead>
-           <tbody>
-             {currentWarranties.map(w => (
-               <tr key={w.id}>
-                 <td>{bookingMap[w.bookingId] || 'Unknown'}</td>
-                 <td>
-                   {userNames[w.customerId] || w.customerId}
-                 </td>
-                 <td>
-                   {technicianNames[w.technicianId] || w.technicianId}
-                 </td>
-                 <td>{w.status}</td>
-                 <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
-                 <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
-                 <td>
-                   <Button size="small" onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
-                     Edit
-                   </Button>
-                   <Button size="small" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
-                     View
-                   </Button>
-                 </td>
+         {/* Bảng warranties */}
+         {loading || !warranties || warranties.length === 0 ? (
+           <Spin />
+         ) : (
+           <table className="table datatable">
+             <thead className="thead-light">
+               <tr>
+                 <th style={{ cursor: 'pointer' }} onClick={handleSortByBooking}>
+                   BOOKING CODE
+                   {sortField === 'bookingId' && (
+                     <span style={{ marginLeft: 4 }}>
+                       {sortOrder === 'asc' ? '▲' : '▼'}
+                     </span>
+                   )}
+                 </th>
+                 <th style={{ cursor: 'pointer' }} onClick={handleSortByCustomer}>
+                   CUSTOMER
+                   {sortField === 'customer' && (
+                     <span style={{ marginLeft: 4 }}>
+                       {sortOrder === 'asc' ? '▲' : '▼'}
+                     </span>
+                   )}
+                 </th>
+                 <th style={{ cursor: 'pointer' }} onClick={handleSortByTechnician}>
+                   TECHNICIAN
+                   {sortField === 'technician' && (
+                     <span style={{ marginLeft: 4 }}>
+                       {sortOrder === 'asc' ? '▲' : '▼'}
+                     </span>
+                   )}
+                 </th>
+                 <th>STATUS</th>
+                 <th>UNDER WARRANTY</th>
+                 <th>REVIEWED</th>
+                 <th>ACTION</th>
                </tr>
-             ))}
-           </tbody>
-         </table>
+             </thead>
+             <tbody>
+               {currentWarranties.map(w => (
+                 <tr key={w.id}>
+                   <td>{bookingMap[w.bookingId] || 'Unknown'}</td>
+                   <td>{userNames[w.customerId]}</td>
+                   <td>{technicianNames[w.technicianId]}</td>
+                   <td>{w.status}</td>
+                   <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
+                   <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
+                   <td>
+                     <Button size="small" onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
+                       Edit
+                     </Button>
+                     <Button size="small" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
+                       View
+                     </Button>
+                   </td>
+                 </tr>
+               ))}
+             </tbody>
+           </table>
+         )}
        </div>
        <div className="d-flex justify-content-end mt-3">
          <nav>

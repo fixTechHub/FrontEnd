@@ -4,7 +4,7 @@ import { fetchCouponUsages, setFilters } from '../../features/couponusages/coupo
 import { userAPI } from '../../features/users/userAPI';
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
-import { Modal, Button, Select, Descriptions } from 'antd';
+import { Modal, Button, Select, Descriptions, Spin } from 'antd';
 
 
 const CouponUsageManagement = () => {
@@ -22,6 +22,7 @@ const CouponUsageManagement = () => {
  const [sortField, setSortField] = useState('');
 const [sortOrder, setSortOrder] = useState('desc');
 const [hasSorted, setHasSorted] = useState(false);
+const [isDataReady, setIsDataReady] = useState(false);
 
 
  // Fetch usages + bookings
@@ -95,6 +96,7 @@ const [hasSorted, setHasSorted] = useState(false);
 
      setUserMap(userMapTemp);
      setCouponMap(couponMapTemp);
+     setIsDataReady(true);
    };
 
 
@@ -306,19 +308,25 @@ const handleSortByUsedAt = () => {
              </tr>
            </thead>
            <tbody>
-             {currentPageData.map((usage) => (
-               <tr key={usage.id}>
-                 <td>{userMap[usage.userId] || usage.userId}</td>
-                 <td>{couponMap[usage.couponId] || usage.couponId}</td>
-                 <td>{bookingMap[usage.bookingId] || 'Unknown'}</td>
-                 <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
-                 <td>
-                   <Button size="small" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>
-                     View Detail
-                   </Button>
-                 </td>
+             {!isDataReady ? (
+               <tr>
+                 <td><Spin /></td>
                </tr>
-             ))}
+             ) : (
+               currentPageData.map((usage) => (
+                 <tr key={usage.id}>
+                   <td>{userMap[usage.userId] || usage.userId}</td>
+                   <td>{couponMap[usage.couponId] || usage.couponId}</td>
+                   <td>{bookingMap[usage.bookingId] || 'Unknown'}</td>
+                   <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
+                   <td>
+                     <Button size="small" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>
+                       View Detail
+                     </Button>
+                   </td>
+                 </tr>
+               ))
+             )}
            </tbody>
          </table>
        </div>

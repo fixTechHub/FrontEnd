@@ -27,6 +27,8 @@ import { getTechnicianCountByMonth } from "../../features/technicians/technician
 // Add Bootstrap CSS import
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
+import { Descriptions } from 'antd';
+import { serviceAPI } from '../../features/service/serviceAPI';
 
 // Register ChartJS components
 ChartJS.register(
@@ -167,6 +169,8 @@ const AdminDashboard = () => {
   const [revenueThisYear, setRevenueThisYear] = useState(Array(12).fill(0));
   const [revenueLastYear, setRevenueLastYear] = useState(Array(12).fill(0));
   const [revenueChartLoading, setRevenueChartLoading] = useState(false);
+  const [customerName, setCustomerName] = useState('');
+  const [serviceName, setServiceName] = useState('');
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -257,10 +261,46 @@ const AdminDashboard = () => {
 
     setRecentBookingsLoading(true);
     bookingAPI.getAll()
-      .then((data) => {
+      .then(async (data) => {
         // Sắp xếp theo CreatedAt giảm dần, lấy 5 booking mới nhất
-        const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setRecentBookings(sorted.slice(0, 5));
+        const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+
+        // Lấy tất cả customerId và serviceId duy nhất
+        const customerIds = [...new Set(sorted.map(b => b.customerId).filter(Boolean))];
+        const serviceIds = [...new Set(sorted.map(b => b.serviceId).filter(Boolean))];
+
+        // Tạo map cache
+        const userMap = {};
+        const serviceMap = {};
+
+        // Lấy thông tin user (song song)
+        await Promise.all(customerIds.map(async id => {
+          try {
+            const user = await userAPI.getById(id);
+            userMap[id] = user.fullName || user.email || id;
+          } catch {
+            userMap[id] = id;
+          }
+        }));
+
+        // Lấy thông tin service (song song)
+        await Promise.all(serviceIds.map(async id => {
+          try {
+            const service = await serviceAPI.getById(id);
+            serviceMap[id] = service.serviceName || id;
+          } catch {
+            serviceMap[id] = id;
+          }
+        }));
+
+        // Gán tên vào booking
+        const bookingsWithNames = sorted.map(booking => ({
+          ...booking,
+          customerName: userMap[booking.customerId] || booking.customerId || 'N/A',
+          serviceName: serviceMap[booking.serviceId] || booking.serviceId || 'N/A'
+        }));
+
+        setRecentBookings(bookingsWithNames);
       })
       .catch(() => setRecentBookings([]))
       .finally(() => setRecentBookingsLoading(false));
@@ -302,6 +342,10 @@ const AdminDashboard = () => {
       setRevenueLastYear(dataLastYear);
     }).finally(() => setRevenueChartLoading(false));
   }, [dispatch, currentYear, lastYear]);
+
+  useEffect(() => {
+    // Xóa useEffect fetch tên user/service khi mở modal
+  }, [selectedBooking, showDetailModal]);
 
   // Tính tổng booking của tháng hiện tại
   const nowForBooking = new Date();
@@ -534,15 +578,19 @@ const AdminDashboard = () => {
             onCancel={() => setShowDetailModal(false)}
             footer={null}
             title="Booking Detail"
+            width={600}
           >
-            <div><b>ID:</b> {selectedBooking.id}</div>
-            <div><b>Booking Code:</b> {selectedBooking.bookingCode}</div>
-            <div><b>Description:</b> {selectedBooking.description}</div>
-            <div><b>Status:</b> {selectedBooking.status}</div>
-            <div><b>Created At:</b> {selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : ''}</div>
-            <div><b>Schedule:</b> {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''} - {selectedBooking.schedule?.endTime ? new Date(selectedBooking.schedule.endTime).toLocaleString() : ''}</div>
-            <div><b>Address:</b> {selectedBooking.location?.address}</div>
-            <div><b>Payment Status:</b> {selectedBooking.paymentStatus}</div>
+            <Descriptions bordered column={1} size="middle">
+              <Descriptions.Item label="Booking Code">{selectedBooking.bookingCode || selectedBooking.id}</Descriptions.Item>
+              <Descriptions.Item label="Customer">{selectedBooking.customerName || selectedBooking.customerId || 'N/A'}</Descriptions.Item>
+              <Descriptions.Item label="Service">{selectedBooking.serviceName || selectedBooking.serviceId || 'N/A'}</Descriptions.Item>
+              <Descriptions.Item label="Status">{selectedBooking.status}</Descriptions.Item>
+              <Descriptions.Item label="Created At">{selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : ''}</Descriptions.Item>
+              <Descriptions.Item label="Schedule">
+                {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
+                {selectedBooking.schedule?.endTime ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}` : ''}
+              </Descriptions.Item>
+            </Descriptions>
           </Modal>
         )}
 
@@ -686,7 +734,7 @@ display: true,
         </div> */}
 
         {/* <!-- /Recent Invoices -->*/}
-        <div className="col-md-12">
+        {/* <div className="col-md-12">
 						<div className="card">
 							<div className="card-body">
 								<div className="d-flex align-items-center justify-content-between flex-wrap gap-1 mb-3">
@@ -822,7 +870,7 @@ display: true,
 								</div>
 							</div>
 						</div>
-				</div>			
+				</div>			 */}
         
 			</div>
     </div>
