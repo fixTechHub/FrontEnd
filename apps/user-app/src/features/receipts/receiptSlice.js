@@ -3,9 +3,19 @@ import { getUserReceipts } from './receiptAPI';
 
 export const fetchUserReceipts = createAsyncThunk(
   'receipt/fetchUserReceipts',
-  async ({ limit, skip }, { rejectWithValue }) => {
+  async (
+    { limit, skip, searchTerm, paymentMethod, dateFilter, customStartDate, customEndDate }
+    , { rejectWithValue }) => {
     try {
-      const response = await getUserReceipts(limit, skip );
+      const response = await getUserReceipts(
+        limit,
+        skip,
+        searchTerm,
+        paymentMethod,
+        dateFilter,
+        customStartDate,
+        customEndDate
+       );
       // console.log(response);
       
       return response.data;

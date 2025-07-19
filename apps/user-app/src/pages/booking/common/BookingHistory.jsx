@@ -41,8 +41,7 @@ const modalStyles = {
     modalHeader: {
         background: 'rgb(0, 0, 0)',
         padding: '16px 24px',
-        borderTopLeftRadius: '12px',
-        borderTopRightRadius: '12px',
+      
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -173,8 +172,7 @@ const BookingHistory = () => {
 
     const limit = 5;
     const handleFilesSelect = (files) => {
-        const imageUrls = files.map(file => URL.createObjectURL(file));
-        setWarrantyImages(imageUrls);
+        setWarrantyImages(files);
     };
     useEffect(() => {
         dispatch(fetchUserBookingHistory({ limit, skip: page * limit }));
@@ -212,6 +210,8 @@ const BookingHistory = () => {
         setWarrantyReason('');
         setWarrantyReasonError(null);
         setSelectedWarrantyBookingId(null);
+        setWarrantyImages([])
+
         dispatch(resetWarrantyState());
 
         const modalElement = document.getElementById(`warranty_modal_${selectedWarrantyBookingId}`);
@@ -232,13 +232,17 @@ const BookingHistory = () => {
             toast.error('Booking ID is required');
             return;
         }
+
         try {
-            const formData = {
-                bookingId: selectedWarrantyBookingId,
-                reportedIssue: warrantyReason || undefined,
-                images: warrantyImages
-            };
-            const result = await dispatch(requestWarrantyThunk(formData)).unwrap();
+            const formData = new FormData();
+            formData.append('bookingId', selectedWarrantyBookingId);
+            formData.append('reportedIssue', warrantyReason);
+            for (const file of warrantyImages) {
+                formData.append('images', file); // Use for...of like BookingPage
+               
+            }
+          
+           await dispatch(requestWarrantyThunk(formData)).unwrap();
             toast.success(
                 `Yêu cầu bảo hành thành công, Vui lòng đợi trong vòng 24h để thợ phản hồi`
             );
@@ -246,7 +250,8 @@ const BookingHistory = () => {
             // navigate(`/warranty?bookingWarrantyId=${result._id}`);
             dispatch(resetWarrantyState());
         } catch (err) {
-            setWarrantyReasonError(err || 'Đã xảy ra lỗi khi yêu cầu bảo hành');
+            // setWarrantyReasonError(err || 'Đã xảy ra lỗi khi yêu cầu bảo hành');
+            toast.error(err)
         }
     };
 
@@ -503,7 +508,6 @@ const BookingHistory = () => {
                                             </button>
                                         </div>
                                         <div style={modalStyles.modalBody} className="modal-body">
-                                            {warrantyError && <p style={modalStyles.errorText}>Lỗi: {warrantyError}</p>}
                                             <form onSubmit={handleWarrantySubmit}>
                                                 <div style={modalStyles.modalFormGroup}>
                                                     <ImageUploader onFilesSelect={handleFilesSelect} />

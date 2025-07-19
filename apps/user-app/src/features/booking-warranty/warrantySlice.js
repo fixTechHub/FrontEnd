@@ -1,5 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { requestWarranty, getWarrantyInformation, acceptWarranty, rejectWarranty, confirmWarranty } from './warrantyAPI'; // Assuming the requestWarranty function is in a service file
+import {
+    requestWarranty, getWarrantyInformation, acceptWarranty, rejectWarranty, confirmWarranty, proposeWarrantySchedule,
+    confirmWarrantySchedule
+} from './warrantyAPI'; // Assuming the requestWarranty function is in a service file
 
 // Async thunk for requesting a warranty
 export const requestWarrantyThunk = createAsyncThunk(
@@ -64,13 +67,40 @@ export const confirmWarrantyThunk = createAsyncThunk(
         }
     }
 );
+export const proposeWarrantyScheduleThunk = createAsyncThunk(
+    'warranty/proposeWarrantySchedule',
+    async ({ bookingWarrantyId, proposedSchedule }, { rejectWithValue }) => {
+        try {
+            const response = await proposeWarrantySchedule(bookingWarrantyId, proposedSchedule);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || error.message);
+        }
+    }
+);
 
+// Xác nhận lịch
+export const confirmWarrantyScheduleThunk = createAsyncThunk(
+    'warranty/confirmWarrantySchedule',
+    async ({ bookingWarrantyId, data }, { rejectWithValue }) => {
+        try {
+            const response = await confirmWarrantySchedule(bookingWarrantyId, data);
+            return response.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || error.message);
+        }
+    }
+);
 const warrantySlice = createSlice({
     name: 'warranty',
     initialState: {
         warranty: null,
         loading: false,
         error: null,
+        loadingSchedule: {
+            propose: false,
+            confirm: false,
+        },
     },
     reducers: {
         resetWarrantyState: (state) => {
@@ -148,7 +178,35 @@ const warrantySlice = createSlice({
             .addCase(confirmWarrantyThunk.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload || 'Không thể xác nhận giải quyết bảo hành';
-            });
+            })
+            .addCase(proposeWarrantyScheduleThunk.pending, (state) => {
+                state.loadingSchedule.propose = true;
+                state.error = null;
+            })
+            .addCase(proposeWarrantyScheduleThunk.fulfilled, (state, action) => {
+                state.loadingSchedule.propose = false;
+                state.warranty = action.payload; // Update warranty with new schedule
+                state.error = null;
+            })
+            .addCase(proposeWarrantyScheduleThunk.rejected, (state, action) => {
+                state.loadingSchedule.propose = false;
+                state.error = action.payload || "Không thể đề xuất lịch bảo hành";
+            })
+
+            // Confirm schedule
+            .addCase(confirmWarrantyScheduleThunk.pending, (state) => {
+                state.loadingSchedule.confirm = true;
+                state.error = null;
+            })
+            .addCase(confirmWarrantyScheduleThunk.fulfilled, (state, action) => {
+                state.loadingSchedule.confirm = false;
+                state.warranty = action.payload; // Update warranty with confirmed schedule
+                state.error = null;
+            })
+            .addCase(confirmWarrantyScheduleThunk.rejected, (state, action) => {
+                state.loadingSchedule.confirm = false;
+                state.error = action.payload || "Không thể xác nhận lịch bảo hành";
+            })
     },
 });
 

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { Modal, Button } from "react-bootstrap";
 import { getWarrantyInformationThunk, acceptWarrantyThunk, rejectWarrantyThunk } from "../../features/booking-warranty/warrantySlice";
-import { formatDateOnly, formatDate } from "../../utils/formatDate";
+import { formatDateOnly } from "../../utils/formatDate";
 import { BOOKING_WARRANTY_STATUS_CONFIG } from "../../constants/bookingConstants";
 import { toast } from 'react-toastify';
 
@@ -11,6 +12,10 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const { user } = useSelector((state) => state.auth);
     const [rejectedReason, setRejectedReason] = useState('');
     const [expandedNotes2, setExpandedNotes2] = useState({});
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [showWarrantyModal, setShowWarrantyModal] = useState(false);
+    const [showImageModal, setShowImageModal] = useState(false);
+    const [showRejectModal, setShowRejectModal] = useState(false);
     useEffect(() => {
         if (bookingWarrantyId) {
             dispatch(getWarrantyInformationThunk(bookingWarrantyId));
@@ -35,23 +40,39 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
         }
     };
 
-    const handleRejectWarranty = async () => {
+    const handleRejectWarranty = () => {
         if (!rejectedReason.trim()) {
             toast.error('Vui lòng nhập lý do từ chối');
             return;
         }
-        try {
-            await dispatch(rejectWarrantyThunk({ bookingWarrantyId, formData: { status: 'DENIED', rejectedReason } })).unwrap();
-            toast.success('Từ chối yêu cầu bảo hành thành công');
-            setRejectedReason('');
-            if (onWarrantyUpdated) onWarrantyUpdated();
-        } catch (error) {
-            toast.error(`Lỗi: ${error}`);
-        }
+        dispatch(rejectWarrantyThunk({ bookingWarrantyId, formData: { status: 'DENIED', rejectedReason } }))
+            .unwrap()
+            .then(() => {
+                toast.success('Từ chối yêu cầu bảo hành thành công');
+                setRejectedReason('');
+                if (onWarrantyUpdated) onWarrantyUpdated();
+                setShowRejectModal(false); // Close the rejection modal after success
+            })
+            .catch((error) => {
+                toast.error(`Lỗi: ${error}`);
+            });
     };
 
-    const isExpired = warranty?.expireAt && new Date(warranty.expireAt) < new Date() && warranty?.status==='PENDING';
+    const isExpired = warranty?.expireAt && new Date(warranty.expireAt) < new Date() && warranty?.status === 'PENDING';
     const warrantyStatusText = isExpired ? 'HẾT HẠN' : statusConfig.text;
+
+    const handleImageClick = (index) => {
+        setSelectedImageIndex(index);
+        setShowImageModal(true);
+    };
+
+    const handlePrevImage = () => {
+        setSelectedImageIndex((prev) => (prev === 0 ? (warranty?.images?.length || 0) - 1 : prev - 1));
+    };
+
+    const handleNextImage = () => {
+        setSelectedImageIndex((prev) => (prev === (warranty?.images?.length || 0) - 1 ? 0 : prev + 1));
+    };
 
     const styles = {
         sidebar: {
@@ -118,19 +139,10 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             color: '#007bff',
             textDecoration: 'none',
             fontWeight: 500,
+            cursor: 'pointer',
         },
         modalLinkHover: {
             textDecoration: 'underline',
-        },
-        modal: {
-            display: 'none',
-        },
-        modalDialog: {
-            maxWidth: '700px',
-            margin: '1.75rem auto',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
         },
         modalContent: {
             borderRadius: '12px',
@@ -139,11 +151,10 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             background: '#fff',
         },
         modalHeader: {
-            background: 'linear-gradient(90deg, #007bff, #0056b3)',
+            background: 'linear-gradient(135deg, #090909 0%, #181818 100%)',
             color: '#fff',
             padding: '16px 24px',
-            borderTopLeftRadius: '12px',
-            borderTopRightRadius: '12px',
+
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
@@ -173,15 +184,13 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             padding: 0,
             margin: '0 0 20px 0',
         },
+       
         warrantyDetailsItem: {
             display: 'flex',
             justifyContent: 'space-between',
             padding: '14px 0',
             borderBottom: '1px solid #e9ecef',
             fontSize: '1.05rem',
-        },
-        warrantyDetailsItemLast: {
-            borderBottom: 'none',
         },
         detailLabel: {
             fontWeight: 600,
@@ -199,8 +208,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             flexWrap: 'wrap',
         },
         warrantyImage: {
-            maxWidth: '100px',
-            maxHeight: '100px',
+            maxWidth: '100%',
             objectFit: 'cover',
             borderRadius: '5px',
             border: '1px solid #dee2e6',
@@ -246,45 +254,41 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             gap: '15px',
             marginTop: '20px',
         },
-        btn: {
-            padding: '12px 25px',
-            fontSize: '1.1rem',
-            fontWeight: 600,
+      
+       
+      
+   
+        imageModalImage: {
+            maxWidth: '100%',
+            maxHeight: '60vh',
+            objectFit: 'contain',
             borderRadius: '8px',
-            transition: 'background-color 0.2s ease, transform 0.1s ease',
+        },
+        imageModalNavBtn: {
+            position: 'absolute',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            color: '#fff',
             border: 'none',
+            padding: '10px',
+            fontSize: '1.5rem',
+            cursor: 'pointer',
+            borderRadius: '50%',
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
         },
-        btnPrimary: {
-            backgroundColor: '#007bff',
-            color: '#fff',
+        imageModalNavBtnHover: {
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
         },
-        btnPrimaryHover: {
-            backgroundColor: '#0056b3',
-            transform: 'translateY(-1px)',
+        imageModalNavBtnPrev: {
+            left: '10px',
         },
-        btnPrimaryDisabled: {
-            backgroundColor: '#6c757d',
-            cursor: 'not-allowed',
-        },
-        btnDanger: {
-            backgroundColor: '#dc3545',
-            color: '#fff',
-        },
-        btnDangerHover: {
-            backgroundColor: '#b02a37',
-            transform: 'translateY(-1px)',
-        },
-        btnDangerDisabled: {
-            backgroundColor: '#6c757d',
-            cursor: 'not-allowed',
-        },
-        btnSecondary: {
-            backgroundColor: '#6c757d',
-            color: '#fff',
-        },
-        btnSecondaryHover: {
-            backgroundColor: '#5a6268',
-            transform: 'translateY(-1px)',
+        imageModalNavBtnNext: {
+            right: '10px',
         },
     };
 
@@ -297,7 +301,6 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                     </div>
                     <div style={styles.sidebarBody} className="booking-sidebar-body">
                         {loading && <p style={styles.loadingText} className="custom-loading-text">Đang tải...</p>}
-                        {error && <p style={styles.errorText} className="text-danger">Lỗi: {error}</p>}
                         {!loading && !error && warranty && (
                             <div style={styles.vehicleRates} className="booking-vehicle-rates">
                                 <ul>
@@ -306,42 +309,21 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                             <span style={styles.vehicleRatesSpan}>Mã đơn hàng:</span>
                                             {' '}
                                             <a
-                                                href="#warranty_details_modal"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#warranty_details_modal"
                                                 style={styles.modalLink}
                                                 onMouseOver={(e) => Object.assign(e.target.style, styles.modalLinkHover)}
                                                 onMouseOut={(e) => Object.assign(e.target.style, {})}
-                                                className=" custom-modal-link"  
+                                                onClick={() => setShowWarrantyModal(true)}
+                                                className="custom-modal-link"
                                             >
-                                            {warranty.bookingId?.bookingCode || 'Không có dữ liệu'}
-
+                                                {warranty.bookingId?.bookingCode || 'Không có dữ liệu'}
                                             </a>
-                                            {' '}
-                                            {/* <a
-                                                href="#warranty_details_modal"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#warranty_details_modal"
-                                                style={styles.modalLink}
-                                                onMouseOver={(e) => Object.assign(e.target.style, styles.modalLinkHover)}
-                                                onMouseOut={(e) => Object.assign(e.target.style, {})}
-                                                className="bx bx-info-circle custom-modal-link"  
-                                            >
-                                               
-                                            </a> */}
-
-
                                         </h6>
                                     </li>
-
-
-
                                     <li style={styles.vehicleRatesLi}>
                                         <h6 style={styles.vehicleRatesH6}>
                                             <span style={styles.vehicleRatesSpan}>Ngày yêu cầu:</span> {formatDateOnly(warranty.requestDate) || 'Không có dữ liệu'}
                                         </h6>
                                     </li>
-
                                     <li style={styles.vehicleRatesLi}>
                                         <h6 style={styles.vehicleRatesH6}>
                                             <span style={styles.vehicleRatesSpan}>Trạng thái:</span>
@@ -356,177 +338,250 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                     </div>
                 </div>
 
-                {/* Modal for Warranty and Booking Details */}
-                <div
-                    style={styles.modal}
-                    className="modal new-modal fade custom-custom-warranty-modal"
-                    id="warranty_details_modal"
-                    data-bs-keyboard="false"
-                    data-bs-backdrop="static"
+                {/* Warranty Details Modal */}
+                <Modal
+                    show={showWarrantyModal}
+                    onHide={() => {
+                        setShowWarrantyModal(false);
+                        setRejectedReason('');
+                    }}
+                    centered
+                    size="lg"
+                    backdrop="static"
+                    keyboard={false}
                 >
-                    <div style={styles.modalDialog} className="modal-dialog modal-dialog-centered modal-lg">
-                        <div style={styles.modalContent} className="modal-content custom-custom-modal-content">
-                            <div style={styles.modalHeader} className="modal-header custom-custom-modal-header">
-                                <h4 style={styles.modalTitle} className="modal-title">Chi tiết bảo hành</h4>
-                                <button
-                                    type="button"
-                                    style={styles.closeBtn}
-                                    className="custom-custom-close-btn"
-                                    data-bs-dismiss="modal"
-                                    onClick={() => setRejectedReason('')}
-                                    onMouseOver={(e) => Object.assign(e.currentTarget.style, styles.closeBtnHover)}
-                                    onMouseOut={(e) => Object.assign(e.currentTarget.style, styles.closeBtn)}
-                                >
-                                    <span>×</span>
-                                </button>
-                            </div>
-                            <div style={styles.modalBody} className="modal-body custom-custom-modal-body">
-                                {warranty && (
-                                    <div className="custom-custom-modal-form-group">
-                                        <ul style={styles.warrantyDetailsList} className="custom-warranty-details-list">
-                                            <li style={styles.warrantyDetailsItem}>
-                                                <span style={styles.detailLabel} className="custom-detail-label">Mã đơn hàng:</span>
-                                                <span style={styles.detailValue} className="custom-detail-value">{warranty.bookingId?.bookingCode || 'Không có dữ liệu'}</span>
-                                            </li>
-                                            <li style={styles.warrantyDetailsItem}>
-                                                <span style={styles.detailLabel} className="custom-detail-label">Dịch vụ:</span>
-                                                <span style={styles.detailValue} className="custom-detail-value">{warranty.bookingId?.serviceId?.serviceName || 'Không có dữ liệu'}</span>
-                                            </li>
-                                            {warranty.images && warranty.images.length > 0 && (
-                                                <li style={styles.warrantyDetailsItem}>
-                                                    <span style={styles.detailLabel} className="custom-detail-label">Hình ảnh:</span>
-                                                    <div style={styles.imageGallery} className="custom-image-gallery">
-                                                        {warranty.images.map((image, index) => (
-                                                            <img
-                                                                key={index}
-                                                                src={image}
-                                                                alt={`Evidence ${index + 1}`}
-                                                                style={styles.warrantyImage}
-                                                                onMouseOver={(e) => Object.assign(e.target.style, styles.warrantyImageHover)}
-                                                                onMouseOut={(e) => Object.assign(e.target.style, styles.warrantyImage)}
-                                                                className="custom-warranty-image"
-                                                            />
-                                                        ))}
-                                                    </div>
-                                                </li>
-                                            )}
-                                            <li style={styles.warrantyDetailsItem}>
-                                                <span style={styles.detailLabel} className="custom-detail-label">{isCustomer ? 'Kỹ thuật viên' : 'Khách hàng'}:</span>
-                                                <span style={styles.detailValue} className="custom-detail-value">{displayName}</span>
-                                            </li>
-
-
-                                            <li style={styles.warrantyDetailsItem}>
-                                                <span style={styles.detailLabel} className="custom-detail-label">Ngày đặt dịch vụ:</span>
-                                                <span style={styles.detailValue} className="custom-detail-value">{formatDateOnly(warranty.bookingId?.schedule?.startTime) || 'Không có dữ liệu'}</span>
-                                            </li>
-                                            <li style={styles.warrantyDetailsItem}>
-                                                <span style={styles.detailLabel} className="custom-detail-label">Ngày yêu cầu bảo hành:</span>
-                                                <span style={styles.detailValue} className="custom-detail-value">{formatDateOnly(warranty.requestDate) || 'Không có dữ liệu'}</span>
-                                            </li>
-                                            <li style={styles.warrantyDetailsItem}>
-                                                <span style={styles.detailLabel} className="custom-detail-label">Trạng thái:</span>
-                                                <span style={styles.statusBadge} className={`status-badge ${statusConfig.className}`}>
-                                                    {warrantyStatusText}
-                                                </span>
-                                            </li>
-                                            <li style={styles.warrantyDetailsItem}>
-                                                <span style={styles.detailLabel} className="custom-detail-label">Mô tả của khách:
-                                                    <i
-                                                        className="bx bx-info-circle"
-                                                        style={{ marginLeft: '5px', cursor: 'pointer', color: '#ff6200' }}
-                                                        onClick={() => {
-                                                            setExpandedNotes2(
-                                                                prev => ({
-                                                                    ...prev,
-                                                                    [warranty.reportedIssue]: !prev[warranty.reportedIssue]
-                                                                })
-                                                            );
-                                                        }}
-
-                                                    ></i></span>
-                                                {/* <span style={styles.detailValue} className="custom-detail-value">{warranty.reportedIssue || 'Không có dữ liệu'}</span> */}
-
-                                            </li>
-                                            <li>
-                                                {expandedNotes2 && expandedNotes2[warranty.reportedIssue] && (
-
-                                                    <textarea
-                                                        style={styles.warrantyTextarea}
-                                                        value={warranty.reportedIssue || 'Không có dữ liệu'}
-                                                        readOnly
-                                                        rows="4"
+                    <Modal.Header style={styles.modalHeader}>
+                        <Modal.Title style={styles.modalTitle}>Chi tiết bảo hành</Modal.Title>
+                        <button
+                            style={styles.closeBtn}
+                            onClick={() => {
+                                setShowWarrantyModal(false);
+                                setRejectedReason('');
+                            }}
+                            onMouseOver={(e) => Object.assign(e.currentTarget.style, styles.closeBtnHover)}
+                            onMouseOut={(e) => Object.assign(e.currentTarget.style, styles.closeBtn)}
+                        >
+                            <span>×</span>
+                        </button>
+                    </Modal.Header>
+                    <Modal.Body style={styles.modalBody}>
+                        {warranty && (
+                            <div className="custom-custom-modal-form-group">
+                                <ul style={styles.warrantyDetailsList} className="custom-warranty-details-list">
+                                    <li style={styles.warrantyDetailsItem}>
+                                        <span style={styles.detailLabel} className="custom-detail-label">Mã đơn hàng:</span>
+                                        <span style={styles.detailValue} className="custom-detail-value">{warranty.bookingId?.bookingCode || 'Không có dữ liệu'}</span>
+                                    </li>
+                                    <li style={styles.warrantyDetailsItem}>
+                                        <span style={styles.detailLabel} className="custom-detail-label">Dịch vụ:</span>
+                                        <span style={styles.detailValue} className="custom-detail-value">{warranty.bookingId?.serviceId?.serviceName || 'Không có dữ liệu'}</span>
+                                    </li>
+                                    {warranty.images && warranty.images.length > 0 && (
+                                        <li style={styles.warrantyDetailsItem}>
+                                            <span style={styles.detailLabel} className="custom-detail-label">Hình ảnh:</span>
+                                            <div style={styles.imageGallery} className="custom-image-gallery">
+                                                {warranty.images.map((image, index) => (
+                                                    <img
+                                                        key={index}
+                                                        src={image}
+                                                        alt={`Evidence ${index + 1}`}
+                                                        style={styles.warrantyImage}
+                                                        onMouseOver={(e) => Object.assign(e.target.style, styles.warrantyImageHover)}
+                                                        onMouseOut={(e) => Object.assign(e.target.style, styles.warrantyImage)}
+                                                        onClick={() => handleImageClick(index)}
+                                                        className="custom-warranty-image"
                                                     />
-                                                )}
-                                            </li>
-
-
-                                        </ul>
-                                        {isTechnician && warranty.status === 'PENDING' && (
-                                            <div style={styles.textareaGroup} className="custom-custom-textarea-group">
-                                                <label style={styles.textareaLabel} className="custom-textarea-label">Lý do nếu từ chối:</label>
-                                                <textarea
-                                                    style={styles.textarea}
-                                                    className="custom-custom-textarea"
-                                                    placeholder="Nhập lý do từ chối (bắt buộc nếu từ chối)"
-                                                    value={rejectedReason}
-                                                    onChange={(e) => setRejectedReason(e.target.value)}
-                                                    onFocus={(e) => Object.assign(e.target.style, styles.textareaFocus)}
-                                                    onBlur={(e) => Object.assign(e.target.style, styles.textarea)}
-                                                    rows="4"
-                                                />
+                                                ))}
                                             </div>
-                                        )}
-                                        {warranty.status === 'DENIED' && warranty.rejectedReason && (
-                                            <li style={styles.warrantyDetailsItem}>
-                                                <span style={styles.detailLabel} className="custom-detail-label">Lý do từ chối:</span>
-                                                <span style={styles.detailValue} className="custom-detail-value">{warranty.rejectedReason}</span>
-                                            </li>
-                                        )}
-                                    </div>
-                                )}
-                                <div style={styles.btnGroup} className="custom-custom-modal-btn-group">
-                                    {isTechnician && warranty?.status === 'PENDING' && (
-                                        <>
-                                            <button
-                                                type="button"
-                                                style={isExpired ? { ...styles.btn, ...styles.btnPrimary, ...styles.btnPrimaryDisabled } : { ...styles.btn, ...styles.btnPrimary }}
-                                                className="btn custom-custom-btn custom-custom-btn-primary"
-                                                onClick={handleAcceptWarranty}
-                                                disabled={loading || isExpired}
-                                                title={isExpired ? 'Không thể chấp nhận vì đã hết hạn' : ''}
-                                            >
-                                                {loading ? 'Xử lý...' : 'Chấp nhận bảo hành'}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                style={styles.btnDanger}
-                                                className="btn custom-custom-btn custom-custom-btn-danger"
-                                                onClick={handleRejectWarranty}
-                                                disabled={loading}
-                                                onMouseOver={(e) => Object.assign(e.target.style, styles.btnDangerHover)}
-                                                onMouseOut={(e) => Object.assign(e.target.style, styles.btnDanger)}
-                                            >
-                                                {loading ? 'Xử lý...' : 'Từ chối bảo hành'}
-                                            </button>
-                                        </>
+                                        </li>
                                     )}
-                                    <button
-                                        type="button"
-                                        style={styles.btnSecondary}
-                                        className="btn custom-custom-btn custom-custom-btn-secondary"
-                                        data-bs-dismiss="modal"
-                                        onClick={() => setRejectedReason('')}
-                                        onMouseOver={(e) => Object.assign(e.target.style, styles.btnSecondaryHover)}
-                                        onMouseOut={(e) => Object.assign(e.target.style, styles.btnSecondary)}
-                                    >
-                                        Đóng
-                                    </button>
-                                </div>
+                                    <li style={styles.warrantyDetailsItem}>
+                                        <span style={styles.detailLabel} className="custom-detail-label">{isCustomer ? 'Kỹ thuật viên' : 'Khách hàng'}:</span>
+                                        <span style={styles.detailValue} className="custom-detail-value">{displayName}</span>
+                                    </li>
+                                    <li style={styles.warrantyDetailsItem}>
+                                        <span style={styles.detailLabel} className="custom-detail-label">Ngày đặt dịch vụ:</span>
+                                        <span style={styles.detailValue} className="custom-detail-value">{formatDateOnly(warranty.bookingId?.schedule?.startTime) || 'Không có dữ liệu'}</span>
+                                    </li>
+                                    <li style={styles.warrantyDetailsItem}>
+                                        <span style={styles.detailLabel} className="custom-detail-label">Ngày yêu cầu bảo hành:</span>
+                                        <span style={styles.detailValue} className="custom-detail-value">{formatDateOnly(warranty.requestDate) || 'Không có dữ liệu'}</span>
+                                    </li>
+                                    <li style={styles.warrantyDetailsItem}>
+                                        <span style={styles.detailLabel} className="custom-detail-label">Trạng thái:</span>
+                                        <span style={{ ...styles.statusBadge, marginRight: '45%' }} className={`status-badge ${statusConfig.className}`}>
+                                            {warrantyStatusText}
+                                        </span>
+                                    </li>
+                                    <li style={styles.warrantyDetailsItem}>
+                                        <span style={styles.detailLabel} className="custom-detail-label">Mô tả của khách:
+                                            <i
+                                                className="bx bx-info-circle"
+                                                style={{ marginLeft: '5px', cursor: 'pointer', color: '#ff6200' }}
+                                                onClick={() => {
+                                                    setExpandedNotes2(
+                                                        prev => ({
+                                                            ...prev,
+                                                            [warranty.reportedIssue]: !prev[warranty.reportedIssue]
+                                                        })
+                                                    );
+                                                }}
+                                            ></i></span>
+                                    </li>
+                                    <li>
+                                        {expandedNotes2 && expandedNotes2[warranty.reportedIssue] && (
+                                            <textarea
+                                                style={styles.warrantyTextarea}
+                                                value={warranty.reportedIssue || 'Không có dữ liệu'}
+                                                readOnly
+                                                rows="4"
+                                            />
+                                        )}
+                                    </li>
+                                </ul>
+
+                                {warranty.status === 'DENIED' && warranty.rejectedReason && (
+                                    <li style={styles.warrantyDetailsItem}>
+                                        <span style={styles.detailLabel} className="custom-detail-label">Lý do từ chối:</span>
+                                        <span style={styles.detailValue} className="custom-detail-value">{warranty.rejectedReason}</span>
+                                    </li>
+                                )}
                             </div>
+                        )}
+                    </Modal.Body>
+                    <Modal.Footer style={styles.btnGroup}>
+                        {isTechnician && warranty?.status === 'PENDING' && (
+                            <>
+                                <Button
+                                    onClick={handleAcceptWarranty}
+                                    disabled={loading || isExpired}
+                                    title={isExpired ? 'Không thể chấp nhận vì đã hết hạn' : ''}
+                                >
+                                    {loading ? 'Xử lý...' : 'Chấp nhận bảo hành'}
+                                </Button>
+                                <Button
+                                    onClick={() => setShowRejectModal(true)}
+                                    disabled={loading}
+                                >
+                                    {loading ? 'Xử lý...' : 'Từ chối bảo hành'}
+                                </Button>
+                            </>
+                        )}
+                     
+                    </Modal.Footer>
+                </Modal>
+
+                {/* Image Viewer Modal */}
+                <Modal
+                    show={showImageModal}
+                    onHide={() => setShowImageModal(false)}
+                    centered
+                    size="lg"
+                    backdrop="static"
+                    keyboard={true}
+                >
+                    <Modal.Header style={styles.modalHeader}>
+                        <Modal.Title ></Modal.Title>
+                        <button
+                            style={styles.closeBtn}
+                            onClick={() => setShowImageModal(false)}
+                          
+                        >
+                            <span>×</span>
+                        </button>
+                    </Modal.Header>
+                    <Modal.Body style={{ ...styles.modalBody, position: 'relative' }}>
+                        {warranty?.images && warranty.images.length > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+                                <img
+                                    src={warranty.images[selectedImageIndex]}
+                                    alt={`Evidence ${selectedImageIndex + 1}`}
+                                    style={styles.imageModalImage}
+                                />
+                                {warranty.images.length >= 1 && (
+                                    <>
+                                        <button
+                                            style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnPrev }}
+                                            onClick={handlePrevImage}
+                                            onMouseOver={(e) => Object.assign(e.target.style, styles.imageModalNavBtnHover)}
+                                            onMouseOut={(e) => Object.assign(e.target.style, styles.imageModalNavBtn)}
+                                        >
+                                            &lt;
+                                        </button>
+                                        <button
+                                            style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnNext }}
+                                            onClick={handleNextImage}
+                                            onMouseOver={(e) => Object.assign(e.target.style, styles.imageModalNavBtnHover)}
+                                            onMouseOut={(e) => Object.assign(e.target.style, styles.imageModalNavBtn)}
+                                        >
+                                            &gt;
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </Modal.Body>
+                </Modal>
+                <Modal
+                    show={showRejectModal}
+                    onHide={() => {
+                        setShowRejectModal(false);
+                        setRejectedReason('');
+                    }}
+                    centered
+                    size="md"
+                    backdrop="static"
+                    keyboard={false}
+                >
+                    <Modal.Header style={styles.modalHeader}>
+                        <Modal.Title style={styles.modalTitle}>Từ chối bảo hành</Modal.Title>
+                        <button
+                            style={styles.closeBtn}
+                            onClick={() => {
+                                setShowRejectModal(false);
+                                setRejectedReason('');
+                            }}
+                      
+                        >
+                            <span>×</span>
+                        </button>
+                    </Modal.Header>
+                    <Modal.Body style={styles.modalBody}>
+                        <div style={styles.textareaGroup} className="custom-custom-textarea-group">
+                            <label style={styles.textareaLabel} className="custom-textarea-label">Lý do từ chối:</label>
+                            <textarea
+                                style={styles.textarea}
+                                className="custom-custom-textarea"
+                                placeholder="Nhập lý do từ chối (bắt buộc nếu từ chối)"
+                                value={rejectedReason}
+                                onChange={(e) => setRejectedReason(e.target.value)}
+                                onFocus={(e) => Object.assign(e.target.style, styles.textareaFocus)}
+                                onBlur={(e) => Object.assign(e.target.style, styles.textarea)}
+                                rows="4"
+                            />
                         </div>
-                    </div>
-                </div>
+                    </Modal.Body>
+                    <Modal.Footer style={styles.btnGroup}>
+                        <Button
+                            className="custom-custom-btn custom-custom-btn-danger"
+                            onClick={handleRejectWarranty}
+                            disabled={loading}
+                      
+                        >
+                            {loading ? 'Xử lý...' : 'Xác nhận từ chối'}
+                        </Button>
+                        <Button
+                            className="custom-custom-btn custom-custom-btn-secondary"
+                            onClick={() => {
+                                setShowRejectModal(false);
+                                setRejectedReason('');
+                            }}
+                         
+                        >
+                            Hủy
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
             </div>
         </>
     );

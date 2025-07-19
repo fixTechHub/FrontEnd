@@ -5,9 +5,7 @@ const apiClient = axios.create({
   || 'http://localhost:3000/api'
   ,
   withCredentials: true, // Enable cookies
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  
 });
 
 // Add request interceptor

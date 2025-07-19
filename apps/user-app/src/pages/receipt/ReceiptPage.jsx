@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Modal, Button, Dropdown } from 'react-bootstrap';
-import { fetchUserReceipts } from '../../features/receipts/receiptSlice'; // Removed selectReceipts, selectReceiptStatus, selectReceiptError as they are destructured from the state directly
+import { Modal, Button, Dropdown, Form } from 'react-bootstrap';
+import { fetchUserReceipts } from '../../features/receipts/receiptSlice';
 import { formatCurrency, maskTransactionId } from '../../utils/formatDuration';
 import handlePrintPDF from '../../utils/pdf';
 import './ReceiptPage.css';
@@ -17,7 +17,7 @@ const styles = {
     border: '1px solid #dee2e6',
     borderRadius: '4px',
     color: '#6c757d',
-   padding: '20px 25px',
+    padding: '20px 25px',
     margin: '0 5px',
     cursor: 'pointer',
     transition: 'all 0.2s',
@@ -30,17 +30,31 @@ const styles = {
 
 const ReceiptPage = () => {
   const dispatch = useDispatch();
-  // Destructure directly from state.receipt for cleaner access
   const { receipts, status, error } = useSelector((state) => state.receipt);
 
   const [showModal, setShowModal] = React.useState(false);
   const [selectedReceipt, setSelectedReceipt] = React.useState(null);
-  const [page, setPage] = useState(0); // Current page, starts at 0
+  const [page, setPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState(''); // 'thisWeek', 'thisMonth', 'custom'
+  const [customStartDate, setCustomStartDate] = useState('');
+  const [customEndDate, setCustomEndDate] = useState('');
+
   const limit = 5;
 
   useEffect(() => {
-    dispatch(fetchUserReceipts({ limit, skip: page * limit }));
-  }, [dispatch, page, limit]);
+    const filters = {
+      limit,
+      skip: page * limit,
+      searchTerm,
+      paymentMethod: paymentMethodFilter,
+      dateFilter,
+      customStartDate,
+      customEndDate,
+    };
+    dispatch(fetchUserReceipts(filters));
+  }, [dispatch, page, limit, searchTerm, paymentMethodFilter, dateFilter, customStartDate, customEndDate]);
 
   const handleShowModal = (receipt) => {
     setSelectedReceipt(receipt);
@@ -53,6 +67,33 @@ const ReceiptPage = () => {
     if (newPage >= 0) {
       setPage(newPage);
     }
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setPage(0); // Reset to first page on new search
+  };
+
+  const handlePaymentMethodFilterChange = (method) => {
+    setPaymentMethodFilter(method);
+    setPage(0); // Reset to first page on new filter
+  };
+
+  const handleDateFilterChange = (filter) => {
+    setDateFilter(filter);
+    setCustomStartDate('');
+    setCustomEndDate('');
+    setPage(0); // Reset to first page on new filter
+  };
+
+  const handleCustomDateChange = (type, value) => {
+    if (type === 'start') {
+      setCustomStartDate(value);
+    } else {
+      setCustomEndDate(value);
+    }
+    setDateFilter('custom');
+    setPage(0); // Reset to first page
   };
 
   const getStatusBadgeClass = (status) => {
@@ -71,32 +112,56 @@ const ReceiptPage = () => {
   return (
     <div className="content">
       <div className="container">
-        {/* <div className="row">
+        <div className="row">
           <div className="col-lg-12">
             <div className="sorting-info">
               <div className="row d-flex align-items-center">
                 <div className="col-lg-12">
                   <div className="filter-group">
+                    <Form.Control
+                      type="text"
+                      placeholder="Tìm kiếm theo mã đơn, phương thức thanh toán hoặc ngày..."
+                      value={searchTerm}
+                      onChange={handleSearchChange}
+                      className="me-2"
+                    />
+
                     <Dropdown className="sort-week sort">
                       <Dropdown.Toggle variant="light">
-                        This Week <i className="fas fa-chevron-down"></i>
+                        {dateFilter === 'thisWeek' ? 'Tuần Này' : dateFilter === 'thisMonth' ? 'Tháng Này' : dateFilter === 'custom' ? 'Tùy Chỉnh' : 'Lọc Theo Ngày'} <i className="fas fa-chevron-down"></i>
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
-                        <Dropdown.Item>This Week</Dropdown.Item>
-                        <Dropdown.Item>This Month</Dropdown.Item>
-                        <Dropdown.Item>Last 30 Days</Dropdown.Item>
-                        <Dropdown.Item>Custom</Dropdown.Item>
+                        <Dropdown.Item onClick={() => handleDateFilterChange('')}>Tất cả</Dropdown.Item>
+                        <Dropdown.Item onClick={() => handleDateFilterChange('thisWeek')}>Tuần Này</Dropdown.Item>
+                        <Dropdown.Item onClick={() => handleDateFilterChange('thisMonth')}>Tháng Này</Dropdown.Item>
+                        <Dropdown.Item onClick={() => handleDateFilterChange('custom')}>Tùy Chỉnh</Dropdown.Item>
                       </Dropdown.Menu>
                     </Dropdown>
+
+                    {dateFilter === 'custom' && (
+                      <div className="d-flex ms-2">
+                        <Form.Control
+                          type="date"
+                          value={customStartDate}
+                          onChange={(e) => handleCustomDateChange('start', e.target.value)}
+                          className="me-2"
+                        />
+                        <Form.Control
+                          type="date"
+                          value={customEndDate}
+                          onChange={(e) => handleCustomDateChange('end', e.target.value)}
+                        />
+                      </div>
+                    )}
+
                     <Dropdown className="sort-relevance sort">
                       <Dropdown.Toggle variant="light">
-                        Sort By Relevance <i className="fas fa-chevron-down"></i>
+                        {paymentMethodFilter === 'BANK' ? 'Ngân hàng' : paymentMethodFilter === 'CASH' ? 'Tiền mặt' : 'Lọc Theo Thanh Toán'} <i className="fas fa-chevron-down"></i>
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
-                        <Dropdown.Item>Sort By Relevance</Dropdown.Item>
-                        <Dropdown.Item>Sort By Ascending</Dropdown.Item>
-                        <Dropdown.Item>Sort By Descending</Dropdown.Item>
-                        <Dropdown.Item>Sort By Alphabet</Dropdown.Item>
+                        <Dropdown.Item onClick={() => handlePaymentMethodFilterChange('')}>Tất cả</Dropdown.Item>
+                        <Dropdown.Item onClick={() => handlePaymentMethodFilterChange('BANK')}>Ngân hàng</Dropdown.Item>
+                        <Dropdown.Item onClick={() => handlePaymentMethodFilterChange('CASH')}>Tiền mặt</Dropdown.Item>
                       </Dropdown.Menu>
                     </Dropdown>
                   </div>
@@ -104,7 +169,7 @@ const ReceiptPage = () => {
               </div>
             </div>
           </div>
-        </div> */}
+        </div>
 
         <div className="row">
           <div className="col-lg-12 d-flex">
@@ -135,7 +200,6 @@ const ReceiptPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {/* Conditional rendering for loading, error, and no data states */}
                       {status === 'loading' ? (
                         <tr>
                           <td colSpan="6" className="text-center custom-loading-text">
@@ -193,10 +257,6 @@ const ReceiptPage = () => {
                   </table>
                 </div>
 
-
-
-
-                {/* Pagination buttons */}
                 <div style={styles.pagination}>
                   <button
                     style={{
@@ -220,7 +280,6 @@ const ReceiptPage = () => {
                   </button>
                 </div>
               </div>
-
             </div>
           </div>
         </div>

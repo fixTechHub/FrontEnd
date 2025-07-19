@@ -13,6 +13,7 @@ import { checkBookingWarrantyAccess } from "../../hooks/checkBookingAccess";
 import { getWarrantyInformationThunk, confirmWarrantyThunk } from "../../features/booking-warranty/warrantySlice";
 import { onWarrantyUpdated } from "../../services/socket";
 import { Button, Modal } from "react-bootstrap";
+import BookingWarrantySchedule from "./BookingWarrantySchedule";
 
 function BookingWarranty() {
     const styles = {
@@ -250,8 +251,13 @@ function BookingWarranty() {
                                     bookingWarrantyId={bookingWarrantyId}
                                     onWarrantyUpdated={handleWarrantyUpdated}
                                 />
+                                <BookingWarrantySchedule 
+                                     bookingWarrantyId={bookingWarrantyId}
+                                     onWarrantyUpdated={handleWarrantyUpdated}
+                                />
                             </div>
-                            <div className="col-lg">
+                            
+                            <div className="col-lg-6">
                                 {warranty?.bookingId?._id && (warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed) ? (
                                     <MessageBox
                                         bookingId={warranty?.bookingId._id}

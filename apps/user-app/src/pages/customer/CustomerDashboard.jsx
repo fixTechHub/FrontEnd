@@ -386,9 +386,6 @@ function CustomerDashboard() {
 				<div className="container">
 				
 
-					<div className="content-header">
-						<h4>Bảng điều khiển</h4>
-					</div>
 
 					{activeTab==='DASHBOARD' && (
 						<>
