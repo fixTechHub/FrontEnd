@@ -17,6 +17,7 @@ import receiptReducer from '../features/receipts/receiptSlice';
 import roleReducer from '../features/roles/roleSlice';
 import warrantyReducer from '../features/booking-warranty/warrantySlice'
 import favoritesReducer from '../features/favorites/favoriteSlice';
+import reportReducer from '../features/reports/reportSlice';
 
 export const store = configureStore({
   reducer: {
@@ -36,7 +37,8 @@ export const store = configureStore({
     receipt: receiptReducer,
     roles: roleReducer,
     warranty: warrantyReducer,
-    favorites: favoritesReducer
+    favorites: favoritesReducer,
+    report: reportReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
