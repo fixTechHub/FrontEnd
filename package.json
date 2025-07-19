@@ -18,6 +18,8 @@
         "concurrently": "^8.0.0"
     },
     "dependencies": {
+        "jspdf": "^3.0.1",
+        "pdfmake": "^0.2.20",
         "simple-peer": "^9.11.1"
     }
 }

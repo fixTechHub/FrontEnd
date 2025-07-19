@@ -18,8 +18,7 @@ export const finalizeBookingThunk = createAsyncThunk(
       const response = await transactionAPI.finalizeBooking(bookingData);
       return response.data; // This will contain the paymentUrl if applicable
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Finalizing booking failed';
-      toast.error(errorMessage);
+      const errorMessage = error.response?.data?.error || 'Finalizing booking failed';
       return rejectWithValue(errorMessage);
     }
   }

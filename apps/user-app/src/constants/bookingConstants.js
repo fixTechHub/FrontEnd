@@ -45,7 +45,7 @@ export const BOOKING_WARRANTY_STATUS = {
     RESOLVED: 'RESOLVED',
     DENIED: 'DENIED',
     EXPIRED: 'EXPIRED',
-  
+    DONE:'DONE'
 };
 
 export const BOOKING_WARRANTY_STATUS_CONFIG = {
@@ -69,6 +69,10 @@ export const BOOKING_WARRANTY_STATUS_CONFIG = {
     [BOOKING_WARRANTY_STATUS.EXPIRED]: {
         text: 'Đã Hết Hạn',
         className: 'status-cancelled'
+    },
+    [BOOKING_WARRANTY_STATUS.DONE]: {
+        text: 'Đã Xác Nhận Bảo Hành',
+        className: 'status-confirmed'
     },
     default: {
         text: 'Không xác định',

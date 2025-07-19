@@ -43,7 +43,7 @@ function App() {
             {!isAuthChecked ? (
                 <div className="loading-wrapper" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                     <div className="spinner-border text-warning" role="status">
-                        <span className="visually-hidden">Loading...</span>
+                        <span className="visually-hidden">Đang tải...</span>
                     </div>
                     <p className="ms-3">Đang tải...</p>
                 </div>

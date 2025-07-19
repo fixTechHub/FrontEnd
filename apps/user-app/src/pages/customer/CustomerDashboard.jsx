@@ -4,7 +4,8 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import { getFavoritesThunk, removeFavoriteThunk } from '../../features/favorites/favoriteSlice';
 import { fetchNotificationsThunk } from '../../features/notifications/notificationSlice';
-
+import BookingHistory from "../booking/common/BookingHistory";
+import ReceiptPage from "../receipt/ReceiptPage";
 // ---------- Breadcrumb -----------
 const BreadcrumbSection = () => (
 	<div className="breadcrumb-bar">
@@ -38,6 +39,8 @@ const DashboardMenu = ({ activeTab, onSelect }) => (
 								{ icon: "tool", text: "Bảo hành", iconPath: "/img/icons/service-07.svg", section: 'WARRANTY' },
 								{ icon: "wishlist", text: "KTV yêu thích", section: 'FAVORITES' },
 								{ icon: "payment", text: "Phiếu giảm giá", section: 'COUPONS' },
+								{ icon: "wallet", text: "Hoá đơn", section: 'PAYMENTS' },
+
 							].map((item) => (
 								<li key={item.text}>
 									<a
@@ -67,32 +70,7 @@ const DashboardMenu = ({ activeTab, onSelect }) => (
 	</div>
 );
 
-// ---------- Status List -----------
-const StatusList = () => (
-	<ul className="status-lists">
-		<li className="approve-item">
-			<div className="status-info">
-				<span><i className="fa-solid fa-calendar-days" /></span>
-				<p>Đơn đặt lịch của bạn đã được quản trị viên phê duyệt</p>
-			</div>
-			<a href="#" className="view-detail">Xem chi tiết</a>
-		</li>
-		<li>
-			<div className="status-info">
-				<span><i className="fa-solid fa-money-bill" /></span>
-				<p>Yêu cầu hoàn tiền của bạn đã được chấp nhận, số tiền sẽ được cập nhật trong 3 ngày.</p>
-			</div>
-			<a href="#" className="close-link"><i className="feather-x" /></a>
-		</li>
-		<li className="bg-danger-light">
-			<div className="status-info">
-				<span><i className="fa-solid fa-money-bill" /></span>
-				<p>Yêu cầu hoàn tiền của bạn đã bị từ chối <a href="#">Xem lý do</a></p>
-			</div>
-			<a href="#" className="close-link"><i className="feather-x" /></a>
-		</li>
-	</ul>
-);
+
 
 // ---------- Widget Item component -----------
 const WidgetItem = ({ icon, title, value, color, iconPath }) => (
@@ -406,7 +384,7 @@ function CustomerDashboard() {
 
 			<div className="content dashboard-content">
 				<div className="container">
-					<StatusList />
+				
 
 					<div className="content-header">
 						<h4>Bảng điều khiển</h4>
@@ -429,7 +407,7 @@ function CustomerDashboard() {
 					)}
 
 					{activeTab==='BOOKINGS' && (
-						<LastBookingsCard />
+						<BookingHistory />
 					)}
 
 					{activeTab==='WARRANTY' && (
@@ -442,6 +420,9 @@ function CustomerDashboard() {
 
 					{activeTab==='COUPONS' && (
 						<div className="mt-4"><h5>Phiếu giảm giá (đang phát triển)</h5></div>
+					)}
+					{activeTab==='PAYMENTS' && (
+						<ReceiptPage />
 					)}
 				</div>
 			</div>

@@ -51,8 +51,9 @@ function BookingProcessing() {
 
     useEffect(() => {
         if (isChecking) return;
-        if (isAuthorized === false) {
-
+       
+        if (isChecking && isAuthorized === false) {
+            toast.error("Bạn không có quyền truy cập trang này.");
             // Redirect to the original page or default to '/'
             const redirectPath = location.state?.from?.pathname || '/';
             navigate(redirectPath, { replace: true });
@@ -67,15 +68,11 @@ function BookingProcessing() {
 
         navigate(`/checkout?bookingId=${bookingId}`);
     };
- 
+    if (!isAuthorized) {
+        return authError ? <div>Error: {authError}</div> : null;
+    }
 
-    useEffect(() => {
-        if (error) {
-          toast.error("Bạn không có quyền truy cập trang này.");
-          const redirectPath = location.state?.from?.pathname || '/';
-          navigate(redirectPath, { replace: true });
-        }
-      }, [error, navigate]);
+  
     return (
         <>
             <Header />
