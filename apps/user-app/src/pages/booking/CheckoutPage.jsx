@@ -5,13 +5,13 @@ import { getAcceptedBookingPriceThunk } from '../../features/booking-prices/book
 import { finalizeBookingThunk } from '../../features/transactions/transactionSlice'
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { toast } from 'react-toastify';
-import { useBookingParams } from '../../hooks/useBookingParams';
 import Accordion from 'react-bootstrap/Accordion';
 import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import Footer from '../../components/common/Footer';
 import { checkOutCustomerAccess } from "../../hooks/checkBookingAccess";
+
 const CheckoutPage = () => {
     const dispatch = useDispatch();
     const { acceptedBookingPrice, bookingItem, userCoupons, loading, error } = useSelector(state => state.bookingPrice);
