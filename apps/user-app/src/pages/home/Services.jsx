@@ -1,5 +1,5 @@
 import { useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function Services() {
     const navigate = useNavigate();
@@ -11,7 +11,7 @@ function Services() {
             <section className="section popular-services popular-explore">
                 <div className="container">
                     <div className="section-heading" data-aos="fade-down">
-                        <h2>Các dịch vụ nổi bật</h2>
+                        <h2>Dịch Vụ Nổi Bật</h2>
                         <p>Here's a list of some of the most popular cars globally, based on sales and customer preferences</p>
                     </div>
 
@@ -31,7 +31,9 @@ function Services() {
                                                 <div className="listing-features d-flex align-items-end justify-content-between">
                                                     <div className="list-rating">
                                                         <h3 className="listing-title">
-                                                            <a href="listing-details.html">{service?.service?.serviceName}</a>
+                                                            <a href="listing-details.html"
+                                                                title={service?.service?.serviceName}
+                                                            >{service?.service?.serviceName}</a>
                                                         </h3>
                                                         <div className="list-rating">
                                                             <>Tổng số lần đặt: {service?.bookingCount}</>
@@ -62,13 +64,13 @@ function Services() {
 
                                                 <div className="button-container" >
                                                     <button href="listing-details.html" className="custom-button"
-                                                        onClick={() => navigate(`/booking?serviceId=${service?._id}&type=scheduled`)}
+                                                        onClick={() => navigate(`/booking?serviceId=${service?.service?._id}&type=scheduled`)}
                                                     >
                                                         <i className="feather-calendar me-2"></i>
                                                         Đặt Lịch
                                                     </button>
                                                     <button href="contact.html" className="custom-button-secondary"
-                                                        onClick={() => navigate(`/booking?serviceId=${service?._id}&type=urgent`)}
+                                                        onClick={() => navigate(`/booking?serviceId=${service?.service?._id}&type=urgent`)}
                                                     >
                                                         <i className="feather-calendar me-2"></i>
                                                         Đặt Ngay
@@ -84,12 +86,14 @@ function Services() {
                             </div>
 
                             <div className="view-all text-center" data-aos="fade-down" data-aos-anchor-placement="top-bottom">
-                                <a className="btn btn-view d-inline-flex align-items-center">
+                                <Link
+                                    to={"/services"}
+                                    className="btn btn-view d-inline-flex align-items-center">
                                     Xem tất cả dịch vụ
                                     <span>
                                         <i className="feather-arrow-right ms-2"></i>
                                     </span>
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </div>

@@ -13,6 +13,7 @@ function ServiceList() {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategories, setSelectedCategories] = useState([]);
+
     const filteredServices = services.filter(service => {
         const matchCategory =
             selectedCategories.length === 0 || selectedCategories.includes(service.categoryId);
@@ -185,7 +186,9 @@ function ServiceList() {
                                                         >
                                                             <div className="list-rating">
                                                                 <h3 className="listing-title">
-                                                                    <a href="listing-details.html">{service?.serviceName}</a>
+                                                                    <a href="listing-details.html"
+                                                                        title={service?.serviceName}
+                                                                    >{service?.serviceName}</a>
                                                                 </h3>
                                                                 {/* <div className="list-rating">
                                                             <>Loại dịch vụ: <>Đơn giản</></>
@@ -193,7 +196,7 @@ function ServiceList() {
                                                             </div>
                                                         </div>
 
-                                                        <div className="listing-details-group">
+                                                        <div className="listing-details-group two-line-ellipsis" title={service?.description}>
                                                             <p>{service?.description}</p>
                                                         </div>
 
