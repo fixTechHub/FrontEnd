@@ -9,8 +9,10 @@ import { bookingAPI } from '../../features/bookings/bookingAPI';
 
 const statusOptions = [
  { value: 'PENDING', label: 'PENDING' },
- { value: 'APPROVED', label: 'APPROVED' },
- { value: 'REJECTED', label: 'REJECTED' },
+ { value: 'CONFIRMED', label: 'CONFIRMED' },
+ { value: 'RESOLVED', label: 'RESOLVED' },
+ { value: 'DENIED', label: 'DENIED' },
+ { value: 'EXPIRED', label: 'EXPIRED' },
 ];
 
 
@@ -240,8 +242,10 @@ const handleSortByTechnician = () => {
              allowClear
            >
              <Select.Option value="PENDING">PENDING</Select.Option>
-             <Select.Option value="APPROVED">APPROVED</Select.Option>
-             <Select.Option value="REJECTED">REJECTED</Select.Option>
+             <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
+             <Select.Option value="RESOLVED">RESOLVED</Select.Option>
+             <Select.Option value="DENIED">DENIED</Select.Option>
+             <Select.Option value="EXPIRED">EXPIRED</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center">
@@ -360,26 +364,31 @@ const handleSortByTechnician = () => {
        </div>
      </Modal>
      {/* View Detail Modal */}
-     <Modal
-       open={showDetailModal}
-       onCancel={() => setShowDetailModal(false)}
-       footer={null}
-       title="Warranty Detail"
-       width={600}
-     >
-       {selectedWarranty && (
+     {showDetailModal && selectedWarranty && (
+       <Modal
+         open={showDetailModal}
+         onCancel={() => setShowDetailModal(false)}
+         footer={null}
+         title="Warranty Details"
+         width={600}
+       >
          <Descriptions bordered column={1} size="middle">
-           <Descriptions.Item label="Booking Code">{bookingMap[selectedWarranty.bookingId] || 'Unknown'}</Descriptions.Item>
+           <Descriptions.Item label="Booking Code">{bookingMap[selectedWarranty.bookingId] || selectedWarranty.bookingId}</Descriptions.Item>
            <Descriptions.Item label="Customer">{userNames[selectedWarranty.customerId] || selectedWarranty.customerId}</Descriptions.Item>
            <Descriptions.Item label="Technician">{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId}</Descriptions.Item>
            <Descriptions.Item label="Status">{selectedWarranty.status}</Descriptions.Item>
-           <Descriptions.Item label="Under Warranty">{selectedWarranty.isUnderWarranty ? 'Yes' : 'No'}</Descriptions.Item>
-           <Descriptions.Item label="Reviewed">{selectedWarranty.isReviewedByAdmin ? 'Yes' : 'No'}</Descriptions.Item>
-           <Descriptions.Item label="Created At">{selectedWarranty.createdAt ? new Date(selectedWarranty.createdAt).toLocaleString() : ''}</Descriptions.Item>
-           {/* Thêm các trường khác nếu cần */}
+           <Descriptions.Item label="Reported Issue">{selectedWarranty.reportedIssue}</Descriptions.Item>
+           <Descriptions.Item label="Resolution Note">{selectedWarranty.resolutionNote || "Chưa có"}</Descriptions.Item>
+           <Descriptions.Item label="Rejection Reason">{selectedWarranty.rejectionReason || "Chưa có"}</Descriptions.Item>
+           <Descriptions.Item label="Expire At">{selectedWarranty.expireAt ? new Date(selectedWarranty.expireAt).toLocaleDateString() : "Chưa có"}</Descriptions.Item>
+           <Descriptions.Item label="Request Date">{new Date(selectedWarranty.requestDate).toLocaleString()}</Descriptions.Item>
+           <Descriptions.Item label="Is Under Warranty">{selectedWarranty.isUnderWarranty ? "Yes" : "No"}</Descriptions.Item>
+           <Descriptions.Item label="Is Reviewed By Admin">{selectedWarranty.isReviewedByAdmin ? "Yes" : "No"}</Descriptions.Item>
+           <Descriptions.Item label="Created At">{new Date(selectedWarranty.createdAt).toLocaleString()}</Descriptions.Item>
+           <Descriptions.Item label="Updated At">{new Date(selectedWarranty.updatedAt).toLocaleString()}</Descriptions.Item>
          </Descriptions>
-       )}
-     </Modal>
+       </Modal>
+     )}
    </div>
  );
 };

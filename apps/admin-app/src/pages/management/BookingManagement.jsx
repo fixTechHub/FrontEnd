@@ -236,7 +236,9 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              <Select.Option value="CANCELLED">CANCELLED</Select.Option>
              <Select.Option value="WAITING_CONFIRM">WAITING CONFIRM</Select.Option>
              <Select.Option value="IN_PROGRESS">IN PROGRESS</Select.Option>
+             <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
              <Select.Option value="DONE">DONE</Select.Option>
+             <Select.Option value="AWAITING_DONE">AWAITING_DONE</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center">
@@ -299,7 +301,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                    <td>{b.status}</td>
                    <td>
                      {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
-                       ? `${new Date(b.schedule.startTime).toLocaleString()} - ${b.schedule.endTime ? new Date(b.schedule.endTime).toLocaleString() : ''}`
+                       ? `${new Date(b.schedule.startTime).toLocaleString()} - ${b.schedule.endTime ? new Date(b.schedule.endTime).toLocaleString() : (b.schedule.expectedEndTime ? new Date(b.schedule.expectedEndTime).toLocaleString() : '')}`
                        : ''}
                    </td>
                    <td>
@@ -343,10 +345,11 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            <Descriptions.Item label="Customer">{userMap[selectedBooking.customerId] || selectedBooking.customerId}</Descriptions.Item>
            <Descriptions.Item label="Service">{serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}</Descriptions.Item>
            <Descriptions.Item label="Status">{selectedBooking.status}</Descriptions.Item>
-           <Descriptions.Item label="Created At">{selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : ''}</Descriptions.Item>
            <Descriptions.Item label="Schedule">
              {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
-             {selectedBooking.schedule?.endTime ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}` : ''}
+             {selectedBooking.schedule?.endTime
+               ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}`
+               : (selectedBooking.schedule?.expectedEndTime ? ` - ${new Date(selectedBooking.schedule.expectedEndTime).toLocaleString()}` : '')}
            </Descriptions.Item>
            {/* Thêm các trường khác nếu cần */}
          </Descriptions>

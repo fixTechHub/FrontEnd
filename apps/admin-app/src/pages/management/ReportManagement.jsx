@@ -199,17 +199,6 @@ const ReportManagement = () => {
      ),
    },
    {
-     title: 'CREATED AT',
-     dataIndex: 'createdAt',
-     key: 'createdAt',
-     render: (date) => (
-       <Space>
-         <CalendarOutlined />
-         <span>{new Date(date).toLocaleDateString()}</span>
-       </Space>
-     ),
-   },
-   {
      title: 'ACTIONS',
      key: 'actions',
      render: (_, record) => (
@@ -226,6 +215,17 @@ const ReportManagement = () => {
 
 
  const isUserMapReady = filteredReports.every(r => (!r.reportedUserId || userMap[r.reportedUserId]) && (!r.reporterId || userMap[r.reporterId]));
+
+
+ // Sort reports theo sortField/sortOrder
+ const sortedReports = [...filteredReports].sort((a, b) => {
+   if (sortField === 'createdAt') {
+     const dateA = new Date(a.createdAt);
+     const dateB = new Date(b.createdAt);
+     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+   }
+   return 0;
+ });
 
 
  return (
@@ -294,6 +294,7 @@ const ReportManagement = () => {
                allowClear
              >
                <Option value="REPORT">REPORT</Option>
+               <Option value="VIOLATION">VIOLATION</Option>
              </Select>
              <Select
                placeholder="Status"
@@ -305,6 +306,8 @@ const ReportManagement = () => {
                <Option value="PENDING">PENDING</Option>
                <Option value="RESOLVED">RESOLVED</Option>
                <Option value="REJECTED">REJECTED</Option>
+               <Option value="CONFIRMED">CONFIRMED</Option>
+               <Option value="CLOSED">CLOSED</Option>
              </Select>
            </div>
            <div className="d-flex align-items-center" style={{ gap: 12 }}>
@@ -325,7 +328,7 @@ const ReportManagement = () => {
          {/* Reports Table */}
          <Table
            columns={columns}
-           dataSource={isUserMapReady ? filteredReports : []}
+           dataSource={isUserMapReady ? sortedReports : []}
            rowKey="id"
            loading={loading || !isUserMapReady}
            pagination={{
@@ -341,30 +344,24 @@ const ReportManagement = () => {
 
 
        {/* Report Details Modal */}
-       <Modal
-         title="Report Details"
-         open={isModalVisible}
-         onCancel={() => setIsModalVisible(false)}
-         footer={[
-           <Button key="close" onClick={() => setIsModalVisible(false)}>
-             Close
-           </Button>,
-         ]}
-         width={800}
-       >
-         {selectedReport && (
+       {isModalVisible && selectedReport && (
+         <Modal
+           open={isModalVisible}
+           onCancel={() => setIsModalVisible(false)}
+           footer={null}
+           title="Report Details"
+           width={600}
+         >
            <Descriptions bordered column={1} size="middle">
-             <Descriptions.Item label="ID">{selectedReport.id}</Descriptions.Item>
              <Descriptions.Item label="Type">{selectedReport.type}</Descriptions.Item>
              <Descriptions.Item label="Status">{selectedReport.status?.toUpperCase()}</Descriptions.Item>
+             <Descriptions.Item label="Penalty">{selectedReport.penalty || "Chưa có"}</Descriptions.Item>
+             <Descriptions.Item label="Description">{selectedReport.description}</Descriptions.Item>
              <Descriptions.Item label="Reported User">{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId}</Descriptions.Item>
              <Descriptions.Item label="Reporter">{userMap[selectedReport.reporterId] || selectedReport.reporterId}</Descriptions.Item>
-             <Descriptions.Item label="Description">{selectedReport.description}</Descriptions.Item>
-             <Descriptions.Item label="Created At">{new Date(selectedReport.createdAt).toLocaleString()}</Descriptions.Item>
-             <Descriptions.Item label="Updated At">{new Date(selectedReport.updatedAt).toLocaleString()}</Descriptions.Item>
            </Descriptions>
-         )}
-       </Modal>
+         </Modal>
+       )}
      </div>
    </div>
  );

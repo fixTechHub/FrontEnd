@@ -70,6 +70,27 @@ const Sidebar = () => {
   };
 
 
+  const managementRoutes = [
+    { label: 'Dashboard', path: '/' },
+    { label: 'User Management', path: '/admin/user-management' },
+    { label: 'Technician Management', path: '/admin/technician-management' },
+    { label: 'Booking Management', path: '/admin/booking-management' },
+    { label: 'Warranty Management', path: '/admin/warranty-management' },
+    { label: 'Service Management', path: '/admin/service-management' },
+    { label: 'Category Management', path: '/admin/category-management' },
+    { label: 'Coupon Management', path: '/admin/coupon-management' },
+    { label: 'Coupon Usage Management', path: '/admin/coupon-usage-management' },
+    { label: 'Booking Report', path: '/admin/report-management' },
+    { label: 'System Report', path: '/admin/system-report-management' },
+  ];
+  const filteredRoutes = searchValue
+    ? managementRoutes.filter(r =>
+        r.label.toLowerCase().includes(searchValue.toLowerCase()) ||
+        r.path.toLowerCase().includes(searchValue.toLowerCase())
+      )
+    : [];
+
+
   return (
     <div className="position-fixed h-100 bg-white border-end shadow-sm" style={{width: '260px'}}>
       {/* Logo section - always visible */}
@@ -103,6 +124,29 @@ const Sidebar = () => {
               </button>
             )}
           </div>
+          {/* Search results dropdown */}
+          {searchValue && (
+            <div className="bg-white border rounded shadow-sm mt-2 position-absolute w-100" style={{zIndex: 100, left: 0}}>
+              <ul className="list-unstyled mb-0">
+                {filteredRoutes.length === 0 ? (
+                  <li className="px-3 py-2 text-muted">No results</li>
+                ) : (
+                  filteredRoutes.map(route => (
+                    <li key={route.path}>
+                      <Link
+                        to={route.path}
+                        className="d-block px-3 py-2 text-decoration-none text-dark sidebar-search-result-item"
+                        onClick={clearSearch}
+                      >
+                        {route.label}
+                        <span className="text-muted ms-2" style={{fontSize: '12px'}}>{route.path}</span>
+                      </Link>
+                    </li>
+                  ))
+                )}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
 

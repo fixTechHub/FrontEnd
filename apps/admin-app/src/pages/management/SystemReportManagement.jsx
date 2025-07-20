@@ -259,17 +259,6 @@ const SystemReportManagement = () => {
      ),
    },
    {
-     title: 'CREATED AT',
-     dataIndex: 'createdAt',
-     key: 'createdAt',
-     render: (date) => (
-       <Space>
-         <CalendarOutlined />
-         <span>{new Date(date).toLocaleDateString()}</span>
-       </Space>
-     ),
-   },
-   {
      title: 'ACTIONS',
      key: 'actions',
      render: (_, record) => (
@@ -295,6 +284,17 @@ const SystemReportManagement = () => {
 
 
  const isUserMapReady = filteredSystemReports.every(r => !r.submittedBy || userMap[r.submittedBy]);
+
+
+ // Sort system reports theo sortField/sortOrder
+ const sortedSystemReports = [...filteredSystemReports].sort((a, b) => {
+   if (sortField === 'createdAt') {
+     const dateA = new Date(a.createdAt);
+     const dateB = new Date(b.createdAt);
+     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+   }
+   return 0;
+ });
 
 
  return (
@@ -376,6 +376,7 @@ const SystemReportManagement = () => {
                allowClear
              >
                <Option value="PENDING">PENDING</Option>
+               <Option value="IN_PROGRESS">IN PROGRESS</Option>
                <Option value="RESOLVED">RESOLVED</Option>
                <Option value="REJECTED">REJECTED</Option>
              </Select>
@@ -398,7 +399,7 @@ const SystemReportManagement = () => {
          {/* System Reports Table */}
          <Table
            columns={columns}
-           dataSource={isUserMapReady ? filteredSystemReports : []}
+           dataSource={isUserMapReady ? sortedSystemReports : []}
            rowKey="id"
            loading={loading || !isUserMapReady}
            pagination={{
@@ -414,34 +415,25 @@ const SystemReportManagement = () => {
 
 
        {/* System Report Details Modal */}
-       <Modal
-         title="System Report Details"
-         open={isModalVisible}
-         onCancel={() => setIsModalVisible(false)}
-         footer={[
-           <Button key="close" onClick={() => setIsModalVisible(false)}>
-             Close
-           </Button>,
-         ]}
-         width={800}
-       >
-         {selectedSystemReport && (
+       {isModalVisible && selectedSystemReport && (
+         <Modal
+           open={isModalVisible}
+           onCancel={() => setIsModalVisible(false)}
+           footer={null}
+           title="System Report Details"
+           width={600}
+         >
            <Descriptions bordered column={1} size="middle">
-             <Descriptions.Item label="ID">{selectedSystemReport.id}</Descriptions.Item>
              <Descriptions.Item label="Title">{selectedSystemReport.title}</Descriptions.Item>
-             <Descriptions.Item label="Tag">{selectedSystemReport.tag?.toUpperCase()}</Descriptions.Item>
-             <Descriptions.Item label="Status">{selectedSystemReport.status?.toUpperCase()}</Descriptions.Item>
-             <Descriptions.Item label="Submitted By">
-               {submittedByUser
-                 ? `${submittedByUser.fullName} (${submittedByUser.email})`
-                 : selectedSystemReport.submittedBy}
-             </Descriptions.Item>
+             <Descriptions.Item label="Tag">{selectedSystemReport.tag}</Descriptions.Item>
+             <Descriptions.Item label="Status">{selectedSystemReport.status}</Descriptions.Item>
              <Descriptions.Item label="Description">{selectedSystemReport.description}</Descriptions.Item>
-             <Descriptions.Item label="Created At">{new Date(selectedSystemReport.createdAt).toLocaleString()}</Descriptions.Item>
-             <Descriptions.Item label="Updated At">{new Date(selectedSystemReport.updatedAt).toLocaleString()}</Descriptions.Item>
+             <Descriptions.Item label="Submitted By">{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy}</Descriptions.Item>
+             <Descriptions.Item label="Resolved By">{selectedSystemReport.resolvedBy || "Chưa có"}</Descriptions.Item>
+             <Descriptions.Item label="Resolution Note">{selectedSystemReport.resolutionNote || "Chưa có"}</Descriptions.Item>
            </Descriptions>
-         )}
-       </Modal>
+         </Modal>
+       )}
 
 
        {/* Modal Edit Status */}
@@ -460,6 +452,7 @@ const SystemReportManagement = () => {
              onChange={setStatusValue}
            >
              <Option value="PENDING">PENDING</Option>
+             <Option value="IN_PROGRESS">IN PROGRESS</Option>
              <Option value="RESOLVED">RESOLVED</Option>
              <Option value="REJECTED">REJECTED</Option>
            </Select>

@@ -29,9 +29,9 @@ export const userAPI = {
     },
 
     // Lock user
-    lockUser: async (id, reason) => {
+    lockUser: async (id, dto) => {
         try {
-            const response = await ApiBE.post(`/Dashboard/users/${id}/lock`, { reason });
+            const response = await ApiBE.post(`/Dashboard/users/${id}/lock`, dto);
             return response.data;
         } catch (error) {
             console.error('Lock user error:', error);
@@ -40,9 +40,9 @@ export const userAPI = {
     },
 
     // Unlock user
-    unlockUser: async (id, note = '') => {
+    unlockUser: async (id) => {
         try {
-            const response = await ApiBE.post(`/Dashboard/users/${id}/unlock`, { note });
+            const response = await ApiBE.post(`/Dashboard/users/${id}/unlock`);
             return response.data;
         } catch (error) {
             console.error('Unlock user error:', error);

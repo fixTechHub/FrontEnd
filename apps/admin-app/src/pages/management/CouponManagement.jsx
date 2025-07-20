@@ -53,6 +53,8 @@ const [filterStatus, setFilterStatus] = useState();
 const [users, setUsers] = useState([]);
 const [allUsers, setAllUsers] = useState([]);
 const [loadingUsers, setLoadingUsers] = useState(false);
+// Thêm state lưu lỗi validate
+const [validationErrors, setValidationErrors] = useState({});
 
 
 
@@ -161,9 +163,11 @@ const [loadingUsers, setLoadingUsers] = useState(false);
  useEffect(() => {
    if (error) {
      message.error(error.title || 'Đã có lỗi xảy ra. Vui lòng thử lại!');
+     setValidationErrors({});
      dispatch(resetState());
    }
    if (success) {
+     setValidationErrors({});
      message.success('Thao tác thành công!');
      setShowAddModal(false);
      setShowEditModal(false);
@@ -180,6 +184,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
  const handleAddCoupon = () => {
    setFormData(initialFormState);
+   setValidationErrors({});
    setShowAddModal(true);
  };
 
@@ -200,6 +205,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
      audience: coupon.audience || 'ALL',
      userIds: coupon.userIds || []
    });
+   setValidationErrors({});
    setShowEditModal(true);
  };
 
@@ -287,6 +293,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
  const handleSubmit = (e) => {
    e.preventDefault();
+   setValidationErrors({});
    let dataToSend = {
      ...formData,
      value: formData.value !== '' ? Number(formData.value) : null,
@@ -299,18 +306,65 @@ const [loadingUsers, setLoadingUsers] = useState(false);
    if (dataToSend.audience !== 'SPECIFIC_USERS') {
      dataToSend.userIds = [];
    } else if (!dataToSend.userIds || dataToSend.userIds.length === 0) {
+     setValidationErrors({ UserIds: ['Bạn phải chọn ít nhất 1 user khi audience là SPECIFIC_USERS'] });
      message.error('Bạn phải chọn ít nhất 1 user khi audience là SPECIFIC_USERS');
      return;
    }
 
-   console.log('Data gửi lên BE:', dataToSend);
+   const fieldNames = [
+     'Code', 'Description', 'Type', 'Value', 'MaxDiscount', 'MinOrderValue',
+     'TotalUsageLimit', 'Audience', 'UserIds', 'IsActive', 'StartDate', 'EndDate'
+   ];
+
+   const mapErrorKey = (key) => {
+     const lower = key.toLowerCase();
+     if (lower.includes('code')) return 'Code';
+     if (lower.includes('description')) return 'Description';
+     if (lower.includes('type')) return 'Type';
+     if (lower.includes('value')) return 'Value';
+     if (lower.includes('maxdiscount')) return 'MaxDiscount';
+     if (lower.includes('minordervalue')) return 'MinOrderValue';
+     if (lower.includes('totalusagelimit')) return 'TotalUsageLimit';
+     if (lower.includes('audience')) return 'Audience';
+     if (lower.includes('userids') || lower.includes('userid')) return 'UserIds';
+     if (lower.includes('isactive')) return 'IsActive';
+     if (lower.includes('startdate')) return 'StartDate';
+     if (lower.includes('enddate')) return 'EndDate';
+     return key;
+   };
+   const processErrors = (apiErrors) => {
+     const newErrors = {};
+     const generalErrors = [];
+     Object.entries(apiErrors).forEach(([key, msgs]) => {
+       const mappedKey = mapErrorKey(key);
+       // Nếu là field hợp lệ thì map vào đúng trường FE
+       if ([
+         'Code', 'Description', 'Type', 'Value', 'MaxDiscount', 'MinOrderValue',
+         'TotalUsageLimit', 'Audience', 'UserIds', 'IsActive', 'StartDate', 'EndDate'
+       ].includes(mappedKey)) {
+         newErrors[mappedKey] = msgs;
+       } else {
+         generalErrors.push(...msgs);
+       }
+     });
+     if (generalErrors.length > 0) {
+       newErrors.general = generalErrors.join(', ');
+     }
+     return newErrors;
+   };
 
    if (showAddModal) {
      dispatch(createCoupon(dataToSend)).then((action) => {
        if (action.error && action.error.message) {
          const err = action.error;
          if (err && err.response && err.response.data) {
-           console.error('API error detail:', err.response.data);
+           console.log('API error detail:', err.response.data);
+           const apiErrors = err.response.data.errors;
+           if (apiErrors) {
+             setValidationErrors(processErrors(apiErrors));
+           } else if (err.response.data.title) {
+             setValidationErrors({ general: err.response.data.title });
+           }
            message.error(err.response.data.title || JSON.stringify(err.response.data));
          } else {
            message.error(err.message);
@@ -322,7 +376,13 @@ const [loadingUsers, setLoadingUsers] = useState(false);
        if (action.error && action.error.message) {
          const err = action.error;
          if (err && err.response && err.response.data) {
-           console.error('API error detail:', err.response.data);
+           console.log('API error detail:', err.response.data);
+           const apiErrors = err.response.data.errors;
+           if (apiErrors) {
+             setValidationErrors(processErrors(apiErrors));
+           } else if (err.response.data.title) {
+             setValidationErrors({ general: err.response.data.title });
+           }
            message.error(err.response.data.title || JSON.stringify(err.response.data));
          } else {
            message.error(err.message);
@@ -335,6 +395,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
  console.log('coupons:', coupons);
  console.log('deletedCoupons:', deletedCoupons);
+ console.log('validationErrors:', validationErrors);
 
 
  return (
@@ -499,23 +560,29 @@ const [loadingUsers, setLoadingUsers] = useState(false);
        width={800}
      >
        <Form layout="vertical" onSubmit={handleSubmit}>
+         {validationErrors.general && (
+           <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+         )}
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Code" required>
+             <Form.Item label="Code" required validateStatus={validationErrors.Code ? 'error' : ''} help={validationErrors.Code ? validationErrors.Code.join(', ') : ''}>
                <Input
                  name="code"
                  value={formData.code}
                  onChange={handleChange}
                  placeholder="Enter coupon code"
+                 required
                />
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="Type">
+             <Form.Item label="Type" required validateStatus={validationErrors.Type ? 'error' : ''} help={validationErrors.Type ? validationErrors.Type.join(', ') : ''}>
                <Select
+                 placeholder="Type"
                  name="type"
                  value={formData.type}
                  onChange={(value) => handleChange({ target: { name: 'type', value } })}
+                 required
                >
                  <Select.Option value="PERCENT">PERCENT</Select.Option>
                  <Select.Option value="FIXED">FIXED</Select.Option>
@@ -524,13 +591,14 @@ const [loadingUsers, setLoadingUsers] = useState(false);
            </Col>
          </Row>
 
-         <Form.Item label="Description">
+         <Form.Item label="Description" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
            <Input.TextArea
              name="description"
              value={formData.description}
              onChange={handleChange}
              rows={3}
              placeholder="Enter description"
+             required
            />
          </Form.Item>
 
@@ -538,7 +606,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
            {formData.type === 'PERCENT' && (
              <>
                <Col span={12}>
-                 <Form.Item label="Value (%)" required>
+                 <Form.Item label="Value (%)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
                    <InputNumber
                      name="value"
                      value={formData.value}
@@ -551,7 +619,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
                  </Form.Item>
                </Col>
                <Col span={12}>
-                 <Form.Item label="Max Discount (VND)" required>
+                 <Form.Item label="Max Discount (VND)" required validateStatus={validationErrors.MaxDiscount ? 'error' : ''} help={validationErrors.MaxDiscount ? validationErrors.MaxDiscount.join(', ') : ''}>
                    <InputNumber
                      name="maxDiscount"
                      value={formData.maxDiscount}
@@ -566,7 +634,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
            )}
            {formData.type === 'FIXED' && (
              <Col span={12}>
-               <Form.Item label="Value (VND)" required>
+               <Form.Item label="Value (VND)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
                  <InputNumber
                    name="value"
                    value={formData.value}
@@ -582,7 +650,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Min Order Value">
+             <Form.Item label="Min Order Value" required validateStatus={validationErrors.MinOrderValue ? 'error' : ''} help={validationErrors.MinOrderValue ? validationErrors.MinOrderValue.join(', ') : ''}>
                <InputNumber
                  name="minOrderValue"
                  value={formData.minOrderValue}
@@ -609,7 +677,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Start Date">
+             <Form.Item label="Start Date" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
                <DatePicker
                  value={formData.startDate ? dayjs(formData.startDate) : null}
                  onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
@@ -619,7 +687,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="End Date">
+             <Form.Item label="End Date" required validateStatus={validationErrors.EndDate ? 'error' : ''} help={validationErrors.EndDate ? validationErrors.EndDate.join(', ') : ''}>
                <DatePicker
                  value={formData.endDate ? dayjs(formData.endDate) : null}
                  onChange={(date, dateString) => handleChange({ target: { name: 'endDate', value: dateString } })}
@@ -632,7 +700,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Audience">
+             <Form.Item label="Audience" validateStatus={validationErrors.Audience ? 'error' : ''} help={validationErrors.Audience ? validationErrors.Audience.join(', ') : ''}>
                <Select
                  name="audience"
                  value={formData.audience}
@@ -659,7 +727,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
          </Row>
 
          {formData.audience === 'SPECIFIC_USERS' && (
-           <Form.Item label="Select Users">
+           <Form.Item label="Select Users" required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
              <Select
                mode="multiple"
                placeholder="Search and select users"
@@ -700,9 +768,12 @@ const [loadingUsers, setLoadingUsers] = useState(false);
        width={800}
      >
        <Form layout="vertical" onSubmit={handleSubmit}>
+         {validationErrors.general && (
+           <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+         )}
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Code" required>
+             <Form.Item label="Code" required validateStatus={validationErrors.Code ? 'error' : ''} help={validationErrors.Code ? validationErrors.Code.join(', ') : ''}>
                <Input
                  name="code"
                  value={formData.code}
@@ -712,7 +783,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="Type">
+             <Form.Item label="Type" required validateStatus={validationErrors.Type ? 'error' : ''} help={validationErrors.Type ? validationErrors.Type.join(', ') : ''}>
                <Select
                  name="type"
                  value={formData.type}
@@ -725,7 +796,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
            </Col>
          </Row>
 
-         <Form.Item label="Description">
+         <Form.Item label="Description" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
            <Input.TextArea
              name="description"
              value={formData.description}
@@ -739,7 +810,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
            {formData.type === 'PERCENT' && (
              <>
                <Col span={12}>
-                 <Form.Item label="Value (%)" required>
+                 <Form.Item label="Value (%)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
                    <InputNumber
                      name="value"
                      value={formData.value}
@@ -752,7 +823,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
                  </Form.Item>
                </Col>
                <Col span={12}>
-                 <Form.Item label="Max Discount (VND)" required>
+                 <Form.Item label="Max Discount (VND)" required validateStatus={validationErrors.MaxDiscount ? 'error' : ''} help={validationErrors.MaxDiscount ? validationErrors.MaxDiscount.join(', ') : ''}>
                    <InputNumber
                      name="maxDiscount"
                      value={formData.maxDiscount}
@@ -767,7 +838,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
            )}
            {formData.type === 'FIXED' && (
              <Col span={12}>
-               <Form.Item label="Value (VND)" required>
+               <Form.Item label="Value (VND)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
                  <InputNumber
                    name="value"
                    value={formData.value}
@@ -783,7 +854,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Min Order Value">
+             <Form.Item label="Min Order Value" required validateStatus={validationErrors.MinOrderValue ? 'error' : ''} help={validationErrors.MinOrderValue ? validationErrors.MinOrderValue.join(', ') : ''}>
                <InputNumber
                  name="minOrderValue"
                  value={formData.minOrderValue}
@@ -810,7 +881,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Start Date">
+             <Form.Item label="Start Date" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
                <DatePicker
                  value={formData.startDate ? dayjs(formData.startDate) : null}
                  onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
@@ -820,7 +891,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="End Date">
+             <Form.Item label="End Date" required validateStatus={validationErrors.EndDate ? 'error' : ''} help={validationErrors.EndDate ? validationErrors.EndDate.join(', ') : ''}>
                <DatePicker
                  value={formData.endDate ? dayjs(formData.endDate) : null}
                  onChange={(date, dateString) => handleChange({ target: { name: 'endDate', value: dateString } })}
@@ -833,7 +904,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Audience">
+             <Form.Item label="Audience" validateStatus={validationErrors.Audience ? 'error' : ''} help={validationErrors.Audience ? validationErrors.Audience.join(', ') : ''}>
                <Select
                  name="audience"
                  value={formData.audience}
@@ -860,7 +931,7 @@ const [loadingUsers, setLoadingUsers] = useState(false);
          </Row>
 
          {formData.audience === 'SPECIFIC_USERS' && (
-           <Form.Item label="Select Users">
+           <Form.Item label="Select Users" required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
              <Select
                mode="multiple"
                placeholder="Search and select users"

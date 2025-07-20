@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Select, Descriptions } from 'antd';
+import { message, Modal, Button, Select, Descriptions, Spin } from 'antd';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
 import {
  setTechnicians,
@@ -269,6 +269,16 @@ function getTechnicianStatus(status) {
   return TECHNICIAN_STATUS_MAP[status] || status || 'Chưa cập nhật';
 }
 
+// Thêm hàm chuyển đổi availability nếu chưa có
+const TECHNICIAN_AVAILABILITY_MAP = {
+  1: 'FREE',
+  2: 'BUSY',
+  0: 'ONJOB',
+};
+function getTechnicianAvailability(availability) {
+  return TECHNICIAN_AVAILABILITY_MAP[availability] || availability || 'Chưa cập nhật';
+}
+
 
  return (
    <div className="modern-page-wrapper">
@@ -378,33 +388,39 @@ function getTechnicianStatus(status) {
              </tr>
            </thead>
            <tbody>
-             {currentTechnicians.map((tech) => (
-               <tr key={tech.id}>
-                 <td>{tech.fullName}</td>
-                 <td>{tech.email}</td>
-                 <td>{tech.phone}</td>
-                 <td>
-                   <span className={`badge badge-dark-transparent ${getTechnicianStatus(tech.status) === 'APPROVED' ? 'text-success' : getTechnicianStatus(tech.status) === 'REJECTED' ? 'text-danger' : 'text-warning'}`}>
-                     <i className={`ti ti-point-filled ${getTechnicianStatus(tech.status) === 'APPROVED' ? 'text-success' : getTechnicianStatus(tech.status) === 'REJECTED' ? 'text-danger' : 'text-warning'} me-1`}></i>
-                     {getTechnicianStatus(tech.status)}
-                   </span>
-                 </td>
-                 <td>{tech.ratingAverage?.toFixed(1) ?? '-'}</td>
-                 <td>{tech.jobCompleted ?? 0}</td>
-                 <td>
-                   <div className="d-flex align-items-center gap-2">
-                     {tech.status === "PENDING" && (
-                       <button className="btn btn-sm btn-primary" onClick={() => handleOpenEditStatus(tech)}>
-                         <i className="ti ti-edit me-1"></i>Edit Status
-                       </button>
-                     )}
-                     <button className="btn btn-sm btn-info" onClick={() => handleOpenDetail(tech)}>
-                       <i className="ti ti-eye me-1"></i>View Detail
-                     </button>
-                   </div>
-                 </td>
+             {loading && technicians.length === 0 ? (
+               <tr>
+                 <td colSpan={7} className="text-center"><Spin /></td>
                </tr>
-             ))}
+             ) : (
+               currentTechnicians.map((tech) => (
+                 <tr key={tech.id}>
+                   <td>{tech.fullName}</td>
+                   <td>{tech.email}</td>
+                   <td>{tech.phone}</td>
+                   <td>
+                     <span className={`badge badge-dark-transparent ${getTechnicianStatus(tech.status) === 'APPROVED' ? 'text-success' : getTechnicianStatus(tech.status) === 'REJECTED' ? 'text-danger' : 'text-warning'}`}>
+                       <i className={`ti ti-point-filled ${getTechnicianStatus(tech.status) === 'APPROVED' ? 'text-success' : getTechnicianStatus(tech.status) === 'REJECTED' ? 'text-danger' : 'text-warning'} me-1`}></i>
+                       {getTechnicianStatus(tech.status)}
+                     </span>
+                   </td>
+                   <td>{tech.ratingAverage?.toFixed(1) ?? '-'}</td>
+                   <td>{tech.jobCompleted ?? 0}</td>
+                   <td>
+                     <div className="d-flex align-items-center gap-2">
+                       {tech.status === "PENDING" && (
+                         <button className="btn btn-sm btn-primary" onClick={() => handleOpenEditStatus(tech)}>
+                           <i className="ti ti-edit me-1"></i>Edit Status
+                         </button>
+                       )}
+                       <button className="btn btn-sm btn-info" onClick={() => handleOpenDetail(tech)}>
+                         <i className="ti ti-eye me-1"></i>View Detail
+                       </button>
+                     </div>
+                   </td>
+                 </tr>
+               ))
+             )}
            </tbody>
          </table>
        </div>
@@ -481,6 +497,7 @@ function getTechnicianStatus(status) {
              <Descriptions.Item label="Đơn giá công (tier1)" span={1}>{selectedTechnician.rates?.laborTiers?.tier1 ?? 'Chưa cập nhật'}</Descriptions.Item>
              <Descriptions.Item label="Đơn giá công (tier2)" span={1}>{selectedTechnician.rates?.laborTiers?.tier2 ?? 'Chưa cập nhật'}</Descriptions.Item>
              <Descriptions.Item label="Đơn giá công (tier3)" span={1}>{selectedTechnician.rates?.laborTiers?.tier3 ?? 'Chưa cập nhật'}</Descriptions.Item>
+             <Descriptions.Item label="Trạng thái làm việc" span={1}>{getTechnicianAvailability(selectedTechnician.availability)}</Descriptions.Item>
              <Descriptions.Item label="Ảnh mặt trước CCCD" span={1}>{selectedTechnician.frontIdImage ? <img src={selectedTechnician.frontIdImage} alt="frontId" style={{ maxWidth: 120 }} /> : 'Chưa cập nhật'}</Descriptions.Item>
              <Descriptions.Item label="Ảnh mặt sau CCCD" span={1}>{selectedTechnician.backIdImage ? <img src={selectedTechnician.backIdImage} alt="backId" style={{ maxWidth: 120 }} /> : 'Chưa cập nhật'}</Descriptions.Item>
              <Descriptions.Item label="Vị trí hiện tại" span={2}>

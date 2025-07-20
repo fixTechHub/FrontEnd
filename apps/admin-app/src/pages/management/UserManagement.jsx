@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Select, Descriptions, Modal } from 'antd';
+import { message, Select, Descriptions, Modal, Spin } from 'antd';
 import { userAPI } from '../../features/users/userAPI';
 import { roleAPI } from '../../features/roles/roleAPI';
 import { setUsers, setLoading, setError, setFilters } from '../../features/users/userSlice';
@@ -188,7 +188,7 @@ const UserManagement = () => {
        }
        try {
            dispatch(setLoading(true));
-           await userAPI.lockUser(selectedUser.id, lockReason);
+           await userAPI.lockUser(selectedUser.id, { lockedReason: lockReason });
            message.success('User locked successfully!');
            setShowLockModal(false);
            fetchUsers();
@@ -206,7 +206,7 @@ const UserManagement = () => {
        e.preventDefault();
        try {
            dispatch(setLoading(true));
-           await userAPI.unlockUser(selectedUser.id, unlockNote);
+           await userAPI.unlockUser(selectedUser.id);
            message.success('User unlocked successfully!');
            setShowUnlockModal(false);
            fetchUsers();
@@ -381,46 +381,52 @@ const UserManagement = () => {
                            </tr>
                        </thead>
                        <tbody>
-                           {currentUsers.map(user => (
-                               <tr key={user.id}>
-                                   <td>
-                                       <div className="d-flex align-items-center">
-                                           <p className="avatar me-2 flex-shrink-0">
-                                               <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} className="rounded-circle" alt="" />
-                                           </p>
-                                           <h6><p className="fs-14 fw-semibold">{user.fullName}</p></h6>
-                                       </div>
-                                   </td>
-                                   <td><p className="text-gray-9">{user.email}</p></td>
-                                   <td><p className="text-gray-9">{user.phone}</p></td>
-                                   <td><p className="text-gray-9">{roleMap[user.role] || user.role}</p></td>
-                                   <td>
-                                       <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
-                                           <i className={`ti ti-point-filled ${getStatusIconClass(user.status)} me-1`}></i>
-                                           {user.status}
-                                       </span>
-                                   </td>
-                                   <td>
-                                       <div className="d-flex align-items-center gap-2">
-                                           {/* <button className="btn btn-sm btn-primary" onClick={() => handleEditUser(user)}>
-                                               <i className="ti ti-edit me-1"></i>Edit
-                                           </button> */}
-                                           {user.lockedReason ? (
-                                               <button className="btn btn-sm btn-success" onClick={() => handleUnlockUser(user)}>
-                                                   <i className="ti ti-unlock me-1"></i>Unlock
-                                               </button>
-                                           ) : (
-                                               <button className="btn btn-sm btn-danger" onClick={() => handleLockUser(user)}>
-                                                   <i className="ti ti-lock me-1"></i>Lock
-                                               </button>
-                                           )}
-                                           <button className="btn btn-sm btn-info" onClick={() => { setSelectedUser(user); setShowDetailModal(true); }}>
-                                               <i className="ti ti-eye me-1"></i>View Detail
-                                           </button>
-                                       </div>
-                                   </td>
+                           {loading && filteredUsers.length === 0 ? (
+                               <tr>
+                                   <td colSpan={6} className="text-center"><Spin /></td>
                                </tr>
-                           ))}
+                           ) : (
+                               currentUsers.map(user => (
+                                   <tr key={user.id}>
+                                       <td>
+                                           <div className="d-flex align-items-center">
+                                               <p className="avatar me-2 flex-shrink-0">
+                                                   <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} className="rounded-circle" alt="" />
+                                               </p>
+                                               <h6><p className="fs-14 fw-semibold">{user.fullName}</p></h6>
+                                           </div>
+                                       </td>
+                                       <td><p className="text-gray-9">{user.email}</p></td>
+                                       <td><p className="text-gray-9">{user.phone}</p></td>
+                                       <td><p className="text-gray-9">{roleMap[user.role] || user.role}</p></td>
+                                       <td>
+                                           <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
+                                               <i className={`ti ti-point-filled ${getStatusIconClass(user.status)} me-1`}></i>
+                                               {user.status}
+                                           </span>
+                                       </td>
+                                       <td>
+                                           <div className="d-flex align-items-center gap-2">
+                                               {/* <button className="btn btn-sm btn-primary" onClick={() => handleEditUser(user)}>
+                                                   <i className="ti ti-edit me-1"></i>Edit
+                                               </button> */}
+                                               {user.lockedReason ? (
+                                                   <button className="btn btn-sm btn-success" onClick={() => handleUnlockUser(user)}>
+                                                       <i className="ti ti-unlock me-1"></i>Unlock
+                                                   </button>
+                                               ) : (
+                                                   <button className="btn btn-sm btn-danger" onClick={() => handleLockUser(user)}>
+                                                       <i className="ti ti-lock me-1"></i>Lock
+                                                   </button>
+                                               )}
+                                               <button className="btn btn-sm btn-info" onClick={() => { setSelectedUser(user); setShowDetailModal(true); }}>
+                                                   <i className="ti ti-eye me-1"></i>View Detail
+                                               </button>
+                                           </div>
+                                       </td>
+                                   </tr>
+                               ))
+                           )}
                        </tbody>
                    </table>
 
@@ -549,16 +555,6 @@ const UserManagement = () => {
                                        <div className="alert alert-info">
                                            <i className="ti ti-info-circle me-2"></i>
                                            Are you sure you want to unlock <strong>{selectedUser?.fullName}</strong>?
-                                       </div>
-                                       <div className="mb-3">
-                                           <label className="form-label">Note (Optional)</label>
-                                           <textarea
-                                               className="form-control"
-                                               rows="3"
-                                               value={unlockNote}
-                                               onChange={(e) => setUnlockNote(e.target.value)}
-                                               placeholder="Add a note about why this user is being unlocked..."
-                                           />
                                        </div>
                                    </div>
                                    <div className="modal-footer">

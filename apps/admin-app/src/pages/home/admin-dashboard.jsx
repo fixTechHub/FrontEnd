@@ -585,10 +585,11 @@ const AdminDashboard = () => {
               <Descriptions.Item label="Customer">{selectedBooking.customerName || selectedBooking.customerId || 'N/A'}</Descriptions.Item>
               <Descriptions.Item label="Service">{selectedBooking.serviceName || selectedBooking.serviceId || 'N/A'}</Descriptions.Item>
               <Descriptions.Item label="Status">{selectedBooking.status}</Descriptions.Item>
-              <Descriptions.Item label="Created At">{selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleString() : ''}</Descriptions.Item>
               <Descriptions.Item label="Schedule">
                 {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
-                {selectedBooking.schedule?.endTime ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}` : ''}
+                {selectedBooking.schedule?.endTime
+                  ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}`
+                  : (selectedBooking.schedule?.expectedEndTime ? ` - ${new Date(selectedBooking.schedule.expectedEndTime).toLocaleString()}` : '')}
               </Descriptions.Item>
             </Descriptions>
           </Modal>
