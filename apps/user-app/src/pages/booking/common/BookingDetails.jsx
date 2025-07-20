@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { cancelBooking, fetchDetailsBookingById, setLastCancelBy } from "../../../features/bookings/bookingSlice";
+import { cancelBooking, fetchBookingById, setLastCancelBy, technicianConfirmBookingThunk } from "../../../features/bookings/bookingSlice";
 import { formatDateOnly, formatTimeOnly } from "../../../utils/formatDate";
 import { BOOKING_STATUS_CONFIG } from "../../../constants/bookingConstants";
 import { useNavigate } from "react-router-dom";
@@ -11,19 +11,20 @@ function BookingDetails({ bookingId }) {
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const [selectedImage, setSelectedImage] = useState(null);
-    const { detailsBooking, status: bookingStatusState } = useSelector((state) => state.booking);
-    // console.log('--- BOOKING DETAILS ---', detailsBooking);
+    const { booking, status: bookingStatusState } = useSelector((state) => state.booking);
     // console.log('--- USER ---', user);
+    console.log('--- BOOKING ---', booking);
+    const [confirming, setConfirming] = useState(false);
 
     useEffect(() => {
         if (bookingId) {
-            dispatch(fetchDetailsBookingById(bookingId));
+            dispatch(fetchBookingById(bookingId));
         }
     }, [dispatch, bookingId]);
 
-    console.log('--- BOOKING DETAILS ---', detailsBooking);
+    console.log('--- BOOKING DETAILS ---', booking);
 
-    const statusConfig = BOOKING_STATUS_CONFIG[detailsBooking?.booking?.status] || BOOKING_STATUS_CONFIG.default;
+    const statusConfig = BOOKING_STATUS_CONFIG[booking?.status] || BOOKING_STATUS_CONFIG.default;
     // console.log('--- IMAGE BOOKING DETAIL ---', booking?.images);
 
     const handleCancel = async () => {
@@ -48,94 +49,268 @@ function BookingDetails({ bookingId }) {
         }
     };
 
+    const handleTechnicianConfirm = async () => {
+        if (!bookingId) return;
+        setConfirming(true);
+        try {
+            const resultAction = await dispatch(technicianConfirmBookingThunk(bookingId));
+            if (technicianConfirmBookingThunk.fulfilled.match(resultAction)) {
+                alert('Bạn đã xác nhận nhận đơn!');
+                dispatch(fetchBookingById(bookingId));
+            } else {
+                alert(resultAction.payload || 'Có lỗi xảy ra!');
+            }
+        } finally {
+            setConfirming(false);
+        }
+    };
+
     return (
+        // <div className="booking-sidebar">
+        //     <div className="booking-sidebar-card">
+        //         <div className="booking-sidebar-head">
+        //             <h5>
+        //                 Chi tiết đơn hàng
+        //             </h5>
+        //         </div>
+        //         <div className="booking-sidebar-body">
+        //             <div className="booking-car-detail">
+        //                 <div
+        //                     className="d-flex flex-nowrap overflow-auto py-2"
+        //                     style={{ gap: "0.5rem" }}
+        //                 >
+        //                     {booking?.images?.map((image) => (
+        //                         <Image
+        //                             key={image}
+        //                             src={image}
+        //                             thumbnail
+        //                             onClick={() => setSelectedImage(image)}
+        //                             style={{ maxHeight: 120, width: "auto", objectFit: "contain" }}
+        //                         />
+        //                     ))}
+        //                 </div>
+        //             </div>
+
+        //             <div className="booking-vehicle-rates">
+        //                 <Container>
+        //                     <Row>
+        //                         <Col>
+        //                             <ul>
+        //                                 <li>
+        //                                     <h6><span>Loại dịch vụ:</span> {booking?.serviceId?.serviceName || 'Đang cập nhật..'}</h6>
+        //                                 </li>
+        //                                 <li>
+        //                                     <h6><span>Loại đặt lịch:</span> {booking?.isUrgent ? 'Đặt ngay' : 'Đặt lịch' || 'Đang cập nhật..'}</h6>
+        //                                 </li>
+        //                                 <li>
+        //                                     <h6><span>Địa chỉ:</span> {booking?.location?.address || 'Đang cập nhật..'}</h6>
+        //                                 </li>
+        //                                 <li>
+        //                                     <h6><span>Mô tả:</span> {booking?.description || 'Đang cập nhật..'}</h6>
+        //                                 </li>
+        //                                 <li>
+        //                                     <h6><span>Ngày đặt lịch:</span> {formatDateOnly(booking?.schedule?.startTime) || 'Đang cập nhật..'}</h6>
+        //                                 </li>
+        //                                 <li>
+        //                                     <h6><span>Thời gian:</span> {booking?.schedule?.startTime && booking?.schedule?.expectedEndTime
+        //                                         ? `${formatTimeOnly(booking?.schedule?.startTime)} - ${formatTimeOnly(booking?.schedule?.expectedEndTime)}`
+        //                                         : 'Thời gian không hợp lệ'}
+        //                                     </h6>
+        //                                 </li>
+        //                             </ul>
+        //                         </Col>
+        //                         <Col>
+        //                             <ul>
+        //                                 {booking?.status === 'IN_PROGRESS' && (
+        //                                     <>
+        //                                         <li>
+        //                                             <h6><span>Giá công: </span> {booking?.bookingPrice?.laborPrice.toLocaleString() || 'Đang cập nhật..'} VNĐ</h6>
+        //                                         </li>
+        //                                         <li>
+        //                                             <h6>
+        //                                                 <span>Giá thiết bị: </span>
+        //                                                 {booking?.bookingItems?.length > 0
+        //                                                     ? booking.bookingItems.reduce(
+        //                                                         (total, item) => total + item.price * item.quantity,
+        //                                                         0
+        //                                                     ).toLocaleString() + ' VNĐ'
+        //                                                     : "Đang cập nhật.."}
+        //                                             </h6>
+        //                                         </li>
+        //                                         <li>
+        //                                             <h6><span>Thời gian bảo hành: </span> {booking?.bookingPrice?.warrantiesDuration || 'Đang cập nhật..'}</h6>
+        //                                         </li>
+        //                                     </>
+        //                                 )}
+
+        //                                 <li>
+        //                                     <h6><span>Trạng thái: </span>
+        //                                         <span className={`status-badge ${statusConfig.className}`}>
+        //                                             {statusConfig.text || 'Đang cập nhật..'}
+        //                                         </span>
+        //                                     </h6>
+        //                                 </li>
+
+
+        //                             </ul>
+        //                         </Col>
+        //                     </Row>
+        //                     <ul>
+        //                         {booking?.booking?.status === 'IN_PROGRESS' && (
+        //                             <li className="total-rate">
+        //                                 <h5>
+        //                                     <span>Tổng tạm tính: </span>
+        //                                     <span>{booking?.bookingPrice?.finalPrice.toLocaleString() || 'Đang cập nhật..'} VNĐ</span>
+        //                                 </h5>
+        //                             </li>
+        //                         )}
+        //                     </ul>
+
+        //                 </Container>
+        //                 <ul>
+
+
+
+        //                 </ul>
+        //             </div>
+        //         </div>
+        //     </div>
+        //     {booking?.booking?.status !== 'DONE' && (
+        //         <button onClick={handleCancel} className="btn btn-outline-danger" style={{ width: '100%', marginTop: -5 }}>Hủy đơn hàng</button>
+        //     )}
+
+        //     {selectedImage && (
+        //         <div
+        //             className="zoom-overlay"
+        //             onClick={() => setSelectedImage(null)}      // click nền để tắt
+        //         >
+        //             <img
+        //                 src={selectedImage}
+        //                 className="zoom-img"
+        //                 alt="zoom"
+        //                 onClick={(e) => e.stopPropagation()}     // ngăn sự kiện nổi bọt
+        //             />
+        //             <button
+        //                 className="zoom-close"
+        //                 onClick={() => setSelectedImage(null)}
+        //             >
+        //                 &times;
+        //             </button>
+        //         </div>
+        //     )}
+        // </div>
         <div className="booking-sidebar">
             <div className="booking-sidebar-card">
-                <div className="booking-sidebar-head">
-                    <h5>
-                        Chi tiết đơn hàng
-                    </h5>
-                </div>
-                <div className="booking-sidebar-body">
-                    <div className="booking-car-detail">
-                        <div
-                            className="d-flex flex-nowrap overflow-auto py-2"
-                            style={{ gap: "0.5rem" }}
-                        >
-                            {detailsBooking?.booking?.images?.map((image) => (
-                                <Image
-                                    key={image}
-                                    src={image}
-                                    thumbnail
-                                    onClick={() => setSelectedImage(image)}
-                                    style={{ maxHeight: 120, width: "auto", objectFit: "contain" }}
-                                />
-                            ))}
+                <div className="accordion-item border-0 mb-4">
+                    <div className="accordion-header">
+                        <div>
+                            <div className="booking-sidebar-head">
+                                <h5>
+                                    Thông tin chi tiết
+                                    {/* <i className="fas fa-chevron-down" /> */}
+                                </h5>
+                            </div>
                         </div>
                     </div>
-
-                    <div className="booking-vehicle-rates">
-                        <ul>
-                            <li>
-                                <h6><span>Loại dịch vụ:</span> {detailsBooking?.booking?.serviceId?.serviceName || 'Đang cập nhật..'}</h6>
-                            </li>
-                            <li>
-                                <h6><span>Địa chỉ:</span> {detailsBooking?.booking?.location?.address || 'Đang cập nhật..'}</h6>
-                            </li>
-                            <li>
-                                <h6><span>Tình trạng:</span> {detailsBooking?.booking?.description || 'Đang cập nhật..'}</h6>
-                            </li>
-                            <li>
-                                <h6><span>Ngày đặt lịch:</span> {formatDateOnly(detailsBooking?.booking?.schedule?.startTime) || 'Đang cập nhật..'}</h6>
-                            </li>
-                            <li>
-                                <h6><span>Thời gian:</span> {detailsBooking?.booking?.schedule?.startTime && detailsBooking?.booking?.schedule?.endTime
-                                    ? `${formatTimeOnly(detailsBooking?.booking?.schedule?.startTime)} - ${formatTimeOnly(detailsBooking?.booking?.schedule?.endTime)}`
-                                    : 'Thời gian không hợp lệ'}
-                                </h6>
-                            </li>
-
-                            {detailsBooking?.booking?.status === 'IN_PROGRESS' && (
-                                <>
-                                    <li>
-                                        <h6><span>Giá công: </span> {detailsBooking?.bookingPrice?.laborPrice.toLocaleString() || 'Đang cập nhật..'} VNĐ</h6>
-                                    </li>
-                                    <li>
+                    <div className="booking-sidebar-body">
+                        {booking?.images.lenght > 0 && (
+                            <div className="booking-car-detail">
+                                <div
+                                    className="d-flex flex-nowrap overflow-auto py-2"
+                                    style={{ gap: "0.5rem" }}
+                                >
+                                    {booking?.images?.map((image) => (
+                                        <Image
+                                            key={image}
+                                            src={image}
+                                            thumbnail
+                                            onClick={() => setSelectedImage(image)}
+                                            style={{ maxHeight: 120, width: "auto", objectFit: "contain" }}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="booking-vehicle-rates">
+                            <ul>
+                                {/* <li>
+                                    <div className="rental-charge">
                                         <h6>
-                                            <span>Giá thiết bị: </span>
-                                            {detailsBooking?.bookingItems?.length > 0
-                                                ? detailsBooking.bookingItems.reduce(
-                                                    (total, item) => total + item.price * item.quantity,
-                                                    0
-                                                ).toLocaleString() + ' VNĐ'
-                                                : "Đang cập nhật.."}
+                                            Rental Charges Rate <span> (1 day )</span>
                                         </h6>
-                                    </li>
-                                    <li>
-                                        <h6><span>Thời gian bảo hành: </span> {detailsBooking?.bookingPrice?.warrantiesDuration || 'Đang cập nhật..'}</h6>
-                                    </li>
-                                </>
-                            )}
-
-                            <li>
-                                <h6><span>Trạng thái: </span>
-                                    <span className={`status-badge ${statusConfig.className}`}>
-                                        {statusConfig.text || 'Đang cập nhật..'}
-                                    </span>
-                                </h6>
-                            </li>
-
-                            {detailsBooking?.booking?.status === 'IN_PROGRESS' && (
-                                <li className="total-rate">
-                                    <h5><span>Tổng tạm tính: </span> {detailsBooking?.bookingPrice?.finalPrice.toLocaleString() || 'Đang cập nhật..'} VNĐ</h5>
+                                        <span className="text-danger">(This does not include fuel)</span>
+                                    </div>
+                                    <h5>+ $300</h5>
+                                </li> */}
+                                <li>
+                                    <h6>Loại dịch vụ:</h6>
+                                    <h5>{booking?.serviceId?.serviceName || 'Đang cập nhật..'}</h5>
                                 </li>
-                            )}
-                        </ul>
+                                <li>
+                                    <h6>Loại đặt lịch:</h6>
+                                    <h5>{booking?.isUrgent ? 'Đặt ngay' : 'Đặt lịch' || 'Đang cập nhật..'}</h5>
+                                </li>
+                                <li>
+                                    <h6>Địa chỉ:</h6>
+                                    <h5>{booking?.location?.address || 'Đang cập nhật..'}</h5>
+                                </li>
+                                <li>
+                                    <h6>Mô tả:</h6>
+                                    <h5 style={{
+                                        wordWrap: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        whiteSpace: 'pre-wrap',
+                                        maxWidth: '200px',
+                                        lineHeight: '1.4'
+                                    }}>
+                                        {booking?.description || 'Đang cập nhật..'}
+                                    </h5>
+                                </li>
+                                {!booking?.isUrgent && (
+                                    <>
+                                        <li>
+                                            <h6>Ngày đặt lịch:</h6>
+                                            <h5>{formatDateOnly(booking?.schedule?.startTime) || 'Đang cập nhật..'}</h5>
+                                        </li>
+                                        <li>
+                                            <h6>Thời gian:</h6>
+                                            <h5>
+                                                {booking?.schedule?.startTime && booking?.schedule?.expectedEndTime
+                                                    ? `${formatTimeOnly(booking?.schedule?.startTime)} - ${formatTimeOnly(booking?.schedule?.expectedEndTime)}`
+                                                    : 'Thời gian không hợp lệ'}
+                                            </h5>
+                                        </li>
+                                    </>
+                                )}
+                                <li>
+                                    <h6>Trạng thái: </h6>
+                                    <h5 className={`status-badge ${statusConfig.className}`}>
+                                        {statusConfig.text || 'Đang cập nhật..'}
+                                    </h5>
+                                </li>
+
+                                {/* <li className="total-rate">
+                                    <h6>Subtotal</h6>
+                                    <h5>+$1604</h5>
+                                </li> */}
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>
-            {detailsBooking?.booking?.status !== 'DONE' && (
+
+            {booking?.status !== 'DONE' && (
                 <button onClick={handleCancel} className="btn btn-outline-danger" style={{ width: '100%', marginTop: -5 }}>Hủy đơn hàng</button>
+            )}
+            {user?.role?.name === 'TECHNICIAN' && booking?.status === 'AWAITING_CONFIRM' && (
+                <button
+                    className="btn btn-outline-success"
+                    style={{ width: '100%', marginTop: 5 }}
+                    disabled={confirming}
+                    onClick={handleTechnicianConfirm}
+                >
+                    {confirming ? 'Đang xác nhận...' : 'Chấp nhận yêu cầu'}
+                </button>
             )}
 
             {selectedImage && (

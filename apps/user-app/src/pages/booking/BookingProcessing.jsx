@@ -5,22 +5,21 @@ import Header from "../../components/common/Header";
 import BookingDetails from "./common/BookingDetails";
 import BookingWizard from "./common/BookingHeader";
 import MessageBox from "../../components/message/MessageBox";
-import TechnicianProfile from "../../components/profile/TechnicianProfile";
-import BookingItems from "./common/BookingItems";
 import { useBookingParams } from "../../hooks/useBookingParams";
 import { checkBookingAccess } from "../../hooks/checkBookingAccess";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchDetailsBookingById, proposeAdditionalItemsThunk, approveAdditionalItemsThunk, rejectAdditionalItemsThunk } from "../../features/bookings/bookingSlice";
 import { addItem, removeItem, updateItem } from "../../features/quotations/quotationSlice";
 import { onBookingStatusUpdate } from "../../services/socket";
 import { confirmJobDoneByTechnician } from '../../features/bookings/bookingAPI';
+import { Accordion } from "react-bootstrap";
+import { fetchBookingById } from "../../features/bookings/bookingSlice";
 
 function BookingProcessing() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { bookingId, stepsForCurrentUser } = useBookingParams();
     const { user } = useSelector((state) => state.auth);
-    const { detailsBooking, status: bookingStatusState } = useSelector((state) => state.booking);
+    const { booking, status: bookingStatusState } = useSelector((state) => state.booking);
     const [isChecking, setIsChecking] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState(null);
     const [authError, setAuthError] = useState(null);
@@ -35,7 +34,7 @@ function BookingProcessing() {
 
     useEffect(() => {
         if (bookingId) {
-            dispatch(fetchDetailsBookingById(bookingId));
+            dispatch(fetchBookingById(bookingId));
         }
     }, [dispatch, bookingId]);
 
@@ -76,7 +75,7 @@ function BookingProcessing() {
                 setShowCancelModal(true);
             }
             if (data.bookingId === bookingId) {
-                dispatch(fetchDetailsBookingById(bookingId));
+                dispatch(fetchBookingById(bookingId));
             }
         });
         return unsubscribe;
@@ -88,10 +87,10 @@ function BookingProcessing() {
             return;
         }
 
-        if (detailsBooking?.booking?.status !== 'WAITING_CONFIRM') {
-            alert("Bạn cần đợi kỹ thuật viên xác nhận hoàn thành trước khi tiến hành thanh toán");
-            return;
-        }
+        // if (booking?.booking?.status !== 'WAITING_CONFIRM') {
+        //     alert("Bạn cần đợi kỹ thuật viên xác nhận hoàn thành trước khi tiến hành thanh toán");
+        //     return;
+        // }
 
         navigate(`/checkout?bookingId=${bookingId}`);
     };
@@ -161,47 +160,6 @@ function BookingProcessing() {
         }
     };
 
-    // Technician gửi yêu cầu phát sinh
-    const handleSendAdditionalRequest = () => {
-        if (!bookingId || items.length === 0) {
-            alert('Vui lòng thêm thiết bị phát sinh trước khi gửi!');
-            return;
-        }
-        dispatch(proposeAdditionalItemsThunk({ bookingId, items, reason: '' }))
-            .unwrap()
-            .then(() => {
-                alert('Đã gửi yêu cầu phát sinh đến khách hàng!');
-            })
-            .catch((err) => {
-                alert('Gửi yêu cầu thất bại: ' + err);
-            });
-    };
-
-    // Customer accept/reject
-    const handleAcceptAdditional = () => {
-        dispatch(approveAdditionalItemsThunk({ bookingId, reason: '' }))
-            .unwrap()
-            .then(() => {
-                setShowAdditionalPopup(false);
-                alert('Bạn đã đồng ý chi phí phát sinh!');
-            })
-            .catch((err) => {
-                alert('Xác nhận thất bại: ' + err);
-            });
-    };
-
-    const handleRejectAdditional = () => {
-        dispatch(rejectAdditionalItemsThunk({ bookingId, reason: '' }))
-            .unwrap()
-            .then(() => {
-                setShowAdditionalPopup(false);
-                alert('Bạn đã từ chối chi phí phát sinh!');
-            })
-            .catch((err) => {
-                alert('Từ chối thất bại: ' + err);
-            });
-    };
-
     if (isAuthorized === null) {
         return <div>Loading...</div>;
     }
@@ -223,68 +181,78 @@ function BookingProcessing() {
                     <div className="booking-detail-info">
                         <div className="row">
                             <div className="col-lg-4">
-                                {user?.role?.name === 'CUSTOMER' && (
-                                    <TechnicianProfile technician={detailsBooking?.booking?.technicianId} />
-                                )}
+                                {/* {user?.role?.name === 'CUSTOMER' && (
+                                    <TechnicianProfile technician={booking?.booking?.technicianId} />
+                                )} */}
 
                                 <BookingDetails bookingId={bookingId} />
+
                             </div>
 
                             <div className="col-lg-8">
+                                {/* {user?.role?.name === 'CUSTOMER' && (
+                                    <TechnicianProfile technician={booking?.booking?.technicianId} />
+                                )} */}
                                 {/* Gắn chat component ở đây */}
-                                {detailsBooking?.booking?.isChatAllowed && detailsBooking?.booking?.isVideoCallAllowed ? (
-                                    <MessageBox bookingId={bookingId} />
+                                {booking?.isChatAllowed && booking?.isVideoCallAllowed ? (
+                                    <div style={{ paddingBottom: 10 }}>
+                                        <MessageBox bookingId={bookingId} />
+                                    </div>
                                 ) : (
                                     <div className="alert alert-warning">
                                         You can't chat or call video.
                                     </div>
                                 )}
 
-                                <div style={{ marginTop: 15 }}>
-                                    <BookingItems bookingItems={detailsBooking?.bookingItems} />
-                                </div>
-
                                 {items.length > 0 && (
-                                    <div className="table-responsive" style={{ marginBottom: 15 }}>
-                                        <h4 style={{ marginBottom: 10 }} >Thiết bị phát sinh</h4>
-                                        <table className="table table-center table-hover">
-                                            <thead className="thead-light">
-                                                <tr>
-                                                    <th>Tên thiết bị</th>
-                                                    <th>Giá tiền</th>
-                                                    <th>Số lượng</th>
-                                                    <th>Ghi chú</th>
-                                                    <th>Hành động</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {items.map((item, idx) => (
-                                                    <tr key={idx}>
-                                                        <td>{item.name}</td>
-                                                        <td>{item.price.toLocaleString()}</td>
-                                                        <td>{item.quantity}</td>
-                                                        <td>{item.note}</td>
-                                                        <td>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-sm btn-warning me-2"
-                                                                onClick={() => handleEdit(idx)}
-                                                            >
-                                                                Sửa
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-sm btn-danger"
-                                                                onClick={() => handleDelete(idx)}
-                                                            >
-                                                                Xóa
-                                                            </button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
+                                    <Accordion defaultActiveKey={['0']} alwaysOpen>
+                                        <Accordion.Item eventKey="0">
+                                            <Accordion.Header>Thiết bị phát sinh</Accordion.Header>
+                                            <Accordion.Body className="p-0">
+                                                {items.length > 0 && (
+                                                    <div className="table-responsive" style={{ marginBottom: 15 }}>
+                                                        <table className="table table-center table-hover">
+                                                            <thead className="thead-light">
+                                                                <tr>
+                                                                    <th>Tên thiết bị</th>
+                                                                    <th>Giá tiền</th>
+                                                                    <th>Số lượng</th>
+                                                                    <th>Ghi chú</th>
+                                                                    <th>Hành động</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {items.map((item, idx) => (
+                                                                    <tr key={idx}>
+                                                                        <td>{item.name}</td>
+                                                                        <td>{item.price.toLocaleString()}</td>
+                                                                        <td>{item.quantity}</td>
+                                                                        <td>{item.note}</td>
+                                                                        <td>
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn btn-sm btn-warning me-2"
+                                                                                onClick={() => handleEdit(idx)}
+                                                                            >
+                                                                                Sửa
+                                                                            </button>
+                                                                            <button
+                                                                                type="button"
+                                                                                className="btn btn-sm btn-danger"
+                                                                                onClick={() => handleDelete(idx)}
+                                                                            >
+                                                                                Xóa
+                                                                            </button>
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                )}
+                                            </Accordion.Body>
+                                        </Accordion.Item>
+                                    </Accordion>
                                 )}
 
                             </div>
@@ -304,13 +272,13 @@ function BookingProcessing() {
                             )}
 
                         {user?.role?.name === 'TECHNICIAN'
-                            && detailsBooking?.booking.status === 'IN_PROGRESS'
+                            && booking.status === 'IN_PROGRESS'
                             && (
                                 <>
                                     {items.length > 0 && (
                                         <button
                                             className="btn btn-primary"
-                                            onClick={handleSendAdditionalRequest}
+                                        // onClick={handleSendAdditionalRequest}
                                         >
                                             Gửi yêu cầu
                                         </button>

@@ -6,8 +6,8 @@ import ServiceSelector from "./common/ServiceSelector";
 import ImageUploader from "./common/ImageUploader";
 import { useDispatch, useSelector } from "react-redux";
 import { Spinner } from "react-bootstrap";
-import { useCallback, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useCallback, useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { createNewBooking } from "../../features/bookings/bookingSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { useBookingParams } from "../../hooks/useBookingParams";
@@ -16,8 +16,12 @@ import { validateBookingData } from "../../validations/bookingValidation";
 function BookingPage() {
     const { categories, status: categoryStatus } = useSelector((state) => state.categories);
     const { services, status: serviceStatus } = useSelector((state) => state.services);
+    const newBooking = useSelector(state => state.booking.newBooking); console.log('--- GET BOOKING CREATED ---', newBooking)
     const { stepsForCurrentUser } = useBookingParams();
     const [errors, setErrors] = useState({});
+    const [searchParams] = useSearchParams();
+    const type = searchParams.get('type');
+    const serviceId = searchParams.get('serviceId');
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -37,10 +41,6 @@ function BookingPage() {
         endTime: '',
         images: []
     });
-
-    const handleServiceChange = useCallback((service) => {
-        setBookingData(prev => ({ ...prev, service }));
-    }, []);
 
     const handleAddressInput = (e) => {
         setAddressInput(e.target.value);
@@ -76,36 +76,71 @@ function BookingPage() {
         setBookingData(prev => ({ ...prev, images: files }));
     };
 
+    const handleServiceChange = (service) => {
+        console.log('Service selected:', service);
+        setBookingData(prev => ({
+            ...prev,
+            service: service
+        }));
+    };
+
+    // Auto-select service when serviceId is provided in URL
+    useEffect(() => {
+        console.log('Auto-select effect:', { serviceId, servicesLength: services.length });
+        if (serviceId && services.length > 0) {
+            const selectedService = services.find(service => service._id === serviceId);
+            console.log('Found service:', selectedService);
+            if (selectedService) {
+                setBookingData(prev => ({
+                    ...prev,
+                    service: selectedService
+                }));
+                console.log('Service auto-selected:', selectedService.serviceName);
+            }
+        }
+    }, [serviceId, services]);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const newErrors = validateBookingData(bookingData, addressInput, geoJson);
+        const newErrors = validateBookingData(bookingData, addressInput, geoJson, type);
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) {
             return;
         }
 
-        const startDateTime = new Date(`${bookingData.scheduleDate}T${bookingData.startTime}`);
-        const endDateTime = new Date(`${bookingData.scheduleDate}T${bookingData.endTime}`);
+        const startDateTime = new Date(`${bookingData?.scheduleDate}T${bookingData?.startTime}`);
+        const endDateTime = new Date(`${bookingData?.scheduleDate}T${bookingData?.endTime}`);
 
         const formData = new FormData();
-        formData.append('serviceId', bookingData.service?._id);
+
+        // Validate service is selected
+        if (!bookingData.service?._id) {
+            alert('Vui lòng chọn dịch vụ!');
+            return;
+        }
+
+        console.log('Submitting with service:', bookingData.service);
+        formData.append('type', type);
+        formData.append('serviceId', bookingData.service._id);
         formData.append('address', addressInput); // địa chỉ khách nhập
         formData.append('geoJson', JSON.stringify(geoJson)); // vị trí marker
         formData.append('description', bookingData.description);
-        formData.append('startTime', startDateTime.toISOString());
-        formData.append('endTime', endDateTime.toISOString());
-        // for (const file of bookingData.images) {
-        //     formData.append('images', file);
-        // }
+        if (type === 'scheduled') {
+            formData.append('startTime', startDateTime.toISOString());
+            formData.append('endTime', endDateTime.toISOString());
+        }
+
         if (bookingData.images && bookingData.images.length > 0) {
             bookingData.images.forEach(file => {
-                formData.append('images', file); // key phải là 'images'
+                formData.append('images', file);
             });
         }
-        console.log('Files to upload:', bookingData.images);
+        // console.log('Files to upload:', bookingData.images);
 
         try {
-            console.log("Đang gửi FormData đến backend...", formData);
+            console.log("Đang gửi FormData đến backend...");
+            console.log("Selected service:", bookingData.service);
+            console.log("Service ID:", bookingData.service?._id);
             for (let [key, value] of formData.entries()) {
                 console.log(key, value);
             }
@@ -116,8 +151,8 @@ function BookingPage() {
             // console.log('--- RES BOOKING ---', res);
             // console.log('--- RES BOOKING ID ---', res.data._id);
 
-            if (bookingResult && bookingResult._id) {
-                navigate(`/booking/choose-technician?bookingId=${bookingResult._id}`);
+            if (bookingResult?.booking?._id) {
+                navigate(`/booking/choose-technician?bookingId=${bookingResult?.booking?._id}`);
             } else {
                 alert('Đặt lịch thành công nhưng không thể chuyển sang trang chọn kỹ thuật viên!');
             }
@@ -127,13 +162,23 @@ function BookingPage() {
         }
     };
 
-    if (categoryStatus === 'loading' || serviceStatus === 'loading')
+    // Show loading if services are still loading
+    if (serviceStatus === 'loading' || categoryStatus === 'loading') {
         return (
             <>
-                <Spinner animation="border" variant="warning" />
-                <h6>Đang tải dữ liệu</h6>
+                <Header />
+                <BreadcrumbBar title={'Đặt Lịch Sửa Chữa'} subtitle={'Create Your Booking Service'} />
+                <div className="booking-new-module">
+                    <div className="container">
+                        <div className="text-center py-5">
+                            <Spinner animation="border" variant="warning" />
+                            <h6 className="mt-3">Đang tải dữ liệu...</h6>
+                        </div>
+                    </div>
+                </div>
             </>
         );
+    }
 
     return (
         <>
@@ -231,60 +276,64 @@ function BookingPage() {
                                     )}
                                 </div>
 
-                                <div className="input-block">
-                                    <label className="form-label">
-                                        Ngày đặt lịch <span className="text-danger">*</span>
-                                    </label>
-                                    <div className="group-img">
-                                        <input
-                                            name="scheduleDate"
-                                            type="date"
-                                            className="form-control"
-                                            value={bookingData.scheduleDate}
-                                            onChange={handleInputChange}
-                                        />
-                                        {/* <span className="input-cal-icon"><i className="bx bx-calendar"></i></span> */}
-                                    </div>
-                                    {errors.scheduleDate && (
-                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.scheduleDate}</div>
-                                    )}
-                                </div>
+                                {type === 'scheduled' && (
+                                    <>
+                                        <div className="input-block">
+                                            <label className="form-label">
+                                                Ngày đặt lịch <span className="text-danger">*</span>
+                                            </label>
+                                            <div className="group-img">
+                                                <input
+                                                    name="scheduleDate"
+                                                    type="date"
+                                                    className="form-control"
+                                                    value={bookingData.scheduleDate}
+                                                    onChange={handleInputChange}
+                                                />
+                                                {/* <span className="input-cal-icon"><i className="bx bx-calendar"></i></span> */}
+                                            </div>
+                                            {errors.scheduleDate && (
+                                                <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.scheduleDate}</div>
+                                            )}
+                                        </div>
 
-                                <div className="input-block">
-                                    <label className="form-label">
-                                        Thời gian bắt đầu <span className="text-danger">*</span>
-                                    </label>
-                                    <div className="group-img">
-                                        <input
-                                            name="startTime"
-                                            type="time"
-                                            className="form-control"
-                                            value={bookingData.startTime}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    {errors.startTime && (
-                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.startTime}</div>
-                                    )}
-                                </div>
+                                        <div className="input-block">
+                                            <label className="form-label">
+                                                Thời gian bắt đầu <span className="text-danger">*</span>
+                                            </label>
+                                            <div className="group-img">
+                                                <input
+                                                    name="startTime"
+                                                    type="time"
+                                                    className="form-control"
+                                                    value={bookingData.startTime}
+                                                    onChange={handleInputChange}
+                                                />
+                                            </div>
+                                            {errors.startTime && (
+                                                <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.startTime}</div>
+                                            )}
+                                        </div>
 
-                                <div className="input-block">
-                                    <label className="form-label">
-                                        Thời gian kết thúc <span className="text-danger">*</span>
-                                    </label>
-                                    <div className="group-img">
-                                        <input
-                                            name="endTime"
-                                            type="time"
-                                            className="form-control"
-                                            value={bookingData.endTime}
-                                            onChange={handleInputChange}
-                                        />
-                                    </div>
-                                    {errors.endTime && (
-                                        <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.endTime}</div>
-                                    )}
-                                </div>
+                                        <div className="input-block">
+                                            <label className="form-label">
+                                                Thời gian kết thúc <span className="text-danger">*</span>
+                                            </label>
+                                            <div className="group-img">
+                                                <input
+                                                    name="endTime"
+                                                    type="time"
+                                                    className="form-control"
+                                                    value={bookingData.endTime}
+                                                    onChange={handleInputChange}
+                                                />
+                                            </div>
+                                            {errors.endTime && (
+                                                <div style={{ color: 'red', fontSize: 13, marginTop: 2 }}>{errors.endTime}</div>
+                                            )}
+                                        </div>
+                                    </>
+                                )}
 
                                 <ImageUploader onFilesSelect={handleFilesSelect} />
                                 {errors.images && (

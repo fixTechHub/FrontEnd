@@ -17,5 +17,7 @@ export const cancelBookingById = (bookingId, reason) => apiClient.post(`/booking
 export const confirmJobDone = (bookingId) => apiClient.post(`/bookings/${bookingId}/done`);
 export const getBookingById = (bookingId) => apiClient.get(`/bookings/${bookingId}`);
 export const getTopBookedServices = () => apiClient.get(`/bookings/top-services`);
+export const selectTechnician = (bookingId, technicianId) => apiClient.post(`/bookings/${bookingId}/select-technician`, { technicianId });
 
 export const confirmJobDoneByTechnician = (bookingId) => apiClient.post(`/technicians/${bookingId}/done`);
+export const technicianConfirmBooking = (bookingId) => apiClient.post(`/bookings/${bookingId}/technician-confirm`);
