@@ -1,11 +1,10 @@
 export const BOOKING_STATUS = {
     PENDING: 'PENDING',
     QUOTED: 'QUOTED',
-    CONFIRMED: 'CONFIRMED',
+    AWAITING_CONFIRM: 'AWAITING_CONFIRM',
     IN_PROGRESS: 'IN_PROGRESS',
-    COMPLETED: 'COMPLETED',
+    DONE: 'DONE',
     CANCELLED: 'CANCELLED',
-    REJECTED: 'REJECTED',
 };
 
 export const BOOKING_STATUS_CONFIG = {
@@ -17,8 +16,8 @@ export const BOOKING_STATUS_CONFIG = {
         text: 'Đã Nhận Báo Giá',
         className: 'status-quoted'
     },
-    [BOOKING_STATUS.WAITING_CONFIRM]: {
-        text: 'Chờ Khách Hàng Xác Nhận',
+    [BOOKING_STATUS.AWAITING_CONFIRM]: {
+        text: 'Chờ Kỹ Thuật Viên Xác Nhận',
         className: 'status-confirmed'
     },
     [BOOKING_STATUS.IN_PROGRESS]: {

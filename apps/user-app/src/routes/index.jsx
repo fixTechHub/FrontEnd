@@ -5,7 +5,6 @@ import { checkAuthThunk } from "../features/auth/authSlice";
 import ProtectedRoute from "./access/PrivateRoute";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import React, { useEffect, useState } from 'react';
 
 import PrivateRoute from "./access/PrivateRoute";
 import HomePage from "../pages/home/HomePage";
@@ -36,28 +35,11 @@ import VideoCallPage from "../pages/video-call/VideoCallPage";
 import NotificationsPage from "../pages/notifications/NotificationPage";
 import ReceiptPage from "../pages/receipt/ReceiptPage";
 import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
-// import { checkAuthThunk } from '../features/auth/authSlice';
+import TechnicianDashboard from "../pages/technician/TechnicianDashboard";
+import ServiceList from "../pages/home/ServiceList";
+
 export default function AppRoutes() {
-  // const dispatch = useDispatch();
   const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
-  // const [isAuthChecked, setIsAuthChecked] = useState(false);
-
-  //   useEffect(() => {
-  //     dispatch(checkAuthThunk()).finally(() => {
-  //       setIsAuthChecked(true);
-  //     });
-  //   }, [dispatch]);
-
-  // if (!isAuthChecked) {
-  //     return (
-  //       <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-  //         <div className="spinner-border text-warning" role="status">
-  //           <span className="visually-hidden">Loading...</span>
-  //         </div>
-  //         <p className="ms-3">Đang tải...</p>
-  //       </div>
-  //     );
-  //   }
 
   return (
     <Routes>
@@ -68,6 +50,7 @@ export default function AppRoutes() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
       <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
+      <Route path="/services" element={<ServiceList />} />
 
 
       {/* ================= VERIFICATION ROUTES ================= */}
@@ -114,10 +97,7 @@ export default function AppRoutes() {
       <Route
         path="/technician/complete-profile"
         element={
-          <PrivateRoute
-            isAllowed={!!user && user.role?.name === "TECHNICIAN"}
-            redirectPath={user ? "/" : "/login"}
-          >
+          <PrivateRoute requiredRole="TECHNICIAN" redirectPath={user ? "/" : "/login"}>
             <CompleteProfile />
           </PrivateRoute>
         }
@@ -213,7 +193,7 @@ export default function AppRoutes() {
       <Route
         path="/booking/booking-processing"
         element={
-          <PrivateRoute requiredRole="CUSTOMER">
+          <PrivateRoute>
             <BookingProcessing />
           </PrivateRoute>
         }
@@ -255,11 +235,20 @@ export default function AppRoutes() {
 
       {/* ================= TECHNICIAN PROTECTED ROUTES ================= */}
       <Route
-        path="/technician/send-quotation"
+        path="/technician/dashboard"
         element={
           // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
-            <SendQuotation />
+          <TechnicianDashboard />
           // </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/technician/send-quotation"
+        element={
+          <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <SendQuotation />
+          </PrivateRoute>
         }
       />
 
@@ -267,7 +256,7 @@ export default function AppRoutes() {
         path="/technician/waiting-confirm"
         element={
           // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
-            <WaitingConfirm />
+          <WaitingConfirm />
           // </PrivateRoute>
         }
       />

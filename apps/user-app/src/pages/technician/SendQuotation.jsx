@@ -132,7 +132,7 @@ function SendQuotationToCustomer() {
                                     <form onSubmit={handleSendQuotation} className="card-body">
                                         <div className="wallet-header d-flex justify-content-between align-items-center">
                                             <h4>Báo giá của bạn</h4>
-                                            <a href="#" data-bs-toggle="modal" data-bs-target="#add_card">
+                                            <a data-bs-toggle="modal" data-bs-target="#add_card">
                                                 <i className="feather-plus-circle"></i>
                                             </a>
                                         </div>

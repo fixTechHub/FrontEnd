@@ -94,4 +94,4 @@ const TechnicianOnboardingModal = () => {
   );
 };
 
-export default TechnicianOnboardingModal; 
+export default TechnicianOnboardingModal;

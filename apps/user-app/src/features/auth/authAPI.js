@@ -235,6 +235,16 @@ const authAPI = {
             throw handleError(error);
         }
     },
+
+    // Update user role (for users registered via Google)
+    updateRole: async (role) => {
+        try {
+            const response = await apiClient.post('/auth/update-role', { role });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
 };
 
 // Delete Account APIs
