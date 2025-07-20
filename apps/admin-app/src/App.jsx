@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './App.css'
 import AppRoutes from './routes'
-import AppProvider from '../../user-app/src/app/AppProvider';
+import AppProvider from '../src/app/AppProvider';
 
 function App() {
   const [count, setCount] = useState(0)

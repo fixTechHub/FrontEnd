@@ -10,7 +10,11 @@ import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 const TechnicianJobList = () => {
     const dispatch = useDispatch();
     const { profile, bookings, loading, error } = useSelector((state) => state.technician);
-    const { technicianId } = useParams();
+    const { technician } = useSelector((state) => state.auth);
+
+    const technicianId = technician._id;
+    console.log(technicianId);
+
     useEffect(() => {
         if (technicianId) {
             dispatch(fetchTechnicianJobs(technicianId));
@@ -38,19 +42,19 @@ const TechnicianJobList = () => {
                                 <div className="dashboard-menu">
                                     <ul>
                                         <li>
-                                            <Link to={`/technician/${technicianId}`}>
+                                            <Link to={`/technician`}>
                                                 <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
                                                 <span>Dashboard</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/booking`} className="active">
+                                            <Link to={`/technician/booking`} className="active">
                                                 <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
                                                 <span>My Bookings</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/feedback`}>
+                                            <Link to="/technician/feedback" >
                                                 <img src="/public/img/icons/review-icon.svg" alt="Icon" />
                                                 <span>Reviews</span>
                                             </Link>
@@ -68,13 +72,13 @@ const TechnicianJobList = () => {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/user-wallet">
+                                            <Link to="/technician/deposit">
                                                 <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
                                                 <span>My Wallet</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/earning`}>
+                                            <Link to={`/technician/earning`} >
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>My Earnings</span>
                                             </Link>
@@ -201,21 +205,46 @@ const TechnicianJobList = () => {
                                             <th>Tên Khách Hàng</th>
                                             <th>Dịch vụ</th>
                                             <th>Địa chỉ</th>
-                                            <th>Thời gian</th>
+                                            <th>Thời gian đến</th>
                                             <th>Trạng thái</th>
-                                            <th></th>
+
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {Array.isArray(bookings) && bookings.map((b) => {
                                             const id = b.bookingId || b._id;
+                                            console.log(bookings);
+
+                                            console.log("bôking" + id);
+
                                             return (
                                                 <tr key={id}>
                                                     <td>{b.bookingCode}</td>
                                                     <td>{b.customerName}</td>
                                                     <td>{b.serviceName}</td>
                                                     <td>{b.address}</td>
-                                                    <td>{new Date(b.schedule).toLocaleString()}</td>
+                                                    <td>
+                                                        
+                                                        {new Date(b.schedule.startTime).toLocaleTimeString('vi-VN', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}{" "}
+                                                        {new Date(b.schedule.startTime).toLocaleDateString('vi-VN', {
+                                                            day: '2-digit',
+                                                            month: '2-digit',
+                                                            year: 'numeric'
+                                                        })}{" "}
+                                                        -{" "}
+                                                        {new Date(b.schedule.expectedEndTime).toLocaleTimeString('vi-VN', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}{" "}
+                                                        {new Date(b.schedule.expectedEndTime).toLocaleDateString('vi-VN', {
+                                                            day: '2-digit',
+                                                            month: '2-digit',
+                                                            year: 'numeric'
+                                                        })}
+                                                    </td>
                                                     <td>
                                                         <span
                                                             className={
@@ -235,7 +264,7 @@ const TechnicianJobList = () => {
                                                             </a>
                                                             <div className="dropdown-menu dropdown-menu-end">
                                                                 <Link
-                                                                    to={`/technician/${technicianId}/booking/${id}`}
+                                                                    to={`/technician/booking/${id}`}
                                                                     className="dropdown-item"
                                                                 >
                                                                     <i className="feather-eye"></i> View

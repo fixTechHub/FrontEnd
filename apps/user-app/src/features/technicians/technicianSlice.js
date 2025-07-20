@@ -180,9 +180,9 @@ export const fetchFeedbacks = createAsyncThunk(
 
 export const uploadCertificate = createAsyncThunk(
   'technician/uploadCertificate',
-  async (formData, thunkAPI) => {
+  async ({ formData, technicianId }, thunkAPI) => {
     try {
-      const data = await uploadCertificateAPI(formData);
+      const data = await uploadCertificateAPI(formData, technicianId);
       return data; // trả về { success, message, fileUrl }
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -315,6 +315,7 @@ const technicianSlice = createSlice({
         state.error = action.payload;
       })
 
+      //certificates
       .addCase(getCertificates.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -369,6 +370,8 @@ const technicianSlice = createSlice({
       .addCase(uploadCertificate.pending, (state) => {
         state.certificateUpload.loading = true;
         state.certificateUpload.error = null;
+        state.certificateUpload.success = false;
+        state.certificateUpload.message = '';
       })
       .addCase(uploadCertificate.fulfilled, (state, action) => {
         state.certificateUpload.loading = false;
@@ -378,8 +381,10 @@ const technicianSlice = createSlice({
       })
       .addCase(uploadCertificate.rejected, (state, action) => {
         state.certificateUpload.loading = false;
-        state.certificateUpload.error = action.payload;
-      });
+        state.certificateUpload.error = action.payload || 'Lỗi không xác định';
+      })
+
+
   }
 });
 

@@ -18,7 +18,6 @@ import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ChooseTechnician from '../pages/booking/ChooseTechnician';
 import BookingProcessing from "../../../user-app/src/pages/booking/BookingProcessing";
-import RegisterTechnician from "../../../admin-app/src/pages/technician-dashboard/RegisterTechnician";
 import ContractComplete from '../pages/contracts/ContractComplete';
 import CheckoutPage from '../pages/booking/CheckoutPage';
 import PaymentSuccess from "../pages/transaction/PaymentSuccess";
@@ -39,29 +38,10 @@ import ReceiptPage from "../pages/receipt/ReceiptPage";
 import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
 import UploadCertificateForm from "../pages/technician/UploadCer";
 import SubmitFeedback from "../pages/feedback/SubmitFeedback";
+import ServiceList from "../pages/home/ServiceList";
 
-// import { checkAuthThunk } from '../features/auth/authSlice';
 export default function AppRoutes() {
-  // const dispatch = useDispatch();
   const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
-  // const [isAuthChecked, setIsAuthChecked] = useState(false);
-
-  //   useEffect(() => {
-  //     dispatch(checkAuthThunk()).finally(() => {
-  //       setIsAuthChecked(true);
-  //     });
-  //   }, [dispatch]);
-
-  // if (!isAuthChecked) {
-  //     return (
-  //       <div className="loading-wrapper" style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
-  //         <div className="spinner-border text-warning" role="status">
-  //           <span className="visually-hidden">Loading...</span>
-  //         </div>
-  //         <p className="ms-3">Đang tải...</p>
-  //       </div>
-  //     );
-  //   }
 
   return (
     <Routes>
@@ -71,7 +51,8 @@ export default function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-      <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
+      <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
+      <Route path="/services" element={<ServiceList />} />
 
 
       {/* ================= VERIFICATION ROUTES ================= */}
@@ -115,12 +96,12 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
-      <Route path="/technician/:technicianId" element={<TechnicianDashboard />} />
-      <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
-      <Route path="/technician/:technicianId/booking" element={< TechnicianJobList/>} />
-      <Route path="/technician/:technicianId/booking/:bookingId" element={< TechnicianJob/>} />
+      <Route path="/technician" element={<TechnicianDashboard />} />
+      <Route path="/technician/earning" element={<ViewEarningAndCommission />} />
+      <Route path="/technician/booking" element={< TechnicianJobList/>} />
+      <Route path="/technician/booking/:bookingId" element={< TechnicianJob/>} />
       <Route path="/technician/:technicianId/certificate" element={< CertificateList/>} />
-      <Route path="/technician/:technicianId/feedback" element={< ListFeedback/>} />
+      <Route path="/technician/feedback" element={< ListFeedback/>} />
       <Route path="/technician/upload-certificate" element={<UploadCertificateForm />} />
       <Route path="/feedback/submit/:bookingId" element={<SubmitFeedback />} />
 
@@ -133,10 +114,7 @@ export default function AppRoutes() {
       <Route
         path="/technician/complete-profile"
         element={
-          <PrivateRoute
-            isAllowed={!!user && user.role?.name === "TECHNICIAN"}
-            redirectPath={user ? "/" : "/login"}
-          >
+          <PrivateRoute requiredRole="TECHNICIAN" redirectPath={user ? "/" : "/login"}>
             <CompleteProfile />
           </PrivateRoute>
         }
@@ -216,25 +194,25 @@ export default function AppRoutes() {
       <Route
         path="/booking"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <BookingPage />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
         path="/booking/choose-technician"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute requiredRole="CUSTOMER">
             <ChooseTechnician />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
         path="/booking/booking-processing"
         element={
-          // <PrivateRoute isAllowed={!!user}>
+          <PrivateRoute>
             <BookingProcessing />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
       <Route
@@ -274,11 +252,21 @@ export default function AppRoutes() {
 
       {/* ================= TECHNICIAN PROTECTED ROUTES ================= */}
       <Route
+        path="/technician/dashboard"
+        element={
+          <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+          <TechnicianDashboard />
+          </PrivateRoute>
+         
+        }
+      />
+
+      <Route
         path="/technician/send-quotation"
         element={
-          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+          <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
             <SendQuotation />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
 
@@ -286,7 +274,7 @@ export default function AppRoutes() {
         path="/technician/waiting-confirm"
         element={
           // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
-            <WaitingConfirm />
+          <WaitingConfirm />
           // </PrivateRoute>
         }
       />

@@ -9,12 +9,13 @@ import { Link } from 'react-router-dom';
 
 function ViewEarningAndCommission() {
     const dispatch = useDispatch();
-    const { technicianId } = useParams();
-    console.log("tech:" + technicianId);
+    // const { technicianId } = useParams();
+    // console.log("tech:" + technicianId);
 
     const { earnings, loading, error } = useSelector((state) => state.technician);
     const { user,technician } = useSelector((state) => state.auth);
-    console.log(technician);
+    const technicianId = technician._id;
+    console.log("tech"+technicianId) ;
  
 
     useEffect(() => {
@@ -130,8 +131,8 @@ function ViewEarningAndCommission() {
                                         {Array.isArray(earnings) && earnings.length > 0 ? (
                                             earnings.map((item, index) => (
                                                 <tr key={item.bookingId ?? item._id ?? index}>
-                                                    <td>{item.bookingInfo?.customerName?.fullName ?? 'Không có'}</td>
-                                                    <td>{item.bookingInfo?.service?.serviceName ?? 'Không có'}</td>
+                                                    <td>{item.bookingInfo?.customerName ?? 'Không có'}</td>
+                                                    <td>{item.bookingInfo?.service ?? 'Không có'}</td>
                                                     <td>{item.commissionAmount?.toLocaleString() ?? '0'} VNĐ</td>
                                                     <td>{item.holdingAmount?.toLocaleString() ?? '0'} VNĐ</td>
                                                     <td>{item.technicianEarning?.toLocaleString() ?? '0'} VNĐ</td>

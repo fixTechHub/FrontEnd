@@ -10,8 +10,7 @@ import { Link } from 'react-router-dom';
 function ViewTechnicianProfile() {
     const dispatch = useDispatch();
     const { profile, loading, error } = useSelector(state => state.technician);
-    console.log("profile", profile);
-
+    // const { user,technician } = useSelector((state) => state.auth);
     const { technicianId } = useParams();
 
     useEffect(() => {
@@ -25,8 +24,11 @@ function ViewTechnicianProfile() {
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
     if (!profile) return <p>No profile data.</p>;
 
-    const [technician, certificates] = profile ?? []; 
+    
 
+    const [technician, certificates] = profile ?? []; 
+    console.log("profile", profile);
+    
     const user = technician?.userId ?? {};
     const specialties = technician?.specialtiesCategories ?? [];
 
@@ -44,19 +46,19 @@ function ViewTechnicianProfile() {
                                 <div className="dashboard-menu">
                                     <ul>
                                         <li>
-                                            <Link to={`/technician/${technicianId}`}>
+                                            <Link to={`/technician`}>
                                                 <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
                                                 <span>Dashboard</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/booking`} >
+                                            <Link to={`/technician/booking`} >
                                                 <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
                                                 <span>My Bookings</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/user-reviews">
+                                            <Link to="/techincian/feedback">
                                                 <img src="/public/img/icons/review-icon.svg" alt="Icon" />
                                                 <span>Reviews</span>
                                             </Link>
@@ -80,7 +82,7 @@ function ViewTechnicianProfile() {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/earning`} >
+                                            <Link to={`/technician/earning`} >
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>My Earnings</span>
                                             </Link>

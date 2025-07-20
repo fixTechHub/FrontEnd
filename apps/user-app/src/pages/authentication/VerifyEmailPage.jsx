@@ -71,11 +71,18 @@ function VerifyEmailPage() {
         const resendEndStored = readTimestamp(storageKey + '_resend', 0);
         const expireEndStored = readTimestamp(storageKey + '_expire', 0);
 
-        const resendEnd = resendEndStored;
-        const expireEnd = expireEndStored || (async () => { const end = now + 300000; localStorage.setItem(storageKey + '_expire', end.toString()); return end; })();
+        // Nếu thời gian resend đã hết hạn, đặt lại về 0
+        const resendEnd = resendEndStored > now ? resendEndStored : 0;
+
+        // Nếu chưa có expireEnd hoặc đã quá hạn, tạo mới 5 phút
+        let expireEnd = expireEndStored;
+        if (!expireEnd || expireEnd <= now) {
+            expireEnd = now + 300000; // 5 phút
+            localStorage.setItem(storageKey + '_expire', expireEnd.toString());
+        }
 
         setTimeLeft(Math.max(0, Math.floor((resendEnd - now) / 1000)));
-        Promise.resolve(expireEnd).then(eEnd=> setCodeExpiryTime(Math.max(0, Math.floor((eEnd - now) / 1000))));
+        setCodeExpiryTime(Math.max(0, Math.floor((expireEnd - now) / 1000)));
 
         // Start interval to update expiry countdown
         const interval = setInterval(() => {

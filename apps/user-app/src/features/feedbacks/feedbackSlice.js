@@ -4,9 +4,9 @@ import { submitFeedback } from './feedbackAPI';
 
 export const submitFeedbackThunk = createAsyncThunk(
   'feedback/submit',
-  async ({ bookingId, feedbackData }, thunkAPI) => {
+  async ({ bookingId, formData }, thunkAPI) => {
     try {
-      const response = await submitFeedback(bookingId, feedbackData);
+      const response = await submitFeedback(bookingId, formData);
       return response;
     } catch (error) {
       return thunkAPI.rejectWithValue(

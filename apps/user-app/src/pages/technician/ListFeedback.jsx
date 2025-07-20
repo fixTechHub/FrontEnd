@@ -8,7 +8,10 @@ import { Link } from 'react-router-dom';
 
 const ListFeedback = () => {
     const dispatch = useDispatch();
-    const { technicianId } = useParams();
+    const { technician } = useSelector((state) => state.auth);
+    const technicianId  = technician._id;
+    console.log(technicianId);
+    
     const { feedbacks, loading, error } = useSelector((state) => state.technician);
     console.log("feedback:", feedbacks);
     
@@ -41,13 +44,13 @@ const ListFeedback = () => {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/booking`} >
+                                            <Link to={`/technician/booking`} >
                                                 <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
                                                 <span>My Bookings</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/user-reviews">
+                                            <Link to="/technician/feedback" className="active">
                                                 <img src="/public/img/icons/review-icon.svg" alt="Icon" />
                                                 <span>Reviews</span>
                                             </Link>
@@ -71,7 +74,7 @@ const ListFeedback = () => {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/earning`} className="active">
+                                            <Link to={`/technician/earning`} >
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>My Earnings</span>
                                             </Link>
@@ -92,7 +95,7 @@ const ListFeedback = () => {
                 <div className="content">
                     <div className="container">
                         <div className="content-header d-flex align-items-center justify-content-between">
-                            <h4>My Earnings</h4>
+                            <h4>Đánh giá của tôi</h4>
                             <ul className="booking-nav">
                                 <li>
                                     <a href="user-bookings.html" className="active">
@@ -112,8 +115,8 @@ const ListFeedback = () => {
                                     <thead className="thead-light">
                                         <tr>
                                             <th>Khách hàng</th>
+                                            <th>Nội dung</th>
                                             <th>Đánh giá</th>
-                                            <th>Chi tiết</th>
                                             <th>Hình ảnh</th>
                                             
                                         </tr>
@@ -122,10 +125,10 @@ const ListFeedback = () => {
                                         {Array.isArray(feedbacks) && feedbacks.length > 0 ? (
                                             feedbacks.map((item, index) => (
                                                 <tr >
-                                                    <td></td>
-                                                    <td></td>
-                                                    <td> VNĐ</td>
-                                                    <td> VNĐ</td>
+                                                    <td>{item?.fromUser?.fullName}</td>
+                                                    <td>{item?.content}</td>
+                                                    <td>{item?.rating} <i className="fas fa-star text-warning"></i></td>
+                                                    <td>{item?.image || 'Không có hình ảnh'}</td>
                                                 
                                                 </tr>
                                             ))

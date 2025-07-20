@@ -1,13 +1,10 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL 
-  || 'http://localhost:3000/api'
+  baseURL: import.meta.env.VITE_API_BASE_URL
+    || 'http://localhost:3000/api'
   ,
-  withCredentials: true, // Enable cookies
-  headers: {
-    'Content-Type': 'application/json',
-  },
+  withCredentials: true,
 });
 
 // Add request interceptor
@@ -23,8 +20,29 @@ apiClient.interceptors.request.use(
 // Add response interceptor
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    // Let the calling code handle the error
+  async (error) => {
+    const originalRequest = error.config;
+
+    // If unauthorized & not already retried and not the refresh endpoint itself
+    if (
+      error.response &&
+      error.response.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url.includes('/auth/refresh-token')
+    ) {
+      originalRequest._retry = true;
+
+      try {
+        // Call refresh endpoint (cookie based, no body)
+        await apiClient.post('/auth/refresh-token');
+        // Retry original request (cookies now contain new token)
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        // If refresh also failed, propagate original error to calling code
+        return Promise.reject(refreshError);
+      }
+    }
+
     return Promise.reject(error);
   }
 );

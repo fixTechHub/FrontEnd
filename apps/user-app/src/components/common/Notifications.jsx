@@ -227,10 +227,12 @@ const Notifications = ({ userId }) => {
                           </span>
                           <div className="media-body">
                             <p className="noti-details">
-                              <span className="noti-title">
-                                {notification.title}
+                              {notification.title}
+                            </p>
+                            <p className="noti-details">
+                              <span style={{ fontSize: 13 }} className="noti-title">
+                                {notification.content}
                               </span>
-                              {notification.content}
                             </p>
                             <p className="noti-time">
                               <span className="notification-time">
@@ -249,7 +251,7 @@ const Notifications = ({ userId }) => {
                             }}
                             style={styles.markAsReadBtn}
                           >
-                            Đánh dấu đã đọc
+                            <i className='bx bx-check-double'></i>
                           </button>
                         )}
                       </div>

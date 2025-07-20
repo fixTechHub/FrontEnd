@@ -7,8 +7,6 @@ import { useEffect } from 'react';
 import { fetchEarningAndCommission, fetchTechnicianJobs, fetchTechnicianJobDetails } from '../../features/technicians/technicianSlice';
 import { Link } from 'react-router-dom';
 
-
-
 const BreadcrumbSection = () => (
     <div className="breadcrumb-bar">
         <div className="container">
@@ -30,41 +28,55 @@ const BreadcrumbSection = () => (
 
 
 // ---------- Widget Item component -----------
-const WidgetItem = ({ icon, title, value, color }) => (
-    <div className="col-lg-3 col-md-6 d-flex">
-        <div className="widget-box flex-fill">
-            <div className="widget-header">
-                <div className="widget-content">
-                    <h6>{title}</h6>
-                    <h3>{value}</h3>
-                </div>
-                <div className="widget-icon">
-                    <span className={color ? `bg-${color}` : ""}>
-                        <img src={`/img/icons/${icon}-icon.svg`} alt="icon" />
-                    </span>
-                </div>
-            </div>
-            <a href="#" className="view-link">
-                View Details <i className="feather-arrow-right" />
-            </a>
+const WidgetItem = ({ icon, title, value, color, link }) => (
+  <div className="col-lg-3 col-md-6 d-flex">
+    <div className="widget-box flex-fill">
+      <div className="widget-header">
+        <div className="widget-content">
+          <h6>{title}</h6>
+          <h3>{value}</h3>
         </div>
+        <div className="widget-icon">
+          <span className={color ? `bg-${color}` : ""}>
+            <img src={`/img/icons/${icon}-icon.svg`} alt="icon" />
+          </span>
+        </div>
+      </div>
+
+      {link ? (
+        <Link to={link} className="view-link">
+          View Details <i className="feather-arrow-right" />
+        </Link>
+      ) : (
+        <a href="#" className="view-link">
+          View Details <i className="feather-arrow-right" />
+        </a>
+      )}
     </div>
+  </div>
 );
 
 // ---------- Widgets Row -----------
-const WidgetsRow = () => (
+const WidgetsRow = () => {
+  const { bookings } = useSelector((state) => state.technician);
+  const { technician } = useSelector((state) => state.auth);
+  console.log(technician);
+  
+
+  return (
     <div className="row">
-        <WidgetItem icon="book" title="My Bookings" value="450" />
-        <WidgetItem icon="balance" title="Wallet Balance" value="$24,665" color="warning" />
-        <WidgetItem icon="transaction" title="Total Transactions" value="$15,210" color="success" />
-        <WidgetItem icon="cars" title="Wishlist Cars" value="24" color="danger" />
+      <WidgetItem icon="book" title="My Bookings" value={bookings.length} link="/technician/bookings" />
+      <WidgetItem icon="balance" title="Wallet Balance" value={technician.balance} color="/technician/deposit" />
+      <WidgetItem icon="transaction" title="Total Transactions" value="$15,210" color="success" link="/technician/earning"/>
+      <WidgetItem icon="cars" title="Wishlist Cars" value="24" color="danger" />
     </div>
-);
+  );
+};
 
 function ViewEarningAndCommission() {
     const dispatch = useDispatch();
-    const { technicianId } = useParams();
-    console.log("tech:" + technicianId);
+    const {technician } = useSelector((state) => state.auth);
+    const  technicianId  = technician._id;
 
     const { earnings, loading, error } = useSelector((state) => state.technician);
 
@@ -114,8 +126,8 @@ function ViewEarningAndCommission() {
                                                     {Array.isArray(earnings) && earnings.length > 0 ? (
                                                         earnings.map((item, index) => (
                                                             <tr key={item.bookingId ?? item._id ?? index}>
-                                                                <td>{item.bookingInfo?.customerName?.fullName ?? 'Không có'}</td>
-                                                                <td>{item.bookingInfo?.service?.serviceName ?? 'Không có'}</td>
+                                                                <td>{item.bookingInfo?.customerName ?? 'Không có'}</td>
+                                                                <td>{item.bookingInfo?.service ?? 'Không có'}</td>
                                                                 <td>{item.commissionAmount?.toLocaleString() ?? '0'} VNĐ</td>
                                                                 <td>{item.holdingAmount?.toLocaleString() ?? '0'} VNĐ</td>
                                                                 <td>{item.technicianEarning?.toLocaleString() ?? '0'} VNĐ</td>
@@ -146,7 +158,8 @@ function ViewEarningAndCommission() {
 
 const TechnicianJobList = () => {
     const dispatch = useDispatch();
-    const { technicianId } = useParams();
+    const {technician } = useSelector((state) => state.auth);
+    const  technicianId  = technician._id;
     const { bookings, loading, error } = useSelector((state) => state.technician);
 
     useEffect(() => {
@@ -305,6 +318,8 @@ const TechnicianJobList = () => {
                     </div>
                 </div>
             </div>
+
+            {/* <Footer /> */}
         </>
     );
 }
@@ -317,7 +332,10 @@ const CardsRow = () => (
 );
 
 function TechnicianDashboard() {
-    const { technicianId } = useParams();
+    const {technician } = useSelector((state) => state.auth);
+    const technicianId  = technician._id;
+    console.log(technicianId);
+    
     return (
         <>
             <div class="main-wrapper">
@@ -332,19 +350,19 @@ function TechnicianDashboard() {
                                 <div className="dashboard-menu">
                                     <ul>
                                         <li>
-                                            <Link to={`/technician/${technicianId}`} className="active">
+                                            <Link to={`/technician`} className="active">
                                                 <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
                                                 <span>Dashboard</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/booking`} >
+                                            <Link to={`/technician/booking`} >
                                                 <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
                                                 <span>My Bookings</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/user-reviews">
+                                            <Link to="/technician/feedback">
                                                 <img src="/public/img/icons/review-icon.svg" alt="Icon" />
                                                 <span>Reviews</span>
                                             </Link>
@@ -368,7 +386,7 @@ function TechnicianDashboard() {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/earning`}>
+                                            <Link to={`/technician/earning`}>
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>My Earnings</span>
                                             </Link>

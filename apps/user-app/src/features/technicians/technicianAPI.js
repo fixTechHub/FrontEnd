@@ -72,13 +72,15 @@ export const getTechnicianDepositLogs = async ({ limit, skip }) => {
   }
 };
 
-export const getListFeedback = async (technicianData) => {
-  const response = await apiClient.post('/feedbacks', technicianData);
-  return response.data;
+export const getListFeedback = async (technicianData,technicianId) => {
+  const response = await apiClient.get(`/feedbacks/${technicianId}`, technicianData);
+  console.log(response);
+  
+  return response.data.data;
 };
 
-export const uploadCertificateAPI = async (formData) => {
-  const response = await apiClient.post('/upload/certificates', formData, {
+export const uploadCertificateAPI = async (formData, technicianId) => {
+  const response = await apiClient.post(`/certificates/${technicianId}/upload`, formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
