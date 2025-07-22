@@ -7,6 +7,7 @@ import AOS from "aos";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import Services from "./Services";
+import Search from "../../components/common/Search";
 
 function HomePage() {
   const { user, isAuthenticated, verificationStatus } = useSelector(
