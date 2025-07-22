@@ -3542,7 +3542,8 @@ table .badge {
 
 .banner-slider {
   position: relative;
-  background-image: url(../img/banner.jpg);
+  /* background-image: url(../img/banner.jpg); */
+  background-image: url(../img/bg/home-banner-img.png);
   background-repeat: no-repeat;
   background-position: right;
   background-size: cover;
@@ -9763,7 +9764,8 @@ table .badge {
 }
 
 .banner-section-four {
-  background: #111111 url("../img/bg/banner-bg.png") no-repeat;
+  background: #111111 url("../img/bannerHero-3.png") no-repeat;
+  background-size: cover;
   background-position: bottom;
   padding: 120px 0 40px;
   z-index: 1;
@@ -9902,7 +9904,7 @@ table .badge {
 }
 .banner-section-four .banner-search .form-block {
   padding: 15px;
-  background: rgba(255, 255, 255, 0.11);
+  background: aliceblue;
   border-radius: 90px;
 }
 @media (max-width: 767.96px) {
@@ -9922,7 +9924,7 @@ table .badge {
   padding: 15px;
   position: relative;
 }
-.banner-section-four .banner-search .search-input::before {
+/* .banner-section-four .banner-search .search-input::before {
   content: "";
   background: #CDCDCD;
   width: 1px;
@@ -9930,7 +9932,7 @@ table .badge {
   position: absolute;
   top: 0;
   right: 0;
-}
+} */
 @media (max-width: 767.98px) {
   .banner-section-four .banner-search .search-input::before {
     right: unset;
