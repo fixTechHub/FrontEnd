@@ -251,9 +251,9 @@ export default function AppRoutes() {
       <Route
         path="/technician/dashboard"
         element={
-          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+          <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
           <TechnicianDashboard />
-          // </PrivateRoute>
+          </PrivateRoute>
         }
       />
 

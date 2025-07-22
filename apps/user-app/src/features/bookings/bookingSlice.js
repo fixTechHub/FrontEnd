@@ -1,6 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cancelBookingById, createBooking, getBookingById, getQuatationsByBookingId,getUserBookingHistory,getAcceptedBooking } from './bookingAPI';
-import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, selectTechnician, technicianConfirmBooking } from './bookingAPI';
+import { cancelBookingById, createBooking, getBookingById, getQuatationsByBookingId,getUserBookingHistory,getAcceptedBooking,getTopBookedServices, selectTechnician, technicianConfirmBooking } from './bookingAPI';
 
 export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',

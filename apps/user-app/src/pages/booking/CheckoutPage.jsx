@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { finalizeBookingThunk } from '../../features/transactions/transactionSlice'
 import { fetchBookingById, getAcceptedBookingThunk } from '../../features/bookings/bookingSlice';
+import { useBookingParams } from '../../hooks/useBookingParams';
 import { toast } from 'react-toastify';
 import Accordion from 'react-bootstrap/Accordion';
 import BookingWizard from "./common/BookingHeader";
@@ -164,6 +165,8 @@ const CheckoutPage = () => {
     const itemsTotal = acceptedBooking?.quote?.items?.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) || 0;
     const laborPrice = acceptedBooking?.quote?.laborPrice || 0;
     const subTotal = acceptedBooking?.quote?.totalAmount || (laborPrice + itemsTotal);
+    // const subTotal = 200000
+
     const handleApplyCouponModal = (e) => {
         e.preventDefault();
         if (paymentMethod === 'CASH') {

@@ -61,7 +61,7 @@ function BookingProcessing() {
 
     useEffect(() => {
         if (isChecking) return;
-       
+
         if (isChecking && isAuthorized === false) {
             toast.error("Bạn không có quyền truy cập trang này.");
             // Redirect to the original page or default to '/'
@@ -156,10 +156,14 @@ function BookingProcessing() {
                 alert('Đã xác nhận hoàn thành!');
                 navigate(`/`);
             } else {
-                alert('Xác nhận hoàn thành thất bại: ' + (res?.data?.message || 'Lỗi không xác định'));
+                alert(
+                    // 'Xác nhận hoàn thành thất bại: ' + 
+                    (res?.data?.message || 'Lỗi không xác định'));
             }
         } catch (err) {
-            alert('Xác nhận hoàn thành thất bại: ' + (err?.response?.data?.message || err.message));
+            alert(
+                // 'Xác nhận hoàn thành thất bại: ' +
+                 (err?.response?.data?.message || err.message));
         }
     };
 
@@ -263,7 +267,7 @@ function BookingProcessing() {
                     </div>
 
                     <div className="text-end">
-                        {user?.role?.name === 'CUSTOMER'
+                        {user?.role?.name === 'CUSTOMER' && booking.status === 'AWAITING_DONE' 
                             // && booking.status === 'WAITING_CONFIRM'
                             && (
                                 <button
@@ -272,20 +276,23 @@ function BookingProcessing() {
                                 >
                                     Xác nhận và Thanh toán
                                 </button>
-                            )}
+                            )
+                        }
 
                         {user?.role?.name === 'TECHNICIAN'
-                            && booking.status === 'IN_PROGRESS'
+                            && (booking.status === 'IN_PROGRESS' 
+                                || booking.status === 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL' 
+                                || booking.status === 'CONFIRM_ADDITIONAL')
                             && (
                                 <>
-                                    {items.length > 0 && (
+                                    {/* {items.length > 0 && (
                                         <button
                                             className="btn btn-primary"
-                                        // onClick={handleSendAdditionalRequest}
+                                            onClick={handleSendAdditionalRequest}
                                         >
                                             Gửi yêu cầu
                                         </button>
-                                    )}
+                                    )} */}
 
                                     <button
                                         style={{ marginLeft: 10 }}

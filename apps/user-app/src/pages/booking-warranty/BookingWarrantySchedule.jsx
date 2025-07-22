@@ -300,7 +300,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
                                 Đề xuất lịch bảo hành
                             </Button>
                         )}
-                        {isTechnician && warranty?.status === "CONFIRMED" && warranty.proposedSchedule  && warranty.confirmedSchedule &&  (
+                        {isTechnician && warranty?.status === "CONFIRMED" && warranty.proposedSchedule  && !warranty.confirmedSchedule &&  (
                             <Button
                                 style={{ ...styles.btn, ...styles.btnPrimary }}
                                 onClick={() => setShowConfirmModal(true)}
