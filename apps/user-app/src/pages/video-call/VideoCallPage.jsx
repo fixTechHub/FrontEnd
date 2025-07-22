@@ -489,9 +489,11 @@ const VideoCallPage = () => {
         </div>
       </div>
       <div className="custom-controls">
-        <button className="custom-btn-hangup" onClick={leaveCall}>
+        {callAccepted && !callEnded && (
+          <button className="custom-btn-hangup" onClick={leaveCall}>
           <MdCallEnd size={24} color="white" />
-        </button>
+          </button>
+        )}
       </div>
     </div>
   );

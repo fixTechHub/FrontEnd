@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import AOS from "aos";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
+import Services from "./Services";
 
 function HomePage() {
   const { user, isAuthenticated, verificationStatus } = useSelector(
@@ -32,7 +33,7 @@ function HomePage() {
     ) {
       // Kiểm tra xem có phải tài khoản vừa được kích hoạt lại không
       const wasReactivated = sessionStorage.getItem("wasReactivated");
-      
+
       if (wasReactivated === "true") {
         // Thông báo đặc biệt cho tài khoản được kích hoạt lại
         Swal.fire({
@@ -160,53 +161,6 @@ function HomePage() {
 
         <Banner />
 
-        <Categories />
-
-        <section className="more-boats-info-sec">
-          <div className="container-fluid">
-            <div className="sec-bottom-info">
-              <div className="row bottom-text-row">
-                <div className="col-xl-3 col-lg-6">
-                  <div className="bottom-ship-info-card">
-                    <div className="hover-ship-info w-100">
-                      <h4>2022 Sea Doo Pontoon for Exciting Adventure</h4>
-                      <div className="address-info">
-                        <span>
-                          <i className="bx bx-map"></i>Heflin, AL
-                        </span>
-                        <div className="rated-star">
-                          <i className="bx bxs-star filled"></i>
-                          <i className="bx bxs-star filled"></i>
-                          <i className="bx bxs-star filled"></i>
-                          <i className="bx bxs-star filled"></i>
-                          <i className="bx bxs-star"></i>
-                          <span>55 Reviews</span>
-                        </div>
-                      </div>
-                      <ul className="ship-features">
-                        <li>Cabins : 4</li>
-                        <li>People : 8</li>
-                        <li>Length : 4.6</li>
-                      </ul>
-                      <div className="ship-pricing">
-                        <h5>
-                          From <span> $180 </span> /day
-                        </h5>
-                        <a
-                          href="listing-details.html"
-                          className="btn btn-primary btn-buy"
-                        >
-                          Book Now
-                        </a>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
         <section className="section services">
           <div className="service-right">
             <img
@@ -292,6 +246,55 @@ function HomePage() {
                         your details, driver's license, contact info, and
                         payment details.
                       </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <Services />
+
+        <Categories />
+
+        <section className="more-boats-info-sec">
+          <div className="container-fluid">
+            <div className="sec-bottom-info">
+              <div className="row bottom-text-row">
+                <div className="col-xl-3 col-lg-6">
+                  <div className="bottom-ship-info-card">
+                    <div className="hover-ship-info w-100">
+                      <h4>2022 Sea Doo Pontoon for Exciting Adventure</h4>
+                      <div className="address-info">
+                        <span>
+                          <i className="bx bx-map"></i>Heflin, AL
+                        </span>
+                        <div className="rated-star">
+                          <i className="bx bxs-star filled"></i>
+                          <i className="bx bxs-star filled"></i>
+                          <i className="bx bxs-star filled"></i>
+                          <i className="bx bxs-star filled"></i>
+                          <i className="bx bxs-star"></i>
+                          <span>55 Reviews</span>
+                        </div>
+                      </div>
+                      <ul className="ship-features">
+                        <li>Cabins : 4</li>
+                        <li>People : 8</li>
+                        <li>Length : 4.6</li>
+                      </ul>
+                      <div className="ship-pricing">
+                        <h5>
+                          From <span> $180 </span> /day
+                        </h5>
+                        <a
+                          href="listing-details.html"
+                          className="btn btn-primary btn-buy"
+                        >
+                          Book Now
+                        </a>
+                      </div>
                     </div>
                   </div>
                 </div>

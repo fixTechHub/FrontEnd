@@ -4,7 +4,6 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { finalizeBookingThunk } from '../../features/transactions/transactionSlice'
 import { fetchBookingById, getAcceptedBookingThunk } from '../../features/bookings/bookingSlice';
 import { toast } from 'react-toastify';
-import { useBookingParams } from '../../hooks/useBookingParams';
 import Accordion from 'react-bootstrap/Accordion';
 import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';

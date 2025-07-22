@@ -140,7 +140,7 @@ export const onReceiveNotification = (callback) => {
     };
     socket.on('receiveNotification', listener);
     return () => {
-      if (socket) socket.off('receiveNotification', listener);
+      if (socket) socket?.off('receiveNotification', listener);
       console.log('Removed receiveNotification listener');
     };
   }
@@ -154,7 +154,7 @@ export const onNewRequest = (callback) => {
     };
     socket.on('new_request', listener);
     return () => {
-      if (socket) socket.off('new_request', listener);
+      if (socket) socket?.off('new_request', listener);
       console.log('Removed new_request listener');
     };
   }
@@ -168,7 +168,7 @@ export const onNewBooking = (callback) => {
     };
     socket.on('new_booking', listener);
     return () => {
-      if (socket) socket.off('new_booking', listener);
+      if (socket) socket?.off('new_booking', listener);
       console.log('Removed new_booking listener');
     };
   }
@@ -182,7 +182,7 @@ export const onNotificationUpdated = (callback) => {
     };
     socket.on('notificationUpdated', listener);
     return () => {
-      if (socket) socket.off('notificationUpdated', listener);
+      if (socket) socket?.off('notificationUpdated', listener);
       console.log('Removed notificationUpdated listener');
     };
   }
@@ -217,14 +217,15 @@ export const onUserNotifications = (callback) => {
     };
     socket.on('userNotifications', listener);
     return () => {
-      if (socket) socket.off('userNotifications', listener);
+      if (socket) socket?.off('userNotifications', listener);
       console.log('Removed userNotifications listener');
     };
   }
 };
+
 export const onNotificationsCleared = (callback) => {
   socket.on('notificationsCleared', callback);
-  return () => socket.off('notificationsCleared', callback);
+  return () => socket?.off('notificationsCleared', callback);
 };
 
 export const onWarrantyUpdated = (callback) => {
@@ -239,6 +240,75 @@ export const onWarrantyUpdated = (callback) => {
       console.log('Removed warrantyUpdated listener');
     };
   }
+}
+export const onBookingNew = (callback) => {
+  if (socket) {
+    const listener = (data) => callback(data);
+    socket.on('booking:new', listener);
+    return () => socket?.off('booking:new', listener);
+  }
+
+  return () => {};
+};
+
+export const onTechnicianResponse = (callback) => {
+  if (socket) {
+    const listener = (data) => callback(data);
+    socket.on('booking:technicianResponse', listener);
+    return () => socket?.off('booking:technicianResponse', listener);
+  }
+
+  return () => {};
+};
+
+export const onBookingQuotation = (callback) => {
+  if (socket) {
+    const listener = (data) => callback(data);
+    socket.on('booking:quotation', listener);
+    return () => socket?.off('booking:quotation', listener);
+  }
+
+  return () => {};
+};
+
+export const onUserQuotationResponse = (callback) => {
+  if (socket) {
+    const listener = (data) => callback(data);
+    socket.on('booking:userQuotationResponse', listener);
+    return () => socket?.off('booking:userQuotationResponse', listener);
+  }
+
+  return () => {};
+};
+
+export const onBookingAdditionalFee = (callback) => {
+  if (socket) {
+    const listener = (data) => callback(data);
+    socket.on('booking:additionalFee', listener);
+    return () => socket?.off('booking:additionalFee', listener);
+  }
+
+  return () => {};
+};
+
+export const onUserAdditionalFeeResponse = (callback) => {
+  if (socket) {
+    const listener = (data) => callback(data);
+    socket.on('booking:userAdditionalFeeResponse', listener);
+    return () => socket?.off('booking:userAdditionalFeeResponse', listener);
+  }
+
+  return () => {};
+};
+
+export const onBookingStatusUpdate = (callback) => {
+  if (socket) {
+    const listener = (data) => callback(data);
+    socket.on('booking:statusUpdate', listener);
+    return () => socket?.off('booking:statusUpdate', listener);
+  }
+
+  return () => {};
 };
 
 export const getSocket = () => socket;

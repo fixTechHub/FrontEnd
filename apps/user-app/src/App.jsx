@@ -1,13 +1,13 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchAllPublicCategories } from './features/categories/categorySlice';
+import { fetchAllPublicCategories, fetchTopPublicCategories } from './features/categories/categorySlice';
 import { fetchAllPublicServices } from './features/services/serviceSlice';
 import { initializeSocket, disconnectSocket } from './services/socket';
-import AppRoutes from './routes'
-import AppProvider from './app/AppProvider';
-import React, { useState } from 'react';
 import { checkAuthThunk } from './features/auth/authSlice';
 import { fetchAllRoles } from './features/roles/roleSlice';
+import { fetchTopBookedServices } from './features/bookings/bookingSlice';
+import AppRoutes from './routes'
+import AppProvider from './app/AppProvider';
 
 function App() {
     const dispatch = useDispatch();
@@ -24,6 +24,8 @@ function App() {
     useEffect(() => {
         dispatch(fetchAllPublicCategories());
         dispatch(fetchAllPublicServices());
+        dispatch(fetchTopBookedServices());
+        dispatch(fetchTopPublicCategories());
         dispatch(fetchAllRoles());
         // Logic checkAuth đã được chuyển sang main.jsx
     }, [dispatch]);

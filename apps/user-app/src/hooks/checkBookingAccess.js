@@ -16,8 +16,8 @@ export const checkBookingAccess = async (dispatch, bookingId, userId, role) => {
         
         // Extract customerId and technicianId (handle both populated objects and ObjectId strings)
         const customerId = booking.customerId?._id || booking.customerId;
-        const technicianId = booking.technicianId?.userId?._id 
-    
+        const technicianId = booking.technicianId?.userId._id
+      
         let isAuthorized = false;
 
         if (role === 'CUSTOMER') {
@@ -25,6 +25,7 @@ export const checkBookingAccess = async (dispatch, bookingId, userId, role) => {
         } else if (role === 'TECHNICIAN') {
             isAuthorized = userId === technicianId;
         }
+        // console.log(isAuthorized);
         
         return {
             isAuthorized,
