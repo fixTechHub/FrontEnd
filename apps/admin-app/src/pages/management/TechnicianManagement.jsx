@@ -16,6 +16,8 @@ import {
  selectTechnicianError,
 } from '../../features/technicians/technicianSelectors';
 import { categoryAPI } from "../../features/categories/categoryAPI";
+import { EyeOutlined } from '@ant-design/icons';
+import './ManagementTableStyle.css';
 
 
 const TechnicianManagement = () => {
@@ -37,12 +39,17 @@ const TechnicianManagement = () => {
  const techniciansPerPage = 10;
  const [sortField, setSortField] = useState('createdAt');
 const [sortOrder, setSortOrder] = useState('desc');
+const [filterAvailability, setFilterAvailability] = useState('');
 
 
+
+ const filteredTechnicians = filterAvailability
+  ? technicians.filter(tech => tech.availability === filterAvailability)
+  : technicians;
 
  const indexOfLastTechnician = currentPage * techniciansPerPage;
  const indexOfFirstTechnician = indexOfLastTechnician - techniciansPerPage;
- const sortedTechnicians = [...technicians].sort((a, b) => {
+ const sortedTechnicians = [...filteredTechnicians].sort((a, b) => {
   if (sortField === 'fullName') {
     if (!a.fullName) return 1;
     if (!b.fullName) return -1;
@@ -279,6 +286,18 @@ function getTechnicianAvailability(availability) {
   return TECHNICIAN_AVAILABILITY_MAP[availability] || availability || 'Chưa cập nhật';
 }
 
+// Thêm hàm getStatusBadgeClass giống UserManagement
+const getStatusBadgeClass = (status) => {
+  switch ((status || '').toUpperCase()) {
+    case 'APPROVED':
+      return 'bg-success-transparent';
+    case 'REJECTED':
+      return 'bg-danger-transparent';
+    default:
+      return 'bg-secondary-transparent';
+  }
+};
+
 
  return (
    <div className="modern-page-wrapper">
@@ -306,24 +325,35 @@ function getTechnicianAvailability(availability) {
                <input
                  type="text"
                  className="form-control"
-                 placeholder="Search name, email, phone"
+                 placeholder="Search technicians"
                  value={searchText}
                  onChange={e => setSearchText(e.target.value)}
                />
              </div>
            </div>
-           {/* Status Filter */}
            <Select
+             placeholder="Availability"
+             value={filterAvailability || undefined}
+             onChange={value => setFilterAvailability(value)}
+             style={{ width: 150, marginRight: 8 }}
              allowClear
+           >
+             <Select.Option value="ONJOB">ONJOB</Select.Option>
+             <Select.Option value="FREE">FREE</Select.Option>
+             <Select.Option value="BUSY">BUSY</Select.Option>
+           </Select>
+           <Select
              placeholder="Status"
-             style={{ width: 130 }}
-             onChange={value => dispatch(setFilters({ status: value }))}
-             options={[
-               { value: 'APPROVED', label: 'APPROVED' },
-               { value: 'PENDING', label: 'PENDING' },
-               { value: 'REJECTED', label: 'REJECTED' },
-             ]}
-           />
+             value={filters.status || undefined}
+             onChange={value => dispatch(setFilters({ ...filters, status: value }))}
+             style={{ width: 130, marginRight: 8 }}
+             allowClear
+           >
+             <Select.Option value="PENDING">PENDING</Select.Option>
+             <Select.Option value="APPROVED">APPROVED</Select.Option>
+             <Select.Option value="REJECTED">REJECTED</Select.Option>
+           </Select>
+           
          </div>
          <div className="d-flex align-items-center" style={{ gap: 12 }}>
            <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
@@ -384,7 +414,8 @@ function getTechnicianAvailability(availability) {
                    </span>
                  )}
                </th>
-               <th></th>
+               <th>AVAILABILITY</th>
+               <th>ACTION</th>
              </tr>
            </thead>
            <tbody>
@@ -399,13 +430,13 @@ function getTechnicianAvailability(availability) {
                    <td>{tech.email}</td>
                    <td>{tech.phone}</td>
                    <td>
-                     <span className={`badge badge-dark-transparent ${getTechnicianStatus(tech.status) === 'APPROVED' ? 'text-success' : getTechnicianStatus(tech.status) === 'REJECTED' ? 'text-danger' : 'text-warning'}`}>
-                       <i className={`ti ti-point-filled ${getTechnicianStatus(tech.status) === 'APPROVED' ? 'text-success' : getTechnicianStatus(tech.status) === 'REJECTED' ? 'text-danger' : 'text-warning'} me-1`}></i>
+                     <span className={`badge ${getStatusBadgeClass(getTechnicianStatus(tech.status))} text-dark`}>
                        {getTechnicianStatus(tech.status)}
                      </span>
                    </td>
                    <td>{tech.ratingAverage?.toFixed(1) ?? '-'}</td>
                    <td>{tech.jobCompleted ?? 0}</td>
+                   <td>{getTechnicianAvailability(tech.availability)}</td>
                    <td>
                      <div className="d-flex align-items-center gap-2">
                        {tech.status === "PENDING" && (
@@ -413,9 +444,9 @@ function getTechnicianAvailability(availability) {
                            <i className="ti ti-edit me-1"></i>Edit Status
                          </button>
                        )}
-                       <button className="btn btn-sm btn-info" onClick={() => handleOpenDetail(tech)}>
-                         <i className="ti ti-eye me-1"></i>View Detail
-                       </button>
+                       <Button className="management-action-btn" size="middle" onClick={() => handleOpenDetail(tech)}>
+                          <EyeOutlined style={{marginRight: 4}} />View Detail
+                        </Button>
                      </div>
                    </td>
                  </tr>
@@ -451,69 +482,152 @@ function getTechnicianAvailability(availability) {
          open={showDetailModal}
          onCancel={handleCloseDetail}
          footer={null}
-         title="Technician Detail"
+         title={null}
          width={800}
        >
-         {selectedTechnician && (
-           <Descriptions bordered column={2} size="small">
-             <Descriptions.Item label="Họ tên" span={1}>{selectedTechnician.fullName || 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Email" span={1}>{selectedTechnician.email || 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Số điện thoại" span={1}>{selectedTechnician.phone || 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Trạng thái" span={1}>{getTechnicianStatus(selectedTechnician.status)}</Descriptions.Item>
-             <Descriptions.Item label="Kinh nghiệm (năm)" span={1}>{selectedTechnician.experienceYears ?? 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Số job hoàn thành" span={1}>{selectedTechnician.jobCompleted ?? 0}</Descriptions.Item>
-             <Descriptions.Item label="Rating trung bình" span={1}>{selectedTechnician.ratingAverage ?? 0}</Descriptions.Item>
-             <Descriptions.Item label="Specialization">
-             <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-               {[...new Set(selectedTechnician.specialtiesCategories || [])].map(catIdRaw => {
-                 let catId = catIdRaw && typeof catIdRaw === 'object' && catIdRaw.$oid
-                   ? catIdRaw.$oid
-                   : (catIdRaw.id || catIdRaw._id || catIdRaw).toString().trim();
-                 return (
-                   <span key={catId} className="badge bg-secondary mb-1">
-                     {categoryMap[catId] || catId}
-                   </span>
-                 );
-               })}
+         <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
+           <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
+             <div style={{width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#888'}}>
+               {selectedTechnician.avatar ? (
+                 <img src={selectedTechnician.avatar.startsWith('http') ? selectedTechnician.avatar : `${process.env.REACT_APP_API_URL || ''}${selectedTechnician.avatar}`}
+                      alt="avatar"
+                      style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+               ) : (
+                 selectedTechnician.fullName ? selectedTechnician.fullName[0].toUpperCase() : <i className="ti ti-user"></i>
+               )}
              </div>
-           </Descriptions.Item>
-             <Descriptions.Item label="Chứng chỉ" span={2}>{(selectedTechnician.certificate && selectedTechnician.certificate.length > 0) ? selectedTechnician.certificate.join(', ') : 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Tài khoản ngân hàng" span={2}>
-               {selectedTechnician.bankAccount ? (
-                 <>
-                   <div>Ngân hàng: {selectedTechnician.bankAccount.bankName}</div>
-                   <div>Số TK: {selectedTechnician.bankAccount.accountNumber}</div>
-                   <div>Chủ TK: {selectedTechnician.bankAccount.accountHolder}</div>
-                   <div>Chi nhánh: {selectedTechnician.bankAccount.branch}</div>
-                 </>
-               ) : 'Chưa cập nhật'}
-             </Descriptions.Item>
-             <Descriptions.Item label="Số dư" span={1}>{selectedTechnician.balance ?? 0}</Descriptions.Item>
-             <Descriptions.Item label="Tổng thu nhập" span={1}>{selectedTechnician.totalEarning ?? 0}</Descriptions.Item>
-             <Descriptions.Item label="Tổng hoa hồng đã trả" span={1}>{selectedTechnician.totalCommissionPaid ?? 0}</Descriptions.Item>
-             <Descriptions.Item label="Tổng giữ lại" span={1}>{selectedTechnician.totalHoldingAmount ?? 0}</Descriptions.Item>
-             <Descriptions.Item label="Tổng đã rút" span={1}>{selectedTechnician.totalWithdrawn ?? 0}</Descriptions.Item>
-             <Descriptions.Item label="Đơn giá kiểm tra" span={1}>{selectedTechnician.rates?.inspectionFee ?? 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Đơn giá công (tier1)" span={1}>{selectedTechnician.rates?.laborTiers?.tier1 ?? 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Đơn giá công (tier2)" span={1}>{selectedTechnician.rates?.laborTiers?.tier2 ?? 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Đơn giá công (tier3)" span={1}>{selectedTechnician.rates?.laborTiers?.tier3 ?? 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Trạng thái làm việc" span={1}>{getTechnicianAvailability(selectedTechnician.availability)}</Descriptions.Item>
-             <Descriptions.Item label="Ảnh mặt trước CCCD" span={1}>{selectedTechnician.frontIdImage ? <img src={selectedTechnician.frontIdImage} alt="frontId" style={{ maxWidth: 120 }} /> : 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Ảnh mặt sau CCCD" span={1}>{selectedTechnician.backIdImage ? <img src={selectedTechnician.backIdImage} alt="backId" style={{ maxWidth: 120 }} /> : 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Vị trí hiện tại" span={2}>
-               {selectedTechnician.currentLocation ? (
-                 <>
-                   <div>Type: {selectedTechnician.currentLocation.type}</div>
-                   <div>Toạ độ: {selectedTechnician.currentLocation.coordinates?.join(', ')}</div>
-                 </>
-               ) : 'Chưa cập nhật'}
-             </Descriptions.Item>
-             <Descriptions.Item label="Ngày chờ xoá" span={1}>{selectedTechnician.pendingDeletionAt ? new Date(selectedTechnician.pendingDeletionAt).toLocaleString() : 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Ngày xoá" span={1}>{selectedTechnician.deletedAt ? new Date(selectedTechnician.deletedAt).toLocaleString() : 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Ngày cập nhật giá" span={1}>{selectedTechnician.pricesLastUpdatedAt ? new Date(selectedTechnician.pricesLastUpdatedAt).toLocaleString() : 'Chưa cập nhật'}</Descriptions.Item>
-             <Descriptions.Item label="Ghi chú" span={2}>{selectedTechnician.note || 'Không có'}</Descriptions.Item>
-           </Descriptions>
-         )}
+             <div style={{flex: 1}}>
+               <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>{selectedTechnician.fullName || 'No Name'}</div>
+               <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>{selectedTechnician.email}</div>
+               <div style={{fontSize: 13, color: '#888'}}>
+                 <span style={{marginRight: 12}}><b>Status:</b> <span style={{color: getTechnicianStatus(selectedTechnician.status) === 'APPROVED' ? '#52c41a' : getTechnicianStatus(selectedTechnician.status) === 'REJECTED' ? '#cf1322' : '#faad14'}}>{getTechnicianStatus(selectedTechnician.status)}</span></span>
+                 <span><b>Phone:</b> {selectedTechnician.phone || '-'}</span>
+               </div>
+             </div>
+           </div>
+           <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
+           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Kinh nghiệm (năm)</div>
+               <div>{selectedTechnician.experienceYears ?? '-'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Số job hoàn thành</div>
+               <div>{selectedTechnician.jobCompleted ?? 0}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Rating trung bình</div>
+               <div>{selectedTechnician.ratingAverage ?? 0}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Chuyên môn</div>
+               <div style={{display: 'flex', flexWrap: 'wrap', gap: 4}}>
+                 {[...new Set(selectedTechnician.specialtiesCategories || [])].map(catIdRaw => {
+                   let catId = catIdRaw && typeof catIdRaw === 'object' && catIdRaw.$oid
+                     ? catIdRaw.$oid
+                     : (catIdRaw.id || catIdRaw._id || catIdRaw).toString().trim();
+                   return (
+                     <span key={catId} className="badge bg-secondary mb-1">
+                       {categoryMap[catId] || catId}
+                     </span>
+                   );
+                 })}
+               </div>
+             </div>
+             <div style={{gridColumn: '1 / span 2'}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Chứng chỉ</div>
+               <div>{(selectedTechnician.certificate && selectedTechnician.certificate.length > 0) ? selectedTechnician.certificate.join(', ') : '-'}</div>
+             </div>
+             <div style={{gridColumn: '1 / span 2'}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tài khoản ngân hàng</div>
+               <div>
+                 {selectedTechnician.bankAccount ? (
+                   <>
+                     <div>Ngân hàng: {selectedTechnician.bankAccount.bankName}</div>
+                     <div>Số TK: {selectedTechnician.bankAccount.accountNumber}</div>
+                     <div>Chủ TK: {selectedTechnician.bankAccount.accountHolder}</div>
+                     <div>Chi nhánh: {selectedTechnician.bankAccount.branch}</div>
+                   </>
+                 ) : '-'}
+               </div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Số dư</div>
+               <div>{selectedTechnician.balance ?? 0}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tổng thu nhập</div>
+               <div>{selectedTechnician.totalEarning ?? 0}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tổng hoa hồng đã trả</div>
+               <div>{selectedTechnician.totalCommissionPaid ?? 0}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tổng giữ lại</div>
+               <div>{selectedTechnician.totalHoldingAmount ?? 0}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tổng đã rút</div>
+               <div>{selectedTechnician.totalWithdrawn ?? 0}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Đơn giá kiểm tra</div>
+               <div>{selectedTechnician.rates?.inspectionFee ?? '-'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Đơn giá công (tier1)</div>
+               <div>{selectedTechnician.rates?.laborTiers?.tier1 ?? '-'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Đơn giá công (tier2)</div>
+               <div>{selectedTechnician.rates?.laborTiers?.tier2 ?? '-'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Đơn giá công (tier3)</div>
+               <div>{selectedTechnician.rates?.laborTiers?.tier3 ?? '-'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Trạng thái làm việc</div>
+               <div>{getTechnicianAvailability(selectedTechnician.availability)}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ảnh mặt trước CCCD</div>
+               <div>{selectedTechnician.frontIdImage ? <img src={selectedTechnician.frontIdImage.startsWith('http') ? selectedTechnician.frontIdImage : `${process.env.REACT_APP_API_URL || ''}${selectedTechnician.frontIdImage}`} alt="frontId" style={{ maxWidth: 120, borderRadius: 8 }} /> : '-'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ảnh mặt sau CCCD</div>
+               <div>{selectedTechnician.backIdImage ? <img src={selectedTechnician.backIdImage.startsWith('http') ? selectedTechnician.backIdImage : `${process.env.REACT_APP_API_URL || ''}${selectedTechnician.backIdImage}`} alt="backId" style={{ maxWidth: 120, borderRadius: 8 }} /> : '-'}</div>
+             </div>
+             <div style={{gridColumn: '1 / span 2'}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Vị trí hiện tại</div>
+               <div>
+                 {selectedTechnician.currentLocation ? (
+                   <>
+                     <div>Type: {selectedTechnician.currentLocation.type}</div>
+                     <div>Toạ độ: {selectedTechnician.currentLocation.coordinates?.join(', ')}</div>
+                   </>
+                 ) : '-'}
+               </div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ngày chờ xoá</div>
+               <div>{selectedTechnician.pendingDeletionAt ? new Date(selectedTechnician.pendingDeletionAt).toLocaleString() : '-'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ngày xoá</div>
+               <div>{selectedTechnician.deletedAt ? new Date(selectedTechnician.deletedAt).toLocaleString() : '-'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ngày cập nhật giá</div>
+               <div>{selectedTechnician.pricesLastUpdatedAt ? new Date(selectedTechnician.pricesLastUpdatedAt).toLocaleString() : '-'}</div>
+             </div>
+             <div style={{gridColumn: '1 / span 2'}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ghi chú</div>
+               <div>{selectedTechnician.note || '-'}</div>
+             </div>
+           </div>
+         </div>
        </Modal>
      )}
      {/* Edit Status Modal */}

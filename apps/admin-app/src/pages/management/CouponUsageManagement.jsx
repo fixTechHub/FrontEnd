@@ -5,6 +5,8 @@ import { userAPI } from '../../features/users/userAPI';
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { Modal, Button, Select, Descriptions, Spin } from 'antd';
+import { EyeOutlined } from '@ant-design/icons';
+import './ManagementTableStyle.css';
 
 
 const CouponUsageManagement = () => {
@@ -317,11 +319,11 @@ const handleSortByUsedAt = () => {
                  <tr key={usage.id}>
                    <td>{userMap[usage.userId] || usage.userId}</td>
                    <td>{couponMap[usage.couponId] || usage.couponId}</td>
-                   <td>{bookingMap[usage.bookingId] || 'Unknown'}</td>
+                   <td>{bookingMap[usage.bookingId] || 'UNKNOWN'}</td>
                    <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
                    <td>
-                     <Button size="small" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>
-                       View Detail
+                     <Button className="management-action-btn" size="middle" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>
+                       <EyeOutlined style={{marginRight: 4}} />View Detail
                      </Button>
                    </td>
                  </tr>
@@ -351,16 +353,30 @@ const handleSortByUsedAt = () => {
          open={showDetailModal}
          onCancel={() => setShowDetailModal(false)}
          footer={null}
-         title="Coupon Usage Detail"
+         title={null}
          width={600}
        >
-         <Descriptions bordered column={1} size="middle">
-           <Descriptions.Item label="User">{userMap[selectedUsage.userId] || selectedUsage.userId}</Descriptions.Item>
-           <Descriptions.Item label="Coupon">{couponMap[selectedUsage.couponId] || selectedUsage.couponId}</Descriptions.Item>
-           <Descriptions.Item label="Booking Code">{bookingMap[selectedUsage.bookingId] || 'Unknown'}</Descriptions.Item>
-           <Descriptions.Item label="Used At">{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : ''}</Descriptions.Item>
-           {/* Thêm các trường khác nếu cần */}
-         </Descriptions>
+         <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
+           <div style={{fontSize: 22, fontWeight: 600, marginBottom: 16}}>Coupon Usage Detail</div>
+           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>User</div>
+               <div>{userMap[selectedUsage.userId] || selectedUsage.userId}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Coupon</div>
+               <div>{couponMap[selectedUsage.couponId] || selectedUsage.couponId}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Booking Code</div>
+               <div>{bookingMap[selectedUsage.bookingId] || 'UNKNOWN'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Used At</div>
+               <div>{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : ''}</div>
+             </div>
+           </div>
+         </div>
        </Modal>
      )}
    </div>

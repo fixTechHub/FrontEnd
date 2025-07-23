@@ -5,10 +5,13 @@ import { Modal, Button, Select, Switch, message, Descriptions, Spin } from 'antd
 import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
+import { EyeOutlined, EditOutlined } from '@ant-design/icons';
+import './ManagementTableStyle.css';
 
 
 const statusOptions = [
  { value: 'PENDING', label: 'PENDING' },
+ { value: 'DONE', label: 'DONE' },
  { value: 'CONFIRMED', label: 'CONFIRMED' },
  { value: 'RESOLVED', label: 'RESOLVED' },
  { value: 'DENIED', label: 'DENIED' },
@@ -242,6 +245,7 @@ const handleSortByTechnician = () => {
              allowClear
            >
              <Select.Option value="PENDING">PENDING</Select.Option>
+             <Select.Option value="DONE">DONE</Select.Option>
              <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
              <Select.Option value="RESOLVED">RESOLVED</Select.Option>
              <Select.Option value="DENIED">DENIED</Select.Option>
@@ -302,18 +306,18 @@ const handleSortByTechnician = () => {
              <tbody>
                {currentWarranties.map(w => (
                  <tr key={w.id}>
-                   <td>{bookingMap[w.bookingId] || 'Unknown'}</td>
+                   <td>{bookingMap[w.bookingId] || 'UNKNOWN'}</td>
                    <td>{userNames[w.customerId]}</td>
                    <td>{technicianNames[w.technicianId]}</td>
                    <td>{w.status}</td>
                    <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
                    <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
                    <td>
-                     <Button size="small" onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
-                       Edit
-                     </Button>
-                     <Button size="small" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
-                       View
+                     <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
+                        Edit
+                      </Button>
+                     <Button className="management-action-btn" size="middle" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
+                       <EyeOutlined style={{marginRight: 4}} />View Detail
                      </Button>
                    </td>
                  </tr>
@@ -369,24 +373,69 @@ const handleSortByTechnician = () => {
          open={showDetailModal}
          onCancel={() => setShowDetailModal(false)}
          footer={null}
-         title="Warranty Details"
+         title={null}
          width={600}
        >
-         <Descriptions bordered column={1} size="middle">
-           <Descriptions.Item label="Booking Code">{bookingMap[selectedWarranty.bookingId] || selectedWarranty.bookingId}</Descriptions.Item>
-           <Descriptions.Item label="Customer">{userNames[selectedWarranty.customerId] || selectedWarranty.customerId}</Descriptions.Item>
-           <Descriptions.Item label="Technician">{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId}</Descriptions.Item>
-           <Descriptions.Item label="Status">{selectedWarranty.status}</Descriptions.Item>
-           <Descriptions.Item label="Reported Issue">{selectedWarranty.reportedIssue}</Descriptions.Item>
-           <Descriptions.Item label="Resolution Note">{selectedWarranty.resolutionNote || "Chưa có"}</Descriptions.Item>
-           <Descriptions.Item label="Rejection Reason">{selectedWarranty.rejectionReason || "Chưa có"}</Descriptions.Item>
-           <Descriptions.Item label="Expire At">{selectedWarranty.expireAt ? new Date(selectedWarranty.expireAt).toLocaleDateString() : "Chưa có"}</Descriptions.Item>
-           <Descriptions.Item label="Request Date">{new Date(selectedWarranty.requestDate).toLocaleString()}</Descriptions.Item>
-           <Descriptions.Item label="Is Under Warranty">{selectedWarranty.isUnderWarranty ? "Yes" : "No"}</Descriptions.Item>
-           <Descriptions.Item label="Is Reviewed By Admin">{selectedWarranty.isReviewedByAdmin ? "Yes" : "No"}</Descriptions.Item>
-           <Descriptions.Item label="Created At">{new Date(selectedWarranty.createdAt).toLocaleString()}</Descriptions.Item>
-           <Descriptions.Item label="Updated At">{new Date(selectedWarranty.updatedAt).toLocaleString()}</Descriptions.Item>
-         </Descriptions>
+         <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
+           <div style={{fontSize: 22, fontWeight: 600, marginBottom: 16}}>Warranty Detail</div>
+           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Booking Code</div>
+               <div>{bookingMap[selectedWarranty.bookingId] || "UNKNOWN"}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Customer</div>
+               <div>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Technician</div>
+               <div>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Status</div>
+               <div>{selectedWarranty.status}</div>
+             </div>
+             <div style={{gridColumn: '1 / span 2'}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reported Issue</div>
+               <div>{selectedWarranty.reportedIssue}</div>
+             </div>
+             <div style={{gridColumn: '1 / span 2'}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolution Note</div>
+               <div>{selectedWarranty.resolutionNote || 'Chưa có'}</div>
+             </div>
+             <div style={{gridColumn: '1 / span 2'}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Rejection Reason</div>
+               <div>{selectedWarranty.rejectionReason || 'Chưa có'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Expire At</div>
+               <div>{selectedWarranty.expireAt ? new Date(selectedWarranty.expireAt).toLocaleDateString() : 'Chưa có'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Request Date</div>
+               <div>{new Date(selectedWarranty.requestDate).toLocaleString()}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Is Under Warranty</div>
+               <div>{selectedWarranty.isUnderWarranty ? 'Yes' : 'No'}</div>
+             </div>
+             <div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Is Reviewed By Admin</div>
+               <div>{selectedWarranty.isReviewedByAdmin ? 'Yes' : 'No'}</div>
+             </div>
+             {/* Nếu có trường images hoặc ảnh liên quan trong Warranty Detail, hiển thị như gallery đẹp: */}
+             {selectedWarranty.images && selectedWarranty.images.length > 0 && (
+               <div style={{gridColumn: '1 / span 2'}}>
+                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Images</div>
+                 <div style={{display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', minHeight: 60}}>
+                   {selectedWarranty.images.map((img, idx) => (
+                     <img key={idx} src={img} alt="img" style={{maxWidth: 120, maxHeight: 120, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', objectFit: 'cover'}} />
+                   ))}
+                 </div>
+               </div>
+             )}
+           </div>
+         </div>
        </Modal>
      )}
    </div>

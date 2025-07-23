@@ -12,6 +12,8 @@ import {
 } from '../../features/coupons/couponSlice';
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { userAPI } from '../../features/users/userAPI';
+import './ManagementTableStyle.css';
+import { EyeOutlined, EditOutlined, FilterOutlined } from '@ant-design/icons';
 
 
 const initialFormState = {
@@ -53,9 +55,19 @@ const [filterStatus, setFilterStatus] = useState();
 const [users, setUsers] = useState([]);
 const [allUsers, setAllUsers] = useState([]);
 const [loadingUsers, setLoadingUsers] = useState(false);
-// Thêm state lưu lỗi validate
-const [validationErrors, setValidationErrors] = useState({});
-
+const [showUserFilterModal, setShowUserFilterModal] = useState(false);
+const [userFilterCriteria, setUserFilterCriteria] = useState({
+    isNewUser: null,
+    isIntermissionUser: null,
+    minTotalBookingValue: null,
+    rank: null,
+});
+const [filteredUsers, setFilteredUsers] = useState([]);
+const [loadingFilteredUsers, setLoadingFilteredUsers] = useState(false);
+const [selectedFilteredUserIds, setSelectedFilteredUserIds] = useState([]);
+ 
+ const [validationErrors, setValidationErrors] = useState({});
+ const [activeKey, setActiveKey] = useState('active');
 
 
  const couponsPerPage = 10;
@@ -161,11 +173,6 @@ const [validationErrors, setValidationErrors] = useState({});
 
 
  useEffect(() => {
-   if (error) {
-     message.error(error.title || 'Đã có lỗi xảy ra. Vui lòng thử lại!');
-     setValidationErrors({});
-     dispatch(resetState());
-   }
    if (success) {
      setValidationErrors({});
      message.success('Thao tác thành công!');
@@ -174,6 +181,11 @@ const [validationErrors, setValidationErrors] = useState({});
      setShowDeleteModal(false);
      dispatch(resetState());
      dispatch(fetchCoupons());
+   }
+   if (error) {
+     message.error(error.title || 'Đã có lỗi xảy ra. Vui lòng thử lại!');
+     dispatch(resetState());
+     // KHÔNG reset validationErrors ở đây!
    }
  }, [error, success, dispatch]);
 
@@ -290,16 +302,82 @@ const [validationErrors, setValidationErrors] = useState({});
    }));
  };
 
+ const handleOpenUserFilterModal = () => {
+    setShowUserFilterModal(true);
+    setFilteredUsers([]);
+    setSelectedFilteredUserIds([]); 
+    setUserFilterCriteria({
+        isNewUser: null,
+        isIntermissionUser: null,
+        minTotalBookingValue: null,
+        rank: null,
+    });
+};
+
+const handleUserFilterChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setUserFilterCriteria(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? (checked ? true : null) : (value || null)
+    }));
+};
+
+const handleApplyUserFilter = async () => {
+    setLoadingFilteredUsers(true);
+    try {
+        const criteriaToSend = Object.entries(userFilterCriteria).reduce((acc, [key, value]) => {
+            if (value !== null && value !== '') {
+                acc[key] = value;
+            }
+            return acc;
+        }, {});
+
+        const result = await userAPI.filter(criteriaToSend);
+        setFilteredUsers(result);
+    } catch (error) {
+        message.error("Lỗi khi lọc người dùng!");
+        console.error("Filter user error:", error);
+    } finally {
+        setLoadingFilteredUsers(false);
+    }
+};
+
+const handleConfirmUserSelection = () => {
+    const currentSelected = new Set(formData.userIds);
+    selectedFilteredUserIds.forEach(id => currentSelected.add(id));
+    setFormData(prev => ({ ...prev, userIds: Array.from(currentSelected) }));
+
+    // Cập nhật lại danh sách users để hiển thị trong Select chính
+    const updatedUsers = [...allUsers];
+    filteredUsers.forEach(filteredUser => {
+        if (!updatedUsers.some(u => u.id === filteredUser.id)) {
+            updatedUsers.push(filteredUser);
+        }
+    });
+    setUsers(updatedUsers);
+    setAllUsers(updatedUsers);
+
+    setShowUserFilterModal(false);
+};
+
 
  const handleSubmit = (e) => {
    e.preventDefault();
    setValidationErrors({});
    let dataToSend = {
      ...formData,
-     value: formData.value !== '' ? Number(formData.value) : null,
-     maxDiscount: formData.maxDiscount !== '' ? Number(formData.maxDiscount) : null,
-     minOrderValue: formData.minOrderValue !== '' ? Number(formData.minOrderValue) : null,
-     totalUsageLimit: formData.totalUsageLimit !== '' ? Number(formData.totalUsageLimit) : null,
+     code: formData.code || '',
+     description: formData.description || '',
+     type: formData.type || 'PERCENT',
+     value: formData.value !== '' ? Number(formData.value) : 0,
+     maxDiscount: formData.maxDiscount !== '' ? Number(formData.maxDiscount) : 0,
+     minOrderValue: formData.minOrderValue !== '' ? Number(formData.minOrderValue) : 0,
+     totalUsageLimit: formData.totalUsageLimit !== '' ? Number(formData.totalUsageLimit) : 0,
+     startDate: formData.startDate || '',
+     endDate: formData.endDate || '',
+     audience: formData.audience || 'ALL',
+     userIds: formData.userIds || [],
+     isActive: typeof formData.isActive === 'boolean' ? formData.isActive : true,
    };
 
    // Luôn gửi userIds, nếu không phải SPECIFIC_USERS thì là mảng rỗng
@@ -337,8 +415,13 @@ const [validationErrors, setValidationErrors] = useState({});
      const generalErrors = [];
      Object.entries(apiErrors).forEach(([key, msgs]) => {
        const mappedKey = mapErrorKey(key);
-       // Nếu là field hợp lệ thì map vào đúng trường FE
-       if ([
+       // Nếu là lỗi kỹ thuật, chỉ đẩy vào general
+       const isTechError = msgs.some(msg =>
+         msg.includes('could not be converted') || msg.includes('System.DateTime')
+       );
+       if (isTechError) {
+         generalErrors.push('Nhập vào các trường * bắt buộc');
+       } else if ([
          'Code', 'Description', 'Type', 'Value', 'MaxDiscount', 'MinOrderValue',
          'TotalUsageLimit', 'Audience', 'UserIds', 'IsActive', 'StartDate', 'EndDate'
        ].includes(mappedKey)) {
@@ -355,38 +438,36 @@ const [validationErrors, setValidationErrors] = useState({});
 
    if (showAddModal) {
      dispatch(createCoupon(dataToSend)).then((action) => {
-       if (action.error && action.error.message) {
+       console.log('ACTION RETURNED:', action);
+       // Ưu tiên lấy lỗi từ action.payload nếu có
+       if (action.payload && action.payload.errors) {
+         const apiErrors = action.payload.errors;
+         console.log('apiErrors:', apiErrors);
+         const processed = processErrors(apiErrors);
+         console.log('processed validationErrors:', processed);
+         setValidationErrors(processed);
+       } else if (action.error && action.error.message) {
+         // fallback cho các lỗi khác
          const err = action.error;
-         if (err && err.response && err.response.data) {
-           console.log('API error detail:', err.response.data);
-           const apiErrors = err.response.data.errors;
-           if (apiErrors) {
-             setValidationErrors(processErrors(apiErrors));
-           } else if (err.response.data.title) {
-             setValidationErrors({ general: err.response.data.title });
-           }
-           message.error(err.response.data.title || JSON.stringify(err.response.data));
-         } else {
-           message.error(err.message);
-         }
+         console.log('ERROR OBJECT:', err);
+         message.error(err.message);
        }
      });
    } else if (showEditModal && selectedCoupon) {
      dispatch(updateCoupon({ id: selectedCoupon.id, couponData: dataToSend })).then((action) => {
-       if (action.error && action.error.message) {
+       console.log('ACTION RETURNED:', action);
+       // Ưu tiên lấy lỗi từ action.payload nếu có
+       if (action.payload && action.payload.errors) {
+         const apiErrors = action.payload.errors;
+         // Xử lý lỗi kỹ thuật giống như create
+         const processed = processErrors(apiErrors);
+         console.log('processed validationErrors:', processed);
+         setValidationErrors(processed);
+       } else if (action.error && action.error.message) {
+         // fallback cho các lỗi khác
          const err = action.error;
-         if (err && err.response && err.response.data) {
-           console.log('API error detail:', err.response.data);
-           const apiErrors = err.response.data.errors;
-           if (apiErrors) {
-             setValidationErrors(processErrors(apiErrors));
-           } else if (err.response.data.title) {
-             setValidationErrors({ general: err.response.data.title });
-           }
-           message.error(err.response.data.title || JSON.stringify(err.response.data));
-         } else {
-           message.error(err.message);
-         }
+         console.log('ERROR OBJECT:', err);
+         message.error(err.message);
        }
      });
    }
@@ -396,6 +477,10 @@ const [validationErrors, setValidationErrors] = useState({});
  console.log('coupons:', coupons);
  console.log('deletedCoupons:', deletedCoupons);
  console.log('validationErrors:', validationErrors);
+
+
+ // Trước khi render modal
+ console.log('validationErrors trước khi render:', validationErrors);
 
 
  return (
@@ -510,13 +595,17 @@ const [validationErrors, setValidationErrors] = useState({});
                    <td>{coupon.value}</td>
                    <td>{coupon.maxDiscount}</td>
                    <td>
-                     <span className={`badge ${coupon.isActive ? 'bg-success' : 'bg-danger'}`}>
+                     <span className={`badge ${coupon.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
                        {coupon.isActive ? 'ACTIVE' : 'INACTIVE'}
                      </span>
                    </td>
                    <td>
-                     <Button size="small" onClick={() => handleEditCoupon(coupon)} style={{ marginRight: 8 }}>Edit</Button>
-                     <Button size="small" danger onClick={() => handleDeleteCoupon(coupon)}>Delete</Button>
+                     <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditCoupon(coupon)} style={{ marginRight: 8 }}>
+                        Edit
+                      </Button>
+                     <Button className="management-action-btn" size="middle" danger onClick={() => { setSelectedCoupon(coupon); setShowDeleteModal(true); }} style={{ marginRight: 8 }}>
+                       Delete
+                     </Button>
                    </td>
                  </tr>
                ))}
@@ -561,7 +650,13 @@ const [validationErrors, setValidationErrors] = useState({});
      >
        <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
-           <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+           <div style={{ color: 'red', marginBottom: 8 }}>
+             {validationErrors.general.includes('The dto field is required') ||
+              validationErrors.general.includes('could not be converted') ||
+              validationErrors.general.includes('System.DateTime')
+               ? 'Nhập vào các trường * bắt buộc'
+               : validationErrors.general}
+           </div>
          )}
          <Row gutter={16}>
            <Col span={12}>
@@ -611,8 +706,6 @@ const [validationErrors, setValidationErrors] = useState({});
                      name="value"
                      value={formData.value}
                      onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
-                     min={1}
-                     max={100}
                      style={{ width: '100%' }}
                      placeholder="Enter percentage"
                    />
@@ -727,25 +820,38 @@ const [validationErrors, setValidationErrors] = useState({});
          </Row>
 
          {formData.audience === 'SPECIFIC_USERS' && (
-           <Form.Item label="Select Users" required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
-             <Select
-               mode="multiple"
-               placeholder="Search and select users"
-               value={formData.userIds}
-               onChange={handleUserSelect}
-               onSearch={handleUserSearch}
-               loading={loadingUsers}
-               filterOption={false}
-               showSearch
-               style={{ width: '100%' }}
-             >
-               {users.map(user => (
-                 <Select.Option key={user.id} value={user.id}>
-                   {user.fullName} ({user.email})
-                 </Select.Option>
-               ))}
-             </Select>
-           </Form.Item>
+            <Form.Item label="Select Users" required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
+                <Row align="middle">
+                    <Col flex="auto">
+                        <Select
+                            mode="multiple"
+                            placeholder="Search and select users"
+                            value={formData.userIds}
+                            onChange={handleUserSelect}
+                            onSearch={handleUserSearch}
+                            loading={loadingUsers}
+                            filterOption={false}
+                            showSearch
+                            style={{ width: '100%' }}
+                        >
+                            {users.map(user => (
+                                <Select.Option key={user.id} value={user.id}>
+                                    {user.fullName} ({user.email})
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </Col>
+                    <Col>
+                        <Button
+                            icon={<FilterOutlined />}
+                            onClick={handleOpenUserFilterModal}
+                            style={{ marginLeft: 8 }}
+                        >
+                            Filter Users
+                        </Button>
+                    </Col>
+                </Row>
+            </Form.Item>
          )}
 
          <div className="d-flex justify-content-end">
@@ -815,8 +921,6 @@ const [validationErrors, setValidationErrors] = useState({});
                      name="value"
                      value={formData.value}
                      onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
-                     min={1}
-                     max={100}
                      style={{ width: '100%' }}
                      placeholder="Enter percentage"
                    />
@@ -931,25 +1035,38 @@ const [validationErrors, setValidationErrors] = useState({});
          </Row>
 
          {formData.audience === 'SPECIFIC_USERS' && (
-           <Form.Item label="Select Users" required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
-             <Select
-               mode="multiple"
-               placeholder="Search and select users"
-               value={formData.userIds}
-               onChange={handleUserSelect}
-               onSearch={handleUserSearch}
-               loading={loadingUsers}
-               filterOption={false}
-               showSearch
-               style={{ width: '100%' }}
-             >
-               {users.map(user => (
-                 <Select.Option key={user.id} value={user.id}>
-                   {user.fullName} ({user.email})
-                 </Select.Option>
-               ))}
-             </Select>
-           </Form.Item>
+            <Form.Item label="Select Users" required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
+                <Row align="middle">
+                    <Col flex="auto">
+                        <Select
+                            mode="multiple"
+                            placeholder="Search and select users"
+                            value={formData.userIds}
+                            onChange={handleUserSelect}
+                            onSearch={handleUserSearch}
+                            loading={loadingUsers}
+                            filterOption={false}
+                            showSearch
+                            style={{ width: '100%' }}
+                        >
+                            {users.map(user => (
+                                <Select.Option key={user.id} value={user.id}>
+                                    {user.fullName} ({user.email})
+                                </Select.Option>
+                            ))}
+                        </Select>
+                    </Col>
+                    <Col>
+                        <Button
+                            icon={<FilterOutlined />}
+                            onClick={handleOpenUserFilterModal}
+                            style={{ marginLeft: 8 }}
+                        >
+                            Filter Users
+                        </Button>
+                    </Col>
+                </Row>
+            </Form.Item>
          )}
 
          <div className="d-flex justify-content-end">
@@ -961,6 +1078,95 @@ const [validationErrors, setValidationErrors] = useState({});
            </Button>
          </div>
        </Form>
+     </Modal>
+
+
+     {/* User Filter Modal */}
+     <Modal
+        open={showUserFilterModal}
+        onCancel={() => setShowUserFilterModal(false)}
+        title="Filter Users"
+        width={1000}
+        footer={[
+            <Button key="back" onClick={() => setShowUserFilterModal(false)}>
+                Cancel
+            </Button>,
+            <Button key="submit" type="primary" loading={loadingFilteredUsers} onClick={handleConfirmUserSelection}>
+                Confirm Selection
+            </Button>,
+        ]}
+    >
+        <Form layout="vertical">
+            <Row gutter={16}>
+                <Col span={8}>
+                    <Form.Item>
+                        <Switch
+                            name="isNewUser"
+                            checked={userFilterCriteria.isNewUser}
+                            onChange={(checked) => handleUserFilterChange({ target: { name: 'isNewUser', type: 'checkbox', checked } })}
+                        />
+                        <span style={{ marginLeft: 8 }}>New User (chưa có booking)</span>
+                    </Form.Item>
+                </Col>
+                <Col span={8}>
+                    <Form.Item>
+                        <Switch
+                            name="isIntermissionUser"
+                            checked={userFilterCriteria.isIntermissionUser}
+                            onChange={(checked) => handleUserFilterChange({ target: { name: 'isIntermissionUser', type: 'checkbox', checked } })}
+                        />
+                        <span style={{ marginLeft: 8 }}>Intermission User (3 tháng không hoạt động)</span>
+                    </Form.Item>
+                </Col>
+            </Row>
+            <Row gutter={16}>
+                <Col span={8}>
+                    <Form.Item label="Tổng giá trị booking tối thiểu">
+                        <InputNumber
+                            name="minTotalBookingValue"
+                            value={userFilterCriteria.minTotalBookingValue}
+                            onChange={(value) => handleUserFilterChange({ target: { name: 'minTotalBookingValue', value } })}
+                            style={{ width: '100%' }}
+                            placeholder="e.g., 5000000"
+                        />
+                    </Form.Item>
+                </Col>
+                <Col span={8}>
+                    <Form.Item label="Hạng thành viên">
+                        <Select
+                            name="rank"
+                            value={userFilterCriteria.rank}
+                            onChange={(value) => handleUserFilterChange({ target: { name: 'rank', value } })}
+                            allowClear
+                        >
+                            <Select.Option value="Silver">Bạc (5-19 bookings)</Select.Option>
+                            <Select.Option value="Gold">Vàng (20-49 bookings)</Select.Option>
+                            <Select.Option value="Diamond">Kim Cương (50-99 bookings)</Select.Option>
+                            <Select.Option value="VIP">VIP (100 bookings or 50M chi tiêu)</Select.Option>
+                        </Select>
+                    </Form.Item>
+                </Col>
+                <Col span={8} style={{ alignSelf: 'flex-end' }}>
+                     <Button type="primary" onClick={handleApplyUserFilter} loading={loadingFilteredUsers}>Áp dụng bộ lọc</Button>
+                </Col>
+            </Row>
+        </Form>
+        <Spin spinning={loadingFilteredUsers}>
+            <p>{filteredUsers.length} user(s) found.</p>
+            <Select
+                mode="multiple"
+                placeholder="Select users from results"
+                value={selectedFilteredUserIds}
+                onChange={setSelectedFilteredUserIds}
+                style={{ width: '100%', marginTop: 16 }}
+            >
+                {filteredUsers.map(user => (
+                    <Select.Option key={user.id} value={user.id}>
+                        {user.fullName} ({user.email})
+                    </Select.Option>
+                ))}
+            </Select>
+        </Spin>
      </Modal>
 
 
@@ -1029,4 +1235,4 @@ const [validationErrors, setValidationErrors] = useState({});
 
 
 export default CouponManagement;
-
+  

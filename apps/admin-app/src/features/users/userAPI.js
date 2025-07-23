@@ -49,4 +49,15 @@ export const userAPI = {
             throw error;
         }
     },
+
+    // Filter users
+    filter: async (criteria) => {
+        try {
+            const response = await ApiBE.post('/dashboard/users/filter', criteria);
+            return response.data;
+        } catch (error) {
+            console.error('Filter users error:', error);
+            throw error;
+        }
+    }
 }; 

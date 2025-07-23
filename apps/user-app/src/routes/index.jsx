@@ -3,9 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 
 import { checkAuthThunk } from "../features/auth/authSlice";
 import ProtectedRoute from "./access/PrivateRoute";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-
 import PrivateRoute from "./access/PrivateRoute";
 import HomePage from "../pages/home/HomePage";
 import LoginPage from "../pages/authentication/LogInPage";

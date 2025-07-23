@@ -3,6 +3,9 @@ import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import ApiBE from '../../services/ApiBE';
 import { Modal, Button, Select, Descriptions, Spin } from 'antd';
+import { serviceAPI } from '../../features/service/serviceAPI';
+import { EyeOutlined } from '@ant-design/icons';
+import './ManagementTableStyle.css';
 
 
 const BookingManagement = () => {
@@ -19,6 +22,7 @@ const [sortOrder, setSortOrder] = useState('desc');
 const [filterService, setFilterService] = useState('');
 const [filterStatus,  setFilterStatus] = useState('');
 const [allServices, setAllServices] = useState([]);
+const [technicianName, setTechnicianName] = useState('');
 
 
  useEffect(() => {
@@ -75,6 +79,16 @@ useEffect(() => {
 useEffect(() => {
   setCurrentPage(1);
 }, [filterService, filterStatus]);
+
+useEffect(() => {
+  if (showDetailModal && selectedBooking && selectedBooking.technicianId) {
+    userAPI.getById(selectedBooking.technicianId)
+      .then(user => setTechnicianName(user.fullName || user.email || 'Unknown'))
+      .catch(() => setTechnicianName('Unknown'));
+  } else {
+    setTechnicianName('Unknown');
+  }
+}, [showDetailModal, selectedBooking]);
 
 
  const filteredBookings = bookings.filter(b => {
@@ -283,7 +297,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                  )}
                </th>
                <th>STATUS</th>
-               <th>TIME</th>
+               <th>SCHEDULE</th>
                <th>ACTION</th>
              </tr>
            </thead>
@@ -295,18 +309,18 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              ) : (
                currentBookings.map(b => (
                  <tr key={b.id}>
-                   <td>{b.bookingCode || b.id}</td>
+                   <td>{b.bookingCode || 'UNKNOWN'}</td>
                    <td>{userMap[b.customerId]}</td>
                    <td>{serviceMap[b.serviceId]}</td>
-                   <td>{b.status}</td>
+                   <td>{b.status ? b.status.replace(/_/g, ' ') : ''}</td>
                    <td>
                      {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
                        ? `${new Date(b.schedule.startTime).toLocaleString()} - ${b.schedule.endTime ? new Date(b.schedule.endTime).toLocaleString() : (b.schedule.expectedEndTime ? new Date(b.schedule.expectedEndTime).toLocaleString() : '')}`
                        : ''}
                    </td>
                    <td>
-                     <Button size="small" onClick={() => { setSelectedBooking(b); setShowDetailModal(true); }}>
-                       View Detail
+                     <Button className="management-action-btn" size="middle" onClick={() => { setSelectedBooking(b); setShowDetailModal(true); }}>
+                       <EyeOutlined style={{marginRight: 4}} />View Detail
                      </Button>
                    </td>
                  </tr>
@@ -337,22 +351,83 @@ const isDataReady = isUserMapReady && isServiceMapReady;
          open={showDetailModal}
          onCancel={() => setShowDetailModal(false)}
          footer={null}
-         title="Booking Detail"
-         width={600}
+         title={null}
+         width={650}
        >
-         <Descriptions bordered column={1} size="middle">
-           <Descriptions.Item label="Booking Code">{selectedBooking.bookingCode || selectedBooking.id}</Descriptions.Item>
-           <Descriptions.Item label="Customer">{userMap[selectedBooking.customerId] || selectedBooking.customerId}</Descriptions.Item>
-           <Descriptions.Item label="Service">{serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}</Descriptions.Item>
-           <Descriptions.Item label="Status">{selectedBooking.status}</Descriptions.Item>
-           <Descriptions.Item label="Schedule">
-             {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
-             {selectedBooking.schedule?.endTime
-               ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}`
-               : (selectedBooking.schedule?.expectedEndTime ? ` - ${new Date(selectedBooking.schedule.expectedEndTime).toLocaleString()}` : '')}
-           </Descriptions.Item>
-           {/* Thêm các trường khác nếu cần */}
-         </Descriptions>
+         <div style={{background: '#f8fafc', borderRadius: 16, boxShadow: '0 2px 16px rgba(0,0,0,0.10)', padding: 0}}>
+           {/* Section: Main Info */}
+           <div style={{padding: 24, borderBottom: '1px solid #eee', background: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16}}>
+             <div style={{fontSize: 22, fontWeight: 700, marginBottom: 8, color: '#222'}}>Booking Detail</div>
+             <div style={{display: 'flex', flexWrap: 'wrap', gap: 24}}>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Booking Code</div>
+                 <div>{selectedBooking.bookingCode || selectedBooking.id}</div>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Customer</div>
+                 <div>{userMap[selectedBooking.customerId] || selectedBooking.customerId}</div>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Technician</div>
+                 <div>{technicianName}</div>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Service</div>
+                 <div>{serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}</div>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Location</div>
+                 <div>{selectedBooking.location?.address}</div>
+               </div>
+             </div>
+           </div>
+           {/* Section: Status & Payment */}
+           <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#f6faff'}}>
+             <div style={{display: 'flex', gap: 24, flexWrap: 'wrap'}}>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Status</div>
+                 <span style={{background: '#e6f7ff', color: '#1890ff', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}</span>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Payment</div>
+                 <span style={{background: '#f6ffed', color: '#52c41a', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.paymentStatus}</span>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Is Urgent</div>
+                 <span style={{background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', color: selectedBooking.isUrgent ? '#faad14' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</span>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Customer Confirmed</div>
+                 <span style={{background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</span>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888'}}>Technician Confirmed</div>
+                 <span style={{background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</span>
+               </div>
+             </div>
+           </div>
+           {/* Section: Schedule & Description */}
+           <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#fff'}}>
+             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Schedule</div>
+             <div style={{marginBottom: 12}}>
+               {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
+               {selectedBooking.schedule?.endTime
+                 ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}`
+                 : (selectedBooking.schedule?.expectedEndTime ? ` - ${new Date(selectedBooking.schedule.expectedEndTime).toLocaleString()}` : '')}
+             </div>
+             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
+             <div>{selectedBooking.description}</div>
+           </div>
+           {/* Section: Images */}
+           <div style={{padding: 20, background: '#f6faff', borderBottomLeftRadius: 16, borderBottomRightRadius: 16}}>
+             <div style={{fontWeight: 500, color: '#888', marginBottom: 8}}>Images</div>
+             <div style={{display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 60}}>
+               {selectedBooking.images && selectedBooking.images.length > 0 ? selectedBooking.images.map((img, idx) => (
+                 <img key={idx} src={img} alt="img" style={{maxWidth: 120, maxHeight: 120, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', objectFit: 'cover'}} />
+               )) : <span style={{color: '#aaa'}}>N/A</span>}
+             </div>
+           </div>
+         </div>
        </Modal>
      )}
    </div>

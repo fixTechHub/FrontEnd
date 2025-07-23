@@ -10,6 +10,8 @@ import {
  fetchDeletedCategories,
  restoreCategory,
 } from '../../features/categories/categorySlice';
+import './ManagementTableStyle.css';
+import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 
 
 const initialFormState = {
@@ -37,6 +39,7 @@ const CategoryManagement = () => {
 const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
 const [filterStatus, setFilterStatus] = useState();
 const [showRestoreModal, setShowRestoreModal] = useState(false);
+const [validationErrors, setValidationErrors] = useState({});
 
 
  const handlePageChange = (page) => {
@@ -80,14 +83,10 @@ const sortedCategories = [...filteredCategories].sort((a, b) => {
     } else {
       return b.categoryName.localeCompare(a.categoryName);
     }
-  } else if (sortField === 'createdAt') {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
-    if (sortOrder === 'asc') {
-      return dateA - dateB;
-    } else {
-      return dateB - dateA;
-    }
+  } else if (sortField === 'createdAt' || sortField === 'lasted') { // Thêm điều kiện sortField === 'lasted'
+    const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+    const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA; // Mặc định sort DESC cho lasted
   }
   return 0;
 });
@@ -106,15 +105,53 @@ const currentCategories = sortedCategories.slice(indexOfFirstCategory, indexOfLa
    }));
  };
 
+const processErrors = (apiErrors) => {
+  const newErrors = {};
+  const generalErrors = [];
+  Object.entries(apiErrors).forEach(([key, msgs]) => {
+    const mappedKey = key === 'CategoryName' ? 'CategoryName' : key === 'Icon' ? 'Icon' : key;
+    const isTechError = msgs.some(msg =>
+      msg.includes('could not be converted') || msg.includes('System.')
+    );
+    if (isTechError) {
+      generalErrors.push('Nhập vào các trường * bắt buộc');
+    } else if ([ 'CategoryName', 'Icon' ].includes(mappedKey)) {
+      newErrors[mappedKey] = msgs;
+    } else {
+      generalErrors.push(...msgs);
+    }
+  });
+  if (generalErrors.length > 0) {
+    newErrors.general = generalErrors.join(', ');
+  }
+  return newErrors;
+};
 
- const handleSubmit = (e) => {
-   e.preventDefault();
-   if (showAddModal) {
-     dispatch(createCategory(formData));
-   } else if (showEditModal && selectedCategory) {
-     dispatch(updateCategory({ id: selectedCategory.id, categoryData: formData }));
-   }
- };
+const handleSubmit = (e) => {
+  e.preventDefault();
+  setValidationErrors({});
+  if (!formData.categoryName || !formData.icon) {
+    setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
+    return;
+  }
+  if (showAddModal) {
+    dispatch(createCategory(formData)).then((action) => {
+      if (action.payload && action.payload.errors) {
+        const apiErrors = action.payload.errors;
+        const processed = processErrors(apiErrors);
+        setValidationErrors(processed);
+      }
+    });
+  } else if (showEditModal && selectedCategory) {
+    dispatch(updateCategory({ id: selectedCategory.id, categoryData: formData })).then((action) => {
+      if (action.payload && action.payload.errors) {
+        const apiErrors = action.payload.errors;
+        const processed = processErrors(apiErrors);
+        setValidationErrors(processed);
+      }
+    });
+  }
+};
 
 
  const handleSortChange = (value) => {
@@ -253,6 +290,7 @@ const isDataReady = categories.length > 0;
                  <th>ICON</th>
                  <th>STATUS</th>
                  <th>ACTION</th>
+                 
                </tr>
              </thead>
              <tbody>
@@ -266,13 +304,15 @@ const isDataReady = categories.length > 0;
                      <td>{cat.categoryName}</td>
                      <td>{cat.icon}</td>
                      <td>
-                       <span className={`badge ${cat.isActive ? 'bg-success' : 'bg-danger'}`}>
-                         {cat.isActive ? 'Active' : 'Inactive'}
+                       <span className={`badge ${cat.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
+                         {cat.isActive ? 'ACTIVE' : 'INACTIVE'}
                        </span>
                      </td>
                      <td>
-                       <Button size="small" onClick={() => handleEditCategory(cat)} style={{ marginRight: 8 }}>Edit</Button>
-                       <Button size="small" danger onClick={() => handleDeleteCategory(cat)}>Delete</Button>
+                       <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditCategory(cat)} style={{ marginRight: 8 }}>
+                        Edit
+                      </Button>
+                       <Button className="management-action-btn" size="middle" danger onClick={() => handleDeleteCategory(cat)}>Delete</Button>
                      </td>
                    </tr>
                  ))
@@ -312,26 +352,35 @@ const isDataReady = categories.length > 0;
        title="Add Category"
      >
        <form onSubmit={handleSubmit}>
+         {validationErrors.general && (
+           <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+         )}
          <div className="mb-3">
            <label className="form-label">Category Name</label>
            <input
              type="text"
              name="categoryName"
-             className="form-control"
+             className={`form-control${validationErrors.CategoryName ? ' is-invalid' : ''}`}
              value={formData.categoryName}
              onChange={handleChange}
              required
            />
+           {validationErrors.CategoryName && (
+             <div className="invalid-feedback">{validationErrors.CategoryName.join(', ')}</div>
+           )}
          </div>
          <div className="mb-3">
            <label className="form-label">Icon</label>
            <input
              type="text"
              name="icon"
-             className="form-control"
+             className={`form-control${validationErrors.Icon ? ' is-invalid' : ''}`}
              value={formData.icon}
              onChange={handleChange}
            />
+           {validationErrors.Icon && (
+             <div className="invalid-feedback">{validationErrors.Icon.join(', ')}</div>
+           )}
          </div>
          <div className="mb-3">
            <label className="form-label">Status</label>
@@ -362,26 +411,35 @@ const isDataReady = categories.length > 0;
        title="Update category"
      >
        <form onSubmit={handleSubmit}>
+         {validationErrors.general && (
+           <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+         )}
          <div className="mb-3">
            <label className="form-label">Category Name</label>
            <input
              type="text"
              name="categoryName"
-             className="form-control"
+             className={`form-control${validationErrors.CategoryName ? ' is-invalid' : ''}`}
              value={formData.categoryName}
              onChange={handleChange}
              required
            />
+           {validationErrors.CategoryName && (
+             <div className="invalid-feedback">{validationErrors.CategoryName.join(', ')}</div>
+           )}
          </div>
          <div className="mb-3">
            <label className="form-label">Icon</label>
            <input
              type="text"
              name="icon"
-             className="form-control"
+             className={`form-control${validationErrors.Icon ? ' is-invalid' : ''}`}
              value={formData.icon}
              onChange={handleChange}
            />
+           {validationErrors.Icon && (
+             <div className="invalid-feedback">{validationErrors.Icon.join(', ')}</div>
+           )}
          </div>
          <div className="mb-3">
            <label className="form-label">Status</label>

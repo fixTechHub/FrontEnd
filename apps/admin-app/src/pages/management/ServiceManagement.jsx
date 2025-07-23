@@ -11,6 +11,8 @@ import {
   restoreService,
 } from '../../features/service/serviceSlice';
 import { fetchCategories } from '../../features/categories/categorySlice';
+import './ManagementTableStyle.css';
+import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 
 const initialFormState = {
   serviceName: '',
@@ -42,6 +44,8 @@ const ServiceManagement = () => {
   const [filterStatus, setFilterStatus] = useState();
   const [filterCategory, setFilterCategory] = useState();
   const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
   const handlePageChange = (page) => {
     setCurrentPage(page);
@@ -155,16 +159,16 @@ const ServiceManagement = () => {
         return b.serviceName.localeCompare(a.serviceName);
       }
     } else if (sortField === 'category') {
-      const catA = (categories.find(cat => cat.id === a.categoryId)?.categoryName || '').toLowerCase();
-      const catB = (categories.find(cat => cat.id === b.categoryId)?.categoryName || '').toLowerCase();
+      const catA = categories.find(cat => cat.id === a.categoryId)?.categoryName?.toLowerCase() || 'zzz';
+      const catB = categories.find(cat => cat.id === b.categoryId)?.categoryName?.toLowerCase() || 'zzz';
       if (sortOrder === 'asc') {
         return catA.localeCompare(catB);
       } else {
         return catB.localeCompare(catA);
       }
     } else if (sortField === 'createdAt') {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
       if (sortOrder === 'asc') {
         return dateA - dateB;
       } else {
@@ -200,11 +204,33 @@ const ServiceManagement = () => {
     }
   };
 
+  const processErrors = (apiErrors) => {
+    const newErrors = {};
+    const generalErrors = [];
+    Object.entries(apiErrors).forEach(([key, msgs]) => {
+      const mappedKey = key === 'ServiceName' ? 'ServiceName' : key === 'Icon' ? 'Icon' : key;
+      const isTechError = msgs.some(msg =>
+        msg.includes('could not be converted') || msg.includes('System.')
+      );
+      if (isTechError) {
+        generalErrors.push('Nhập vào các trường * bắt buộc');
+      } else if ([ 'ServiceName', 'Icon' ].includes(mappedKey)) {
+        newErrors[mappedKey] = msgs;
+      } else {
+        generalErrors.push(...msgs);
+      }
+    });
+    if (generalErrors.length > 0) {
+      newErrors.general = generalErrors.join(', ');
+    }
+    return newErrors;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Chỉ validate required trường cơ bản
+    setValidationErrors({});
     if (!formData.serviceName || !formData.categoryId) {
-      message.error('Vui lòng nhập đầy đủ tên dịch vụ và chọn danh mục!');
+      setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
       return;
     }
     // Chuẩn bị data gửi lên BE
@@ -215,37 +241,23 @@ const ServiceManagement = () => {
         max: Number(formData.estimatedMarketPrice.max)
       };
     } else {
-      // Nếu là FIXED, xóa hoàn toàn trường estimatedMarketPrice khỏi payload
       delete dataToSend.estimatedMarketPrice;
     }
-    console.log('Data gửi lên BE:', dataToSend);
     if (showAddModal) {
       dispatch(createService(dataToSend)).then((action) => {
-        if (action.error && action.error.message) {
-          const err = action.error;
-          if (err && err.response && err.response.data) {
-            console.error('API error detail:', err.response.data);
-            message.error(err.response.data.title || JSON.stringify(err.response.data));
-          } else {
-            message.error(err.message);
-          }
+        if (action.payload && action.payload.errors) {
+          const apiErrors = action.payload.errors;
+          const processed = processErrors(apiErrors);
+          setValidationErrors(processed);
         }
-      }).catch(error => {
-        console.log("API Error:", error.response?.data || error.message);
       });
     } else if (showEditModal && selectedService) {
       dispatch(updateService({ id: selectedService.id, serviceData: dataToSend })).then((action) => {
-        if (action.error && action.error.message) {
-          const err = action.error;
-          if (err && err.response && err.response.data) {
-            console.error('API error detail:', err.response.data);
-            message.error(err.response.data.title || JSON.stringify(err.response.data));
-          } else {
-            message.error(err.message);
-          }
+        if (action.payload && action.payload.errors) {
+          const apiErrors = action.payload.errors;
+          const processed = processErrors(apiErrors);
+          setValidationErrors(processed);
         }
-      }).catch(error => {
-        console.log("API Error:", error.response?.data || error.message);
       });
     }
   };
@@ -340,7 +352,7 @@ const ServiceManagement = () => {
                       </span>
                     )}
                   </th>
-                  <th>ICON</th>
+                  <th>SERVICE TYPE</th>
                   <th>STATUS</th>
                   <th>ACTION</th>
                 </tr>
@@ -352,15 +364,17 @@ const ServiceManagement = () => {
                     <tr key={svc.id}>
                       <td>{svc.serviceName}</td>
                       <td>{category ? category.categoryName : ''}</td>
-                      <td>{svc.icon}</td>
+                      <td>{svc.serviceType}</td>
                       <td>
-                        <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
+                        <span className={`badge ${svc.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
                           {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
                         </span>
                       </td>
                       <td>
-                        <Button size="small" onClick={() => handleEditService(svc)} style={{ marginRight: 8 }}>Edit</Button>
-                        <Button size="small" danger onClick={() => handleDeleteService(svc)}>Delete</Button>
+                        <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditService(svc)} style={{ marginRight: 8 }}>
+                          Edit
+                        </Button>
+                        <Button className="management-action-btn" size="middle" danger onClick={() => handleDeleteService(svc)}>Delete</Button>
                       </td>
                     </tr>
                   );
@@ -398,21 +412,27 @@ const ServiceManagement = () => {
         destroyOnClose
       >
         <form onSubmit={handleSubmit}>
+          {validationErrors.general && (
+            <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+          )}
           <div className="mb-3">
             <label className="form-label">Service Name</label>
             <input
               type="text"
-              className="form-control"
+              className={`form-control${validationErrors.ServiceName ? ' is-invalid' : ''}`}
               name="serviceName"
               value={formData.serviceName}
               onChange={handleChange}
               required
             />
+            {validationErrors.ServiceName && (
+              <div className="invalid-feedback">{validationErrors.ServiceName.join(', ')}</div>
+            )}
           </div>
           <div className="mb-3">
             <label className="form-label">Category</label>
             <select
-              className="form-control"
+              className={`form-control${validationErrors.CategoryId ? ' is-invalid' : ''}`}
               name="categoryId"
               value={formData.categoryId}
               onChange={handleChange}
@@ -423,16 +443,22 @@ const ServiceManagement = () => {
                 <option key={cat.id} value={cat.id}>{cat.categoryName}</option>
               ))}
             </select>
+            {validationErrors.CategoryId && (
+              <div className="invalid-feedback">{validationErrors.CategoryId.join(', ')}</div>
+            )}
           </div>
           <div className="mb-3">
             <label className="form-label">Icon</label>
             <input
               type="text"
-              className="form-control"
+              className={`form-control${validationErrors.Icon ? ' is-invalid' : ''}`}
               name="icon"
               value={formData.icon}
               onChange={handleChange}
             />
+            {validationErrors.Icon && (
+              <div className="invalid-feedback">{validationErrors.Icon.join(', ')}</div>
+            )}
           </div>
           <div className="mb-3">
             <label className="form-label">Status:</label>
@@ -533,6 +559,7 @@ const ServiceManagement = () => {
               <tr>
                 <th>NAME</th>
                 <th>CATEGORY</th>
+                <th>SERVICE TYPE</th>
                 <th>ICON</th>
                 <th>STATUS</th>
                 <th>ACTION</th>
@@ -543,6 +570,7 @@ const ServiceManagement = () => {
                 <tr key={svc.id}>
                   <td>{svc.serviceName}</td>
                   <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || ''}</td>
+                  <td>{svc.serviceType}</td>
                   <td>{svc.icon}</td>
                   <td>
                     <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
@@ -562,6 +590,28 @@ const ServiceManagement = () => {
         <div className="d-flex justify-content-end mt-3">
           <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
         </div>
+      </Modal>
+      {/* Detail Modal */}
+      <Modal
+        open={showDetailModal}
+        onCancel={() => setShowDetailModal(false)}
+        title="Service Detail"
+        width={600}
+        destroyOnClose
+      >
+        {selectedService && (
+          <div className="p-3">
+            <p><strong>Service Name:</strong> {selectedService.serviceName}</p>
+            <p><strong>Category:</strong> {categories.find(cat => cat.id === selectedService.categoryId)?.categoryName || 'N/A'}</p>
+            <p><strong>Icon:</strong> {selectedService.icon || 'N/A'}</p>
+            <p><strong>Status:</strong> {selectedService.isActive ? 'Active' : 'Inactive'}</p>
+            <p><strong>Service Type:</strong> {selectedService.serviceType}</p>
+            <p><strong>Estimated Market Price:</strong> {selectedService.estimatedMarketPrice ? `${selectedService.estimatedMarketPrice.min} - ${selectedService.estimatedMarketPrice.max}` : 'N/A'}</p>
+            <p><strong>Description:</strong> {selectedService.description || 'N/A'}</p>
+            <p><strong>Created At:</strong> {new Date(selectedService.createdAt).toLocaleDateString()}</p>
+            <p><strong>Updated At:</strong> {new Date(selectedService.updatedAt).toLocaleDateString()}</p>
+          </div>
+        )}
       </Modal>
     </div>
   );

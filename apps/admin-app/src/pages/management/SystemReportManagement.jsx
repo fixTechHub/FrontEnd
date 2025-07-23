@@ -263,18 +263,10 @@ const SystemReportManagement = () => {
      key: 'actions',
      render: (_, record) => (
        <Space>
-         <Button
-           type="primary"
-           icon={<EyeOutlined />}
-           onClick={() => handleViewSystemReportDetails(record)}
-         >
-           View
-         </Button>
-         <Button
-           type="default"
-           icon={<EditIcon />}
-           onClick={() => openEditStatusModal(record)}
-         >
+         <Button className="management-action-btn" size="middle" onClick={() => handleViewSystemReportDetails(record)}>
+     <EyeOutlined style={{marginRight: 4}} />View Detail
+   </Button>
+         <Button className="management-action-btn" type="default" icon={<EditIcon />} onClick={() => openEditStatusModal(record)}>
            Edit
          </Button>
        </Space>
@@ -420,18 +412,39 @@ const SystemReportManagement = () => {
            open={isModalVisible}
            onCancel={() => setIsModalVisible(false)}
            footer={null}
-           title="System Report Details"
+           title={null}
            width={600}
          >
-           <Descriptions bordered column={1} size="middle">
-             <Descriptions.Item label="Title">{selectedSystemReport.title}</Descriptions.Item>
-             <Descriptions.Item label="Tag">{selectedSystemReport.tag}</Descriptions.Item>
-             <Descriptions.Item label="Status">{selectedSystemReport.status}</Descriptions.Item>
-             <Descriptions.Item label="Description">{selectedSystemReport.description}</Descriptions.Item>
-             <Descriptions.Item label="Submitted By">{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy}</Descriptions.Item>
-             <Descriptions.Item label="Resolved By">{selectedSystemReport.resolvedBy || "Chưa có"}</Descriptions.Item>
-             <Descriptions.Item label="Resolution Note">{selectedSystemReport.resolutionNote || "Chưa có"}</Descriptions.Item>
-           </Descriptions>
+           <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
+             <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
+               <div style={{flex: 1}}>
+                 <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>
+                   <span style={{marginRight: 12}}>{selectedSystemReport.title}</span>
+                   <Tag color={getTagColor(selectedSystemReport.tag)} style={{fontSize: 14, padding: '2px 12px', marginRight: 8}}>{selectedSystemReport.tag?.toUpperCase()}</Tag>
+                   <Tag color={getStatusColor(selectedSystemReport.status)} style={{fontSize: 14, padding: '2px 12px'}}>{selectedSystemReport.status?.toUpperCase()}</Tag>
+                 </div>
+               </div>
+             </div>
+             <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
+             <div style={{marginBottom: 16}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
+               <div>{selectedSystemReport.description}</div>
+             </div>
+             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Submitted By</div>
+                 <div>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy}</div>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolved By</div>
+                 <div>{selectedSystemReport.resolvedBy || 'Chưa có'}</div>
+               </div>
+               <div style={{gridColumn: '1 / span 2'}}>
+                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolution Note</div>
+                 <div>{selectedSystemReport.resolutionNote || 'Chưa có'}</div>
+               </div>
+             </div>
+           </div>
          </Modal>
        )}
 

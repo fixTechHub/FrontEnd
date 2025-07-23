@@ -202,13 +202,10 @@ const ReportManagement = () => {
      title: 'ACTIONS',
      key: 'actions',
      render: (_, record) => (
-       <Button
-         type="primary"
-         icon={<EyeOutlined />}
-         onClick={() => handleViewReportDetails(record)}
-       >
-         View Details
-       </Button>
+     
+     <Button className="management-action-btn" size="middle" onClick={() => handleViewReportDetails(record)}>
+     <EyeOutlined style={{marginRight: 4}} />View Detail
+   </Button>
      ),
    },
  ];
@@ -349,17 +346,37 @@ const ReportManagement = () => {
            open={isModalVisible}
            onCancel={() => setIsModalVisible(false)}
            footer={null}
-           title="Report Details"
+           title={null}
            width={600}
          >
-           <Descriptions bordered column={1} size="middle">
-             <Descriptions.Item label="Type">{selectedReport.type}</Descriptions.Item>
-             <Descriptions.Item label="Status">{selectedReport.status?.toUpperCase()}</Descriptions.Item>
-             <Descriptions.Item label="Penalty">{selectedReport.penalty || "Chưa có"}</Descriptions.Item>
-             <Descriptions.Item label="Description">{selectedReport.description}</Descriptions.Item>
-             <Descriptions.Item label="Reported User">{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId}</Descriptions.Item>
-             <Descriptions.Item label="Reporter">{userMap[selectedReport.reporterId] || selectedReport.reporterId}</Descriptions.Item>
-           </Descriptions>
+           <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
+             <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
+               <div style={{flex: 1}}>
+                 <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>
+                   <span style={{marginRight: 12}}>{selectedReport.type}</span>
+                   <Tag color={getStatusColor(selectedReport.status)} style={{fontSize: 14, padding: '2px 12px'}}>{selectedReport.status?.toUpperCase()}</Tag>
+                 </div>
+                 <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>
+                   <b>Penalty:</b> {selectedReport.penalty || 'Chưa có'}
+                 </div>
+               </div>
+             </div>
+             <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
+             <div style={{marginBottom: 16}}>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
+               <div>{selectedReport.description}</div>
+             </div>
+             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reported User</div>
+                 <div>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId}</div>
+               </div>
+               <div>
+                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reporter</div>
+                 <div>{userMap[selectedReport.reporterId] || selectedReport.reporterId}</div>
+               </div>
+             </div>
+           </div>
          </Modal>
        )}
      </div>

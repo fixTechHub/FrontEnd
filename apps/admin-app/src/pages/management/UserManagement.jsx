@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Select, Descriptions, Modal, Spin } from 'antd';
+import { message, Select, Descriptions, Modal, Spin, Button } from 'antd';
 import { userAPI } from '../../features/users/userAPI';
 import { roleAPI } from '../../features/roles/roleAPI';
 import { setUsers, setLoading, setError, setFilters } from '../../features/users/userSlice';
 import { selectFilteredUsers, selectUserFilters } from '../../features/users/userSelectors';
+import { EyeOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 
 
 const UserManagement = () => {
@@ -398,10 +399,9 @@ const UserManagement = () => {
                                        </td>
                                        <td><p className="text-gray-9">{user.email}</p></td>
                                        <td><p className="text-gray-9">{user.phone}</p></td>
-                                       <td><p className="text-gray-9">{roleMap[user.role] || user.role}</p></td>
+                                       <td><p className="text-gray-9">{roleMap[user.role] || 'UNKNOWN'}</p></td>
                                        <td>
                                            <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
-                                               <i className={`ti ti-point-filled ${getStatusIconClass(user.status)} me-1`}></i>
                                                {user.status}
                                            </span>
                                        </td>
@@ -411,17 +411,17 @@ const UserManagement = () => {
                                                    <i className="ti ti-edit me-1"></i>Edit
                                                </button> */}
                                                {user.lockedReason ? (
-                                                   <button className="btn btn-sm btn-success" onClick={() => handleUnlockUser(user)}>
-                                                       <i className="ti ti-unlock me-1"></i>Unlock
-                                                   </button>
+                                                <Button className="management-action-btn" size="middle" onClick={() => handleUnlockUser(user)} style={{ marginRight: 8 }}>
+                                                    <UnlockOutlined style={{ color: 'green', marginRight: 4 }} />Unlock
+                                                </Button>
                                                ) : (
-                                                   <button className="btn btn-sm btn-danger" onClick={() => handleLockUser(user)}>
-                                                       <i className="ti ti-lock me-1"></i>Lock
-                                                   </button>
+                                                <Button className="management-action-btn" size="middle" onClick={() => handleLockUser(user)} style={{ marginRight: 8 }}>
+                                                    <LockOutlined style={{ color: 'red', marginRight: 4 }} />Lock
+                                                </Button>
                                                )}
-                                               <button className="btn btn-sm btn-info" onClick={() => { setSelectedUser(user); setShowDetailModal(true); }}>
-                                                   <i className="ti ti-eye me-1"></i>View Detail
-                                               </button>
+                                               <Button className="management-action-btn" size="middle" onClick={() => { setSelectedUser(user); setShowDetailModal(true); }}>
+                                                    <EyeOutlined style={{marginRight: 4}} />View Detail
+                                                </Button>
                                            </div>
                                        </td>
                                    </tr>
@@ -576,19 +576,96 @@ const UserManagement = () => {
                        open={showDetailModal}
                        onCancel={() => setShowDetailModal(false)}
                        footer={null}
-                       title="User Detail"
+                       title={null}
                        width={600}
                    >
-                       <Descriptions bordered column={1} size="middle">
-                           <Descriptions.Item label="Full Name">{selectedUser.fullName}</Descriptions.Item>
-                           <Descriptions.Item label="Email">{selectedUser.email}</Descriptions.Item>
-                           <Descriptions.Item label="Phone">{selectedUser.phone}</Descriptions.Item>
-                           <Descriptions.Item label="Role">{roleMap[selectedUser.role] || selectedUser.role}</Descriptions.Item>
-                           <Descriptions.Item label="Status">{selectedUser.status}</Descriptions.Item>
-                           {selectedUser.lockedReason && (
-                               <Descriptions.Item label="Lock Reason">{selectedUser.lockedReason}</Descriptions.Item>
+                     <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
+                       <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
+                         <div style={{width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#888'}}>
+                           {selectedUser.avatar ? (
+                             <img
+                               src={selectedUser.avatar.startsWith('http') ? selectedUser.avatar : `${process.env.REACT_APP_API_URL || ''}${selectedUser.avatar}`}
+                               alt="avatar"
+                               style={{width: '100%', height: '100%', objectFit: 'cover'}}
+                             />
+                           ) : (
+                             selectedUser.fullName ? selectedUser.fullName[0].toUpperCase() : <i className="ti ti-user"></i>
                            )}
-                       </Descriptions>
+                         </div>
+                         <div style={{flex: 1}}>
+                           <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>{selectedUser.fullName || 'No Name'}</div>
+                           <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>{selectedUser.email}</div>
+                           <div style={{fontSize: 13, color: '#888'}}>
+                             <span style={{marginRight: 12}}><b>Status:</b> <span style={{color: selectedUser.status === 'ACTIVE' ? '#52c41a' : '#faad14'}}>{selectedUser.status}</span></span>
+                             <span><b>Role:</b> {roleMap[selectedUser.role] || 'UNKNOWN'}</span>
+                           </div>
+                         </div>
+                       </div>
+                       <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
+                       <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
+                         <div>
+                           <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Phone</div>
+                           <div>{selectedUser.phone || '-'}</div>
+                         </div>
+                         <div>
+                           <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>User Code</div>
+                           <div>{selectedUser.userCode || '-'}</div>
+                         </div>
+                         <div style={{gridColumn: '1 / span 2'}}>
+                           <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Address</div>
+                           <div>{selectedUser.address ? [selectedUser.address.street, selectedUser.address.district, selectedUser.address.city].filter(Boolean).join(', ') : '-'}</div>
+                         </div>
+                         <div>
+                           <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Phone Verified</div>
+                           <div>{selectedUser.phoneVerified ? 'Yes' : 'No'}</div>
+                         </div>
+                         <div>
+                           <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Email Verified</div>
+                           <div>{selectedUser.emailVerified ? 'Yes' : 'No'}</div>
+                         </div>
+                         {selectedUser.lockedReason && (
+                           <div style={{gridColumn: '1 / span 2', color: '#cf1322', background: '#fff1f0', borderRadius: 6, padding: 8, fontWeight: 500}}>
+                             <b>Lock Reason:</b> {selectedUser.lockedReason}
+                           </div>
+                         )}
+                         {selectedUser.verificationOTP && (
+                           <div>
+                             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Verification OTP</div>
+                             <div>{selectedUser.verificationOTP}</div>
+                           </div>
+                         )}
+                         {selectedUser.otpExpires && (
+                           <div>
+                             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>OTP Expires</div>
+                             <div>{new Date(selectedUser.otpExpires).toLocaleString()}</div>
+                           </div>
+                         )}
+                         {selectedUser.verificationCode && (
+                           <div>
+                             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Verification Code</div>
+                             <div>{selectedUser.verificationCode}</div>
+                           </div>
+                         )}
+                         {selectedUser.verificationCodeExpires && (
+                           <div>
+                             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Verification Code Expires</div>
+                             <div>{new Date(selectedUser.verificationCodeExpires).toLocaleString()}</div>
+                           </div>
+                         )}
+                         {selectedUser.pendingDeletionAt && (
+                           <div>
+                             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Pending Deletion At</div>
+                             <div>{new Date(selectedUser.pendingDeletionAt).toLocaleString()}</div>
+                           </div>
+                         )}
+                         {selectedUser.lastDeletionReminderSent && (
+                           <div>
+                             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Last Deletion Reminder Sent</div>
+                             <div>{new Date(selectedUser.lastDeletionReminderSent).toLocaleString()}</div>
+                           </div>
+                         )}
+                       </div>
+                     </div>
                    </Modal>
                )}
            </div>

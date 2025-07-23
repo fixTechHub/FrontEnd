@@ -29,6 +29,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import { Descriptions } from 'antd';
 import { serviceAPI } from '../../features/service/serviceAPI';
+import { EyeOutlined } from '@ant-design/icons';
 
 // Register ChartJS components
 ChartJS.register(
@@ -171,6 +172,7 @@ const AdminDashboard = () => {
   const [revenueChartLoading, setRevenueChartLoading] = useState(false);
   const [customerName, setCustomerName] = useState('');
   const [serviceName, setServiceName] = useState('');
+  const [technicianName, setTechnicianName] = useState('');
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -344,8 +346,14 @@ const AdminDashboard = () => {
   }, [dispatch, currentYear, lastYear]);
 
   useEffect(() => {
-    // Xóa useEffect fetch tên user/service khi mở modal
-  }, [selectedBooking, showDetailModal]);
+    if (showDetailModal && selectedBooking && selectedBooking.technicianId) {
+      userAPI.getById(selectedBooking.technicianId)
+        .then(user => setTechnicianName(user.fullName || user.email || 'Unknown'))
+        .catch(() => setTechnicianName('Unknown'));
+    } else {
+      setTechnicianName('Unknown');
+    }
+  }, [showDetailModal, selectedBooking]);
 
   // Tính tổng booking của tháng hiện tại
   const nowForBooking = new Date();
@@ -520,16 +528,18 @@ const AdminDashboard = () => {
           <Card style={{border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
             <div className="py-2 px-2 border-bottom d-flex justify-content-between align-items-center position-sticky top-0 bg-white" style={{zIndex: 10}}>
               <span className="fw-medium small">Recent Bookings</span>
-              <Button variant="outline-primary" size="sm" className="py-0 px-1" style={{fontSize: '0.6rem'}} onClick={() => navigate('/admin/booking-management')}>View</Button>
+              <Button variant="outline-primary" size="sm" className="py-0 px-1" style={{fontSize: '0.6rem'}} onClick={() => navigate('/admin/booking-management')}>
+                <EyeOutlined style={{marginRight: 4}} />View
+              </Button>
             </div>
             <div className="table-responsive">
               <table className="table table-hover small mb-0">
                 <thead className="position-sticky top-0 bg-white" style={{zIndex: 5}}>
                   <tr>
                     <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>CODE</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>DESCRIPTION</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>ADDRESS</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>START TIME</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>CUSTOMER</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>SERVICE</th>
+                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>SCHEDULE</th>
                     <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>STATUS</th>
                     <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>PAYMENT</th>
                     <th style={{fontSize: '0.65rem', padding: '0.5rem', textAlign: 'right', fontWeight: 'normal', color: '#666'}}>ACTION</th>
@@ -543,16 +553,21 @@ const AdminDashboard = () => {
                   ) : recentBookings.map((booking) => (
                     <tr key={booking.id}>
                       <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.bookingCode}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.description}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.location?.address}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.schedule ? new Date(booking.schedule.startTime).toLocaleString() : ''}</td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.customerName}</td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.serviceName}</td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>
+                        {booking.schedule?.startTime ? new Date(booking.schedule.startTime).toLocaleString() : ''}
+                        {booking.schedule?.endTime
+                          ? ` - ${new Date(booking.schedule.endTime).toLocaleString()}`
+                          : (booking.schedule?.expectedEndTime ? ` - ${new Date(booking.schedule.expectedEndTime).toLocaleString()}` : '')}
+                      </td>
                       <td style={{padding: '0.5rem'}}>
                         <span className={`badge rounded-pill ${
                           booking.status === 'Active' ? 'bg-success' : 
                           booking.status === 'Pending' ? 'bg-warning' : 
                           'bg-info'}`} 
                           style={{fontSize: '0.55rem', padding: '3px 6px'}}>
-                          {booking.status}
+                          {booking.status.replace(/_/g, ' ')}
                         </span>
                       </td>
                       <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.paymentStatus}</td>
@@ -560,7 +575,7 @@ const AdminDashboard = () => {
                         <button className="btn btn-light btn-sm p-0 me-1" 
                                style={{width: "20px", height: "20px"}}
                                onClick={() => { setSelectedBooking(booking); setShowDetailModal(true); }}>
-                          <i className="bi bi-eye" style={{fontSize: '0.6rem'}}></i>
+                          <EyeOutlined style={{fontSize: '0.6rem'}} />
                         </button>
                       </td>
                     </tr>
@@ -577,21 +592,83 @@ const AdminDashboard = () => {
             open={showDetailModal}
             onCancel={() => setShowDetailModal(false)}
             footer={null}
-            title="Booking Detail"
-            width={600}
+            title={null}
+            width={650}
           >
-            <Descriptions bordered column={1} size="middle">
-              <Descriptions.Item label="Booking Code">{selectedBooking.bookingCode || selectedBooking.id}</Descriptions.Item>
-              <Descriptions.Item label="Customer">{selectedBooking.customerName || selectedBooking.customerId || 'N/A'}</Descriptions.Item>
-              <Descriptions.Item label="Service">{selectedBooking.serviceName || selectedBooking.serviceId || 'N/A'}</Descriptions.Item>
-              <Descriptions.Item label="Status">{selectedBooking.status}</Descriptions.Item>
-              <Descriptions.Item label="Schedule">
-                {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
-                {selectedBooking.schedule?.endTime
-                  ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}`
-                  : (selectedBooking.schedule?.expectedEndTime ? ` - ${new Date(selectedBooking.schedule.expectedEndTime).toLocaleString()}` : '')}
-              </Descriptions.Item>
-            </Descriptions>
+            <div style={{background: '#f8fafc', borderRadius: 16, boxShadow: '0 2px 16px rgba(0,0,0,0.10)', padding: 0}}>
+              {/* Section: Main Info */}
+              <div style={{padding: 24, borderBottom: '1px solid #eee', background: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16}}>
+                <div style={{fontSize: 22, fontWeight: 700, marginBottom: 8, color: '#222'}}>Booking Detail</div>
+                <div style={{display: 'flex', flexWrap: 'wrap', gap: 24}}>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Booking Code</div>
+                    <div>{selectedBooking.bookingCode || selectedBooking.id}</div>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Customer</div>
+                    <div>{selectedBooking.customerName || selectedBooking.customerId || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Technician</div>
+                    <div>{technicianName}</div>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Service</div>
+                    <div>{selectedBooking.serviceName || selectedBooking.serviceId || 'N/A'}</div>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Location</div>
+                    <div>{selectedBooking.location?.address}</div>
+                  </div>
+                </div>
+              </div>
+              {/* Section: Status & Payment */}
+              <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#f6faff'}}>
+                <div style={{display: 'flex', gap: 24, flexWrap: 'wrap'}}>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Status</div>
+                    <span style={{background: '#e6f7ff', color: '#1890ff', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}</span>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Payment</div>
+                    <span style={{background: '#f6ffed', color: '#52c41a', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.paymentStatus}</span>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Is Urgent</div>
+                    <span style={{background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', color: selectedBooking.isUrgent ? '#faad14' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Customer Confirmed</div>
+                    <span style={{background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</span>
+                  </div>
+                  <div>
+                    <div style={{fontWeight: 500, color: '#888'}}>Technician Confirmed</div>
+                    <span style={{background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</span>
+                  </div>
+                </div>
+              </div>
+              {/* Section: Schedule & Description */}
+              <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#fff'}}>
+                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Schedule</div>
+                <div style={{marginBottom: 12}}>
+                  {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
+                  {selectedBooking.schedule?.endTime
+                    ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}`
+                    : (selectedBooking.schedule?.expectedEndTime ? ` - ${new Date(selectedBooking.schedule.expectedEndTime).toLocaleString()}` : '')}
+                </div>
+                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
+                <div>{selectedBooking.description}</div>
+              </div>
+              {/* Section: Images */}
+              <div style={{padding: 20, background: '#f6faff', borderBottomLeftRadius: 16, borderBottomRightRadius: 16}}>
+                <div style={{fontWeight: 500, color: '#888', marginBottom: 8}}>Images</div>
+                <div style={{display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 60}}>
+                  {selectedBooking.images && selectedBooking.images.length > 0 ? selectedBooking.images.map((img, idx) => (
+                    <img key={idx} src={img} alt="img" style={{maxWidth: 120, maxHeight: 120, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', objectFit: 'cover'}} />
+                  )) : <span style={{color: '#aaa'}}>N/A</span>}
+                </div>
+              </div>
+            </div>
           </Modal>
         )}
 
@@ -681,8 +758,11 @@ display: true,
           </Card>
           
           <Card style={{flex: '1', minWidth: '220px', border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-            <div className="py-2 px-2 border-bottom position-sticky top-0 bg-white" style={{zIndex: 10}}>
+            <div className="py-2 px-2 border-bottom position-sticky top-0 bg-white d-flex justify-content-between align-items-center" style={{zIndex: 10}}>
               <span className="fw-medium small">Top Technicians Rating</span>
+              <Button variant="outline-primary" size="sm" className="py-0 px-1" style={{fontSize: '0.6rem'}} onClick={() => navigate('/admin/technician-management')}>
+                <EyeOutlined style={{marginRight: 4}} />View
+              </Button>
             </div>
             <Card.Body className="p-2">
               {topTechniciansLoading ? (
