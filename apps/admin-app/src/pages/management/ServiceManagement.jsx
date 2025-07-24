@@ -11,7 +11,7 @@ import {
   restoreService,
 } from '../../features/service/serviceSlice';
 import { fetchCategories } from '../../features/categories/categorySlice';
-import './ManagementTableStyle.css';
+import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 
 const initialFormState = {
@@ -363,7 +363,7 @@ const ServiceManagement = () => {
                   return (
                     <tr key={svc.id}>
                       <td>{svc.serviceName}</td>
-                      <td>{category ? category.categoryName : ''}</td>
+                      <td>{category ? category.categoryName : '-'}</td>
                       <td>{svc.serviceType}</td>
                       <td>
                         <span className={`badge ${svc.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
@@ -569,7 +569,7 @@ const ServiceManagement = () => {
               {deletedServices.map((svc) => (
                 <tr key={svc.id}>
                   <td>{svc.serviceName}</td>
-                  <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || ''}</td>
+                  <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || '-'}</td>
                   <td>{svc.serviceType}</td>
                   <td>{svc.icon}</td>
                   <td>
@@ -602,7 +602,7 @@ const ServiceManagement = () => {
         {selectedService && (
           <div className="p-3">
             <p><strong>Service Name:</strong> {selectedService.serviceName}</p>
-            <p><strong>Category:</strong> {categories.find(cat => cat.id === selectedService.categoryId)?.categoryName || 'N/A'}</p>
+            <p><strong>Category:</strong> {categories.find(cat => cat.id === selectedService.categoryId)?.categoryName || '-'}</p>
             <p><strong>Icon:</strong> {selectedService.icon || 'N/A'}</p>
             <p><strong>Status:</strong> {selectedService.isActive ? 'Active' : 'Inactive'}</p>
             <p><strong>Service Type:</strong> {selectedService.serviceType}</p>

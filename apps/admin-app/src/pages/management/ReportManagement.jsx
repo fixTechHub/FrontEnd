@@ -183,7 +183,7 @@ const ReportManagement = () => {
      render: (userId) => (
        <Space>
          <UserOutlined />
-         <span>{userMap[userId] || userId}</span>
+         <span>{userMap[userId] || userId || "UNKNOWN"}</span>
        </Space>
      ),
    },
@@ -194,7 +194,7 @@ const ReportManagement = () => {
      render: (userId) => (
        <Space>
          <UserOutlined />
-         <span>{userMap[userId] || userId}</span>
+         <span>{userMap[userId] || userId || "UNKNOWN"}</span>
        </Space>
      ),
    },
@@ -369,11 +369,11 @@ const ReportManagement = () => {
              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
                <div>
                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reported User</div>
-                 <div>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId}</div>
+                 <div>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId || "UNKNOWN"}</div>
                </div>
                <div>
                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reporter</div>
-                 <div>{userMap[selectedReport.reporterId] || selectedReport.reporterId}</div>
+                 <div>{userMap[selectedReport.reporterId] || selectedReport.reporterId || "UNKNOWN"}</div>
                </div>
              </div>
            </div>

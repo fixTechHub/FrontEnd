@@ -5,7 +5,7 @@ import ApiBE from '../../services/ApiBE';
 import { Modal, Button, Select, Descriptions, Spin } from 'antd';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined } from '@ant-design/icons';
-import './ManagementTableStyle.css';
+import "../../../public/css/ManagementTableStyle.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';

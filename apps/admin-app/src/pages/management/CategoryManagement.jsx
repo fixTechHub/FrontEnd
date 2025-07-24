@@ -10,7 +10,7 @@ import {
  fetchDeletedCategories,
  restoreCategory,
 } from '../../features/categories/categorySlice';
-import './ManagementTableStyle.css';
+import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 
 

@@ -6,7 +6,7 @@ import { couponAPI } from '../../features/coupons/couponAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { Modal, Button, Select, Descriptions, Spin } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
-import './ManagementTableStyle.css';
+import "../../../public/css/ManagementTableStyle.css";
 
 
 const CouponUsageManagement = () => {
@@ -319,7 +319,7 @@ const handleSortByUsedAt = () => {
                  <tr key={usage.id}>
                    <td>{userMap[usage.userId] || usage.userId}</td>
                    <td>{couponMap[usage.couponId] || usage.couponId}</td>
-                   <td>{bookingMap[usage.bookingId] || 'UNKNOWN'}</td>
+                   <td>{bookingMap[usage.bookingId] || usage.bookingId }</td>
                    <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
                    <td>
                      <Button className="management-action-btn" size="middle" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>

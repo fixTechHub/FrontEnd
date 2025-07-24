@@ -16,7 +16,7 @@ import {
 } from '../../features/coupons/couponSlice';
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { userAPI } from '../../features/users/userAPI';
-import './ManagementTableStyle.css';
+import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined, FilterOutlined } from '@ant-design/icons';
 
 
@@ -328,7 +328,8 @@ useEffect(() => {
  const handleOpenUserFilterModal = () => {
     setShowUserFilterModal(true);
     setFilteredUsers([]);
-    setSelectedFilteredUserIds([]);
+    // Đặt selectedFilteredUserIds = formData.userIds để giữ trạng thái đã chọn
+    setSelectedFilteredUserIds(formData.userIds || []);
     const defaultCriteria = {
         isNewUser: null,
         isIntermissionUser: null,

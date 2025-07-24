@@ -6,7 +6,7 @@ import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
-import './ManagementTableStyle.css';
+import "../../../public/css/ManagementTableStyle.css";
 
 
 const statusOptions = [
@@ -307,8 +307,8 @@ const handleSortByTechnician = () => {
                {currentWarranties.map(w => (
                  <tr key={w.id}>
                    <td>{bookingMap[w.bookingId] || 'UNKNOWN'}</td>
-                   <td>{userNames[w.customerId]}</td>
-                   <td>{technicianNames[w.technicianId]}</td>
+                   <td>{userNames[w.customerId]|| 'UNKNOWN'}</td>
+                   <td>{technicianNames[w.technicianId]|| 'UNKNOWN'}</td>
                    <td>{w.status}</td>
                    <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
                    <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
@@ -385,11 +385,11 @@ const handleSortByTechnician = () => {
              </div>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Customer</div>
-               <div>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId}</div>
+               <div>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId || 'UNKNOWN'}</div>
              </div>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Technician</div>
-               <div>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId}</div>
+               <div>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId || 'UNKNOWN'}</div>
              </div>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Status</div>
