@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, DatePicker, InputNumber, Switch } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, DatePicker, TimePicker, InputNumber, Switch, Table } from 'antd';
 import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+dayjs.extend(utc);
+dayjs.extend(timezone);
 import {
  fetchCoupons,
  createCoupon,
@@ -32,25 +36,26 @@ const initialFormState = {
 };
 
 
+
 const CouponManagement = () => {
- const dispatch = useDispatch();
- const couponState = useSelector((state) => state.coupon) || {};
- const { coupons = [], loading = false, error = null, success = false, deletedCoupons = [] } = couponState;
+const dispatch = useDispatch();
+const couponState = useSelector((state) => state.coupon) || {};
+const { coupons = [], loading = false, error = null, success = false, deletedCoupons = [] } = couponState;
 
 
- const [showAddModal, setShowAddModal] = useState(false);
- const [showEditModal, setShowEditModal] = useState(false);
- const [showDeleteModal, setShowDeleteModal] = useState(false);
- const [showRestoreModal, setShowRestoreModal] = useState(false);
- const [selectedCoupon, setSelectedCoupon] = useState(null);
- const [formData, setFormData] = useState(initialFormState);
- const [searchText, setSearchText] = useState('');
- const [currentPage, setCurrentPage] = useState(1);
- const [sortField, setSortField] = useState('createdAt');
+const [showAddModal, setShowAddModal] = useState(false);
+const [showEditModal, setShowEditModal] = useState(false);
+const [showDeleteModal, setShowDeleteModal] = useState(false);
+const [showRestoreModal, setShowRestoreModal] = useState(false);
+const [selectedCoupon, setSelectedCoupon] = useState(null);
+const [formData, setFormData] = useState(initialFormState);
+const [searchText, setSearchText] = useState('');
+const [currentPage, setCurrentPage] = useState(1);
+const [sortField, setSortField] = useState('createdAt');
 const [sortOrder, setSortOrder] = useState('desc');
 
 
- const [filterType, setFilterType] = useState();
+const [filterType, setFilterType] = useState();
 const [filterStatus, setFilterStatus] = useState();
 const [users, setUsers] = useState([]);
 const [allUsers, setAllUsers] = useState([]);
@@ -60,17 +65,22 @@ const [userFilterCriteria, setUserFilterCriteria] = useState({
     isNewUser: null,
     isIntermissionUser: null,
     minTotalBookingValue: null,
+    maxTotalBookingValue: null,
+    bookingTimeFrom: null,
+    bookingTimeTo: null,
+    minBookingCountInMonth: null,
+    maxBookingCountInMonth: null,
     rank: null,
 });
 const [filteredUsers, setFilteredUsers] = useState([]);
 const [loadingFilteredUsers, setLoadingFilteredUsers] = useState(false);
 const [selectedFilteredUserIds, setSelectedFilteredUserIds] = useState([]);
  
- const [validationErrors, setValidationErrors] = useState({});
- const [activeKey, setActiveKey] = useState('active');
+const [validationErrors, setValidationErrors] = useState({});
+const [activeKey, setActiveKey] = useState('active');
 
 
- const couponsPerPage = 10;
+const couponsPerPage = 10;
 
 
  const handleSortChange = (value) => {
@@ -273,27 +283,40 @@ const [selectedFilteredUserIds, setSelectedFilteredUserIds] = useState([]);
 
  // Khi audience là SPECIFIC_USERS, lấy toàn bộ user về 1 lần
  useEffect(() => {
-   if (formData.audience === 'SPECIFIC_USERS') {
-     setLoadingUsers(true);
-     userAPI.getAll().then(data => {
-       setAllUsers(data);
-       setUsers(data);
-     }).finally(() => setLoadingUsers(false));
-   }
- }, [formData.audience]);
+  if (formData.audience === 'SPECIFIC_USERS') {
+    setLoadingUsers(true);
+    userAPI.getAll().then(data => {
+      setAllUsers(data);
+      setUsers(data);
+    }).finally(() => setLoadingUsers(false));
+  }
+}, [formData.audience]);
 
  // Sửa lại handleUserSearch: chỉ filter trên allUsers
  const handleUserSearch = (searchText) => {
-   if (!searchText) {
-     setUsers(allUsers);
-     return;
-   }
-   const filtered = allUsers.filter(user =>
-     (user.fullName && user.fullName.toLowerCase().includes(searchText.toLowerCase())) ||
-     (user.email && user.email.toLowerCase().includes(searchText.toLowerCase()))
-   );
-   setUsers(filtered);
- };
+  if (!searchText) {
+    setFilteredUsers(allUsers);
+    return;
+  }
+  setFilteredUsers(
+    allUsers.filter(
+      u =>
+        (u.fullName && u.fullName.toLowerCase().includes(searchText.toLowerCase())) ||
+        (u.email && u.email.toLowerCase().includes(searchText.toLowerCase()))
+    )
+  );
+};
+useEffect(() => {
+  if (showUserFilterModal && allUsers.length === 0) {
+    setLoadingUsers(true);
+    userAPI.getAll().then(data => {
+      setAllUsers(data);
+      setFilteredUsers(data);
+    }).finally(() => setLoadingUsers(false));
+  } else if (showUserFilterModal) {
+    setFilteredUsers(allUsers);
+  }
+}, [showUserFilterModal]);
 
  const handleUserSelect = (selectedUserIds) => {
    setFormData(prev => ({
@@ -305,38 +328,66 @@ const [selectedFilteredUserIds, setSelectedFilteredUserIds] = useState([]);
  const handleOpenUserFilterModal = () => {
     setShowUserFilterModal(true);
     setFilteredUsers([]);
-    setSelectedFilteredUserIds([]); 
-    setUserFilterCriteria({
+    setSelectedFilteredUserIds([]);
+    const defaultCriteria = {
         isNewUser: null,
         isIntermissionUser: null,
         minTotalBookingValue: null,
         rank: null,
-    });
+    };
+    setUserFilterCriteria(defaultCriteria);
+    handleApplyUserFilter(defaultCriteria);
 };
 
 const handleUserFilterChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setUserFilterCriteria(prev => ({
-        ...prev,
-        [name]: type === 'checkbox' ? (checked ? true : null) : (value || null)
-    }));
+    setUserFilterCriteria(prev => {
+        const newCriteria = {
+            ...prev,
+            [name]: type === 'checkbox' ? (checked ? true : null) : (value || null)
+        };
+        handleApplyUserFilter(newCriteria); // Gọi API ngay khi thay đổi filter
+        return newCriteria;
+    });
 };
 
-const handleApplyUserFilter = async () => {
+const handleApplyUserFilter = async (criteria = userFilterCriteria) => {
     setLoadingFilteredUsers(true);
     try {
-        const criteriaToSend = Object.entries(userFilterCriteria).reduce((acc, [key, value]) => {
+        const criteriaToSend = Object.entries(criteria).reduce((acc, [key, value]) => {
             if (value !== null && value !== '') {
                 acc[key] = value;
             }
             return acc;
         }, {});
+        let result = await userAPI.filter(criteriaToSend);
 
-        const result = await userAPI.filter(criteriaToSend);
+        // Nếu có filter bookingTimeFrom/To, filter lại ở FE theo giờ VN
+        // if (criteria.bookingTimeFrom || criteria.bookingTimeTo) {
+        //     result = result.filter(user => {
+        //         // Giả sử user.bookings là mảng các booking của user
+        //         if (!user.bookings || user.bookings.length === 0) return false;
+        //         // Kiểm tra có ít nhất 1 booking thỏa mãn giờ
+        //         return user.bookings.some(b => {
+        //             if (!b.schedule || !b.schedule.startTime) return false;
+        //             const bookingTimeVN = dayjs(b.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('HH:mm:ss');
+        //             const from = criteria.bookingTimeFrom;
+        //             const to = criteria.bookingTimeTo;
+        //             if (from && to) {
+        //                 return bookingTimeVN >= from && bookingTimeVN <= to;
+        //             } else if (from) {
+        //                 return bookingTimeVN >= from;
+        //             } else if (to) {
+        //                 return bookingTimeVN <= to;
+        //             }
+        //             return true;
+        //         });
+        //     });
+        // }
+
         setFilteredUsers(result);
     } catch (error) {
         message.error("Lỗi khi lọc người dùng!");
-        console.error("Filter user error:", error);
     } finally {
         setLoadingFilteredUsers(false);
     }
@@ -590,7 +641,17 @@ const handleConfirmUserSelection = () => {
                {currentCoupons.map((coupon) => (
                  <tr key={coupon.id}>
                    <td>{coupon.code}</td>
-                   <td>{coupon.description}</td>
+                   <td style={{
+                      maxWidth: 260,
+                      minWidth: 120,
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }}
+                      title={coupon.description}
+                    >
+                      {coupon.description}
+                    </td>
                    <td>{coupon.type}</td>
                    <td>{coupon.value}</td>
                    <td>{coupon.maxDiscount}</td>
@@ -820,37 +881,26 @@ const handleConfirmUserSelection = () => {
          </Row>
 
          {formData.audience === 'SPECIFIC_USERS' && (
-            <Form.Item label="Select Users" required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
-                <Row align="middle">
-                    <Col flex="auto">
-                        <Select
-                            mode="multiple"
-                            placeholder="Search and select users"
-                            value={formData.userIds}
-                            onChange={handleUserSelect}
-                            onSearch={handleUserSearch}
-                            loading={loadingUsers}
-                            filterOption={false}
-                            showSearch
-                            style={{ width: '100%' }}
-                        >
-                            {users.map(user => (
-                                <Select.Option key={user.id} value={user.id}>
-                                    {user.fullName} ({user.email})
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Col>
-                    <Col>
-                        <Button
-                            icon={<FilterOutlined />}
-                            onClick={handleOpenUserFilterModal}
-                            style={{ marginLeft: 8 }}
-                        >
-                            Filter Users
-                        </Button>
-                    </Col>
-                </Row>
+            <Form.Item label={<span>Select Users <Button icon={<FilterOutlined />} size="small" style={{ marginLeft: 8 }} onClick={handleOpenUserFilterModal}>Filter Users</Button></span>} required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
+                <Select
+                    mode="multiple"
+                    placeholder="Search and select users"
+                    value={formData.userIds}
+                    onChange={handleUserSelect}
+                    onSearch={handleUserSearch}
+                    loading={loadingUsers}
+                    filterOption={false}
+                    showSearch
+                    style={{ width: '100%' }}
+                    maxTagCount={2}
+                    maxTagPlaceholder={omittedValues => `${omittedValues.length + 2} users selected`}
+                >
+                    {users.map(user => (
+                        <Select.Option key={user.id} value={user.id}>
+                            {user.fullName} ({user.email})
+                        </Select.Option>
+                    ))}
+                </Select>
             </Form.Item>
          )}
 
@@ -1035,37 +1085,26 @@ const handleConfirmUserSelection = () => {
          </Row>
 
          {formData.audience === 'SPECIFIC_USERS' && (
-            <Form.Item label="Select Users" required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
-                <Row align="middle">
-                    <Col flex="auto">
-                        <Select
-                            mode="multiple"
-                            placeholder="Search and select users"
-                            value={formData.userIds}
-                            onChange={handleUserSelect}
-                            onSearch={handleUserSearch}
-                            loading={loadingUsers}
-                            filterOption={false}
-                            showSearch
-                            style={{ width: '100%' }}
-                        >
-                            {users.map(user => (
-                                <Select.Option key={user.id} value={user.id}>
-                                    {user.fullName} ({user.email})
-                                </Select.Option>
-                            ))}
-                        </Select>
-                    </Col>
-                    <Col>
-                        <Button
-                            icon={<FilterOutlined />}
-                            onClick={handleOpenUserFilterModal}
-                            style={{ marginLeft: 8 }}
-                        >
-                            Filter Users
-                        </Button>
-                    </Col>
-                </Row>
+            <Form.Item label={<span>Select Users <Button icon={<FilterOutlined />} size="small" style={{ marginLeft: 8 }} onClick={handleOpenUserFilterModal}>Filter Users</Button></span>} required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
+                <Select
+                    mode="multiple"
+                    placeholder="Search and select users"
+                    value={formData.userIds}
+                    onChange={handleUserSelect}
+                    onSearch={handleUserSearch}
+                    loading={loadingUsers}
+                    filterOption={false}
+                    showSearch
+                    style={{ width: '100%' }}
+                    maxTagCount={2}
+                    maxTagPlaceholder={omittedValues => `${omittedValues.length + 2} users selected`}
+                >
+                    {users.map(user => (
+                        <Select.Option key={user.id} value={user.id}>
+                            {user.fullName} ({user.email})
+                        </Select.Option>
+                    ))}
+                </Select>
             </Form.Item>
          )}
 
@@ -1078,95 +1117,6 @@ const handleConfirmUserSelection = () => {
            </Button>
          </div>
        </Form>
-     </Modal>
-
-
-     {/* User Filter Modal */}
-     <Modal
-        open={showUserFilterModal}
-        onCancel={() => setShowUserFilterModal(false)}
-        title="Filter Users"
-        width={1000}
-        footer={[
-            <Button key="back" onClick={() => setShowUserFilterModal(false)}>
-                Cancel
-            </Button>,
-            <Button key="submit" type="primary" loading={loadingFilteredUsers} onClick={handleConfirmUserSelection}>
-                Confirm Selection
-            </Button>,
-        ]}
-    >
-        <Form layout="vertical">
-            <Row gutter={16}>
-                <Col span={8}>
-                    <Form.Item>
-                        <Switch
-                            name="isNewUser"
-                            checked={userFilterCriteria.isNewUser}
-                            onChange={(checked) => handleUserFilterChange({ target: { name: 'isNewUser', type: 'checkbox', checked } })}
-                        />
-                        <span style={{ marginLeft: 8 }}>New User (chưa có booking)</span>
-                    </Form.Item>
-                </Col>
-                <Col span={8}>
-                    <Form.Item>
-                        <Switch
-                            name="isIntermissionUser"
-                            checked={userFilterCriteria.isIntermissionUser}
-                            onChange={(checked) => handleUserFilterChange({ target: { name: 'isIntermissionUser', type: 'checkbox', checked } })}
-                        />
-                        <span style={{ marginLeft: 8 }}>Intermission User (3 tháng không hoạt động)</span>
-                    </Form.Item>
-                </Col>
-            </Row>
-            <Row gutter={16}>
-                <Col span={8}>
-                    <Form.Item label="Tổng giá trị booking tối thiểu">
-                        <InputNumber
-                            name="minTotalBookingValue"
-                            value={userFilterCriteria.minTotalBookingValue}
-                            onChange={(value) => handleUserFilterChange({ target: { name: 'minTotalBookingValue', value } })}
-                            style={{ width: '100%' }}
-                            placeholder="e.g., 5000000"
-                        />
-                    </Form.Item>
-                </Col>
-                <Col span={8}>
-                    <Form.Item label="Hạng thành viên">
-                        <Select
-                            name="rank"
-                            value={userFilterCriteria.rank}
-                            onChange={(value) => handleUserFilterChange({ target: { name: 'rank', value } })}
-                            allowClear
-                        >
-                            <Select.Option value="Silver">Bạc (5-19 bookings)</Select.Option>
-                            <Select.Option value="Gold">Vàng (20-49 bookings)</Select.Option>
-                            <Select.Option value="Diamond">Kim Cương (50-99 bookings)</Select.Option>
-                            <Select.Option value="VIP">VIP (100 bookings or 50M chi tiêu)</Select.Option>
-                        </Select>
-                    </Form.Item>
-                </Col>
-                <Col span={8} style={{ alignSelf: 'flex-end' }}>
-                     <Button type="primary" onClick={handleApplyUserFilter} loading={loadingFilteredUsers}>Áp dụng bộ lọc</Button>
-                </Col>
-            </Row>
-        </Form>
-        <Spin spinning={loadingFilteredUsers}>
-            <p>{filteredUsers.length} user(s) found.</p>
-            <Select
-                mode="multiple"
-                placeholder="Select users from results"
-                value={selectedFilteredUserIds}
-                onChange={setSelectedFilteredUserIds}
-                style={{ width: '100%', marginTop: 16 }}
-            >
-                {filteredUsers.map(user => (
-                    <Select.Option key={user.id} value={user.id}>
-                        {user.fullName} ({user.email})
-                    </Select.Option>
-                ))}
-            </Select>
-        </Spin>
      </Modal>
 
 
@@ -1229,6 +1179,166 @@ const handleConfirmUserSelection = () => {
          <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
        </div>
      </Modal>
+
+     {/* User Filter Modal - moved to bottom and set zIndex */}
+     <Modal
+    open={showUserFilterModal}
+    onCancel={() => setShowUserFilterModal(false)}
+    title="Filter Users"
+    width={900}
+    zIndex={2000}
+    footer={[
+        <Button key="back" onClick={() => setShowUserFilterModal(false)}>
+            Cancel
+        </Button>,
+        <Button key="submit" type="primary" loading={loadingFilteredUsers} onClick={handleConfirmUserSelection}>
+            Confirm Selection
+        </Button>,
+    ]}
+>
+    <div style={{ marginBottom: 16 }}>
+        <Row gutter={16}>
+            <Col span={8}>
+                <label style={{ fontWeight: 500 }}>Tìm kiếm tên hoặc email</label>
+                <Input.Search
+                    placeholder="Nhập tên hoặc email"
+                    onSearch={handleUserSearch}
+                    onChange={e => handleUserSearch(e.target.value)}
+                    allowClear
+                />
+            </Col>
+            <Col span={4}>
+                <label style={{ fontWeight: 500 }}>New User</label>
+                <Switch
+                    checked={userFilterCriteria.isNewUser}
+                    onChange={checked => handleUserFilterChange({ target: { name: 'isNewUser', type: 'checkbox', checked } })}
+                />
+            </Col>
+            <Col span={4}>
+                <label style={{ fontWeight: 500 }}>Intermission User</label>
+                <Switch
+                    checked={userFilterCriteria.isIntermissionUser}
+                    onChange={checked => handleUserFilterChange({ target: { name: 'isIntermissionUser', type: 'checkbox', checked } })}
+                />
+            </Col>
+            <Col span={4}>
+                <label style={{ fontWeight: 500 }}>Rank</label>
+                <Select
+                    placeholder="Chọn rank"
+                    style={{ width: '100%' }}
+                    value={userFilterCriteria.rank}
+                    onChange={value => handleUserFilterChange({ target: { name: 'rank', value } })}
+                    allowClear
+                >
+                    <Select.Option value="Silver">Silver</Select.Option>
+                    <Select.Option value="Gold">Gold</Select.Option>
+                    <Select.Option value="Diamond">Diamond</Select.Option>
+                    <Select.Option value="VIP">VIP</Select.Option>
+                </Select>
+            </Col>
+        </Row>
+        <Row gutter={16} style={{ marginTop: 12 }}>
+            <Col span={6}>
+                <label style={{ fontWeight: 500 }}>Min Total Booking Value</label>
+                <InputNumber
+                    placeholder="Tối thiểu"
+                    style={{ width: '100%' }}
+                    value={userFilterCriteria.minTotalBookingValue}
+                    onChange={value => handleUserFilterChange({ target: { name: 'minTotalBookingValue', value } })}
+                />
+            </Col>
+            <Col span={6}>
+                <label style={{ fontWeight: 500 }}>Max Total Booking Value</label>
+                <InputNumber
+                    placeholder="Tối đa"
+                    style={{ width: '100%' }}
+                    value={userFilterCriteria.maxTotalBookingValue}
+                    onChange={value => handleUserFilterChange({ target: { name: 'maxTotalBookingValue', value } })}
+                />
+            </Col>
+            {/* <Col span={6}>
+                <label style={{ fontWeight: 500 }}>Booking Time From</label>
+                <TimePicker
+                    style={{ width: '100%' }}
+                    value={
+                        userFilterCriteria.bookingTimeFrom
+                            ? dayjs.tz(userFilterCriteria.bookingTimeFrom, 'HH:mm:ss', 'Asia/Ho_Chi_Minh')
+                            : null
+                    }
+                    onChange={time =>
+                        handleUserFilterChange({
+                            target: {
+                                name: 'bookingTimeFrom',
+                                value: time ? time.tz('Asia/Ho_Chi_Minh').format('HH:mm:ss') : null
+                            }
+                        })
+                    }
+                    format="HH:mm:ss"
+                    placeholder="Chọn giờ bắt đầu"
+                    allowClear
+                />
+            </Col>
+            <Col span={6}>
+                <label style={{ fontWeight: 500 }}>Booking Time To</label>
+                <TimePicker
+                    style={{ width: '100%' }}
+                    value={
+                        userFilterCriteria.bookingTimeTo
+                            ? dayjs.tz(userFilterCriteria.bookingTimeTo, 'HH:mm:ss', 'Asia/Ho_Chi_Minh')
+                            : null
+                    }
+                    onChange={time =>
+                        handleUserFilterChange({
+                            target: {
+                                name: 'bookingTimeTo',
+                                value: time ? time.tz('Asia/Ho_Chi_Minh').format('HH:mm:ss') : null
+                            }
+                        })
+                    }
+                    format="HH:mm:ss"
+                    placeholder="Chọn giờ kết thúc"
+                    allowClear
+                />
+            </Col> */}
+            <Col span={6}>
+                <label style={{ fontWeight: 500 }}>Min Booking Count (month)</label>
+                <InputNumber
+                    placeholder="Tối thiểu"
+                    style={{ width: '100%' }}
+                    value={userFilterCriteria.minBookingCountInMonth}
+                    onChange={value => handleUserFilterChange({ target: { name: 'minBookingCountInMonth', value } })}
+                />
+            </Col>
+            <Col span={6}>
+                <label style={{ fontWeight: 500 }}>Max Booking Count (month)</label>
+                <InputNumber
+                    placeholder="Tối đa"
+                    style={{ width: '100%' }}
+                    value={userFilterCriteria.maxBookingCountInMonth}
+                    onChange={value => handleUserFilterChange({ target: { name: 'maxBookingCountInMonth', value } })}
+                />
+            </Col>
+        </Row>
+    </div>
+    <Table
+        rowKey="id"
+        columns={[
+            { title: 'Họ tên', dataIndex: 'fullName' },
+            { title: 'Email', dataIndex: 'email' },
+        ]}
+        dataSource={filteredUsers}
+        rowSelection={{
+            selectedRowKeys: selectedFilteredUserIds,
+            onChange: setSelectedFilteredUserIds,
+            selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
+        }}
+        pagination={{ pageSize: 8 }}
+        size="middle"
+    />
+    <div style={{ marginTop: 8 }}>
+        <b>Đã chọn:</b> {selectedFilteredUserIds.length} user
+    </div>
+</Modal>
    </div>
  );
 };

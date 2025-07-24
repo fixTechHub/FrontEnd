@@ -6,7 +6,12 @@ import { Modal, Button, Select, Descriptions, Spin } from 'antd';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined } from '@ant-design/icons';
 import './ManagementTableStyle.css';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
 
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 const BookingManagement = () => {
  const [bookings, setBookings] = useState([]);
@@ -314,10 +319,16 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                    <td>{serviceMap[b.serviceId]}</td>
                    <td>{b.status ? b.status.replace(/_/g, ' ') : ''}</td>
                    <td>
-                     {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
-                       ? `${new Date(b.schedule.startTime).toLocaleString()} - ${b.schedule.endTime ? new Date(b.schedule.endTime).toLocaleString() : (b.schedule.expectedEndTime ? new Date(b.schedule.expectedEndTime).toLocaleString() : '')}`
-                       : ''}
-                   </td>
+                      {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
+                        ? `${dayjs(b.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')} - ${
+                            b.schedule.endTime
+                              ? dayjs(b.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')
+                              : (b.schedule.expectedEndTime
+                                  ? dayjs(b.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')
+                                  : '')
+                          }`
+                        : ''}
+                    </td>
                    <td>
                      <Button className="management-action-btn" size="middle" onClick={() => { setSelectedBooking(b); setShowDetailModal(true); }}>
                        <EyeOutlined style={{marginRight: 4}} />View Detail
@@ -410,11 +421,15 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#fff'}}>
              <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Schedule</div>
              <div style={{marginBottom: 12}}>
-               {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
-               {selectedBooking.schedule?.endTime
-                 ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}`
-                 : (selectedBooking.schedule?.expectedEndTime ? ` - ${new Date(selectedBooking.schedule.expectedEndTime).toLocaleString()}` : '')}
-             </div>
+                {selectedBooking.schedule?.startTime
+                  ? dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')
+                  : ''}
+                {selectedBooking.schedule?.endTime
+                  ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                  : (selectedBooking.schedule?.expectedEndTime
+                      ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                      : '')}
+              </div>
              <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
              <div>{selectedBooking.description}</div>
            </div>
