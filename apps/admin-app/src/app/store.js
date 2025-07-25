@@ -13,6 +13,7 @@ import categoryReducer from '../features/categories/categorySlice';
 import warrantyReducer from '../features/warranty/warrantySlice';
 import serviceReducer from '../features/service/serviceSlice';
 import statisticReducer from '../features/statistics/statisticSlice';
+import commissionConfigReducer from '../features/commissionConfig/commissionSlice';
 
 
 export const store = configureStore({
@@ -30,6 +31,7 @@ export const store = configureStore({
     transaction: transactionReducer,
     service: serviceReducer,
     statistics: statisticReducer,
+    commissionConfig: commissionConfigReducer,
     
 
     // middleware: (getDefaultMiddleware) =>

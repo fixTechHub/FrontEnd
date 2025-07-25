@@ -228,13 +228,7 @@ const Sidebar = () => {
                   <span>Coupon</span>
                 </Link>
               </li>
-              <li>
-                <Link to="/admin/coupon-usage-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/coupon-usage-management" ? "" : "text-dark"}`}
-                      style={currentPath === "/admin/coupon-usage-management" ? customStyles.activeMenuItem : {}}>
-                  <FaTags className="me-3" style={{width: '20px', ...(currentPath === "/admin/coupon-usage-management" ? customStyles.activeIcon : {})}} />
-                  <span>Coupon Usage</span>
-                </Link>
-              </li>
+              
               <li>
                 <Link to="/admin/category-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/category-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/category-management" ? customStyles.activeMenuItem : {}}>
@@ -247,6 +241,13 @@ const Sidebar = () => {
                       style={currentPath === "/admin/service-management" ? customStyles.activeMenuItem : {}}>
                   <FaTag className="me-3" style={{width: '20px', ...(currentPath === "/admin/service-management" ? customStyles.activeIcon : {})}} />
                   <span>Service</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/commission-config-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/commission-config-management" ? customStyles.activeMenuItem : {}}>
+                  <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/commission-config-management" ? customStyles.activeIcon : {})}} />
+                  <span>Commission Config</span>
                 </Link>
               </li>
             </ul>
@@ -263,6 +264,13 @@ const Sidebar = () => {
                       style={currentPath === "/admin/booking-management" ? customStyles.activeMenuItem : {}}>
                   <FaCalendar className="me-3" style={{width: '20px', ...(currentPath === "/admin/booking-management" ? customStyles.activeIcon : {})}} />
                   <span>Booking</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/coupon-usage-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/coupon-usage-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/coupon-usage-management" ? customStyles.activeMenuItem : {}}>
+                  <FaTags className="me-3" style={{width: '20px', ...(currentPath === "/admin/coupon-usage-management" ? customStyles.activeIcon : {})}} />
+                  <span>Coupon Usage</span>
                 </Link>
               </li>
             </ul>
