@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getPublicCategories } from "./categoryAPI";
+import { getPublicCategories, getTopCategoriesByBookings } from "./categoryAPI";
 
 export const fetchAllPublicCategories = createAsyncThunk(
     'categories/fetchAllPublicCategories',
@@ -11,10 +11,21 @@ export const fetchAllPublicCategories = createAsyncThunk(
     }
 );
 
+export const fetchTopPublicCategories = createAsyncThunk(
+    'categories/fetchTopPublicCategories',
+    async () => {
+        const res = await getTopCategoriesByBookings();
+        // console.log(res.data.data);
+
+        return res.data.data;
+    }
+);
+
 const categorySlice = createSlice({
     name: 'categories',
     initialState: {
         categories: [],
+        topCategories: [],
         status: 'idle',
         error: null,
     },
@@ -29,6 +40,18 @@ const categorySlice = createSlice({
                 state.categories = action.payload;
             })
             .addCase(fetchAllPublicCategories.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.error.message;
+            })
+
+            .addCase(fetchTopPublicCategories.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchTopPublicCategories.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.topCategories = action.payload;
+            })
+            .addCase(fetchTopPublicCategories.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.error.message;
             })
