@@ -306,7 +306,7 @@ const handleSortByTechnician = () => {
              <tbody>
                {currentWarranties.map(w => (
                  <tr key={w.id}>
-                   <td>{bookingMap[w.bookingId] || 'UNKNOWN'}</td>
+                   <td>{bookingMap[w.bookingId] || ''}</td>
                    <td>{userNames[w.customerId]|| 'UNKNOWN'}</td>
                    <td>{technicianNames[w.technicianId]|| 'UNKNOWN'}</td>
                    <td>{w.status}</td>
@@ -381,7 +381,7 @@ const handleSortByTechnician = () => {
            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Booking Code</div>
-               <div>{bookingMap[selectedWarranty.bookingId] || "UNKNOWN"}</div>
+               <div>{bookingMap[selectedWarranty.bookingId] || "-"}</div>
              </div>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Customer</div>

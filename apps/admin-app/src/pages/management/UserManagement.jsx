@@ -397,9 +397,9 @@ const UserManagement = () => {
                                                <h6><p className="fs-14 fw-semibold">{user.fullName || "UNKNOWN"}</p></h6>
                                            </div>
                                        </td>
-                                       <td><p className="text-gray-9">{user.email || 'UNKNOWN'}</p></td>
-                                       <td><p className="text-gray-9">{user.phone || 'UNKNOWN'}</p></td>
-                                       <td><p className="text-gray-9">{roleMap[user.role] || 'UNKNOWN'}</p></td>
+                                       <td><p className="text-gray-9">{user.email}</p></td>
+                                       <td><p className="text-gray-9">{user.phone}</p></td>
+                                       <td><p className="text-gray-9">{roleMap[user.role]}</p></td>
                                        <td>
                                            <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
                                                {user.status}
@@ -594,10 +594,10 @@ const UserManagement = () => {
                          </div>
                          <div style={{flex: 1}}>
                            <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>{selectedUser.fullName || "UNKNOWN"}</div>
-                           <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>{selectedUser.email || "UNKNOWN EMAIL"}</div>
+                           <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>{selectedUser.email || "-"}</div>
                            <div style={{fontSize: 13, color: '#888'}}>
                              <span style={{marginRight: 12}}><b>Status:</b> <span style={{color: selectedUser.status === 'ACTIVE' ? '#52c41a' : '#faad14'}}>{selectedUser.status}</span></span>
-                             <span><b>Role:</b> {roleMap[selectedUser.role] || 'UNKNOWN'}</span>
+                             <span><b>Role:</b> {roleMap[selectedUser.role] || '-'}</span>
                            </div>
                          </div>
                        </div>
@@ -605,15 +605,15 @@ const UserManagement = () => {
                        <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
                          <div>
                            <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Phone</div>
-                           <div>{selectedUser.phone || 'UNKNOWN'}</div>
+                           <div>{selectedUser.phone || '-'}</div>
                          </div>
                          <div>
                            <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>User Code</div>
-                           <div>{selectedUser.userCode || 'UNKNOWN'}</div>
+                           <div>{selectedUser.userCode || '-'}</div>
                          </div>
                          <div style={{gridColumn: '1 / span 2'}}>
                            <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Address</div>
-                           <div>{selectedUser.address ? [selectedUser.address.street, selectedUser.address.district, selectedUser.address.city].filter(Boolean).join(', ') : 'UNKNOWN'}</div>
+                           <div>{selectedUser.address ? [selectedUser.address.street, selectedUser.address.district, selectedUser.address.city].filter(Boolean).join(', ') : '-'}</div>
                          </div>
                          <div>
                            <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Phone Verified</div>

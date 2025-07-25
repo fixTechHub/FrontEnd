@@ -317,9 +317,9 @@ const handleSortByUsedAt = () => {
              ) : (
                currentPageData.map((usage) => (
                  <tr key={usage.id}>
-                   <td>{userMap[usage.userId] || usage.userId}</td>
-                   <td>{couponMap[usage.couponId] || usage.couponId}</td>
-                   <td>{bookingMap[usage.bookingId] || usage.bookingId }</td>
+                   <td>{userMap[usage.userId] || usage.userId || "UNKNOWN"}</td>
+                   <td>{couponMap[usage.couponId]}</td>
+                   <td>{bookingMap[usage.bookingId]}</td>
                    <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
                    <td>
                      <Button className="management-action-btn" size="middle" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>
@@ -361,15 +361,15 @@ const handleSortByUsedAt = () => {
            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>User</div>
-               <div>{userMap[selectedUsage.userId] || selectedUsage.userId}</div>
+               <div>{userMap[selectedUsage.userId] || selectedUsage.userId || "UNKNOWN"}</div>
              </div>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Coupon</div>
-               <div>{couponMap[selectedUsage.couponId] || selectedUsage.couponId}</div>
+               <div>{couponMap[selectedUsage.couponId] || selectedUsage.couponId || '-'}</div>
              </div>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Booking Code</div>
-               <div>{bookingMap[selectedUsage.bookingId] || 'UNKNOWN'}</div>
+               <div>{bookingMap[selectedUsage.bookingId] || '-'}</div>
              </div>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Used At</div>

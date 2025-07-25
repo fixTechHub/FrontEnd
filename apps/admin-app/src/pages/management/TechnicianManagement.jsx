@@ -427,8 +427,8 @@ const getStatusBadgeClass = (status) => {
                currentTechnicians.map((tech) => (
                  <tr key={tech.id}>
                    <td>{tech.fullName || 'UNKNOWN'}</td>
-                   <td>{tech.email || 'UNKNOWN'}</td>
-                   <td>{tech.phone || 'UNKNOWN'}</td>
+                   <td>{tech.email}</td>
+                   <td>{tech.phone}</td>
                    <td>
                      <span className={`badge ${getStatusBadgeClass(getTechnicianStatus(tech.status))} text-dark`}>
                        {getTechnicianStatus(tech.status)}
@@ -497,11 +497,11 @@ const getStatusBadgeClass = (status) => {
                )}
              </div>
              <div style={{flex: 1}}>
-               <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>{selectedTechnician.fullName || 'No Name'}</div>
-               <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>{selectedTechnician.email || "UNKNOWN EMAIL" }</div>
+               <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>{selectedTechnician.fullName || 'UNKNOWN'}</div>
+               <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>{selectedTechnician.email || "-" }</div>
                <div style={{fontSize: 13, color: '#888'}}>
                  <span style={{marginRight: 12}}><b>Status:</b> <span style={{color: getTechnicianStatus(selectedTechnician.status) === 'APPROVED' ? '#52c41a' : getTechnicianStatus(selectedTechnician.status) === 'REJECTED' ? '#cf1322' : '#faad14'}}>{getTechnicianStatus(selectedTechnician.status)}</span></span>
-                 <span><b>Phone:</b> {selectedTechnician.phone || "UNKNOWN"}</span>
+                 <span><b>Phone:</b> {selectedTechnician.phone || "-"}</span>
                </div>
              </div>
            </div>

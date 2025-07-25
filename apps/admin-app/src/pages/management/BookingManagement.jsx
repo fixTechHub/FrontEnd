@@ -17,6 +17,7 @@ const BookingManagement = () => {
  const [bookings, setBookings] = useState([]);
  const [userMap, setUserMap] = useState({});
  const [serviceMap, setServiceMap] = useState({});
+ const [technicianMap, setTechnicianMap] = useState({});
  const [searchText, setSearchText] = useState('');
  const [showDetailModal, setShowDetailModal] = useState(false);
  const [selectedBooking, setSelectedBooking] = useState(null);
@@ -27,46 +28,35 @@ const [sortOrder, setSortOrder] = useState('desc');
 const [filterService, setFilterService] = useState('');
 const [filterStatus,  setFilterStatus] = useState('');
 const [allServices, setAllServices] = useState([]);
-const [technicianName, setTechnicianName] = useState('');
 
 
  useEffect(() => {
-   const fetchData = async () => {
-     const data = await bookingAPI.getAll();
-     setBookings(data || []);
-     // Lấy tất cả customerId và serviceId duy nhất
-     const customerIds = Array.from(new Set((data || []).map(b => b.customerId)));
-     const serviceIds = Array.from(new Set((data || []).map(b => b.serviceId)));
-     // Lấy tên customer (chỉ fetch nếu chưa có trong userMap)
-     const userMapTemp = { ...userMap };
-     await Promise.all(customerIds.map(async (id) => {
-       if (id && !userMapTemp[id]) {
-         try {
-           const user = await userAPI.getById(id);
-           userMapTemp[id] = user.fullName || user.email || id;
-         } catch {
-           userMapTemp[id] = id;
-         }
-       }
-     }));
-     setUserMap(userMapTemp);
-     // Lấy tên service (chỉ fetch nếu chưa có trong serviceMap)
-     const serviceMapTemp = { ...serviceMap };
-     await Promise.all(serviceIds.map(async (id) => {
-       if (id && !serviceMapTemp[id]) {
-         try {
-           const res = await ApiBE.get(`/Dashboard/services/${id}`);
-           serviceMapTemp[id] = res.data.serviceName || id;
-         } catch {
-           serviceMapTemp[id] = id;
-         }
-       }
-     }));
-     setServiceMap(serviceMapTemp);
-   };
-   fetchData();
-   // eslint-disable-next-line
- }, []);
+  const fetchData = async () => {
+    try {
+      const [users, services, technicians] = await Promise.all([
+        userAPI.getAll(),
+        serviceAPI.getAll(),
+        technicianAPI.getAll()
+      ]);
+
+      const userMapData = {};
+      users.forEach(u => userMapData[u.id] = u.fullName || u.email);
+      setUserMap(userMapData);
+
+      const serviceMapData = {};
+      services.forEach(s => serviceMapData[s.id] = s.name);
+      setServiceMap(serviceMapData);
+
+      const technicianMapData = {};
+      technicians.forEach(t => technicianMapData[t.id] = t.fullName || t.email);
+      setTechnicianMap(technicianMapData); // ✅ map này sẽ được dùng ở modal
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  fetchData();
+}, []);
 
 useEffect(() => {
   // Gọi API lấy tất cả service
@@ -84,16 +74,6 @@ useEffect(() => {
 useEffect(() => {
   setCurrentPage(1);
 }, [filterService, filterStatus]);
-
-useEffect(() => {
-  if (showDetailModal && selectedBooking && selectedBooking.technicianId) {
-    userAPI.getById(selectedBooking.technicianId)
-      .then(user => setTechnicianName(user.fullName || user.email || 'Unknown'))
-      .catch(() => setTechnicianName('Unknown'));
-  } else {
-    setTechnicianName('Unknown');
-  }
-}, [showDetailModal, selectedBooking]);
 
 
  const filteredBookings = bookings.filter(b => {
@@ -314,7 +294,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              ) : (
                currentBookings.map(b => (
                  <tr key={b.id}>
-                   <td>{b.bookingCode || 'UNKNOWN'}</td>
+                   <td>{b.bookingCode}</td>
                    <td>{userMap[b.customerId]}</td>
                    <td>{serviceMap[b.serviceId]}</td>
                    <td>{b.status ? b.status.replace(/_/g, ' ') : ''}</td>
@@ -376,12 +356,15 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                </div>
                <div>
                  <div style={{fontWeight: 500, color: '#888'}}>Customer</div>
-                 <div>{userMap[selectedBooking.customerId] || selectedBooking.customerId}</div>
+                 <div>{userMap[selectedBooking.customerId] || selectedBooking.customerId || "UNKNOWN"}</div>
                </div>
                <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Technician</div>
-                 <div>{technicianName}</div>
-               </div>
+                <div style={{fontWeight: 500, color: '#888'}}>Technician</div>
+                <div>{selectedBooking?.technicianId
+                  ? (technicianMap[selectedBooking.technicianId] ? technicianMap[selectedBooking.technicianId] : "-")
+                  : "UNKNOWN"}
+                </div>
+              </div>
                <div>
                  <div style={{fontWeight: 500, color: '#888'}}>Service</div>
                  <div>{serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}</div>
