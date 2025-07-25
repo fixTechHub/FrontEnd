@@ -1198,44 +1198,52 @@ const handleConfirmUserSelection = () => {
     ]}
 >
     <div style={{ marginBottom: 16 }}>
-        <Row gutter={16}>
-            <Col span={8}>
-                <label style={{ fontWeight: 500 }}>Tìm kiếm tên hoặc email</label>
-                <Input.Search
-                    placeholder="Nhập tên hoặc email"
-                    onSearch={handleUserSearch}
-                    onChange={e => handleUserSearch(e.target.value)}
-                    allowClear
-                />
+        <Row gutter={16} align="middle" className="filter-row">
+            <Col span={6}>
+                <div className="filter-item">
+                    <label>Tìm kiếm tên hoặc email</label>
+                    <Input.Search
+                        placeholder="Nhập tên hoặc email"
+                        onSearch={handleUserSearch}
+                        onChange={e => handleUserSearch(e.target.value)}
+                        allowClear
+                    />
+                </div>
             </Col>
-            <Col span={4}>
-                <label style={{ fontWeight: 500 }}>New User</label>
-                <Switch
-                    checked={userFilterCriteria.isNewUser}
-                    onChange={checked => handleUserFilterChange({ target: { name: 'isNewUser', type: 'checkbox', checked } })}
-                />
+            <Col span={6}>
+                <div className="switch-label-group">
+                    <label>New User</label>
+                    <Switch
+                        checked={userFilterCriteria.isNewUser}
+                        onChange={checked => handleUserFilterChange({ target: { name: 'isNewUser', type: 'checkbox', checked } })}
+                    />
+                </div>
             </Col>
-            <Col span={4}>
-                <label style={{ fontWeight: 500 }}>Intermission User</label>
-                <Switch
-                    checked={userFilterCriteria.isIntermissionUser}
-                    onChange={checked => handleUserFilterChange({ target: { name: 'isIntermissionUser', type: 'checkbox', checked } })}
-                />
+            <Col span={6}>
+                <div className="switch-label-group">
+                    <label>Intermission User</label>
+                    <Switch
+                        checked={userFilterCriteria.isIntermissionUser}
+                        onChange={checked => handleUserFilterChange({ target: { name: 'isIntermissionUser', type: 'checkbox', checked } })}
+                    />
+                </div>
             </Col>
-            <Col span={4}>
-                <label style={{ fontWeight: 500 }}>Rank</label>
-                <Select
-                    placeholder="Chọn rank"
-                    style={{ width: '100%' }}
-                    value={userFilterCriteria.rank}
-                    onChange={value => handleUserFilterChange({ target: { name: 'rank', value } })}
-                    allowClear
-                >
-                    <Select.Option value="Silver">Silver</Select.Option>
-                    <Select.Option value="Gold">Gold</Select.Option>
-                    <Select.Option value="Diamond">Diamond</Select.Option>
-                    <Select.Option value="VIP">VIP</Select.Option>
-                </Select>
+            <Col span={6}>
+                <div className="switch-label-group">
+                    <label>Rank</label>
+                    <Select
+                        placeholder="Chọn rank"
+                        style={{ minWidth: 120 }}
+                        value={userFilterCriteria.rank}
+                        onChange={value => handleUserFilterChange({ target: { name: 'rank', value } })}
+                        allowClear
+                    >
+                        <Select.Option value="Silver">Silver</Select.Option>
+                        <Select.Option value="Gold">Gold</Select.Option>
+                        <Select.Option value="Diamond">Diamond</Select.Option>
+                        <Select.Option value="VIP">VIP</Select.Option>
+                    </Select>
+                </div>
             </Col>
         </Row>
         <Row gutter={16} style={{ marginTop: 12 }}>
