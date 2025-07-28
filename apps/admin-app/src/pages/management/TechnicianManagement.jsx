@@ -426,7 +426,7 @@ const getStatusBadgeClass = (status) => {
              ) : (
                currentTechnicians.map((tech) => (
                  <tr key={tech.id}>
-                   <td>{tech.fullName || 'UNKNOWN'}</td>
+                   <td>{tech.fullName}</td>
                    <td>{tech.email}</td>
                    <td>{tech.phone}</td>
                    <td>
