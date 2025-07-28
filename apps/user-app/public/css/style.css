@@ -33,6 +33,7 @@ Version      : 1.0
 25. Users
 
 ========================================*/
+
 @import url("https://fonts.googleapis.com/css2?family=Fira+Sans:ital,wght@0,400;0,500;0,600;0,700;0,900;1,400;1,500;1,600;1,700;1,900&amp;display=swap");
 .popular-services .listing-tabs-group, .search-box-banner ul, .css-equal-content, .css-equal-heights {
   display: flex;
@@ -11966,7 +11967,7 @@ table .badge {
   -webkit-transition: all 200ms linear;
   transition: all 200ms linear;
 }
-
+  
 .pagination .pagination {
   flex-wrap: wrap;
 }
@@ -24065,5 +24066,3 @@ input.form-control.rounded-pill:focus {
 .fc .fc-button .fc-icon {
   font-size: 14px;
 }
-
-/*# sourceMappingURL=style.css.map */

@@ -5,6 +5,7 @@ import { getAcceptedBookingPriceThunk } from '../../features/booking-prices/book
 import { finalizeBookingThunk } from '../../features/transactions/transactionSlice'
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { toast } from 'react-toastify';
+import { useBookingParams } from '../../hooks/useBookingParams';
 import Accordion from 'react-bootstrap/Accordion';
 import BookingWizard from "./common/BookingHeader";
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
