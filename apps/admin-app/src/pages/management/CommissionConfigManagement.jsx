@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, InputNumber, DatePicker } from 'antd';
 import {
  fetchCommissionConfigs,
  createCommissionConfig,
@@ -12,11 +12,15 @@ import {
 } from '../../features/commissionConfig/commissionSlice';
 import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
 
 const initialFormState = {
-  name: '',
-  value: '',
-  isActive: true,
+  commissionPercent: '',
+  holdingPercent: '',
+  commissionMinAmount: '',
+  commissionType: 'PERCENT',
+  startDate: '',
+  isApplied: false,
 };
 
 const CommissionConfigManagement = () => {
@@ -32,9 +36,9 @@ const CommissionConfigManagement = () => {
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const configsPerPage = 10;
-  const [sortField, setSortField] = useState('createdAt');
+  const [sortField, setSortField] = useState('startDate');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [filterStatus, setFilterStatus] = useState();
+  const [filterInApplied, setFilterInApplied] = useState();
   const [showRestoreModal, setShowRestoreModal] = useState(false);
   const [validationErrors, setValidationErrors] = useState({});
 
@@ -49,8 +53,13 @@ const CommissionConfigManagement = () => {
 
   useEffect(() => {
     if (error) {
-      message.error(error.title || 'Đã có lỗi xảy ra. Vui lòng thử lại!');
-      dispatch(resetState());
+      // Hiển thị thông báo lỗi cụ thể cho trường hợp không thể xóa config đang được áp dụng
+      if (error.title && error.title.includes('Không thể xóa cấu hình hoa hồng đang được áp dụng')) {
+        message.error('Không thể xóa cấu hình hoa hồng đang được áp dụng. Vui lòng bỏ áp dụng trước khi xóa.');
+      } else {
+        message.error(error.title || 'Đã có lỗi xảy ra. Vui lòng thử lại!');
+      }
+      dispatch(resetState());v
     }
     if (success) {
       message.success('Thao tác thành công!');
@@ -63,23 +72,26 @@ const CommissionConfigManagement = () => {
   }, [error, success, dispatch]);
 
   const filteredConfigs = commissionConfigs.filter(cfg =>
-    cfg.name?.toLowerCase().includes(searchText.toLowerCase()) &&
-    (!filterStatus || (filterStatus === 'ACTIVE' ? cfg.isActive : !cfg.isActive))
+    (!filterInApplied || (filterInApplied === 'APPLIED' ? cfg.isApplied : !cfg.isApplied)) &&
+    (cfg.commissionType || '').toLowerCase().includes(searchText.toLowerCase())
   );
 
   const sortedConfigs = [...filteredConfigs].sort((a, b) => {
-    if (sortField === 'name') {
-      if (!a.name) return 1;
-      if (!b.name) return -1;
-      if (sortOrder === 'asc') {
-        return a.name.localeCompare(b.name);
-      } else {
-        return b.name.localeCompare(a.name);
-      }
-    } else if (sortField === 'createdAt' || sortField === 'lasted') {
-      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    let aValue = a[sortField];
+    let bValue = b[sortField];
+    if (sortField === 'startDate') {
+      aValue = aValue ? new Date(aValue) : new Date(0);
+      bValue = bValue ? new Date(bValue) : new Date(0);
+      return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    if (sortField === 'commissionPercent' || sortField === 'holdingPercent' || sortField === 'commissionMinAmount') {
+      return sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+    }
+    if (sortField === 'commissionType') {
+      return sortOrder === 'asc' ? (aValue || '').localeCompare(bValue || '') : (bValue || '').localeCompare(aValue || '');
+    }
+    if (sortField === 'isApplied') {
+      return sortOrder === 'asc' ? (aValue === bValue ? 0 : aValue ? -1 : 1) : (aValue === bValue ? 0 : aValue ? 1 : -1);
     }
     return 0;
   });
@@ -122,7 +134,13 @@ const CommissionConfigManagement = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setValidationErrors({});
-    if (!formData.name || !formData.value) {
+    if (
+      formData.commissionPercent === '' ||
+      formData.holdingPercent === '' ||
+      formData.commissionMinAmount === '' ||
+      !formData.commissionType ||
+      !formData.startDate
+    ) {
       setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
       return;
     }
@@ -130,16 +148,14 @@ const CommissionConfigManagement = () => {
       dispatch(createCommissionConfig(formData)).then((action) => {
         if (action.payload && action.payload.errors) {
           const apiErrors = action.payload.errors;
-          const processed = processErrors(apiErrors);
-          setValidationErrors(processed);
+          setValidationErrors(apiErrors);
         }
       });
     } else if (showEditModal && selectedCommissionConfig) {
       dispatch(updateCommissionConfig({ id: selectedCommissionConfig.id, commissionConfigData: formData })).then((action) => {
         if (action.payload && action.payload.errors) {
           const apiErrors = action.payload.errors;
-          const processed = processErrors(apiErrors);
-          setValidationErrors(processed);
+          setValidationErrors(apiErrors);
         }
       });
     }
@@ -166,16 +182,21 @@ const CommissionConfigManagement = () => {
 
   const handleAddConfig = () => {
     setFormData(initialFormState);
+    setValidationErrors({});
     setShowAddModal(true);
   };
 
   const handleEditConfig = (config) => {
     setSelectedCommissionConfig(config);
     setFormData({
-      name: config.name || '',
-      value: config.value || '',
-      isActive: config.isActive ?? true,
+      commissionPercent: config.commissionPercent ?? '',
+      holdingPercent: config.holdingPercent ?? '',
+      commissionMinAmount: config.commissionMinAmount ?? '',
+      commissionType: config.commissionType ?? 'PERCENT',
+      startDate: config.startDate ? config.startDate.slice(0, 10) : '',
+      isApplied: config.isApplied ?? false,
     });
+    setValidationErrors({});
     setShowEditModal(true);
   };
 
@@ -203,6 +224,19 @@ const CommissionConfigManagement = () => {
   };
 
   const isDataReady = commissionConfigs.length > 0;
+
+  const handleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const renderSortIcon = (field) => sortField === field ? (
+    <span style={{ marginLeft: 4 }}>{sortOrder === 'asc' ? '\u25b2' : '\u25bc'}</span>
+  ) : null;
 
   return (
     <div className="modern-page-wrapper">
@@ -239,14 +273,14 @@ const CommissionConfigManagement = () => {
               </div>
             </div>
             <Select
-              placeholder="Status"
-              value={filterStatus || undefined}
-              onChange={value => setFilterStatus(value)}
+              placeholder="In Applied"
+              value={filterInApplied || undefined}
+              onChange={value => setFilterInApplied(value)}
               style={{ width: 130 }}
               allowClear
             >
-              <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-              <Select.Option value="INACTIVE">INACTIVE</Select.Option>
+              <Select.Option value="APPLIED">APPLIED</Select.Option>
+              <Select.Option value="NOT_APPLIED">NOT APPLIED</Select.Option>
             </Select>
           </div>
           <div className="d-flex align-items-center" style={{ gap: 12 }}>
@@ -267,39 +301,59 @@ const CommissionConfigManagement = () => {
             <table className="table datatable">
               <thead className="thead-light">
                 <tr>
-                  <th style={{ cursor: 'pointer' }} onClick={handleSortByName}>
-                    CONFIG NAME
-                    {sortField === 'name' && (
-                      <span style={{ marginLeft: 4 }}>
-                        {sortOrder === 'asc' ? '\u25b2' : '\u25bc'}
-                      </span>
-                    )}
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('commissionPercent')}>
+                    COMMISSION % {renderSortIcon('commissionPercent')}
                   </th>
-                  <th>VALUE</th>
-                  <th>STATUS</th>
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('holdingPercent')}>
+                    HOLDING % {renderSortIcon('holdingPercent')}
+                  </th>
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('commissionMinAmount')}>
+                    MIN AMOUNT {renderSortIcon('commissionMinAmount')}
+                  </th>
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('commissionType')}>
+                    TYPE {renderSortIcon('commissionType')}
+                  </th>
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('startDate')}>
+                    START DATE {renderSortIcon('startDate')}
+                  </th>
+                  <th style={{ cursor: 'pointer' }} onClick={() => handleSort('isApplied')}>
+                    IN APPLIED {renderSortIcon('isApplied')}
+                  </th>
                   <th>ACTION</th>
                 </tr>
               </thead>
               <tbody>
                 {!isDataReady ? (
                   <tr>
-                    <td colSpan={4} className="text-center">Loading...</td>
+                    <td colSpan={7} className="text-center">Loading...</td>
                   </tr>
                 ) : (
                   currentConfigs.map((cfg) => (
                     <tr key={cfg.id}>
-                      <td>{cfg.name}</td>
-                      <td>{cfg.value}</td>
+                      <td>{cfg.commissionPercent}</td>
+                      <td>{cfg.holdingPercent}</td>
+                      <td>{cfg.commissionMinAmount}</td>
+                      <td>{cfg.commissionType}</td>
+                      <td>{cfg.startDate ? dayjs(cfg.startDate).format('DD/MM/YYYY') : ''}</td>
                       <td>
-                        <span className={`badge ${cfg.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                          {cfg.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        <span className={`badge ${cfg.isApplied ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
+                          {cfg.isApplied ? 'Yes' : 'No'}
                         </span>
                       </td>
                       <td>
                         <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditConfig(cfg)} style={{ marginRight: 8 }}>
                           Edit
                         </Button>
-                        <Button className="management-action-btn" size="middle" danger onClick={() => handleDeleteConfig(cfg)}>Delete</Button>
+                        <Button 
+                          className="management-action-btn" 
+                          size="middle" 
+                          danger 
+                          disabled={cfg.isApplied}
+                          onClick={() => handleDeleteConfig(cfg)}
+                          title={cfg.isApplied ? 'Không thể xóa cấu hình đang được áp dụng' : 'Xóa cấu hình'}
+                        >
+                          Delete
+                        </Button>
                       </td>
                     </tr>
                   ))
@@ -331,114 +385,236 @@ const CommissionConfigManagement = () => {
         onCancel={() => setShowAddModal(false)}
         footer={null}
         title="Add Commission Config"
+        width={700}
       >
-        <form onSubmit={handleSubmit}>
+        <Form layout="vertical" onSubmit={handleSubmit}>
           {validationErrors.general && (
-            <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
-          )}
-          <div className="mb-3">
-            <label className="form-label">Config Name</label>
-            <input
-              type="text"
-              name="name"
-              className={`form-control${validationErrors.Name ? ' is-invalid' : ''}`}
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-            {validationErrors.Name && (
-              <div className="invalid-feedback">{validationErrors.Name.join(', ')}</div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Value</label>
-            <input
-              type="text"
-              name="value"
-              className={`form-control${validationErrors.Value ? ' is-invalid' : ''}`}
-              value={formData.value}
-              onChange={handleChange}
-            />
-            {validationErrors.Value && (
-              <div className="invalid-feedback">{validationErrors.Value.join(', ')}</div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Status</label>
-            <div>
-              <input
-                type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-                id="isActiveSwitch"
-              />
-              <label htmlFor="isActiveSwitch" style={{ marginLeft: 8 }}>{formData.isActive ? 'Active' : 'Inactive'}</label>
+            <div style={{ color: 'red', marginBottom: 8 }}>
+              {validationErrors.general.includes('The dto field is required') ||
+               validationErrors.general.includes('could not be converted') ||
+               validationErrors.general.includes('System.')
+                ? 'Nhập vào các trường * bắt buộc'
+                : validationErrors.general}
             </div>
-          </div>
+          )}
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Commission Percent (%)" required validateStatus={validationErrors.CommissionPercent ? 'error' : ''} help={validationErrors.CommissionPercent ? validationErrors.CommissionPercent.join(', ') : ''}>
+                <InputNumber
+                  name="commissionPercent"
+                  value={formData.commissionPercent}
+                  onChange={(value) => handleChange({ target: { name: 'commissionPercent', value: value?.toString() || '' } })}
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  style={{ width: '100%' }}
+                  placeholder="Enter commission percent"
+                  required
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Holding Percent (%)" required validateStatus={validationErrors.HoldingPercent ? 'error' : ''} help={validationErrors.HoldingPercent ? validationErrors.HoldingPercent.join(', ') : ''}>
+                <InputNumber
+                  name="holdingPercent"
+                  value={formData.holdingPercent}
+                  onChange={(value) => handleChange({ target: { name: 'holdingPercent', value: value?.toString() || '' } })}
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  style={{ width: '100%' }}
+                  placeholder="Enter holding percent"
+                  required
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Commission Min Amount (VND)" required validateStatus={validationErrors.CommissionMinAmount ? 'error' : ''} help={validationErrors.CommissionMinAmount ? validationErrors.CommissionMinAmount.join(', ') : ''}>
+                <InputNumber
+                  name="commissionMinAmount"
+                  value={formData.commissionMinAmount}
+                  onChange={(value) => handleChange({ target: { name: 'commissionMinAmount', value: value?.toString() || '' } })}
+                  min={0}
+                  step={0.01}
+                  style={{ width: '100%' }}
+                  placeholder="Enter minimum amount"
+                  required
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Commission Type" required validateStatus={validationErrors.CommissionType ? 'error' : ''} help={validationErrors.CommissionType ? validationErrors.CommissionType.join(', ') : ''}>
+                <Select
+                  name="commissionType"
+                  value={formData.commissionType}
+                  onChange={(value) => handleChange({ target: { name: 'commissionType', value } })}
+                  placeholder="Select commission type"
+                  required
+                >
+                  <Select.Option value="PERCENT">PERCENT</Select.Option>
+                  <Select.Option value="MIN_AMOUNT">MIN_AMOUNT</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Start Date" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
+                <DatePicker
+                  value={formData.startDate ? dayjs(formData.startDate) : null}
+                  onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
+                  style={{ width: '100%' }}
+                  placeholder="Select start date"
+                  required
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Status">
+                <Switch
+                  name="isApplied"
+                  checked={formData.isApplied}
+                  onChange={(checked) => handleChange({ target: { name: 'isApplied', type: 'checkbox', checked } })}
+                  checkedChildren="Applied"
+                  unCheckedChildren="Not Applied"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
           <div className="d-flex justify-content-end">
-            <button type="button" className="btn btn-light me-2" onClick={() => setShowAddModal(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save</button>
+            <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
+              Cancel
+            </Button>
+            <Button type="primary" onClick={handleSubmit}>
+              Save
+            </Button>
           </div>
-        </form>
+        </Form>
       </Modal>
+
       {/* Edit Modal */}
       <Modal
         open={showEditModal}
         onCancel={() => setShowEditModal(false)}
         footer={null}
         title="Update Commission Config"
+        width={700}
       >
-        <form onSubmit={handleSubmit}>
+        <Form layout="vertical" onSubmit={handleSubmit}>
           {validationErrors.general && (
-            <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
-          )}
-          <div className="mb-3">
-            <label className="form-label">Config Name</label>
-            <input
-              type="text"
-              name="name"
-              className={`form-control${validationErrors.Name ? ' is-invalid' : ''}`}
-              value={formData.name}
-              onChange={handleChange}
-              required
-            />
-            {validationErrors.Name && (
-              <div className="invalid-feedback">{validationErrors.Name.join(', ')}</div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Value</label>
-            <input
-              type="text"
-              name="value"
-              className={`form-control${validationErrors.Value ? ' is-invalid' : ''}`}
-              value={formData.value}
-              onChange={handleChange}
-            />
-            {validationErrors.Value && (
-              <div className="invalid-feedback">{validationErrors.Value.join(', ')}</div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Status</label>
-            <div>
-              <input
-                type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-                id="isActiveSwitchEdit"
-              />
-              <label htmlFor="isActiveSwitchEdit" style={{ marginLeft: 8 }}>{formData.isActive ? 'Active' : 'Inactive'}</label>
+            <div style={{ color: 'red', marginBottom: 8 }}>
+              {validationErrors.general.includes('The dto field is required') ||
+               validationErrors.general.includes('could not be converted') ||
+               validationErrors.general.includes('System.')
+                ? 'Nhập vào các trường * bắt buộc'
+                : validationErrors.general}
             </div>
-          </div>
+          )}
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Commission Percent (%)" required validateStatus={validationErrors.CommissionPercent ? 'error' : ''} help={validationErrors.CommissionPercent ? validationErrors.CommissionPercent.join(', ') : ''}>
+                <InputNumber
+                  name="commissionPercent"
+                  value={formData.commissionPercent}
+                  onChange={(value) => handleChange({ target: { name: 'commissionPercent', value: value?.toString() || '' } })}
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  style={{ width: '100%' }}
+                  placeholder="Enter commission percent"
+                  required
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Holding Percent (%)" required validateStatus={validationErrors.HoldingPercent ? 'error' : ''} help={validationErrors.HoldingPercent ? validationErrors.HoldingPercent.join(', ') : ''}>
+                <InputNumber
+                  name="holdingPercent"
+                  value={formData.holdingPercent}
+                  onChange={(value) => handleChange({ target: { name: 'holdingPercent', value: value?.toString() || '' } })}
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  style={{ width: '100%' }}
+                  placeholder="Enter holding percent"
+                  required
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Commission Min Amount (VND)" required validateStatus={validationErrors.CommissionMinAmount ? 'error' : ''} help={validationErrors.CommissionMinAmount ? validationErrors.CommissionMinAmount.join(', ') : ''}>
+                <InputNumber
+                  name="commissionMinAmount"
+                  value={formData.commissionMinAmount}
+                  onChange={(value) => handleChange({ target: { name: 'commissionMinAmount', value: value?.toString() || '' } })}
+                  min={0}
+                  step={0.01}
+                  style={{ width: '100%' }}
+                  placeholder="Enter minimum amount"
+                  required
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Commission Type" required validateStatus={validationErrors.CommissionType ? 'error' : ''} help={validationErrors.CommissionType ? validationErrors.CommissionType.join(', ') : ''}>
+                <Select
+                  name="commissionType"
+                  value={formData.commissionType}
+                  onChange={(value) => handleChange({ target: { name: 'commissionType', value } })}
+                  placeholder="Select commission type"
+                  required
+                >
+                  <Select.Option value="PERCENT">PERCENT</Select.Option>
+                  <Select.Option value="MIN_AMOUNT">MIN_AMOUNT</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Start Date" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
+                <DatePicker
+                  value={formData.startDate ? dayjs(formData.startDate) : null}
+                  onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
+                  style={{ width: '100%' }}
+                  placeholder="Select start date"
+                  required
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Status">
+                <Switch
+                  name="isApplied"
+                  checked={formData.isApplied}
+                  onChange={(checked) => handleChange({ target: { name: 'isApplied', type: 'checkbox', checked } })}
+                  checkedChildren="Applied"
+                  unCheckedChildren="Not Applied"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+
           <div className="d-flex justify-content-end">
-            <button type="button" className="btn btn-light me-2" onClick={() => setShowEditModal(false)}>Cancel</button>
-            <button type="submit" className="btn btn-primary">Save</button>
+            <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
+              Cancel
+            </Button>
+            <Button type="primary" onClick={handleSubmit}>
+              Save
+            </Button>
           </div>
-        </form>
+        </Form>
       </Modal>
+
       {/* Delete Modal */}
       <Modal
         open={showDeleteModal}
@@ -456,6 +632,7 @@ const CommissionConfigManagement = () => {
           </div>
         </div>
       </Modal>
+
       {/* Restore Modal */}
       <Modal
         open={showRestoreModal}
@@ -468,20 +645,24 @@ const CommissionConfigManagement = () => {
           <table className="table datatable">
             <thead className="thead-light">
               <tr>
-                <th>NAME</th>
-                <th>VALUE</th>
-                <th>STATUS</th>
+                <th>COMMISSION %</th>
+                <th>HOLDING %</th>
+                <th>MIN AMOUNT</th>
+                <th>START DATE</th>
+                <th>IN APPLIED</th>
                 <th>ACTION</th>
               </tr>
             </thead>
             <tbody>
               {deletedCommissionConfigs.map((cfg) => (
                 <tr key={cfg.id}>
-                  <td>{cfg.name}</td>
-                  <td>{cfg.value}</td>
+                  <td>{cfg.commissionPercent}</td>
+                  <td>{cfg.holdingPercent}</td>
+                  <td>{cfg.commissionMinAmount}</td>
+                  <td>{cfg.startDate ? dayjs(cfg.startDate).format('DD/MM/YYYY') : ''}</td>
                   <td>
-                    <span className={`badge ${cfg.isActive ? 'bg-success' : 'bg-danger'}`}>
-                      {cfg.isActive ? 'Active' : 'Inactive'}
+                    <span className={`badge ${cfg.isApplied ? 'bg-success' : 'bg-danger'}`}>
+                      {cfg.isApplied ? 'Yes' : 'No'}
                     </span>
                   </td>
                   <td>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch } from 'antd';
 import {
  fetchCategories,
  createCategory,
@@ -175,6 +175,7 @@ const handleSortByName = () => {
 
 const handleAddCategory = () => {
   setFormData(initialFormState);
+  setValidationErrors({});
   setShowAddModal(true);
 };
 
@@ -185,6 +186,7 @@ const handleEditCategory = (category) => {
     icon: category.icon || '',
     isActive: category.isActive ?? true,
   });
+  setValidationErrors({});
   setShowEditModal(true);
 };
 
@@ -350,56 +352,53 @@ const isDataReady = categories.length > 0;
        onCancel={() => setShowAddModal(false)}
        footer={null}
        title="Add Category"
+       width={600}
      >
-       <form onSubmit={handleSubmit}>
+       <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
-           <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+           <div style={{ color: 'red', marginBottom: 8 }}>
+             {validationErrors.general.includes('The dto field is required') ||
+              validationErrors.general.includes('could not be converted') ||
+              validationErrors.general.includes('System.')
+               ? 'Nhập vào các trường * bắt buộc'
+               : validationErrors.general}
+           </div>
          )}
-         <div className="mb-3">
-           <label className="form-label">Category Name</label>
-           <input
-             type="text"
+         <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+           <Input
              name="categoryName"
-             className={`form-control${validationErrors.CategoryName ? ' is-invalid' : ''}`}
              value={formData.categoryName}
              onChange={handleChange}
+             placeholder="Enter category name"
              required
            />
-           {validationErrors.CategoryName && (
-             <div className="invalid-feedback">{validationErrors.CategoryName.join(', ')}</div>
-           )}
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Icon</label>
-           <input
-             type="text"
+         </Form.Item>
+         <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+           <Input
              name="icon"
-             className={`form-control${validationErrors.Icon ? ' is-invalid' : ''}`}
              value={formData.icon}
              onChange={handleChange}
+             placeholder="Enter icon (e.g., ti ti-tools)"
            />
-           {validationErrors.Icon && (
-             <div className="invalid-feedback">{validationErrors.Icon.join(', ')}</div>
-           )}
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Status</label>
-           <div>
-             <input
-               type="checkbox"
-               name="isActive"
-               checked={formData.isActive}
-               onChange={handleChange}
-               id="isActiveSwitch"
-             />
-             <label htmlFor="isActiveSwitch" style={{ marginLeft: 8 }}>{formData.isActive ? 'Active' : 'Inactive'}</label>
-           </div>
-         </div>
+         </Form.Item>
+         <Form.Item label="Status">
+           <Switch
+             name="isActive"
+             checked={formData.isActive}
+             onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+             checkedChildren="Active"
+             unCheckedChildren="Inactive"
+           />
+         </Form.Item>
          <div className="d-flex justify-content-end">
-           <button type="button" className="btn btn-light me-2" onClick={() => setShowAddModal(false)}>Cancel</button>
-           <button type="submit" className="btn btn-primary">Save</button>
+           <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
+             Cancel
+           </Button>
+           <Button type="primary" onClick={handleSubmit}>
+             Save
+           </Button>
          </div>
-       </form>
+       </Form>
      </Modal>
 
 
@@ -408,57 +407,54 @@ const isDataReady = categories.length > 0;
        open={showEditModal}
        onCancel={() => setShowEditModal(false)}
        footer={null}
-       title="Update category"
+       title="Update Category"
+       width={600}
      >
-       <form onSubmit={handleSubmit}>
+       <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
-           <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+           <div style={{ color: 'red', marginBottom: 8 }}>
+             {validationErrors.general.includes('The dto field is required') ||
+              validationErrors.general.includes('could not be converted') ||
+              validationErrors.general.includes('System.')
+               ? 'Nhập vào các trường * bắt buộc'
+               : validationErrors.general}
+           </div>
          )}
-         <div className="mb-3">
-           <label className="form-label">Category Name</label>
-           <input
-             type="text"
+         <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+           <Input
              name="categoryName"
-             className={`form-control${validationErrors.CategoryName ? ' is-invalid' : ''}`}
              value={formData.categoryName}
              onChange={handleChange}
+             placeholder="Enter category name"
              required
            />
-           {validationErrors.CategoryName && (
-             <div className="invalid-feedback">{validationErrors.CategoryName.join(', ')}</div>
-           )}
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Icon</label>
-           <input
-             type="text"
+         </Form.Item>
+         <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+           <Input
              name="icon"
-             className={`form-control${validationErrors.Icon ? ' is-invalid' : ''}`}
              value={formData.icon}
              onChange={handleChange}
+             placeholder="Enter icon (e.g., ti ti-tools)"
            />
-           {validationErrors.Icon && (
-             <div className="invalid-feedback">{validationErrors.Icon.join(', ')}</div>
-           )}
-         </div>
-         <div className="mb-3">
-           <label className="form-label">Status</label>
-           <div>
-             <input
-               type="checkbox"
-               name="isActive"
-               checked={formData.isActive}
-               onChange={handleChange}
-               id="isActiveSwitchEdit"
-             />
-             <label htmlFor="isActiveSwitchEdit" style={{ marginLeft: 8 }}>{formData.isActive ? 'Active' : 'Inactive'}</label>
-           </div>
-         </div>
+         </Form.Item>
+         <Form.Item label="Status">
+           <Switch
+             name="isActive"
+             checked={formData.isActive}
+             onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+             checkedChildren="Active"
+             unCheckedChildren="Inactive"
+           />
+         </Form.Item>
          <div className="d-flex justify-content-end">
-           <button type="button" className="btn btn-light me-2" onClick={() => setShowEditModal(false)}>Cancel</button>
-           <button type="submit" className="btn btn-primary">Save</button>
+           <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
+             Cancel
+           </Button>
+           <Button type="primary" onClick={handleSubmit}>
+             Save
+           </Button>
          </div>
-       </form>
+       </Form>
      </Modal>
 
 

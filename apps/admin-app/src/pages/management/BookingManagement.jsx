@@ -9,6 +9,7 @@ import "../../../public/css/ManagementTableStyle.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
+import { technicianAPI } from '../../features/technicians/techniciansAPI';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -28,47 +29,43 @@ const [sortOrder, setSortOrder] = useState('desc');
 const [filterService, setFilterService] = useState('');
 const [filterStatus,  setFilterStatus] = useState('');
 const [allServices, setAllServices] = useState([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState(null);
 
 
  useEffect(() => {
   const fetchData = async () => {
     try {
-      const [users, services, technicians] = await Promise.all([
+      setLoading(true);
+      setError(null);
+      const [users, services, technicians, bookingsData] = await Promise.all([
         userAPI.getAll(),
-        serviceAPI.getAll(),
-        technicianAPI.getAll()
+        serviceAPI.getAll(), // chỉ dùng serviceAPI.getAll()
+        technicianAPI.getAll(),
+        bookingAPI.getAll()
       ]);
-
       const userMapData = {};
       users.forEach(u => userMapData[u.id] = u.fullName || u.email);
       setUserMap(userMapData);
 
       const serviceMapData = {};
-      services.forEach(s => serviceMapData[s.id] = s.name);
+      services.forEach(s => serviceMapData[s.id] = s.serviceName || s.name); // lấy đúng tên service
       setServiceMap(serviceMapData);
+      setAllServices(services); // cho dropdown filter
 
       const technicianMapData = {};
       technicians.forEach(t => technicianMapData[t.id] = t.fullName || t.email);
-      setTechnicianMap(technicianMapData); // ✅ map này sẽ được dùng ở modal
+      setTechnicianMap(technicianMapData);
+      setBookings(bookingsData);
     } catch (error) {
+      setError(error);
       console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   fetchData();
-}, []);
-
-useEffect(() => {
-  // Gọi API lấy tất cả service
-  const fetchAllServices = async () => {
-    try {
-      const res = await ApiBE.get('/Dashboard/services'); // hoặc endpoint đúng của bạn
-      setAllServices(res.data || []);
-    } catch {
-      setAllServices([]);
-    }
-  };
-  fetchAllServices();
 }, []);
 
 useEffect(() => {
@@ -221,7 +218,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              allowClear
            >
              {allServices.map(s => (
-               <Select.Option key={s.id} value={s.id}>{s.serviceName}</Select.Option>
+               <Select.Option key={s.id} value={s.id}>{s.serviceName || s.name}</Select.Option>
              ))}
            </Select>
            <Select
@@ -282,14 +279,17 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                  )}
                </th>
                <th>STATUS</th>
-               <th>SCHEDULE</th>
                <th>ACTION</th>
              </tr>
            </thead>
            <tbody>
-             {!isDataReady ? (
+             {loading ? (
                <tr>
                  <td><Spin /></td>
+               </tr>
+             ) : error ? (
+               <tr>
+                 <td colSpan={6} style={{ color: 'red' }}>{error.message || 'Failed to fetch bookings.'}</td>
                </tr>
              ) : (
                currentBookings.map(b => (
@@ -298,7 +298,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                    <td>{userMap[b.customerId]}</td>
                    <td>{serviceMap[b.serviceId]}</td>
                    <td>{b.status ? b.status.replace(/_/g, ' ') : ''}</td>
-                   <td>
+                   {/* <td>
                       {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
                         ? `${dayjs(b.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')} - ${
                             b.schedule.endTime
@@ -308,7 +308,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                                   : '')
                           }`
                         : ''}
-                    </td>
+                    </td> */}
                    <td>
                      <Button className="management-action-btn" size="middle" onClick={() => { setSelectedBooking(b); setShowDetailModal(true); }}>
                        <EyeOutlined style={{marginRight: 4}} />View Detail

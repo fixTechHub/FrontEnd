@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, InputNumber } from 'antd';
 import {
   fetchServices,
   createService,
@@ -108,6 +108,7 @@ const ServiceManagement = () => {
 
   const handleAddService = () => {
     setFormData(initialFormState);
+    setValidationErrors({});
     setShowAddModal(true);
   };
 
@@ -122,6 +123,7 @@ const ServiceManagement = () => {
       estimatedMarketPrice: service.estimatedMarketPrice || { min: '', max: '' },
       description: service.description || '',
     });
+    setValidationErrors({});
     setShowEditModal(true);
   };
 
@@ -402,123 +404,131 @@ const ServiceManagement = () => {
       </div>
       {/* Modal Thêm/Sửa */}
       <Modal
-        title={showAddModal ? 'Add service' : 'Update service'}
+        title={showAddModal ? 'Add Service' : 'Update Service'}
         open={showAddModal || showEditModal}
         onCancel={() => {
           setShowAddModal(false);
           setShowEditModal(false);
         }}
         footer={null}
+        width={800}
         destroyOnClose
       >
-        <form onSubmit={handleSubmit}>
+        <Form layout="vertical" onSubmit={handleSubmit}>
           {validationErrors.general && (
-            <div style={{ color: 'red', marginBottom: 8 }}>{validationErrors.general}</div>
+            <div style={{ color: 'red', marginBottom: 8 }}>
+              {validationErrors.general.includes('The dto field is required') ||
+               validationErrors.general.includes('could not be converted') ||
+               validationErrors.general.includes('System.')
+                ? 'Nhập vào các trường * bắt buộc'
+                : validationErrors.general}
+            </div>
           )}
-          <div className="mb-3">
-            <label className="form-label">Service Name</label>
-            <input
-              type="text"
-              className={`form-control${validationErrors.ServiceName ? ' is-invalid' : ''}`}
-              name="serviceName"
-              value={formData.serviceName}
-              onChange={handleChange}
-              required
-            />
-            {validationErrors.ServiceName && (
-              <div className="invalid-feedback">{validationErrors.ServiceName.join(', ')}</div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Category</label>
-            <select
-              className={`form-control${validationErrors.CategoryId ? ' is-invalid' : ''}`}
-              name="categoryId"
-              value={formData.categoryId}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Choose category</option>
-              {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.categoryName}</option>
-              ))}
-            </select>
-            {validationErrors.CategoryId && (
-              <div className="invalid-feedback">{validationErrors.CategoryId.join(', ')}</div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Icon</label>
-            <input
-              type="text"
-              className={`form-control${validationErrors.Icon ? ' is-invalid' : ''}`}
-              name="icon"
-              value={formData.icon}
-              onChange={handleChange}
-            />
-            {validationErrors.Icon && (
-              <div className="invalid-feedback">{validationErrors.Icon.join(', ')}</div>
-            )}
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Status:</label>
-            <br></br>
-            <input
-              type="checkbox"
-              name="isActive"
-              checked={formData.isActive}
-              onChange={handleChange}
-            /> Active
-          </div>
-          <div className="mb-3">
-            <label className="form-label">Loại dịch vụ</label>
-            <select
-              name="serviceType"
-              className="form-control"
-              value={formData.serviceType}
-              onChange={handleChange}
-            >
-              <option value="FIXED">FIXED</option>
-              <option value="COMPLEX">COMPLEX</option>
-            </select>
-          </div>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Service Name" required validateStatus={validationErrors.ServiceName ? 'error' : ''} help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}>
+                <Input
+                  name="serviceName"
+                  value={formData.serviceName}
+                  onChange={handleChange}
+                  placeholder="Enter service name"
+                  required
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Category" required validateStatus={validationErrors.CategoryId ? 'error' : ''} help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}>
+                <Select
+                  placeholder="Choose category"
+                  name="categoryId"
+                  value={formData.categoryId}
+                  onChange={(value) => handleChange({ target: { name: 'categoryId', value } })}
+                  required
+                >
+                  {categories.map(cat => (
+                    <Select.Option key={cat.id} value={cat.id}>{cat.categoryName}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Icon" validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+                <Input
+                  name="icon"
+                  value={formData.icon}
+                  onChange={handleChange}
+                  placeholder="Enter icon (e.g., ti ti-tools)"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Service Type">
+                <Select
+                  name="serviceType"
+                  value={formData.serviceType}
+                  onChange={(value) => handleChange({ target: { name: 'serviceType', value } })}
+                >
+                  <Select.Option value="FIXED">FIXED</Select.Option>
+                  <Select.Option value="COMPLEX">COMPLEX</Select.Option>
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
+
           {formData.serviceType === 'COMPLEX' && (
-            <>
-              <div className="mb-3">
-                <label className="form-label">Giá thị trường tối thiểu (min)</label>
-                <input
-                  type="number"
-                  name="min"
-                  className="form-control"
-                  value={formData.estimatedMarketPrice.min}
-                  onChange={handleChange}
-                  min={1}
-                  required={formData.serviceType === 'COMPLEX'}
-                />
-              </div>
-              <div className="mb-3">
-                <label className="form-label">Giá thị trường tối đa (max)</label>
-                <input
-                  type="number"
-                  name="max"
-                  className="form-control"
-                  value={formData.estimatedMarketPrice.max}
-                  onChange={handleChange}
-                  min={1}
-                  required={formData.serviceType === 'COMPLEX'}
-                />
-              </div>
-            </>
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item label="Min Market Price (VND)" required>
+                  <InputNumber
+                    name="min"
+                    value={formData.estimatedMarketPrice.min}
+                    onChange={(value) => handleChange({ target: { name: 'min', value: value?.toString() || '' } })}
+                    min={1}
+                    style={{ width: '100%' }}
+                    placeholder="Enter min price"
+                    required={formData.serviceType === 'COMPLEX'}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item label="Max Market Price (VND)" required>
+                  <InputNumber
+                    name="max"
+                    value={formData.estimatedMarketPrice.max}
+                    onChange={(value) => handleChange({ target: { name: 'max', value: value?.toString() || '' } })}
+                    min={1}
+                    style={{ width: '100%' }}
+                    placeholder="Enter max price"
+                    required={formData.serviceType === 'COMPLEX'}
+                  />
+                </Form.Item>
+              </Col>
+            </Row>
           )}
-          <div className="mb-3">
-            <label className="form-label">Mô tả</label>
-            <textarea
-              className="form-control"
+
+          <Form.Item label="Description">
+            <Input.TextArea
               name="description"
               value={formData.description}
               onChange={handleChange}
+              rows={3}
+              placeholder="Enter service description"
             />
-          </div>
+          </Form.Item>
+
+          <Form.Item label="Status">
+            <Switch
+              name="isActive"
+              checked={formData.isActive}
+              onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+              checkedChildren="Active"
+              unCheckedChildren="Inactive"
+            />
+          </Form.Item>
+
           <div className="d-flex justify-content-end">
             <Button onClick={() => {
               setShowAddModal(false);
@@ -526,11 +536,11 @@ const ServiceManagement = () => {
             }} style={{ marginRight: 8 }}>
               Cancel
             </Button>
-            <Button type="primary" htmlType="submit">
+            <Button type="primary" onClick={handleSubmit}>
               {showAddModal ? 'Add' : 'Save'}
             </Button>
           </div>
-        </form>
+        </Form>
       </Modal>
       {/* Modal Xóa */}
       <Modal
