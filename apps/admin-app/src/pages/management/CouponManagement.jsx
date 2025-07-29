@@ -240,7 +240,6 @@ const couponsPerPage = 10;
 
  const confirmDelete = () => {
    if (selectedCoupon) {
-     console.log('Delete coupon id:', selectedCoupon.id);
      dispatch(deleteCoupon(selectedCoupon.id));
    }
  };
@@ -489,51 +488,34 @@ const handleConfirmUserSelection = () => {
    };
 
    if (showAddModal) {
-     dispatch(createCoupon(dataToSend)).then((action) => {
-       console.log('ACTION RETURNED:', action);
-       // Ưu tiên lấy lỗi từ action.payload nếu có
-       if (action.payload && action.payload.errors) {
-         const apiErrors = action.payload.errors;
-         console.log('apiErrors:', apiErrors);
-         const processed = processErrors(apiErrors);
-         console.log('processed validationErrors:', processed);
-         setValidationErrors(processed);
-       } else if (action.error && action.error.message) {
-         // fallback cho các lỗi khác
-         const err = action.error;
-         console.log('ERROR OBJECT:', err);
-         message.error(err.message);
-       }
-     });
+         dispatch(createCoupon(dataToSend)).then((action) => {
+      // Ưu tiên lấy lỗi từ action.payload nếu có
+      if (action.payload && action.payload.errors) {
+        const apiErrors = action.payload.errors;
+        const processed = processErrors(apiErrors);
+        setValidationErrors(processed);
+      } else if (action.error && action.error.message) {
+        // fallback cho các lỗi khác
+        const err = action.error;
+        message.error(err.message);
+      }
+    });
    } else if (showEditModal && selectedCoupon) {
-     dispatch(updateCoupon({ id: selectedCoupon.id, couponData: dataToSend })).then((action) => {
-       console.log('ACTION RETURNED:', action);
-       // Ưu tiên lấy lỗi từ action.payload nếu có
-       if (action.payload && action.payload.errors) {
-         const apiErrors = action.payload.errors;
-         // Xử lý lỗi kỹ thuật giống như create
-         const processed = processErrors(apiErrors);
-         console.log('processed validationErrors:', processed);
-         setValidationErrors(processed);
-       } else if (action.error && action.error.message) {
-         // fallback cho các lỗi khác
-         const err = action.error;
-         console.log('ERROR OBJECT:', err);
-         message.error(err.message);
-       }
-     });
+         dispatch(updateCoupon({ id: selectedCoupon.id, couponData: dataToSend })).then((action) => {
+      // Ưu tiên lấy lỗi từ action.payload nếu có
+      if (action.payload && action.payload.errors) {
+        const apiErrors = action.payload.errors;
+        // Xử lý lỗi kỹ thuật giống như create
+        const processed = processErrors(apiErrors);
+        setValidationErrors(processed);
+      } else if (action.error && action.error.message) {
+        // fallback cho các lỗi khác
+        const err = action.error;
+        message.error(err.message);
+      }
+    });
    }
  };
-
-
- console.log('coupons:', coupons);
- console.log('deletedCoupons:', deletedCoupons);
- console.log('validationErrors:', validationErrors);
-
-
- // Trước khi render modal
- console.log('validationErrors trước khi render:', validationErrors);
-
 
  return (
    <div className="modern-page-wrapper">

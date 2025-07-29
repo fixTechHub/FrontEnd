@@ -15,170 +15,161 @@ dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const BookingManagement = () => {
- const [bookings, setBookings] = useState([]);
- const [userMap, setUserMap] = useState({});
- const [serviceMap, setServiceMap] = useState({});
- const [technicianMap, setTechnicianMap] = useState({});
- const [searchText, setSearchText] = useState('');
- const [showDetailModal, setShowDetailModal] = useState(false);
- const [selectedBooking, setSelectedBooking] = useState(null);
- const [currentPage, setCurrentPage] = useState(1);
- const bookingsPerPage = 10;
- const [sortField, setSortField] = useState('createdAt');
-const [sortOrder, setSortOrder] = useState('desc');
-const [filterService, setFilterService] = useState('');
-const [filterStatus,  setFilterStatus] = useState('');
-const [allServices, setAllServices] = useState([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState(null);
-
-
- useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [users, services, technicians, bookingsData] = await Promise.all([
-        userAPI.getAll(),
-        serviceAPI.getAll(), // chỉ dùng serviceAPI.getAll()
-        technicianAPI.getAll(),
-        bookingAPI.getAll()
-      ]);
-      const userMapData = {};
-      users.forEach(u => userMapData[u.id] = u.fullName || u.email);
-      setUserMap(userMapData);
-
-      const serviceMapData = {};
-      services.forEach(s => serviceMapData[s.id] = s.serviceName || s.name); // lấy đúng tên service
-      setServiceMap(serviceMapData);
-      setAllServices(services); // cho dropdown filter
-
-      const technicianMapData = {};
-      technicians.forEach(t => technicianMapData[t.id] = t.fullName || t.email);
-      setTechnicianMap(technicianMapData);
-      setBookings(bookingsData);
-    } catch (error) {
-      setError(error);
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchData();
-}, []);
-
-useEffect(() => {
-  setCurrentPage(1);
-}, [filterService, filterStatus]);
-
-
- const filteredBookings = bookings.filter(b => {
+  const [bookings, setBookings] = useState([]);
+  const [userMap, setUserMap] = useState({});
+  const [serviceMap, setServiceMap] = useState({});
+  const [technicianMap, setTechnicianMap] = useState({});
+  const [searchText, setSearchText] = useState('');
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const bookingsPerPage = 10;
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [filterService, setFilterService] = useState('');
+  const [filterStatus,  setFilterStatus] = useState('');
+  const [allServices, setAllServices] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const filteredBookings = bookings.filter(b => {
   const bookingCode = (b.bookingCode || '').toLowerCase();
   const customer = (userMap[b.customerId] || '').toLowerCase();
   const service = (serviceMap[b.serviceId] || '').toLowerCase();
   const status = (b.status || '').toLowerCase();
   const id = (b.id || '').toLowerCase();
   const search = searchText.toLowerCase();
+  const indexOfLastBooking = currentPage * bookingsPerPage;
+  const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    if (sortField === 'id') {
+      if (!a.id) return 1;
+      if (!b.id) return -1;
+      if (sortOrder === 'asc') {
+        return (a.id || '').localeCompare(b.id || '');
+      } else {
+        return (b.id || '').localeCompare(a.id || '');
+      }
+    } else if (sortField === 'customer') {
+      const nameA = (userMap[a.customerId] || '').toLowerCase();
+      const nameB = (userMap[b.customerId] || '').toLowerCase();
+      if (sortOrder === 'asc') {
+        return nameA.localeCompare(nameB);
+      } else {
+        return nameB.localeCompare(nameA);
+      }
+    } else if (sortField === 'service') {
+      const nameA = (serviceMap[a.serviceId] || '').toLowerCase();
+      const nameB = (serviceMap[b.serviceId] || '').toLowerCase();
+      if (sortOrder === 'asc') {
+        return nameA.localeCompare(nameB);
+      } else {
+        return nameB.localeCompare(nameA);
+      }
+    } else if (sortField === 'createdAt') {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      if (sortOrder === 'asc') {
+        return dateA - dateB;
+      } else {
+        return dateB - dateA;
+      }
+    }
+    return 0;
+  });
+  const currentBookings = sortedBookings.slice(indexOfFirstBooking, indexOfLastBooking);
+  const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+  const handleSortChange = (value) => {
+    if (value === 'lasted') {
+      setSortField('createdAt');
+      setSortOrder('desc');
+    } else if (value === 'oldest') {
+      setSortField('createdAt');
+      setSortOrder('asc');
+    }
+  };
+  const handleSortById = () => {
+    if (sortField === 'id') {
+      setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField('id');
+      setSortOrder('asc');
+    }
+  };
+  const handleSortByCustomer = () => {
+    if (sortField === 'customer') {
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField('customer');
+      setSortOrder('asc');
+    }
+  };
+  const handleSortByService = () => {
+    if (sortField === 'service') {
+      setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortField('service');
+      setSortOrder('asc');
+    }
+  };
+  const isUserMapReady = bookings.every(b => !b.customerId || userMap[b.customerId]);
+  const isServiceMapReady = bookings.every(b => !b.serviceId || serviceMap[b.serviceId]);
+  const isDataReady = isUserMapReady && isServiceMapReady;
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const [users, services, technicians, bookingsData] = await Promise.all([
+          userAPI.getAll(),
+          serviceAPI.getAll(), // chỉ dùng serviceAPI.getAll()
+          technicianAPI.getAll(),
+          bookingAPI.getAll()
+        ]);
+        const userMapData = {};
+        users.forEach(u => userMapData[u.id] = u.fullName || u.email);
+        setUserMap(userMapData);
+
+        const serviceMapData = {};
+        services.forEach(s => serviceMapData[s.id] = s.serviceName || s.name); // lấy đúng tên service
+        setServiceMap(serviceMapData);
+        setAllServices(services); // cho dropdown filter
+
+        const technicianMapData = {};
+        technicians.forEach(t => technicianMapData[t.id] = t.fullName || t.email);
+        setTechnicianMap(technicianMapData);
+        setBookings(bookingsData);
+      } catch (error) {
+        setError(error);
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filterService, filterStatus]);
 
   return (
-    (bookingCode.includes(search) ||
-     customer.includes(search) ||
-     service.includes(search) ||
-     status.includes(search) ||
-     id.includes(search)
-    ) &&
-    (!filterService || b.serviceId === filterService) &&
-    (!filterStatus || b.status === filterStatus)
-  );
-});
- const indexOfLastBooking = currentPage * bookingsPerPage;
- const indexOfFirstBooking = indexOfLastBooking - bookingsPerPage;
- const sortedBookings = [...filteredBookings].sort((a, b) => {
-  if (sortField === 'id') {
-    if (!a.id) return 1;
-    if (!b.id) return -1;
-    if (sortOrder === 'asc') {
-      return (a.id || '').localeCompare(b.id || '');
-    } else {
-      return (b.id || '').localeCompare(a.id || '');
-    }
-  } else if (sortField === 'customer') {
-    const nameA = (userMap[a.customerId] || '').toLowerCase();
-    const nameB = (userMap[b.customerId] || '').toLowerCase();
-    if (sortOrder === 'asc') {
-      return nameA.localeCompare(nameB);
-    } else {
-      return nameB.localeCompare(nameA);
-    }
-  } else if (sortField === 'service') {
-    const nameA = (serviceMap[a.serviceId] || '').toLowerCase();
-    const nameB = (serviceMap[b.serviceId] || '').toLowerCase();
-    if (sortOrder === 'asc') {
-      return nameA.localeCompare(nameB);
-    } else {
-      return nameB.localeCompare(nameA);
-    }
-  } else if (sortField === 'createdAt') {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
-    if (sortOrder === 'asc') {
-      return dateA - dateB;
-    } else {
-      return dateB - dateA;
-    }
-  }
-  return 0;
-});
-const currentBookings = sortedBookings.slice(indexOfFirstBooking, indexOfLastBooking);
- const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
-
-
- const handlePageChange = (pageNumber) => {
-   setCurrentPage(pageNumber);
- };
-
-const handleSortChange = (value) => {
-  if (value === 'lasted') {
-    setSortField('createdAt');
-    setSortOrder('desc');
-  } else if (value === 'oldest') {
-    setSortField('createdAt');
-    setSortOrder('asc');
-  }
-};
-
-const handleSortById = () => {
-  if (sortField === 'id') {
-    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-  } else {
-    setSortField('id');
-    setSortOrder('asc');
-  }
-};
-
-const handleSortByCustomer = () => {
-  if (sortField === 'customer') {
-    setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
-  } else {
-    setSortField('customer');
-    setSortOrder('asc');
-  }
-};
-
-const handleSortByService = () => {
-  if (sortField === 'service') {
-    setSortOrder(prev => (prev === 'asc' ? 'desc' : 'asc'));
-  } else {
-    setSortField('service');
-    setSortOrder('asc');
-  }
-};
-
-const isUserMapReady = bookings.every(b => !b.customerId || userMap[b.customerId]);
-const isServiceMapReady = bookings.every(b => !b.serviceId || serviceMap[b.serviceId]);
-const isDataReady = isUserMapReady && isServiceMapReady;
-
+      (bookingCode.includes(search) ||
+      customer.includes(search) ||
+      service.includes(search) ||
+      status.includes(search) ||
+      id.includes(search)
+      ) &&
+      (!filterService || b.serviceId === filterService) &&
+      (!filterStatus || b.status === filterStatus)
+    );
+  });
+  
 
  return (
    <div className="modern-page-wrapper">

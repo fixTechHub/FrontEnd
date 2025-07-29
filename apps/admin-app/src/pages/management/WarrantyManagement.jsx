@@ -17,28 +17,26 @@ const statusOptions = [
  { value: 'DENIED', label: 'DENIED' },
  { value: 'EXPIRED', label: 'EXPIRED' },
 ];
-
-
 const WarrantyManagement = () => {
- const dispatch = useDispatch();
- const { list: warranties, loading, error } = useSelector(state => state.warranty);
- const [searchText, setSearchText] = useState('');
- const [showModal, setShowModal] = useState(false);
- const [selected, setSelected] = useState(null);
- const [editStatus, setEditStatus] = useState('');
- const [editReviewed, setEditReviewed] = useState(false);
- const [userNames, setUserNames] = useState({});
- const [technicianNames, setTechnicianNames] = useState({});
- const [currentPage, setCurrentPage] = useState(1);
- const warrantiesPerPage = 10;
- const [bookingMap, setBookingMap] = useState({});
- const [sortField, setSortField] = useState('createdAt');
-const [sortOrder, setSortOrder] = useState('desc');
-const [filterStatus, setFilterStatus] = useState();
-const [filterUnderWarranty, setFilterUnderWarranty] = useState();
-const [filterReviewed, setFilterReviewed] = useState();
-const [showDetailModal, setShowDetailModal] = useState(false);
-const [selectedWarranty, setSelectedWarranty] = useState(null);
+  const dispatch = useDispatch();
+  const { list: warranties, loading, error } = useSelector(state => state.warranty);
+  const [searchText, setSearchText] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [editReviewed, setEditReviewed] = useState(false);
+  const [userNames, setUserNames] = useState({});
+  const [technicianNames, setTechnicianNames] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const warrantiesPerPage = 10;
+  const [bookingMap, setBookingMap] = useState({});
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [filterStatus, setFilterStatus] = useState();
+  const [filterUnderWarranty, setFilterUnderWarranty] = useState();
+  const [filterReviewed, setFilterReviewed] = useState();
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedWarranty, setSelectedWarranty] = useState(null);
 
 
  useEffect(() => {

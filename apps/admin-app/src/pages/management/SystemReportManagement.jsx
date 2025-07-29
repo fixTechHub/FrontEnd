@@ -140,9 +140,8 @@ const SystemReportManagement = () => {
 
  const handleUpdateStatus = async (id, newStatus) => {
    try {
-     const updatedSystemReport = await systemReportAPI.updateStatus(id, statusValue);
-     console.log('API trả về từ updateStatus:', updatedSystemReport);
-     dispatch(updateSystemReport(updatedSystemReport));
+        const updatedSystemReport = await systemReportAPI.updateStatus(id, statusValue);
+   dispatch(updateSystemReport(updatedSystemReport));
      message.success(`Status updated to ${newStatus}`);
      return updatedSystemReport;
    } catch (error) {

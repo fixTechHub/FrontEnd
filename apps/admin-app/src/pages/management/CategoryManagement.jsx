@@ -13,34 +13,31 @@ import {
 import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 
-
 const initialFormState = {
  categoryName: '',
  icon: '',
  isActive: true,
 };
 
-
 const CategoryManagement = () => {
- const dispatch = useDispatch();
- const categoryState = useSelector((state) => state.categories) || {};
- const { categories = [], loading = false, error = null, success = false } = categoryState;
+  const dispatch = useDispatch();
+  const categoryState = useSelector((state) => state.categories) || {};
+  const { categories = [], loading = false, error = null, success = false } = categoryState;
 
 
- const [showAddModal, setShowAddModal] = useState(false);
- const [showEditModal, setShowEditModal] = useState(false);
- const [showDeleteModal, setShowDeleteModal] = useState(false);
- const [selectedCategory, setSelectedCategory] = useState(null);
- const [formData, setFormData] = useState(initialFormState);
- const [searchText, setSearchText] = useState('');
- const [currentPage, setCurrentPage] = useState(1);
- const categoriesPerPage = 10;
- const [sortField, setSortField] = useState('createdAt');
-const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
-const [filterStatus, setFilterStatus] = useState();
-const [showRestoreModal, setShowRestoreModal] = useState(false);
-const [validationErrors, setValidationErrors] = useState({});
-
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [formData, setFormData] = useState(initialFormState);
+  const [searchText, setSearchText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const categoriesPerPage = 10;
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
+  const [filterStatus, setFilterStatus] = useState();
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
  const handlePageChange = (page) => {
    setCurrentPage(page);
@@ -213,9 +210,6 @@ const handleOpenRestoreModal = () => {
   setShowRestoreModal(true);
 };
 
-
- console.log('categories:', categories);
-
 const isDataReady = categories.length > 0;
 
  return (
@@ -345,7 +339,6 @@ const isDataReady = categories.length > 0;
 
      </div>
 
-
      {/* Add Modal */}
      <Modal
        open={showAddModal}
@@ -401,7 +394,6 @@ const isDataReady = categories.length > 0;
        </Form>
      </Modal>
 
-
      {/* Edit Modal */}
      <Modal
        open={showEditModal}
@@ -456,7 +448,6 @@ const isDataReady = categories.length > 0;
          </div>
        </Form>
      </Modal>
-
 
      {/* Delete Modal */}
      <Modal

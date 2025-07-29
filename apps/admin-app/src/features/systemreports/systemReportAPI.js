@@ -7,7 +7,6 @@ export const systemReportAPI = {
             const response = await ApiBE.get('/Dashboard/systemreports');
             return response.data;
         } catch (error) {
-            console.error('Get all system reports error:', error);
             throw error;
         }
     },
@@ -19,16 +18,9 @@ export const systemReportAPI = {
                 throw new Error('statusValue must be a string');
             }
             const payload = { status: statusValue.toUpperCase() };
-            console.log('Payload gửi lên:', payload);
             const response = await ApiBE.patch(`/Dashboard/systemreports/${id}/status`, payload);
             return response.data;
         } catch (error) {
-            console.error('Update system report status error:', error);
-            if (error.response) {
-                console.error('Response data:', error.response.data);
-                console.error('Response status:', error.response.status);
-                console.error('Response errors:', error.response.data.errors);
-            }
             throw error;
         }
     },

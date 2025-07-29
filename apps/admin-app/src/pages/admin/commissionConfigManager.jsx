@@ -9,8 +9,6 @@ import {
 const CommissionConfigManager = () => {
   const dispatch = useDispatch();
   const { configs , loading , error }  = useSelector(state => {
-    console.log("Entire Redux state:", state);
-
     return state.commission
   });
   
@@ -26,7 +24,6 @@ const CommissionConfigManager = () => {
 
   // ← FIXED: Chỉ 1 useEffect
      useEffect(() => {
-    console.log('Fetching commissions...');
     dispatch(fetchCommissionConfigs());
   }, [dispatch]);
 

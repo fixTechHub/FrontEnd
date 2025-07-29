@@ -412,7 +412,7 @@ const ServiceManagement = () => {
         }}
         footer={null}
         width={800}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form layout="vertical" onSubmit={handleSubmit}>
           {validationErrors.general && (
@@ -551,7 +551,7 @@ const ServiceManagement = () => {
         okText="Delete"
         cancelText="Cancel"
         okButtonProps={{ danger: true }}
-        destroyOnClose
+        destroyOnHidden
       >
         <p>Bạn có chắc chắn muốn xóa dịch vụ này?</p>
       </Modal>
@@ -607,7 +607,7 @@ const ServiceManagement = () => {
         onCancel={() => setShowDetailModal(false)}
         title="Service Detail"
         width={600}
-        destroyOnClose
+        destroyOnHidden
       >
         {selectedService && (
           <div className="p-3">

@@ -7,7 +7,6 @@ export const userAPI = {
             const response = await ApiBE.get('/Dashboard/users');
             return response.data;
         } catch (error) {
-            console.error('Get all users error:', error);
             throw error;
         }
     },
@@ -18,7 +17,10 @@ export const userAPI = {
             const response = await ApiBE.get(`/Dashboard/users/${id}`);
             return response.data;
         } catch (error) {
-            console.error('Get user by ID error:', error);
+            // Don't log 404 errors as they're expected for missing users
+            if (error.response?.status !== 404) {
+                console.error('Get user by ID error:', error);
+            }
             throw error;
         }
     },
@@ -34,7 +36,6 @@ export const userAPI = {
             const response = await ApiBE.post(`/Dashboard/users/${id}/lock`, dto);
             return response.data;
         } catch (error) {
-            console.error('Lock user error:', error);
             throw error;
         }
     },
@@ -45,7 +46,6 @@ export const userAPI = {
             const response = await ApiBE.post(`/Dashboard/users/${id}/unlock`);
             return response.data;
         } catch (error) {
-            console.error('Unlock user error:', error);
             throw error;
         }
     },
@@ -56,7 +56,6 @@ export const userAPI = {
             const response = await ApiBE.post('/dashboard/users/filter', criteria);
             return response.data;
         } catch (error) {
-            console.error('Filter users error:', error);
             throw error;
         }
     }

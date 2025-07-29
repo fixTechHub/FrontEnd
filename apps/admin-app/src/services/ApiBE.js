@@ -13,13 +13,12 @@ const ApiBE = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 5000, // 5 seconds timeout
+  timeout: 15000, // 15 seconds timeout for slow backend
 });
 
 // Add request interceptor for debugging
 ApiBE.interceptors.request.use(
   (config) => {
-    console.log('Request:', config.method?.toUpperCase(), config.baseURL + config.url);
     return config;
   },
   (error) => {
@@ -31,7 +30,6 @@ ApiBE.interceptors.request.use(
 ApiBE.interceptors.response.use(
   (response) => response,
   (error) => {
-    console.error('API Error:', error.message);
     return Promise.reject(error);
   }
 );

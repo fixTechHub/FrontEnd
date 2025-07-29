@@ -144,9 +144,8 @@ const currentTechnicians = sortedTechnicians.slice(indexOfFirstTechnician, index
        const key = cat._id?.$oid || cat._id || cat.id;
        map[key] = cat.categoryName || cat.name;
      });
-     setCategoryMap(map);
-     console.log("Categories:", data);
-   });
+         setCategoryMap(map);
+  });
  }, []);
 
 
@@ -163,7 +162,6 @@ const currentTechnicians = sortedTechnicians.slice(indexOfFirstTechnician, index
 
 
  const handleOpenEditStatus = (technician) => {
-   console.log('Technician được chọn để edit:', technician);
    setSelectedTechnician(technician);
    setStatusData({ status: technician.status || 'PENDING', note: technician.note || '' });
    setShowEditStatusModal(true);
@@ -186,13 +184,10 @@ const currentTechnicians = sortedTechnicians.slice(indexOfFirstTechnician, index
    e.preventDefault();
    if (!selectedTechnician) return;
    try {
-     dispatch(setLoading(true));
-     console.log('--- Bắt đầu update status ---');
-     await technicianAPI.updateStatus(selectedTechnician.id, statusData.status, statusData.note);
-     console.log('--- Update status thành công, fetch lại list ---');
-     await fetchTechnicians();
-     console.log('--- Fetch xong, show message và đóng modal ---');
-     message.success('Technician status updated successfully!');
+        dispatch(setLoading(true));
+   await technicianAPI.updateStatus(selectedTechnician.id, statusData.status, statusData.note);
+   await fetchTechnicians();
+   message.success('Technician status updated successfully!');
      handleCloseEditStatus();
    } catch (err) {
      console.error('Update status error:', err);
