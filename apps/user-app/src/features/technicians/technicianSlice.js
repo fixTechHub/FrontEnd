@@ -6,7 +6,13 @@ import {
   updateTechnicianAvailability,
   getTechnicianJob,
   getJobDetails,
-  getTechnicians, completeTechnicianProfile, fetchCertificatesByTechnicianId, sendQuotationAPI, getTechnicianDepositLogs, getListFeedback, uploadCertificateAPI
+  getTechnicians, 
+  completeTechnicianProfile, 
+  fetchCertificatesByTechnicianId, 
+  sendQuotationAPI, 
+  getTechnicianDepositLogs, 
+  getListFeedback, 
+  uploadCertificateAPI
 } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
@@ -38,7 +44,6 @@ export const fetchEarningAndCommission = createAsyncThunk(
   }
 );
 
-
 export const fetchTechnicians = createAsyncThunk(
   'technician/fetchList',
   async (thunkAPI) => {
@@ -59,13 +64,13 @@ export const completeTechnicianProfileThunk = createAsyncThunk(
     try {
       const data = await completeTechnicianProfile(technicianData);
       return data.data;
-    }
-    catch (error) {
+    } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message)
+        error.response?.data?.message || error.message
+      );
     }
   }
-)
+);
 
 export const fetchTechnicianAvailability = createAsyncThunk(
   'technician/fetchAvailability',
@@ -388,5 +393,4 @@ const technicianSlice = createSlice({
   }
 });
 
-export default technicianSlice.reducer;
-
+export default technicianSlice.reducer; 

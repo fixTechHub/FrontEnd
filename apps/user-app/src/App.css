@@ -40,3 +40,122 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Modern admin styles for management pages */
+.modern-page-wrapper {
+  padding: 32px 24px;
+  background: #f5f6fa;
+  min-height: 100vh;
+}
+
+.modern-content-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+  padding: 32px 28px 24px 28px;
+  margin: 0 auto;
+  max-width: 1400px;
+}
+
+.modern-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+}
+
+.modern-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.modern-breadcrumb {
+  color: #888;
+  font-size: 1rem;
+}
+
+.modern-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.modern-btn.primary {
+  background: linear-gradient(90deg, #ffb347 0%, #ffcc33 100%);
+  color: #fff;
+}
+.modern-btn.icon {
+  background: #f5f6fa;
+  color: #222;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  margin-right: 4px;
+}
+.modern-btn.icon:hover {
+  background: #e9ecef;
+}
+
+.modern-table-wrapper {
+  margin-top: 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+  background: #fff;
+}
+
+.modern-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+}
+.modern-table th, .modern-table td {
+  padding: 16px 14px;
+  text-align: left;
+  font-size: 1rem;
+}
+.modern-table th {
+  background: #f8f9fa;
+  font-weight: 700;
+  color: #222;
+}
+.modern-table tbody tr {
+  transition: background 0.15s;
+}
+.modern-table tbody tr:hover {
+  background: #f3f6ff;
+}
+.modern-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.modern-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.modern-alert-error {
+  color: #fff;
+  background: #ff4d4f;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  text-align: center;
+}
+
+.modern-modal-detail p {
+  margin-bottom: 8px;
+  font-size: 1.05rem;
+}
