@@ -32,4 +32,20 @@ export const transactionAPI = {
             throw error;
         }
     },
+
+    // ✅ Withdraw balance API
+  withdrawBalance: async ({ technicianId, amount, paymentMethod }) => {
+    try {
+        console.log('Received params:', { technicianId, amount, paymentMethod });
+      const response = await apiClient.post(`/technicians/${technicianId}/withdraw`, {
+        technicianId,
+        amount,
+        paymentMethod
+      });
+      return response;
+    } catch (error) {
+      console.error('Withdraw balance error:', error);
+      throw error;
+    }
+  }
 }

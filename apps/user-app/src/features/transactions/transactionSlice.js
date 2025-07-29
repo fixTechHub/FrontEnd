@@ -36,6 +36,23 @@ export const depositBalance = createAsyncThunk(
   }
 );
 
+export const withdrawBalance = createAsyncThunk(
+  'transaction/withdrawBalance',
+  async (amount, { rejectWithValue }) => {
+    try {
+      
+      const response = await transactionAPI.withdrawBalance(amount);
+      return response.data.message || 'Rút tiền thành công';
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Rút tiền thất bại'
+      );
+    }
+  }
+);
+
+
+
 // Slice
 const transactionSlice = createSlice({
   name: 'transaction',
@@ -79,6 +96,21 @@ const transactionSlice = createSlice({
         state.successMessage = 'Nạp tiền thành công. Đang chuyển hướng đến cổng thanh toán.';
       })
       .addCase(depositBalance.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // withdraw
+      .addCase(withdrawBalance.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(withdrawBalance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.successMessage = action.payload;
+      })
+      .addCase(withdrawBalance.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

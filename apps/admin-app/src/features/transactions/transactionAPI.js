@@ -1,7 +1,5 @@
 import apiClient from '../../services/apiClient';
 
-
-
 export const transactionAPI = {
     depositBalance: async (amount) => {
         try {

@@ -268,11 +268,11 @@ Template Name: Dreams rent - Bootstrap Admin Template
                 var pagination = tableWrapper.find('.dataTables_paginate');
 
                 // Clear the card-footer and append info and pagination
-                $('.table-footer').empty()
-                    .append($('<div class="d-flex justify-content-between align-items-center w-100"></div>')
-                        .append($('<div class="datatable-info"></div>').append(info))
-                        .append($('<div class="datatable-pagination"></div>').append(pagination))
-                    );
+                // $('.table-footer').empty()
+                //     .append($('<div class="d-flex justify-content-between align-items-center w-100"></div>')
+                //         .append($('<div class="datatable-info"></div>').append(info))
+                //         .append($('<div class="datatable-pagination"></div>').append(pagination))
+                //     );
             }
         });
     }

@@ -367,7 +367,7 @@ const ReceiptPage = () => {
                       <div className="invoice-total-inner">
                         <p>Phí Kiểm Tra <span> {formatCurrency(selectedReceipt?.bookingId.technicianId.rates.inspectionFee)}</span></p>
                         <p>Giảm <span> {formatCurrency(selectedReceipt?.discountAmount)}</span></p>
-                        <p>Phí dịch vụ <span> {formatCurrency(selectedReceipt?.serviceAmount)}</span></p>
+                        {/* <p>Phí dịch vụ <span> {formatCurrency(selectedReceipt?.serviceAmount)}</span></p> */}
                         {selectedReceipt?.bookingId?.quote?.items?.length > 0 && (
                           <>
                             <hr />
