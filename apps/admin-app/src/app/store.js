@@ -1,6 +1,5 @@
 import { configureStore } from '@reduxjs/toolkit';
 import transactionReducer from '../features/transactions/transactionSlice';
-
 import bookingReducer from '../features/bookings/bookingSlice';
 import couponReducer from '../features/coupons/couponSlice';
 import couponUsageReducer from '../features/couponusages/couponUsageSlice';
@@ -14,9 +13,9 @@ import warrantyReducer from '../features/warranty/warrantySlice';
 import serviceReducer from '../features/service/serviceSlice';
 import statisticReducer from '../features/statistics/statisticSlice';
 import commissionConfigReducer from '../features/commissionConfig/commissionSlice';
+import commissionReducer from '../features/commission/commissionSlice';
 
-
-export const store = configureStore({
+ const store = configureStore({
   reducer: {
     bookings: bookingReducer,
     coupon: couponReducer,
@@ -32,14 +31,14 @@ export const store = configureStore({
     service: serviceReducer,
     statistics: statisticReducer,
     commissionConfig: commissionConfigReducer,
-    
-
-    // middleware: (getDefaultMiddleware) =>
-    //   getDefaultMiddleware({
-    //       serializableCheck: false,
-    //   }),
+    commission: commissionReducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
 });
+
 
 export default store;
 

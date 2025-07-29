@@ -1,5 +1,4 @@
 import apiClient from '../../services/apiClient';
-
 export const FETCH_AVAILABILITY_SUCCESS = 'FETCH_AVAILABILITY_SUCCESS';
 export const FETCH_AVAILABILITY_ERROR = 'FETCH_AVAILABILITY_ERROR';
 
@@ -7,7 +6,8 @@ export const FETCH_AVAILABILITY_ERROR = 'FETCH_AVAILABILITY_ERROR';
 //   return apiClient.get('/technicians');
 export const getTechnicianProfile = async (technicianId) => {
   const response = await apiClient.get(`/technicians/${technicianId}`);
-  return response.data
+  console.log('GET TECHNICIAN PROFILE RESPONSE:', response.data);
+  return response.data;
 }
 
 export const getEarningAndCommission = async (technicianId) => {
@@ -52,6 +52,11 @@ export const completeTechnicianProfile = async (technicianData) => {
   return response.data;
 };
 
+export const fetchCertificatesByTechnicianId = async (technicianId) => {
+  const response = await apiClient.get(`/technicians/${technicianId}/certificates`);
+  return response.data.certificates;
+};
+
 export const sendQuotationAPI = (formData) => apiClient.post('/technicians/send-quotation', formData);
 
 export const getTechnicianDepositLogs = async ({ limit, skip }) => {
@@ -65,4 +70,20 @@ export const getTechnicianDepositLogs = async ({ limit, skip }) => {
     console.error('API Error:', error.response?.data || error.message);
     throw error;
   }
+};
+
+export const getListFeedback = async (technicianData,technicianId) => {
+  const response = await apiClient.get(`/feedbacks/${technicianId}`, technicianData);
+  console.log(response);
+  
+  return response.data.data;
+};
+
+export const uploadCertificateAPI = async (formData, technicianId) => {
+  const response = await apiClient.post(`/certificates/${technicianId}/upload`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return response.data;
 };

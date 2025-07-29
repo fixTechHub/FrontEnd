@@ -17,6 +17,7 @@ import WarrantyManagement from "../pages/management/WarrantyManagement";
 import AdminDashboard from "../pages/home/admin-dashboard";
 import ServiceManagement from "../pages/management/ServiceManagement";
 import CommissionConfigManagement from '../pages/management/CommissionConfigManagement';
+import CommissionConfigManager from '../pages/admin/commissionConfigManager';
 
 //Định nghĩa các route, xác định trang nào sẽ render vào <Outlet /> của AdminLayout, quyết định trang nào là management page.
 export default function AppRoutes() {
@@ -50,6 +51,7 @@ export default function AppRoutes() {
         <Route path="commission-config-management" element={<CommissionConfigManagement />} />
         <Route index element={<AdminDashboard />} /> {/* Trang mặc định */}
       </Route>
+      <Route path="/admin/commission" element={<CommissionConfigManager />} />
       <Route path="*" element={<Navigate to="/admin/admin-dashboard" replace />} />
     </Routes>
   );

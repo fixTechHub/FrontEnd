@@ -1,14 +1,27 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getTechnicianProfile, getTechnicians, completeTechnicianProfile, sendQuotationAPI, getTechnicianDepositLogs } from '../technicians/technicianAPI';
+import {
+  getTechnicianProfile,
+  getEarningAndCommission,
+  getTechnicianAvailability,
+  updateTechnicianAvailability,
+  getTechnicianJob,
+  getJobDetails,
+  getTechnicians, 
+  completeTechnicianProfile, 
+  fetchCertificatesByTechnicianId, 
+  sendQuotationAPI, 
+  getTechnicianDepositLogs, 
+  getListFeedback, 
+  uploadCertificateAPI
+} from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
   async (technicianId, thunkAPI) => {
     try {
-      const data = await getTechnicianProfile(technicianId);
-      console.log('--- FETCH TECHNICIAN PROFILE ---', data);
-
-      return data; // giữ nguyên trả về { success, data }
+      const data = await getTechnicianProfile(technicianId); // response.data
+      console.log('--- FETCH TECHNICIAN PROFILE ---', data); // ✅ sẽ log ra { success, data }
+      return data.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
@@ -17,6 +30,19 @@ export const fetchTechnicianProfile = createAsyncThunk(
   }
 );
 
+export const fetchEarningAndCommission = createAsyncThunk(
+  'technician/fetchEarningAndCommission',
+  async (technicianId, thunkAPI) => {
+    try {
+      const data = await getEarningAndCommission(technicianId);
+      return data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
 
 export const fetchTechnicians = createAsyncThunk(
   'technician/fetchList',
@@ -30,18 +56,44 @@ export const fetchTechnicians = createAsyncThunk(
         error.response?.data?.message || error.message)
     }
   }
-);
+)
 
 export const completeTechnicianProfileThunk = createAsyncThunk(
   'technician/completeProfile',
   async (technicianData, thunkAPI) => {
     try {
       const data = await completeTechnicianProfile(technicianData);
-      return data;
+      return data.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message
       );
+    }
+  }
+);
+
+export const fetchTechnicianAvailability = createAsyncThunk(
+  'technician/fetchAvailability',
+  async (technicianId, thunkAPI) => {
+    try {
+      const availability = await getTechnicianAvailability(technicianId);
+      return availability;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || error.message
+      );
+    }
+  }
+);
+
+export const changeTechnicianAvailability = createAsyncThunk(
+  'technician/changeAvailability',
+  async ({ technicianId, status }, thunkAPI) => {
+    try {
+      const updated = await updateTechnicianAvailability(technicianId, status);
+      return updated;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data?.message || error.message);
     }
   }
 );
@@ -62,6 +114,47 @@ export const sendQuotation = createAsyncThunk(
   }
 );
 
+export const fetchTechnicianJobDetails = createAsyncThunk(
+  'technician/fetchTechnicianJobDetails',
+  async ({ technicianId, bookingId }, { rejectWithValue }) => {
+    try {
+      const data = await getJobDetails(technicianId, bookingId);
+      console.log(data);
+      return data;
+
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+export const fetchTechnicianJobs = createAsyncThunk(
+  'technician/fetchTechnicianJobs',
+  async (technicianId, { rejectWithValue }) => {
+    try {
+      const data = await getTechnicianJob(technicianId);
+      console.log(data);
+      return data;
+
+    } catch (err) {
+      return rejectWithValue(err.response?.data || err.message);
+    }
+  }
+);
+
+export const getCertificates = createAsyncThunk(
+  'certificates/getCertificates',
+  async (technicianId, { rejectWithValue }) => {
+    try {
+      const data = await fetchCertificatesByTechnicianId(technicianId);
+      console.log("data" + data);
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Lỗi lấy chứng chỉ');
+    }
+  }
+);
+
 export const fetchTechnicianDepositLogs = createAsyncThunk(
   'technician/fetchTechnicianDepositLogs',
   async ({ limit, skip }, { rejectWithValue }) => {
@@ -76,14 +169,55 @@ export const fetchTechnicianDepositLogs = createAsyncThunk(
   }
 );
 
+export const fetchFeedbacks = createAsyncThunk(
+  'feedback/fetchFeedbacks',
+  async (technicianData, { rejectWithValue }) => {
+    try {
+      const data = await getListFeedback(technicianData);
+      return data;
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Lỗi khi tải đánh giá'
+      );
+    }
+  }
+);
+
+export const uploadCertificate = createAsyncThunk(
+  'technician/uploadCertificate',
+  async ({ formData, technicianId }, thunkAPI) => {
+    try {
+      const data = await uploadCertificateAPI(formData, technicianId);
+      return data; // trả về { success, message, fileUrl }
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.response?.data?.message || 'Lỗi khi upload chứng chỉ'
+      );
+    }
+  }
+);
+
 const technicianSlice = createSlice({
   name: 'technician',
   initialState: {
     profile: null,
+    earnings: null,
+    availability: 'FREE',
     quotations: [],
     loading: false,
     error: null,
+    bookings: [],
+    jobDetail: null,
+    certificates: [],
     logs: [],
+    feedbacks: [],
+    certificateUpload: {
+      success: false,
+      message: '',
+      fileUrl: '',
+      loading: false,
+      error: null,
+    },
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -95,14 +229,7 @@ const technicianSlice = createSlice({
       })
       .addCase(fetchTechnicianProfile.fulfilled, (state, action) => {
         state.loading = false;
-
-        const payload = action.payload;
-
-        console.log('Received payload:', payload);
-        state.profile = {
-          technician: payload.data[0],
-          certificates: payload.data[1]
-        };
+        state.profile = action.payload;
       })
       .addCase(fetchTechnicianProfile.rejected, (state, action) => {
         state.loading = false;
@@ -193,6 +320,19 @@ const technicianSlice = createSlice({
         state.error = action.payload;
       })
 
+      //certificates
+      .addCase(getCertificates.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(getCertificates.fulfilled, (state, action) => {
+        state.loading = false;
+        state.certificates = action.payload;
+      })
+      .addCase(getCertificates.rejected, (state, action) => {
+        state.loading = false;
+      })
+
       // Send Quotation
       .addCase(sendQuotation.pending, (state) => {
         state.status = 'loading';
@@ -212,17 +352,45 @@ const technicianSlice = createSlice({
       })
       .addCase(fetchTechnicianDepositLogs.fulfilled, (state, action) => {
         state.loading = false;
-        
+
         state.logs = action.payload;
       })
       .addCase(fetchTechnicianDepositLogs.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+      .addCase(fetchFeedbacks.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchFeedbacks.fulfilled, (state, action) => {
+        state.loading = false;
+        state.feedbacks = action.payload;
+      })
+      .addCase(fetchFeedbacks.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      .addCase(uploadCertificate.pending, (state) => {
+        state.certificateUpload.loading = true;
+        state.certificateUpload.error = null;
+        state.certificateUpload.success = false;
+        state.certificateUpload.message = '';
+      })
+      .addCase(uploadCertificate.fulfilled, (state, action) => {
+        state.certificateUpload.loading = false;
+        state.certificateUpload.success = true;
+        state.certificateUpload.message = action.payload.message;
+        state.certificateUpload.fileUrl = action.payload.fileUrl;
+      })
+      .addCase(uploadCertificate.rejected, (state, action) => {
+        state.certificateUpload.loading = false;
+        state.certificateUpload.error = action.payload || 'Lỗi không xác định';
+      })
+
+
   }
 });
 
-
-
-export default technicianSlice.reducer;
-
+export default technicianSlice.reducer; 
