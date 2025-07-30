@@ -20,13 +20,13 @@ function Footer() {
                                                     <a href="javascript:void(0)">Shop Toyota</a>
                                                 </li>
                                                 <li>
-                                                    <a href="javascript:void(0)">Dreamsrentals USA</a>
+                                                    <a href="javascript:void(0)">USA</a>
                                                 </li>
                                                 <li>
-                                                    <a href="javascript:void(0)">Dreamsrentals Worldwide</a>
+                                                    <a href="javascript:void(0)">Worldwide</a>
                                                 </li>
                                                 <li>
-                                                    <a href="javascript:void(0)">Dreamsrental Category</a>
+                                                    <a href="javascript:void(0)">Category</a>
                                                 </li>
                                             </ul>
                                         </div>
@@ -68,7 +68,7 @@ function Footer() {
                                                     <a href="javascript:void(0)">Champaigns</a>
                                                 </li>
                                                 <li>
-                                                    <a href="javascript:void(0)">Dreamsrental Dealers</a>
+                                                    <a href="javascript:void(0)">Dealers</a>
                                                 </li>
                                                 <li>
                                                     <a href="javascript:void(0)">Deals and Incentive</a>

@@ -175,7 +175,7 @@ function Header() {
                                 <Link to="/" className="menu-logo">
                                     <img src="/img/logo.png" className="img-fluid" alt="Logo" />
                                 </Link>
-                                <a id="menu_close" className="menu-close" href="javascript:void(0);"> 
+                                <a id="menu_close" className="menu-close" href="javascript:void(0);">
                                     <i className="fas fa-times"></i>
                                 </a>
                             </div>
@@ -232,56 +232,132 @@ function Header() {
                                     </li>
                                 </>
                             ) : (
-                              <>
-                                <li  className="nav-item"> <Notifications userId={user._id} /></li>
-                                <li className="nav-item" ref={menuRef}>
-                                    <UserMenuWrapper onClick={() => setDropdownOpen(!dropdownOpen)}>
-                                        <UserInfo>
-                                            {user.avatar && !avatarError ? (
-                                                <Avatar src={user.avatar} alt="Avatar" onError={() => setAvatarError(true)} />
-                                            ) : (
-                                                <FaUserCircle size={36} color="#000" />
-                                            )}
-                                            <UserName>{user.fullName || 'Tài khoản'}</UserName>
-                                            <i className={`fas fa-chevron-${dropdownOpen ? 'up' : 'down'}`} style={{ fontSize: '12px' }}></i>
-                                        </UserInfo>
-                                        {dropdownOpen && (
-                                            <DropdownMenu>
-                                                <DropdownItem to="/profile" onClick={() => setDropdownOpen(false)}>
-                                                    <i className="bi bi-person-circle"></i>
-                                                    Thông tin cá nhân
-                                                </DropdownItem>
-                                                <DropdownItem to="/bookings" onClick={() => setDropdownOpen(false)}>
-                                                    <i className="bi bi-calendar-check"></i>
-                                                    Đơn đặt lịch
-                                                </DropdownItem>
-                                                <DropdownItem to="/reviews" onClick={() => setDropdownOpen(false)}>
-                                                    <i className="bi bi-star-fill"></i>
-                                                    Đánh giá
-                                                </DropdownItem>
-                                                {user.role?.name === 'ADMIN' && (
-                                                    <DropdownItem to="/admin" onClick={() => setDropdownOpen(false)}>
-                                                        <i className="bi bi-shield-lock"></i>
-                                                        Quản trị viên
-                                                    </DropdownItem>
+                                <>
+                                    <li className="nav-item"> <Notifications userId={user._id} /></li>
+                                    <li className="nav-item" ref={menuRef}>
+                                        <UserMenuWrapper onClick={() => setDropdownOpen(!dropdownOpen)}>
+                                            <UserInfo>
+                                                {user.avatar && !avatarError ? (
+                                                    <Avatar src={user.avatar} alt="Avatar" onError={() => setAvatarError(true)} />
+                                                ) : (
+                                                    <FaUserCircle size={36} color="#000" />
                                                 )}
-                                                <Divider />
-                                                <DropdownItemButton onClick={handleLogout}>
-                                                    <i className="bi bi-box-arrow-right"></i>
-                                                    Đăng xuất
-                                                </DropdownItemButton>
-                                            </DropdownMenu>
-                                        )}
-                                    </UserMenuWrapper>
-                                </li>
-                              </>
+                                                <UserName>{user.fullName || 'Tài khoản'}</UserName>
+                                                <i className={`fas fa-chevron-${dropdownOpen ? 'up' : 'down'}`} style={{ fontSize: '12px' }}></i>
+                                            </UserInfo>
+                                            {dropdownOpen && (
+                                                <DropdownMenu>
+                                                    <DropdownItem to="/profile" onClick={() => setDropdownOpen(false)}>
+                                                        <i className="bi bi-person-circle"></i>
+                                                        Thông tin cá nhân
+                                                    </DropdownItem>
+                                                    {/* <DropdownItem to="/bookings" onClick={() => setDropdownOpen(false)}>
+                                                        <i className="bi bi-calendar-check"></i>
+                                                        Đơn đặt lịch
+                                                    </DropdownItem> */}
+                                                    {user.role.name === 'CUSTOMER' && (
+                                                        <DropdownItem to="/dashboard" onClick={() => setDropdownOpen(false)}>
+                                                            <i className="bi bi-calendar-check"></i>
+                                                            Bảng điều khiển
+                                                        </DropdownItem>
+                                                    )}
+                                                    {user.role.name === 'TECHNICIAN' && (
+                                                        <DropdownItem to="/technician/dashboard" onClick={() => setDropdownOpen(false)}>
+                                                            <i className="bi bi-calendar-check"></i>
+                                                            Bảng điều khiển
+                                                        </DropdownItem>
+                                                    )
+
+                                                    }
+                                                    <DropdownItem to="/reviews" onClick={() => setDropdownOpen(false)}>
+                                                        <i className="bi bi-star-fill"></i>
+                                                        Đánh giá
+                                                    </DropdownItem>
+                                                    {user.role?.name === 'ADMIN' && (
+                                                        <DropdownItem to="/admin" onClick={() => setDropdownOpen(false)}>
+                                                            <i className="bi bi-shield-lock"></i>
+                                                            Quản trị viên
+                                                        </DropdownItem>
+                                                    )}
+                                                    <Divider />
+                                                    <DropdownItemButton onClick={handleLogout}>
+                                                        <i className="bi bi-box-arrow-right"></i>
+                                                        Đăng xuất
+                                                    </DropdownItemButton>
+                                                </DropdownMenu>
+                                            )}
+                                        </UserMenuWrapper>
+                                    </li>
+                                </>
                             )}
                         </ul>
+                        {/* <ul className="nav header-navbar-rht">
+                            {!user ? (
+                                <>
+                                    <li className="nav-item">
+                                        <Link className="nav-link header-login" to="/register">
+                                            <span><i className="fa-regular fa-user"></i></span>Đăng Ký
+                                        </Link>
+                                    </li>
+                                    <li className="nav-item">
+                                        <Link className="nav-link header-reg" to="/login">
+                                            <span><i className="fa-solid fa-lock"></i></span>Đăng Nhập
+                                        </Link>
+                                    </li>
+                                </>
+                            ) : (
+                                <>
+                                    <li className="nav-item"><Notifications userId={user._id} /></li>
+                                    <li className="nav-item" ref={menuRef}>
+                                        <UserMenuWrapper onClick={() => setDropdownOpen(!dropdownOpen)}>
+                                            <UserInfo>
+                                                <Avatar src={user.avatar || '/img/profiles/avatar-01.jpg'} alt="Avatar" />
+                                                <UserName>{user.fullName || 'Tài khoản'}</UserName>
+                                                <i className={`fas fa-chevron-${dropdownOpen ? 'up' : 'down'}`} style={{ fontSize: '12px' }}></i>
+                                            </UserInfo>
+                                            {dropdownOpen && (
+                                                <DropdownMenu>
+                                                    {/* Menu khác nhau theo role */}
+                                                    {/* {user?.role?.name === 'technician' ? (
+                                                        <>
+                                                            <DropdownItem to="/technician/dashboard" onClick={() => setDropdownOpen(false)}>
+                                                                <i className="bi bi-speedometer2"></i>
+                                                                Bảng điều khiển
+                                                            </DropdownItem>
+                                                            <DropdownItem to="/technician/profile" onClick={() => setDropdownOpen(false)}>
+                                                                <i className="bi bi-person-fill"></i>
+                                                                Hồ sơ kỹ thuật viên
+                                                            </DropdownItem>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <DropdownItem to="/dashboard" onClick={() => setDropdownOpen(false)}>
+                                                                <i className="bi bi-speedometer2"></i>
+                                                                Bảng điều khiển
+                                                            </DropdownItem>
+                                                            <DropdownItem to="/profile" onClick={() => setDropdownOpen(false)}>
+                                                                <i className="bi bi-gear-fill"></i>
+                                                                Cài đặt
+                                                            </DropdownItem>
+                                                        </>
+                                                    )}
+
+                                                    <Divider />
+                                                    <DropdownItemButton onClick={handleLogout}>
+                                                        <i className="bi bi-box-arrow-right"></i>
+                                                        Đăng xuất
+                                                    </DropdownItemButton>
+                                                </DropdownMenu>
+                                            )}
+                                        </UserMenuWrapper>
+                                    </li>
+                                </>
+                            )}
+                        </ul> */} 
                     </nav>
                 </div>
             </header>
         </>
     );
 }
-
 export default Header;

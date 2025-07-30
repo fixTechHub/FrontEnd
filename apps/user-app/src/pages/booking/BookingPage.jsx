@@ -11,7 +11,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { createNewBooking } from "../../features/bookings/bookingSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { useBookingParams } from "../../hooks/useBookingParams";
-import { validateBookingData } from "../../validations/bookingValidation";
+// import { validateBookingData } from "../../validations/bookingValidation";
 
 function BookingPage() {
     const { categories, status: categoryStatus } = useSelector((state) => state.categories);
@@ -102,11 +102,11 @@ function BookingPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const newErrors = validateBookingData(bookingData, addressInput, geoJson, type);
-        setErrors(newErrors);
-        if (Object.keys(newErrors).length > 0) {
-            return;
-        }
+        // const newErrors = validateBookingData(bookingData, addressInput, geoJson, type);
+        // setErrors(newErrors);
+        // if (Object.keys(newErrors).length > 0) {
+        //     return;
+        // }
 
         const startDateTime = new Date(`${bookingData?.scheduleDate}T${bookingData?.startTime}`);
         const endDateTime = new Date(`${bookingData?.scheduleDate}T${bookingData?.endTime}`);

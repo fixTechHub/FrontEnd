@@ -1,8 +1,9 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { checkAuthThunk } from "../features/auth/authSlice";
+import React, { useEffect, useState } from 'react';
+import ProtectedRoute from "./access/PrivateRoute";
 import PrivateRoute from "./access/PrivateRoute";
-
 import HomePage from "../pages/home/HomePage";
 import LoginPage from "../pages/authentication/LogInPage";
 import RegisterPage from "../pages/authentication/RegisterPage";
@@ -16,21 +17,30 @@ import CompleteProfile from "../pages/technician/CompleteProfile";
 import ProfilePage from "../pages/authentication/ProfilePage";
 import BookingPage from "../pages/booking/BookingPage";
 import ChooseTechnician from '../pages/booking/ChooseTechnician';
-import BookingProcessing from "../pages/booking/BookingProcessing";
+import BookingProcessing from "../../../user-app/src/pages/booking/BookingProcessing";
 import ContractComplete from '../pages/contracts/ContractComplete';
 import CheckoutPage from '../pages/booking/CheckoutPage';
 import PaymentSuccess from "../pages/transaction/PaymentSuccess";
 import PaymentCancel from "../pages/transaction/PaymentCancel";
 import PaymentFail from "../pages/transaction/PaymentFail";
+import TechnicianDashboard from "../pages/technician/TechnicianDashboard";
+import ViewEarningAndCommission from "../pages/technician/ViewEarningAndCommission";
+import TechnicianJobList from "../pages/technician/TechnicianJob";
+import TechnicianJob from "../pages/technician/TechnicianJobDetail";
+import CertificateList from "../pages/technician/Certificate";
 import SendQuotation from "../pages/technician/SendQuotation";
 import WaitingConfirm from "../pages/technician/WaitingConfirm";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
-
+import ListFeedback from "../pages/technician/ListFeedback";
 import VideoCallPage from "../pages/video-call/VideoCallPage";
 import NotificationsPage from "../pages/notifications/NotificationPage";
 import ReceiptPage from "../pages/receipt/ReceiptPage";
 import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
-import TechnicianDashboard from "../pages/technician/TechnicianDashboard";
+import BookingWarranty from "../pages/booking-warranty/BookingWarranty";
+import BookingHistory from "../pages/booking/common/BookingHistory";
+// import { checkAuthThunk } from '../features/auth/authSlice';
+import UploadCertificateForm from "../pages/technician/UploadCer";
+import SubmitFeedback from "../pages/feedback/SubmitFeedback";
 import ServiceList from "../pages/home/ServiceList";
 
 export default function AppRoutes() {
@@ -89,6 +99,21 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route path="/technician" element={<TechnicianDashboard />} />
+      <Route path="/technician/earning" element={<ViewEarningAndCommission />} />
+      <Route path="/technician/booking" element={< TechnicianJobList/>} />
+      <Route path="/technician/booking/:bookingId" element={< TechnicianJob/>} />
+      <Route path="/technician/:technicianId/certificate" element={< CertificateList/>} />
+      <Route path="/technician/feedback" element={< ListFeedback/>} />
+      <Route path="/technician/upload-certificate" element={<UploadCertificateForm />} />
+      <Route path="/feedback/submit/:bookingId" element={<SubmitFeedback />} />
+
+      {/* <Route path="/technician/deposit" element={
+        < TechnicianDeposit/>
+        } /> */}
+
+      
+      {/* <Route
       <Route
         path="/technician/complete-profile"
         element={
@@ -117,11 +142,11 @@ export default function AppRoutes() {
 
       } />
       <Route path="/technician/deposit" element={
-        <PrivateRoute isAllowed={!!user && user.role?.name === "TECHNICIAN"}
-          redirectPath={user ? "/" : "/login"}
-        >
+        // <PrivateRoute isAllowed={!!user && user.role?.name === "TECHNICIAN"}
+        //   redirectPath={user ? "/" : "/login"}
+        // >
           <TechnicianDeposit />
-        </PrivateRoute>
+        // </PrivateRoute>
 
       } />
       <Route path="/checkout" element={<PrivateRoute isAllowed={!!user && user.role?.name === "CUSTOMER"}
@@ -196,9 +221,25 @@ export default function AppRoutes() {
       <Route
         path="/video-call/:bookingId"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          // <PrivateRoute isAllowed={!!user}>
             <VideoCallPage />
-          </PrivateRoute>
+          //  </PrivateRoute>
+        }
+      />
+      <Route
+        path="/warranty"
+        element={
+          // <PrivateRoute isAllowed={!!user}>
+            <BookingWarranty />
+        // </PrivateRoute>
+        }
+      />
+      <Route
+        path="/booking/history"
+        element={
+          // <PrivateRoute isAllowed={!!user}>
+            <BookingHistory />
+          // </PrivateRoute>
         }
       />
       {/* Thêm các route cần user đăng nhập ở đây, ví dụ: */}
@@ -232,9 +273,10 @@ export default function AppRoutes() {
       <Route
         path="/technician/dashboard"
         element={
-          // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+          <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
           <TechnicianDashboard />
-          // </PrivateRoute>
+          </PrivateRoute>
+         
         }
       />
 
@@ -268,7 +310,7 @@ export default function AppRoutes() {
       />
 
       {/* ================= FALLBACK ROUTE ================= */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
 
     </Routes>
   );
