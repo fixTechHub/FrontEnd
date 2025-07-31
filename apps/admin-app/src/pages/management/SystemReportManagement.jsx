@@ -36,14 +36,15 @@ import {
  setLoading,
  setError,
  updateSystemReport
-} from '../../features/systemReports/systemReportSlice';
+} from '../../features/systemreports/systemReportSlice';
 import {
  selectFilteredSystemReports,
  selectSystemReportFilters,
  selectSystemReportStats
-} from '../../features/systemReports/systemReportSelectors';
+} from '../../features/systemreports/systemReportSelectors';
 import { userAPI } from '../../features/users/userAPI';
 import { selectReportStats } from '../../features/reports/reportSelectors';
+import { createExportData, formatDateTime } from '../../utils/exportUtils';
 
 
 const { Option } = Select;
@@ -140,8 +141,8 @@ const SystemReportManagement = () => {
 
  const handleUpdateStatus = async (id, newStatus) => {
    try {
-        const updatedSystemReport = await systemReportAPI.updateStatus(id, statusValue);
-   dispatch(updateSystemReport(updatedSystemReport));
+     const updatedSystemReport = await systemReportAPI.updateStatus(id, statusValue);
+     dispatch(updateSystemReport(updatedSystemReport));
      message.success(`Status updated to ${newStatus}`);
      return updatedSystemReport;
    } catch (error) {
@@ -287,9 +288,34 @@ const SystemReportManagement = () => {
    return 0;
  });
 
+ // Set export data và columns
+ useEffect(() => {
+   const exportColumns = [
+     { title: 'Title', dataIndex: 'title' },
+     { title: 'Description', dataIndex: 'description' },
+     { title: 'Tag', dataIndex: 'tag' },
+     { title: 'Status', dataIndex: 'status' },
+     { title: 'Submitted By', dataIndex: 'submittedBy' },
+     { title: 'Created At', dataIndex: 'createdAt' },
+     { title: 'Updated At', dataIndex: 'updatedAt' },
+   ];
+
+   const exportData = sortedSystemReports.map(report => ({
+     title: report.title,
+     description: report.description,
+     tag: report.tag,
+     status: report.status?.toUpperCase(),
+     submittedBy: userMap[report.submittedBy] || report.submittedBy,
+     createdAt: formatDateTime(report.createdAt),
+     updatedAt: formatDateTime(report.updatedAt),
+   }));
+
+   createExportData(exportData, exportColumns, 'system_reports_export', 'System Reports');
+ }, [sortedSystemReports, userMap]);
+
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <Card>
          {/* Stats Cards */}

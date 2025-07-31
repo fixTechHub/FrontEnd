@@ -9,7 +9,7 @@ export const bookingAPI = {
         } catch (error) {
             // Không log timeout errors để tránh spam console
             if (error.code !== 'ECONNABORTED' && error.message !== 'timeout of 15000ms exceeded') {
-                console.error('Get all bookings error:', error);
+            console.error('Get all bookings error:', error);
             }
             throw error;
         }
@@ -23,7 +23,7 @@ export const bookingAPI = {
         } catch (error) {
             // Không log timeout errors để tránh spam console
             if (error.code !== 'ECONNABORTED' && error.message !== 'timeout of 15000ms exceeded') {
-                console.error('Get booking by ID error:', error);
+            console.error('Get booking by ID error:', error);
             }
             throw error;
         }
@@ -37,7 +37,7 @@ export const bookingAPI = {
         } catch (error) {
             // Không log timeout errors để tránh spam console
             if (error.code !== 'ECONNABORTED' && error.message !== 'timeout of 15000ms exceeded') {
-                console.error('Get booking count by month error:', error);
+            console.error('Get booking count by month error:', error);
             }
             throw error;
         }

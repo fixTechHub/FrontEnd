@@ -13,6 +13,9 @@ import {
 import { fetchCategories } from '../../features/categories/categorySlice';
 import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
+import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
+import IconUploader from '../../components/common/IconUploader';
+import IconDisplay from '../../components/common/IconDisplay';
 
 const initialFormState = {
   serviceName: '',
@@ -181,6 +184,38 @@ const ServiceManagement = () => {
   });
   const currentServices = sortedServices.slice(indexOfFirstService, indexOfLastService);
 
+  // Set export data và columns
+  useEffect(() => {
+    const exportColumns = [
+      { title: 'Service Name', dataIndex: 'serviceName' },
+      { title: 'Category', dataIndex: 'categoryName' },
+      { title: 'Service Type', dataIndex: 'serviceType' },
+      { title: 'Status', dataIndex: 'status' },
+      { title: 'Min Price', dataIndex: 'minPrice' },
+      { title: 'Max Price', dataIndex: 'maxPrice' },
+      { title: 'Description', dataIndex: 'description' },
+      { title: 'Created At', dataIndex: 'createdAt' },
+      { title: 'Updated At', dataIndex: 'updatedAt' },
+    ];
+
+    const exportData = sortedServices.map(service => {
+      const category = categories.find(cat => cat.id === service.categoryId);
+      return {
+        serviceName: service.serviceName,
+        categoryName: category?.categoryName || service.categoryId,
+        serviceType: service.serviceType,
+        status: service.isActive ? 'ACTIVE' : 'INACTIVE',
+        minPrice: service.estimatedMarketPrice?.min ? formatCurrency(service.estimatedMarketPrice.min) : '',
+        maxPrice: service.estimatedMarketPrice?.max ? formatCurrency(service.estimatedMarketPrice.max) : '',
+        description: service.description,
+        createdAt: formatDateTime(service.createdAt),
+        updatedAt: formatDateTime(service.updatedAt),
+      };
+    });
+
+    createExportData(exportData, exportColumns, 'services_export', 'Services');
+  }, [sortedServices, categories]);
+
   const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -265,7 +300,7 @@ const ServiceManagement = () => {
   };
 
   return (
-    <div className="modern-page-wrapper">
+    <div className="modern-page- wrapper">
       <div className="modern-content-card">
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
@@ -456,11 +491,10 @@ const ServiceManagement = () => {
           <Row gutter={16}>
             <Col span={12}>
               <Form.Item label="Icon" validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-                <Input
-                  name="icon"
+                <IconUploader
                   value={formData.icon}
-                  onChange={handleChange}
-                  placeholder="Enter icon (e.g., ti ti-tools)"
+                  onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                  placeholder="Upload icon image"
                 />
               </Form.Item>
             </Col>
@@ -570,7 +604,6 @@ const ServiceManagement = () => {
                 <th>NAME</th>
                 <th>CATEGORY</th>
                 <th>SERVICE TYPE</th>
-                <th>ICON</th>
                 <th>STATUS</th>
                 <th>ACTION</th>
               </tr>
@@ -581,7 +614,6 @@ const ServiceManagement = () => {
                   <td>{svc.serviceName}</td>
                   <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || '-'}</td>
                   <td>{svc.serviceType}</td>
-                  <td>{svc.icon}</td>
                   <td>
                     <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
                       {svc.isActive ? 'Active' : 'Inactive'}
@@ -613,7 +645,10 @@ const ServiceManagement = () => {
           <div className="p-3">
             <p><strong>Service Name:</strong> {selectedService.serviceName}</p>
             <p><strong>Category:</strong> {categories.find(cat => cat.id === selectedService.categoryId)?.categoryName || '-'}</p>
-            <p><strong>Icon:</strong> {selectedService.icon || 'N/A'}</p>
+            <p><strong>Icon:</strong></p>
+            <div style={{ marginBottom: 16 }}>
+              <IconDisplay icon={selectedService.icon} size={60} />
+            </div>
             <p><strong>Status:</strong> {selectedService.isActive ? 'Active' : 'Inactive'}</p>
             <p><strong>Service Type:</strong> {selectedService.serviceType}</p>
             <p><strong>Estimated Market Price:</strong> {selectedService.estimatedMarketPrice ? `${selectedService.estimatedMarketPrice.min} - ${selectedService.estimatedMarketPrice.max}` : 'N/A'}</p>

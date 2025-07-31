@@ -7,6 +7,7 @@ import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { Modal, Button, Select, Descriptions, Spin } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import "../../../public/css/ManagementTableStyle.css";
+import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 
 
 const CouponUsageManagement = () => {
@@ -163,7 +164,32 @@ const [isDataReady, setIsDataReady] = useState(false);
   return 0;
 });
 const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
- const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
+
+// Set export data và columns
+useEffect(() => {
+  const exportColumns = [
+    { title: 'Coupon Code', dataIndex: 'couponCode' },
+    { title: 'User', dataIndex: 'userName' },
+    { title: 'Booking', dataIndex: 'bookingCode' },
+    { title: 'Discount Applied', dataIndex: 'discountApplied' },
+    { title: 'Used At', dataIndex: 'usedAt' },
+    { title: 'Created At', dataIndex: 'createdAt' },
+    { title: 'Updated At', dataIndex: 'updatedAt' },
+  ];
+
+  const exportData = sortedUsages.map(usage => ({
+    couponCode: couponMap[usage.couponId] || usage.couponId,
+    userName: userMap[usage.userId] || usage.userId,
+    bookingCode: bookingMap[usage.bookingId] || usage.bookingId,
+    discountApplied: formatCurrency(usage.discountApplied || 0),
+    usedAt: formatDateTime(usage.usedAt),
+    createdAt: formatDateTime(usage.createdAt),
+    updatedAt: formatDateTime(usage.updatedAt),
+  }));
+
+  createExportData(exportData, exportColumns, 'coupon_usages_export', 'Coupon Usages');
+}, [sortedUsages, couponMap, userMap, bookingMap]);
+const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
 
 
  const handlePageChange = (pageNumber) => {
@@ -227,7 +253,7 @@ const handleSortByUsedAt = () => {
 
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">

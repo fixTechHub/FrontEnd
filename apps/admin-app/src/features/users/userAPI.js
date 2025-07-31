@@ -19,7 +19,7 @@ export const userAPI = {
         } catch (error) {
             // Don't log 404 errors as they're expected for missing users
             if (error.response?.status !== 404) {
-                console.error('Get user by ID error:', error);
+            console.error('Get user by ID error:', error);
             }
             throw error;
         }

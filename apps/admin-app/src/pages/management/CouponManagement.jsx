@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, DatePicker, TimePicker, InputNumber, Switch, Table } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, DatePicker, InputNumber, Table } from 'antd';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -13,11 +13,13 @@ import {
  deleteCoupon,
  resetState,
  fetchDeletedCoupons,
-} from '../../features/coupons/couponSlice';
+ restoreCoupon,
+} from '../../features/coupons/couponSlice';  
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { userAPI } from '../../features/users/userAPI';
 import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined, FilterOutlined } from '@ant-design/icons';
+import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 
 
 const initialFormState = {
@@ -167,8 +169,46 @@ const couponsPerPage = 10;
  const indexOfFirstCoupon = indexOfLastCoupon - couponsPerPage;
  const currentCoupons = sortedCoupons.slice(indexOfFirstCoupon, indexOfLastCoupon);
 
+// Set export data và columns
+useEffect(() => {
+  const exportColumns = [
+    { title: 'Coupon Code', dataIndex: 'code' },
+    { title: 'Description', dataIndex: 'description' },
+    { title: 'Type', dataIndex: 'type' },
+    { title: 'Value', dataIndex: 'value' },
+    { title: 'Max Discount', dataIndex: 'maxDiscount' },
+    { title: 'Min Order Value', dataIndex: 'minOrderValue' },
+    { title: 'Total Usage Limit', dataIndex: 'totalUsageLimit' },
+    { title: 'Used Count', dataIndex: 'usedCount' },
+    { title: 'Start Date', dataIndex: 'startDate' },
+    { title: 'End Date', dataIndex: 'endDate' },
+    { title: 'Status', dataIndex: 'status' },
+    { title: 'Audience', dataIndex: 'audience' },
+    { title: 'Created At', dataIndex: 'createdAt' },
+    { title: 'Updated At', dataIndex: 'updatedAt' },
+  ];
 
- const totalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
+  const exportData = sortedCoupons.map(coupon => ({
+    code: coupon.code,
+    description: coupon.description,
+    type: coupon.type,
+    value: coupon.type === 'PERCENT' ? `${coupon.value}%` : formatCurrency(coupon.value),
+    maxDiscount: formatCurrency(coupon.maxDiscount),
+    minOrderValue: formatCurrency(coupon.minOrderValue),
+    totalUsageLimit: coupon.totalUsageLimit,
+    usedCount: coupon.usedCount || 0,
+    startDate: formatDateTime(coupon.startDate),
+    endDate: formatDateTime(coupon.endDate),
+    status: coupon.isActive ? 'ACTIVE' : 'INACTIVE',
+    audience: coupon.audience,
+    createdAt: formatDateTime(coupon.createdAt),
+    updatedAt: formatDateTime(coupon.updatedAt),
+  }));
+
+  createExportData(exportData, exportColumns, 'coupons_export', 'Coupons');
+}, [sortedCoupons]);
+
+const totalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
 
 
  const handlePageChange = (page) => {
@@ -488,37 +528,37 @@ const handleConfirmUserSelection = () => {
    };
 
    if (showAddModal) {
-         dispatch(createCoupon(dataToSend)).then((action) => {
-      // Ưu tiên lấy lỗi từ action.payload nếu có
-      if (action.payload && action.payload.errors) {
-        const apiErrors = action.payload.errors;
-        const processed = processErrors(apiErrors);
-        setValidationErrors(processed);
-      } else if (action.error && action.error.message) {
-        // fallback cho các lỗi khác
-        const err = action.error;
-        message.error(err.message);
-      }
-    });
+     dispatch(createCoupon(dataToSend)).then((action) => {
+       // Ưu tiên lấy lỗi từ action.payload nếu có
+       if (action.payload && action.payload.errors) {
+         const apiErrors = action.payload.errors;
+         const processed = processErrors(apiErrors);
+         setValidationErrors(processed);
+       } else if (action.error && action.error.message) {
+         // fallback cho các lỗi khác
+         const err = action.error;
+         message.error(err.message);
+       }
+     });
    } else if (showEditModal && selectedCoupon) {
-         dispatch(updateCoupon({ id: selectedCoupon.id, couponData: dataToSend })).then((action) => {
-      // Ưu tiên lấy lỗi từ action.payload nếu có
-      if (action.payload && action.payload.errors) {
-        const apiErrors = action.payload.errors;
-        // Xử lý lỗi kỹ thuật giống như create
-        const processed = processErrors(apiErrors);
-        setValidationErrors(processed);
-      } else if (action.error && action.error.message) {
-        // fallback cho các lỗi khác
-        const err = action.error;
-        message.error(err.message);
-      }
-    });
+     dispatch(updateCoupon({ id: selectedCoupon.id, couponData: dataToSend })).then((action) => {
+       // Ưu tiên lấy lỗi từ action.payload nếu có
+       if (action.payload && action.payload.errors) {
+         const apiErrors = action.payload.errors;
+         // Xử lý lỗi kỹ thuật giống như create
+         const processed = processErrors(apiErrors);
+         setValidationErrors(processed);
+       } else if (action.error && action.error.message) {
+         // fallback cho các lỗi khác
+         const err = action.error;
+         message.error(err.message);
+       }
+     });
    }
  };
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">

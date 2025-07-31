@@ -6,6 +6,7 @@ import { roleAPI } from '../../features/roles/roleAPI';
 import { setUsers, setLoading, setError, setFilters } from '../../features/users/userSlice';
 import { selectFilteredUsers, selectUserFilters } from '../../features/users/userSelectors';
 import { EyeOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
+import { createExportData, formatDateTime, formatStatus } from '../../utils/exportUtils';
 
 
 const UserManagement = () => {
@@ -71,6 +72,30 @@ const UserManagement = () => {
    });
    const currentUsers = sortedUsers.slice(indexOfFirstUser, indexOfLastUser);
 
+   // Set export data và columns
+   useEffect(() => {
+     const exportColumns = [
+       { title: 'Full Name', dataIndex: 'fullName' },
+       { title: 'Email', dataIndex: 'email' },
+       { title: 'Phone', dataIndex: 'phone' },
+       { title: 'Role', dataIndex: 'role' },
+       { title: 'Status', dataIndex: 'status' },
+       { title: 'Created At', dataIndex: 'createdAt' },
+       { title: 'Updated At', dataIndex: 'updatedAt' },
+     ];
+
+     const exportData = sortedUsers.map(user => ({
+       fullName: user.fullName,
+       email: user.email,
+       phone: user.phone,
+       role: roleMap[user.roleId] || user.roleId,
+       status: formatStatus(user.status),
+       createdAt: formatDateTime(user.createdAt),
+       updatedAt: formatDateTime(user.updatedAt),
+     }));
+
+     createExportData(exportData, exportColumns, 'users_export', 'Users');
+   }, [sortedUsers, roleMap]);
 
    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
@@ -283,7 +308,7 @@ const UserManagement = () => {
 
 
    return (
-       <div className="modern-page-wrapper">
+       <div className="modern-page- wrapper">
            <div className="modern-content-card">
                <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
                    <div className="my-auto mb-2">

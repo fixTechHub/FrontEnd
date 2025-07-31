@@ -18,6 +18,7 @@ import {
 import { categoryAPI } from "../../features/categories/categoryAPI";
 import { EyeOutlined } from '@ant-design/icons';
 import "../../../public/css/ManagementTableStyle.css";
+import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 
 
 const TechnicianManagement = () => {
@@ -103,8 +104,44 @@ const [filterAvailability, setFilterAvailability] = useState('');
 });
 const currentTechnicians = sortedTechnicians.slice(indexOfFirstTechnician, indexOfLastTechnician);
 
+// Set export data và columns
+useEffect(() => {
+  const exportColumns = [
+    { title: 'Full Name', dataIndex: 'fullName' },
+    { title: 'Email', dataIndex: 'email' },
+    { title: 'Phone', dataIndex: 'phone' },
+    { title: 'Status', dataIndex: 'status' },
+    { title: 'Availability', dataIndex: 'availability' },
+    { title: 'Rating', dataIndex: 'rating' },
+    { title: 'Jobs Completed', dataIndex: 'jobsCompleted' },
+    { title: 'Total Earning', dataIndex: 'totalEarning' },
+    { title: 'Total Commission Paid', dataIndex: 'totalCommissionPaid' },
+    { title: 'Total Holding Amount', dataIndex: 'totalHoldingAmount' },
+    { title: 'Total Withdrawn', dataIndex: 'totalWithdrawn' },
+    { title: 'Created At', dataIndex: 'createdAt' },
+    { title: 'Updated At', dataIndex: 'updatedAt' },
+  ];
 
- const totalPages = Math.ceil(technicians.length / techniciansPerPage);
+  const exportData = sortedTechnicians.map(technician => ({
+    fullName: technician.fullName,
+    email: technician.email,
+    phone: technician.phone,
+    status: technician.status,
+    availability: technician.availability,
+    rating: technician.ratingAverage || 0,
+    jobsCompleted: technician.jobCompleted || 0,
+    totalEarning: formatCurrency(technician.totalEarning || 0),
+    totalCommissionPaid: formatCurrency(technician.totalCommissionPaid || 0),
+    totalHoldingAmount: formatCurrency(technician.totalHoldingAmount || 0),
+    totalWithdrawn: formatCurrency(technician.totalWithdrawn || 0),
+    createdAt: formatDateTime(technician.createdAt),
+    updatedAt: formatDateTime(technician.updatedAt),
+  }));
+
+  createExportData(exportData, exportColumns, 'technicians_export', 'Technicians');
+}, [sortedTechnicians]);
+
+const totalPages = Math.ceil(technicians.length / techniciansPerPage);
 
 
  const handlePageChange = (page) => {
@@ -144,8 +181,8 @@ const currentTechnicians = sortedTechnicians.slice(indexOfFirstTechnician, index
        const key = cat._id?.$oid || cat._id || cat.id;
        map[key] = cat.categoryName || cat.name;
      });
-         setCategoryMap(map);
-  });
+     setCategoryMap(map);
+   });
  }, []);
 
 
@@ -184,10 +221,10 @@ const currentTechnicians = sortedTechnicians.slice(indexOfFirstTechnician, index
    e.preventDefault();
    if (!selectedTechnician) return;
    try {
-        dispatch(setLoading(true));
-   await technicianAPI.updateStatus(selectedTechnician.id, statusData.status, statusData.note);
-   await fetchTechnicians();
-   message.success('Technician status updated successfully!');
+     dispatch(setLoading(true));
+     await technicianAPI.updateStatus(selectedTechnician.id, statusData.status, statusData.note);
+     await fetchTechnicians();
+     message.success('Technician status updated successfully!');
      handleCloseEditStatus();
    } catch (err) {
      console.error('Update status error:', err);
@@ -295,7 +332,7 @@ const getStatusBadgeClass = (status) => {
 
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        {/* Breadcrumb */}
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">

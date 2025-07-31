@@ -5,8 +5,10 @@ import { Modal, Button, Select, Switch, message, Descriptions, Spin } from 'antd
 import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
+import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 import "../../../public/css/ManagementTableStyle.css";
+import { createExportData, formatDateTime } from '../../utils/exportUtils';
 
 
 const statusOptions = [
@@ -37,6 +39,7 @@ const WarrantyManagement = () => {
   const [filterReviewed, setFilterReviewed] = useState();
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedWarranty, setSelectedWarranty] = useState(null);
+  const [serviceNames, setServiceNames] = useState({});
 
 
  useEffect(() => {
@@ -51,6 +54,12 @@ const WarrantyManagement = () => {
      const map = {};
      techs.forEach(t => { map[t.id] = t.fullName || t.email || t.id; });
      setTechnicianNames(map);
+   });
+   // Lấy toàn bộ services để map serviceId -> serviceName
+   serviceAPI.getAll().then(services => {
+     const map = {};
+     services.forEach(s => { map[s.id] = s.serviceName || s.name || s.id; });
+     setServiceNames(map);
    });
    // Lấy toàn bộ bookings để map bookingId -> bookingCode
    const fetchBookings = async () => {
@@ -120,7 +129,45 @@ const WarrantyManagement = () => {
   return 0;
 });
 const currentWarranties = sorted.slice(indexOfFirst, indexOfLast);
- const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
+
+// Set export data và columns
+useEffect(() => {
+  const exportColumns = [
+    { title: 'Warranty Code', dataIndex: 'warrantyCode' },
+    { title: 'Booking', dataIndex: 'bookingCode' },
+    { title: 'Customer', dataIndex: 'customerName' },
+    { title: 'Technician', dataIndex: 'technicianName' },
+    { title: 'Service', dataIndex: 'serviceName' },
+    { title: 'Warranty Period', dataIndex: 'warrantyPeriod' },
+    { title: 'Start Date', dataIndex: 'startDate' },
+    { title: 'End Date', dataIndex: 'endDate' },
+    { title: 'Status', dataIndex: 'status' },
+    { title: 'Under Warranty', dataIndex: 'underWarranty' },
+    { title: 'Reviewed', dataIndex: 'reviewed' },
+    { title: 'Created At', dataIndex: 'createdAt' },
+    { title: 'Updated At', dataIndex: 'updatedAt' },
+  ];
+
+  const exportData = sorted.map(warranty => ({
+    warrantyCode: warranty.warrantyCode,
+    bookingCode: warranty.bookingId,
+    customerName: userNames[warranty.customerId] || warranty.customerId,
+    technicianName: technicianNames[warranty.technicianId] || warranty.technicianId,
+    serviceName: serviceNames[warranty.serviceId] || warranty.serviceId,
+    warrantyPeriod: warranty.warrantyPeriod,
+    startDate: formatDateTime(warranty.startDate),
+    endDate: formatDateTime(warranty.endDate),
+    status: warranty.status?.toUpperCase(),
+    underWarranty: warranty.isUnderWarranty ? 'Yes' : 'No',
+    reviewed: warranty.isReviewedByAdmin ? 'Yes' : 'No',
+    createdAt: formatDateTime(warranty.createdAt),
+    updatedAt: formatDateTime(warranty.updatedAt),
+  }));
+
+  createExportData(exportData, exportColumns, 'warranties_export', 'Warranties');
+}, [sorted, userNames, technicianNames, serviceNames]);
+
+const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
 
 
  const handlePageChange = (page) => {
@@ -186,7 +233,7 @@ const handleSortByTechnician = () => {
 
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">

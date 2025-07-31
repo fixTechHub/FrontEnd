@@ -27,6 +27,7 @@ import { reportAPI } from '../../features/reports/reportAPI';
 import { setReports, setSelectedReport, setFilters, clearFilters, setLoading, setError } from '../../features/reports/reportSlice';
 import { selectFilteredReports, selectReportFilters, selectReportStats } from '../../features/reports/reportSelectors';
 import { userAPI } from '../../features/users/userAPI';
+import { createExportData, formatDateTime } from '../../utils/exportUtils';
 
 
 const { Option } = Select;
@@ -224,9 +225,34 @@ const ReportManagement = () => {
    return 0;
  });
 
+ // Set export data và columns
+ useEffect(() => {
+   const exportColumns = [
+     { title: 'Report Type', dataIndex: 'type' },
+     { title: 'Description', dataIndex: 'description' },
+     { title: 'Reporter', dataIndex: 'reporterName' },
+     { title: 'Reported User', dataIndex: 'reportedUserName' },
+     { title: 'Status', dataIndex: 'status' },
+     { title: 'Created At', dataIndex: 'createdAt' },
+     { title: 'Updated At', dataIndex: 'updatedAt' },
+   ];
+
+   const exportData = sortedReports.map(report => ({
+     type: report.type,
+     description: report.description,
+     reporterName: userMap[report.reporterId] || report.reporterId,
+     reportedUserName: userMap[report.reportedUserId] || report.reportedUserId,
+     status: report.status?.toUpperCase(),
+     createdAt: formatDateTime(report.createdAt),
+     updatedAt: formatDateTime(report.updatedAt),
+   }));
+
+   createExportData(exportData, exportColumns, 'reports_export', 'Reports');
+ }, [sortedReports, userMap]);
+
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <Card>
          {/* Stats Cards */}

@@ -12,6 +12,9 @@ import {
 } from '../../features/categories/categorySlice';
 import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
+import { createExportData, formatDateTime } from '../../utils/exportUtils';
+import IconUploader from '../../components/common/IconUploader';
+import IconDisplay from '../../components/common/IconDisplay';
 
 const initialFormState = {
  categoryName: '',
@@ -92,8 +95,28 @@ const indexOfLastCategory = currentPage * categoriesPerPage;
 const indexOfFirstCategory = indexOfLastCategory - categoriesPerPage;
 const currentCategories = sortedCategories.slice(indexOfFirstCategory, indexOfLastCategory);
 
+// Set export data và columns
+useEffect(() => {
+  const exportColumns = [
+    { title: 'Category Name', dataIndex: 'categoryName' },
+    { title: 'Icon', dataIndex: 'icon' },
+    { title: 'Status', dataIndex: 'status' },
+    { title: 'Created At', dataIndex: 'createdAt' },
+    { title: 'Updated At', dataIndex: 'updatedAt' },
+  ];
 
- const totalPages = Math.ceil(filteredCategories.length / categoriesPerPage);
+  const exportData = sortedCategories.map(category => ({
+    categoryName: category.categoryName,
+    icon: category.icon,
+    status: category.isActive ? 'ACTIVE' : 'INACTIVE',
+    createdAt: formatDateTime(category.createdAt),
+    updatedAt: formatDateTime(category.updatedAt),
+  }));
+
+  createExportData(exportData, exportColumns, 'categories_export', 'Categories');
+}, [sortedCategories]);
+
+const totalPages = Math.ceil(filteredCategories.length / categoriesPerPage);
  const handleChange = (e) => {
    const { name, value, type, checked } = e.target;
    setFormData(prev => ({
@@ -213,7 +236,7 @@ const handleOpenRestoreModal = () => {
 const isDataReady = categories.length > 0;
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
@@ -298,7 +321,9 @@ const isDataReady = categories.length > 0;
                  currentCategories.map((cat) => (
                    <tr key={cat.id}>
                      <td>{cat.categoryName}</td>
-                     <td>{cat.icon}</td>
+                     <td>
+                       <IconDisplay icon={cat.icon} size={40} />
+                     </td>
                      <td>
                        <span className={`badge ${cat.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
                          {cat.isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -367,11 +392,10 @@ const isDataReady = categories.length > 0;
            />
          </Form.Item>
          <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-           <Input
-             name="icon"
+           <IconUploader
              value={formData.icon}
-             onChange={handleChange}
-             placeholder="Enter icon (e.g., ti ti-tools)"
+             onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+             placeholder="Upload icon image"
            />
          </Form.Item>
          <Form.Item label="Status">
@@ -422,11 +446,10 @@ const isDataReady = categories.length > 0;
            />
          </Form.Item>
          <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-           <Input
-             name="icon"
+           <IconUploader
              value={formData.icon}
-             onChange={handleChange}
-             placeholder="Enter icon (e.g., ti ti-tools)"
+             onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+             placeholder="Upload icon image"
            />
          </Form.Item>
          <Form.Item label="Status">
@@ -489,7 +512,9 @@ const isDataReady = categories.length > 0;
              {deletedCategories.map((cat) => (
                <tr key={cat.id}>
                  <td>{cat.categoryName}</td>
-                 <td>{cat.icon}</td>
+                 <td>
+                   <IconDisplay icon={cat.icon} size={40} />
+                 </td>
                  <td>
                    <span className={`badge ${cat.isActive ? 'bg-success' : 'bg-danger'}`}>
                      {cat.isActive ? 'Active' : 'Inactive'}
