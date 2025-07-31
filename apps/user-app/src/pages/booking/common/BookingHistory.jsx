@@ -41,7 +41,7 @@ const modalStyles = {
     modalHeader: {
         background: 'rgb(0, 0, 0)',
         padding: '16px 24px',
-      
+
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -226,23 +226,30 @@ const BookingHistory = () => {
         setWarrantyReasonError(null);
     };
 
-    const handleWarrantySubmit = async (e) => {
+    const handleWarrantySubmit = async (e, selectedBooking) => {
         e.preventDefault();
         if (!selectedWarrantyBookingId) {
             toast.error('Booking ID is required');
             return;
         }
+        // Optional: check if selectedBooking object exists
+        const warrantyExpiry = new Date(selectedBooking?.warrantyExpiresAt);
+        const now = new Date();
 
+        if (selectedBooking?.warrantyExpiresAt && now > warrantyExpiry) {
+            toast.error('Thời hạn bảo hành đã hết. Bạn không thể gửi yêu cầu bảo hành.');
+            return;
+        }
         try {
             const formData = new FormData();
             formData.append('bookingId', selectedWarrantyBookingId);
             formData.append('reportedIssue', warrantyReason);
             for (const file of warrantyImages) {
                 formData.append('images', file); // Use for...of like BookingPage
-               
+
             }
-          
-           await dispatch(requestWarrantyThunk(formData)).unwrap();
+
+            await dispatch(requestWarrantyThunk(formData)).unwrap();
             toast.success(
                 `Yêu cầu bảo hành thành công, Vui lòng đợi trong vòng 24h để thợ phản hồi`
             );
@@ -508,7 +515,7 @@ const BookingHistory = () => {
                                             </button>
                                         </div>
                                         <div style={modalStyles.modalBody} className="modal-body">
-                                            <form onSubmit={handleWarrantySubmit}>
+                                            <form onSubmit={handleWarrantySubmit(booking)}>
                                                 <div style={modalStyles.modalFormGroup}>
                                                     <ImageUploader onFilesSelect={handleFilesSelect} />
                                                     <label style={modalStyles.formLabel}>

@@ -17,7 +17,7 @@ import roleReducer from '../features/roles/roleSlice';
 import warrantyReducer from '../features/booking-warranty/warrantySlice';
 import feedbackReducer from '../features/feedbacks/feedbackSlice';
 import favoritesReducer from '../features/favorites/favoriteSlice';
-
+import aiChatReducer from '../features/chatbox/chatboxSlice'
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -37,7 +37,8 @@ export const store = configureStore({
     roles: roleReducer,
     warranty: warrantyReducer,
     feedback: feedbackReducer,
-    favorites: favoritesReducer
+    favorites: favoritesReducer,
+    aiChat: aiChatReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

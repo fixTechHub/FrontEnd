@@ -39,7 +39,7 @@ import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
 import BookingWarranty from "../pages/booking-warranty/BookingWarranty";
 import BookingHistory from "../pages/booking/common/BookingHistory";
 // import { checkAuthThunk } from '../features/auth/authSlice';
-import TechnicianDashboard from "../pages/technician/TechnicianDashboard";
+// import TechnicianDashboard from "../pages/technician/TechnicianDashboard";
 import UploadCertificateForm from "../pages/technician/UploadCer";
 import SubmitFeedback from "../pages/feedback/SubmitFeedback";
 import ServiceList from "../pages/home/ServiceList";

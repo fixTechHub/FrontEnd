@@ -132,7 +132,7 @@ const handlePrintPDF = (selectedReceipt) => {
                         { text: formatCurrency(item.price), alignment: 'right' },
                       ])
                     : []),
-                  // ['Phí Dịch Vụ', '1', { text: formatCurrency(selectedReceipt?.serviceAmount || 0), alignment: 'right' }],
+                  ['Phí Dịch Vụ', '1', { text: formatCurrency(selectedReceipt?.serviceAmount || 0), alignment: 'right' }],
                   ['Giảm', '1', { text: `-${formatCurrency(selectedReceipt?.discountAmount || 0)}`, alignment: 'right' }],
                 ],
               },

@@ -14,8 +14,9 @@ import serviceReducer from '../features/service/serviceSlice';
 import statisticReducer from '../features/statistics/statisticSlice';
 import commissionConfigReducer from '../features/commissionConfig/commissionSlice';
 import commissionReducer from '../features/commission/commissionSlice';
+import adminReducer from '../features/admin/adminSlice';
 
- const store = configureStore({
+const store = configureStore({
   reducer: {
     bookings: bookingReducer,
     coupon: couponReducer,
@@ -32,6 +33,8 @@ import commissionReducer from '../features/commission/commissionSlice';
     statistics: statisticReducer,
     commissionConfig: commissionConfigReducer,
     commission: commissionReducer,
+    admin: adminReducer,
+
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

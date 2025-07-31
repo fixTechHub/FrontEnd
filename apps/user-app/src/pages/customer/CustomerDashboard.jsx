@@ -6,6 +6,7 @@ import { getFavoritesThunk, removeFavoriteThunk } from '../../features/favorites
 import { fetchNotificationsThunk } from '../../features/notifications/notificationSlice';
 import BookingHistory from "../booking/common/BookingHistory";
 import ReceiptPage from "../receipt/ReceiptPage";
+import NotificationsPage from "../notifications/NotificationPage";
 // ---------- Breadcrumb -----------
 const BreadcrumbSection = () => (
 	<div className="breadcrumb-bar">
@@ -40,6 +41,7 @@ const DashboardMenu = ({ activeTab, onSelect }) => (
 								{ icon: "wishlist", text: "KTV yêu thích", section: 'FAVORITES' },
 								{ icon: "payment", text: "Phiếu giảm giá", section: 'COUPONS' },
 								{ icon: "wallet", text: "Hoá đơn", section: 'PAYMENTS' },
+								{ icon: "notification", text: "Thông Báo", section: 'NOTIFICATIONS' },
 
 							].map((item) => (
 								<li key={item.text}>
@@ -420,6 +422,9 @@ function CustomerDashboard() {
 					)}
 					{activeTab==='PAYMENTS' && (
 						<ReceiptPage />
+					)}
+					{activeTab==='NOTIFICATIONS' && (
+						<NotificationsPage />
 					)}
 				</div>
 			</div>

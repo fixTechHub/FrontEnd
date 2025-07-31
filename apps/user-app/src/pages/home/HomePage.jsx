@@ -7,7 +7,7 @@ import AOS from "aos";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
 import Services from "./Services";
-
+import AIChatbox from "../../components/message/AIChatBox";
 function HomePage() {
   const { user, isAuthenticated, verificationStatus } = useSelector(
     (state) => state.auth
@@ -491,7 +491,7 @@ function HomePage() {
             </div>
           </div>
         </section>
-
+        {isAuthenticated && <AIChatbox />}
         <Footer />
       </div>
     </>

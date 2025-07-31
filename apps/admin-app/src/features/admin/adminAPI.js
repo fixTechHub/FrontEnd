@@ -4,3 +4,14 @@ export const getTechnicians = async (technicianId) => {
     return response.data;
 };
 
+
+export const  approveTechnician=  async (technicianId) => {
+        try {
+            const response = await apiClient.put(`/admin/technicians/${technicianId}/approve`);
+            return response.data;
+        } catch (error) {
+            console.error('Error approving technician:', error.response?.data || error.message);
+            throw error.response?.data || error;
+        }
+    }
+

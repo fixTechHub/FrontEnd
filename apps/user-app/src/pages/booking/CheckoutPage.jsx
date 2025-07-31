@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { finalizeBookingThunk } from '../../features/transactions/transactionSlice'
 import { fetchBookingById, getAcceptedBookingThunk } from '../../features/bookings/bookingSlice';
-import { useBookingParams } from '../../hooks/useBookingParams';
 import { toast } from 'react-toastify';
 import { useBookingParams } from '../../hooks/useBookingParams';
 import Accordion from 'react-bootstrap/Accordion';

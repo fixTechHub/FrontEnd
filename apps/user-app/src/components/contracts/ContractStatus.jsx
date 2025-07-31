@@ -20,7 +20,7 @@ const ContractStatus = () => {
 
     useEffect(() => {
         if (error && !error.includes('No contract found')) {
-            toast.error(error);
+            toast.error(`Lỗi: ${error}`);
         }
     }, [error]);
 
@@ -30,7 +30,7 @@ const ContractStatus = () => {
     }
 
     if (loading) {
-        return <p>Checking contract status...</p>;
+        return <p>Đang kiểm tra trạng thái hợp đồng...</p>;
     }
 
     // Find the most recent contract that is ready to be signed
@@ -43,49 +43,76 @@ const ContractStatus = () => {
     // Find the most recent signed contract if no contract needs signing
     const latestSignedContract = !contractToSign && Array.isArray(contracts)
         ? [...contracts]
-            .sort((a, b) => new Date(b.signedAt) - new Date(b.signedAt))
-            .find(c => c.status === 'SIGNED' )
+            .sort((a, b) => new Date(b.signedAt) - new Date(a.signedAt))
+            .find(c => c.status === 'SIGNED')
         : null;
 
     if (contractToSign) {
         return (
             <div className="card text-center">
-                <div className="card-header">Action Required</div>
+                <div className="card-header">Yêu cầu hành động</div>
                 <div className="card-body">
-                    <h5 className="card-title">Your Contract is Ready</h5>
-                    <p className="card-text">Please review and sign your service contract to complete your profile.</p>
+                    <h5 className="card-title">Hợp đồng của bạn đã sẵn sàng</h5>
+                    <p className="card-text">Vui lòng xem xét và ký hợp đồng dịch vụ để hoàn tất hồ sơ của bạn.</p>
                     <a href={contractToSign.signingUrl} className="btn btn-primary" target="_blank" rel="noopener noreferrer">
-                        Review and Sign Contract
+                        Xem xét và ký hợp đồng
                     </a>
                 </div>
-                <div className="card-footer text-muted">Status: Awaiting Signature</div>
+                <div className="card-footer text-muted">Trạng thái: Đang chờ chữ ký</div>
             </div>
         );
     }
     
     if (latestSignedContract) {
-         return (
-             <div className="alert alert-success" role="alert">
-                <h4 className="alert-heading">Contract Signed!</h4>
-                <p>Your contract has been successfully signed on {new Date(latestSignedContract.signedAt).toLocaleDateString()} and is active.</p>
+        return (
+            <div className="alert alert-success" role="alert" style={{
+                position: 'fixed',
+                top: '20px',
+                right: '20px',
+                zIndex: 1000,
+                maxWidth: '300px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                padding: '15px',
+                borderRadius: '8px'
+            }}>
+                <h4 className="alert-heading">Hợp đồng đã được ký!</h4>
+                <p>Hợp đồng của bạn đã được ký thành công vào ngày {new Date(latestSignedContract.signedAt).toLocaleDateString('vi-VN')} và đang có hiệu lực.</p>
             </div>
         );
     }
 
     if (currentTechnician.status === 'APPROVED' && !contractToSign && !latestSignedContract) {
-         return (
-            <div className="alert alert-info" role="alert">
-                Your profile is approved. The contract is being prepared by the administrator. Please check back later.
+        return (
+            <div className="alert alert-info" role="alert" style={{
+                position: 'fixed',
+                top: '20px',
+                right: '20px',
+                zIndex: 1000,
+                maxWidth: '300px',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                padding: '15px',
+                borderRadius: '8px'
+            }}>
+                Hồ sơ của bạn đã được duyệt. Hợp đồng đang được quản trị viên chuẩn bị. Vui lòng kiểm tra lại sau.
             </div>
         );
     }
     
     // Default state if technician is not yet approved
     return (
-        <div className="alert alert-warning" role="alert">
-            Your profile is awaiting approval from an administrator.
+        <div className="alert alert-warning" role="alert" style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 1000,
+            maxWidth: '300px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            padding: '15px',
+            borderRadius: '8px'
+        }}>
+            Hồ sơ của bạn đang chờ duyệt từ quản trị viên.
         </div>
     );
 };
 
-export default ContractStatus; 
+export default ContractStatus;
