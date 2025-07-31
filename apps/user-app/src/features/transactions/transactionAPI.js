@@ -2,12 +2,12 @@ import apiClient from '../../services/apiClient';
 
 
 export const transactionAPI = {
-    finalizeBooking: async (bookingData) => {
-        const { bookingPriceId, couponCode, discountValue, finalPrice, paymentMethod } = bookingData;
+        finalizeBooking: async (bookingData) => {
+        const { bookingId, couponCode, discountValue, finalPrice, paymentMethod } = bookingData;
         try {
             // Note: The PATCH endpoint was already created, but we are using it
             // for the final step now. The name in the API reflects its new purpose.
-            const response = await apiClient.post(`/payments/finalize-booking/${bookingPriceId}`, {
+            const response = await apiClient.post(`/payments/finalize-booking/${bookingId}`, {
                 couponCode,
                 discountValue,
                 finalPrice,
@@ -32,4 +32,20 @@ export const transactionAPI = {
             throw error;
         }
     },
+
+    // ✅ Withdraw balance API
+  withdrawBalance: async ({ technicianId, amount, paymentMethod }) => {
+    try {
+        console.log('Received params:', { technicianId, amount, paymentMethod });
+      const response = await apiClient.post(`/technicians/${technicianId}/withdraw`, {
+        technicianId,
+        amount,
+        paymentMethod
+      });
+      return response;
+    } catch (error) {
+      console.error('Withdraw balance error:', error);
+      throw error;
+    }
+  }
 }

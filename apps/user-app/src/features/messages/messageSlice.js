@@ -10,9 +10,9 @@ const initialState = {
 
 export const fetchMessagesThunk = createAsyncThunk(
     'messages/fetchMessages',
-    async (bookingId, { rejectWithValue }) => {
+    async ({ bookingId, bookingWarrantyId }, { rejectWithValue }) => {
         try {
-            const response = await messageAPI.getMessagesByBookingId(bookingId);
+            const response = await messageAPI.getMessagesByBookingOrWarrantyId(bookingId, bookingWarrantyId);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.error || 'Failed to fetch messages');

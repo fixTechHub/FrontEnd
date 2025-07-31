@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, selectTechnician, technicianConfirmBooking } from './bookingAPI';
+import { cancelBookingById, createBooking, getBookingById, getQuatationsByBookingId,getUserBookingHistory,getAcceptedBooking,getTopBookedServices, selectTechnician, technicianConfirmBooking } from './bookingAPI';
 
 export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',
@@ -37,6 +37,15 @@ export const cancelBooking = createAsyncThunk(
     }
 );
 
+export const fetchUserBookingHistory = createAsyncThunk(
+    'bookingHistory/fetchUserBookingHistory',
+    async ({ limit, skip }, { rejectWithValue }) => {
+        try {
+            const response = await getUserBookingHistory({ limit, skip })
+            
+            return response;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || 'Failed to fetch booking history');}})
 export const fetchTopBookedServices = createAsyncThunk(
     'booking/fetchTopBookedServices',
     async () => {
@@ -60,6 +69,20 @@ export const selectTechnicianThunk = createAsyncThunk(
     }
 );
 
+export const getAcceptedBookingThunk = createAsyncThunk(
+    'booking/getAcceptedBooking',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const response = await getAcceptedBooking(bookingId);
+            
+            if (!response.data.success) {
+                return rejectWithValue(response.data.message);
+            }
+            
+            return response.data.data;
+        } catch (error) {
+            console.error('Get Accepted Booking Error:', error);
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch accepted booking');}})
 export const technicianConfirmBookingThunk = createAsyncThunk(
     'booking/technicianConfirmBooking',
     async (bookingId, { rejectWithValue }) => {
@@ -73,18 +96,33 @@ export const technicianConfirmBookingThunk = createAsyncThunk(
     }
 );
 
+const initialState = {
+    bookings: [],
+    newBooking: null,
+    techniciansFound: [],
+    bookingHistories: [],
+    acceptedBooking: null,
+    detailsBooking: null,
+    topBookedServices: [],
+    userCoupons: [],
+    booking: null,
+    quotations: [],
+    loading: false,
+    error: null,
+    status: 'idle',
+};
+
 const bookingSlice = createSlice({
     name: 'booking',
-    initialState: {
-        newBooking: null,
-        techniciansFound: [],
-        booking: null,
-        detailsBooking: null,
-        topBookedServices: [],
-        status: 'idle',
-        error: null,
-    },
+    initialState,
     reducers: {
+        clearError: (state) => {
+            state.error = null;
+        },
+        clearAcceptedBooking: (state) => {
+            state.acceptedBooking = null;
+            state.userCoupons = [];
+        },
         setLastCancelBy: (state, action) => {
             state.lastCancelBy = action.payload;
         },
@@ -127,7 +165,32 @@ const bookingSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.error.message;
             })
-
+            .addCase(fetchUserBookingHistory.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(fetchUserBookingHistory.fulfilled, (state, action) => {
+                state.loading = false;
+                state.bookingHistories = action.payload.data.bookings // Adjust based on API response structure
+                state.total = action.payload.total || state.bookings.length; // Adjust if API provides total
+            })
+            .addCase(fetchUserBookingHistory.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || 'An error occurred';
+            })
+            .addCase(getAcceptedBookingThunk.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getAcceptedBookingThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                state.acceptedBooking = action.payload.acceptedBooking;
+                state.userCoupons = action.payload.userCoupons;
+            })
+            .addCase(getAcceptedBookingThunk.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || 'An error occurred';
+            })
             .addCase(fetchTopBookedServices.pending, (state) => {
                 state.status = 'loading';
             })

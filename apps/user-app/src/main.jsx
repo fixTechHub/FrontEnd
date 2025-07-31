@@ -15,6 +15,7 @@ import { checkAuthThunk } from './features/auth/authSlice.js';
 // Gọi checkAuthThunk ngay khi store được khởi tạo
 store.dispatch(checkAuthThunk());
 
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
