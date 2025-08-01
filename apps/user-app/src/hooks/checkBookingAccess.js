@@ -23,7 +23,7 @@ export const checkBookingAccess = async (dispatch, bookingId, userId, role) => {
         if (role === 'CUSTOMER') {
             isAuthorized = userId === customerId;
         } else if (role === 'TECHNICIAN') {
-            isAuthorized = userId === technicianId;
+            isAuthorized = true;
         }
         // console.log(isAuthorized);
         

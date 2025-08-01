@@ -26,4 +26,12 @@ export const getUserBookingHistory = ({ limit, skip }) => apiClient.get(`/bookin
 
 export const getAcceptedBooking = (bookingId) => apiClient.get(`/bookings/accepted-booking/${bookingId}`);
 export const confirmJobDoneByTechnician = (bookingId) => apiClient.post(`/technicians/${bookingId}/done`);
-export const technicianConfirmBooking = (bookingId) => apiClient.post(`/bookings/${bookingId}/technician-confirm`);
+export const technicianConfirmBooking = (bookingId) => apiClient.post(`/bookings/${bookingId}/technician-accept`);
+export const technicianRejectBooking = (bookingId) => apiClient.post(`/bookings/${bookingId}/technician-reject`);
+
+export const technicianSendQuote = (bookingId, quoteData) => apiClient.post(`/bookings/${bookingId}/quote`, quoteData);
+export const customerAcceptQuote = (bookingId) => apiClient.post(`/bookings/${bookingId}/quote/accept`);
+export const customerRejectQuote = (bookingId) => apiClient.post(`/bookings/${bookingId}/quote/reject`);
+
+export const fetchBookingRequests = (bookingId) => apiClient.get(`/bookings/${bookingId}/technician-requests`);
+export const fetchTechniciansFoundByBookingId = (bookingId) => apiClient.get(`/bookings/${bookingId}/technicians-found`);

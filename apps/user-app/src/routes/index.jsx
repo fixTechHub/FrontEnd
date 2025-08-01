@@ -30,6 +30,7 @@ import TechnicianJob from "../pages/technician/TechnicianJobDetail";
 import CertificateList from "../pages/technician/Certificate";
 import SendQuotation from "../pages/technician/SendQuotation";
 import WaitingConfirm from "../pages/technician/WaitingConfirm";
+import TechnicianIncome from "../pages/technician/TechnicianIncome";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
 import ListFeedback from "../pages/technician/ListFeedback";
 import VideoCallPage from "../pages/video-call/VideoCallPage";
@@ -295,6 +296,15 @@ export default function AppRoutes() {
           // <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
           <WaitingConfirm />
           // </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/technician-income/:bookingId"
+        element={
+          <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <TechnicianIncome />
+          </PrivateRoute>
         }
       />
 

@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cancelBookingById, createBooking, getBookingById, getQuatationsByBookingId,getUserBookingHistory,getAcceptedBooking,getTopBookedServices, selectTechnician, technicianConfirmBooking } from './bookingAPI';
+import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, selectTechnician, technicianConfirmBooking, technicianRejectBooking, technicianSendQuote, customerAcceptQuote, customerRejectQuote, fetchBookingRequests as fetchBookingRequestsAPI, fetchTechniciansFoundByBookingId } from './bookingAPI';
 
 export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',
@@ -63,7 +63,8 @@ export const selectTechnicianThunk = createAsyncThunk(
             const res = await selectTechnician(bookingId, technicianId);
             return res.data;
         } catch (error) {
-            const message = error?.response?.data?.error || error.message || 'Đã xảy ra lỗi';
+            // Sửa lại lấy message đúng chuẩn backend
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
             return rejectWithValue(message);
         }
     }
@@ -90,7 +91,84 @@ export const technicianConfirmBookingThunk = createAsyncThunk(
             const res = await technicianConfirmBooking(bookingId);
             return res.data;
         } catch (error) {
-            const message = error?.response?.data?.error || error.message || 'Đã xảy ra lỗi';
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const technicianSendQuoteThunk = createAsyncThunk(
+    'booking/technicianSendQuote',
+    async ({ bookingId, quoteData }, { rejectWithValue }) => {
+        try {
+            const res = await technicianSendQuote(bookingId, quoteData);
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const customerAcceptQuoteThunk = createAsyncThunk(
+    'booking/customerAcceptQuote',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await customerAcceptQuote(bookingId);
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const customerRejectQuoteThunk = createAsyncThunk(
+    'booking/customerRejectQuote',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await customerRejectQuote(bookingId);
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const fetchBookingRequests = createAsyncThunk(
+    'booking/fetchBookingRequests',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await fetchBookingRequestsAPI(bookingId);
+            return res.data.data; // [{ technicianId, status, ... }]
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const fetchTechniciansFound = createAsyncThunk(
+    'booking/fetchTechniciansFound',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await fetchTechniciansFoundByBookingId(bookingId);
+            return res.data.data; // [{...}]
+        } catch (error) {
+            return rejectWithValue(error?.response?.data?.message || error.message);
+        }
+    }
+);
+
+export const technicianRejectBookingThunk = createAsyncThunk(
+    'booking/technicianRejectBooking',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await technicianRejectBooking(bookingId);
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
             return rejectWithValue(message);
         }
     }
@@ -114,7 +192,19 @@ const initialState = {
 
 const bookingSlice = createSlice({
     name: 'booking',
-    initialState,
+    initialState: {
+        newBooking: null,
+        techniciansFound: [],
+        booking: null,
+        detailsBooking: null,
+        topBookedServices: [],
+        status: 'idle',
+        createBookingStatus: 'idle',
+        selectTechnicianStatus: 'idle',
+        error: null,
+        requests: [],
+        techniciansStatus: 'idle',
+    },
     reducers: {
         clearError: (state) => {
             state.error = null;
@@ -142,15 +232,15 @@ const bookingSlice = createSlice({
             })
 
             .addCase(createNewBooking.pending, (state) => {
-                state.status = 'loading';
+                state.createBookingStatus = 'loading';
             })
             .addCase(createNewBooking.fulfilled, (state, action) => {
-                state.status = 'succeeded';
+                state.createBookingStatus = 'succeeded';
                 state.newBooking = action.payload.booking;
-                state.techniciansFound = action.payload.technicians_found || [];
+                // state.techniciansFound = action.payload.technicians_found || [];
             })
             .addCase(createNewBooking.rejected, (state, action) => {
-                state.status = 'failed';
+                state.createBookingStatus = 'failed';
                 state.error = action.error.message;
             })
 
@@ -204,14 +294,13 @@ const bookingSlice = createSlice({
             })
 
             .addCase(selectTechnicianThunk.pending, (state) => {
-                state.status = 'loading';
+                state.selectTechnicianStatus = 'loading';
             })
-            .addCase(selectTechnicianThunk.fulfilled, (state, action) => {
-                state.status = 'succeeded';
-                // Có thể cập nhật trạng thái booking nếu muốn
+            .addCase(selectTechnicianThunk.fulfilled, (state) => {
+                state.selectTechnicianStatus = 'succeeded';
             })
             .addCase(selectTechnicianThunk.rejected, (state, action) => {
-                state.status = 'failed';
+                state.selectTechnicianStatus = 'failed';
                 state.error = action.payload;
             })
 
@@ -223,6 +312,74 @@ const bookingSlice = createSlice({
                 // Có thể cập nhật trạng thái booking nếu muốn
             })
             .addCase(technicianConfirmBookingThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(technicianSendQuoteThunk.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(technicianSendQuoteThunk.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+            })
+            .addCase(technicianSendQuoteThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(customerAcceptQuoteThunk.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(customerAcceptQuoteThunk.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+            })
+            .addCase(customerAcceptQuoteThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(customerRejectQuoteThunk.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(customerRejectQuoteThunk.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+            })
+            .addCase(customerRejectQuoteThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(fetchBookingRequests.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchBookingRequests.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.requests = action.payload;
+            })
+            .addCase(fetchBookingRequests.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(fetchTechniciansFound.pending, (state) => {
+                state.techniciansStatus = 'loading';
+            })
+            .addCase(fetchTechniciansFound.fulfilled, (state, action) => {
+                state.techniciansStatus = 'succeeded';
+                state.techniciansFound = action.payload;
+            })
+            .addCase(fetchTechniciansFound.rejected, (state, action) => {
+                state.techniciansStatus = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(technicianRejectBookingThunk.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(technicianRejectBookingThunk.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+            })
+            .addCase(technicianRejectBookingThunk.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.payload;
             })

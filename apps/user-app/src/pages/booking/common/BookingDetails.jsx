@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { cancelBooking, fetchBookingById, setLastCancelBy, technicianConfirmBookingThunk } from "../../../features/bookings/bookingSlice";
+import { cancelBooking, fetchBookingById, setLastCancelBy, technicianConfirmBookingThunk, technicianRejectBookingThunk } from "../../../features/bookings/bookingSlice";
 import { formatDateOnly, formatTimeOnly } from "../../../utils/formatDate";
 import { BOOKING_STATUS_CONFIG } from "../../../constants/bookingConstants";
 import { useNavigate } from "react-router-dom";
 import { Image } from "react-bootstrap";
+import { toast } from 'react-toastify';
 
 function BookingDetails({ bookingId }) {
     const dispatch = useDispatch();
@@ -15,6 +16,7 @@ function BookingDetails({ bookingId }) {
     // console.log('--- USER ---', user);
     console.log('--- BOOKING ---', booking);
     const [confirming, setConfirming] = useState(false);
+    const [rejecting, setRejecting] = useState(false);
 
     useEffect(() => {
         if (bookingId) {
@@ -26,6 +28,15 @@ function BookingDetails({ bookingId }) {
 
     const statusConfig = BOOKING_STATUS_CONFIG[booking?.status] || BOOKING_STATUS_CONFIG.default;
     // console.log('--- IMAGE BOOKING DETAIL ---', booking?.images);
+
+    // Kiểm tra xem technician có thể hủy đơn hàng không (chỉ sau khi đã được chấp nhận)
+    const canTechnicianCancel = () => {
+        if (user?.role?.name !== 'TECHNICIAN') return false;
+        
+        // Các status sau khi đã được chấp nhận: IN_PROGRESS, WAITING_CUSTOMER_CONFIRM_ADDITIONAL, CONFIRM_ADDITIONAL, AWAITING_DONE, DONE
+        const statusesAfterAcceptance = ['IN_PROGRESS', 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL', 'CONFIRM_ADDITIONAL', 'AWAITING_DONE', 'DONE'];
+        return statusesAfterAcceptance.includes(booking?.status);
+    };
 
     const handleCancel = async () => {
         if (!bookingId) return;
@@ -54,14 +65,67 @@ function BookingDetails({ bookingId }) {
         setConfirming(true);
         try {
             const resultAction = await dispatch(technicianConfirmBookingThunk(bookingId));
+            console.log('--- TECHNICIAN CONFIRM RESULT ---', resultAction);
+
             if (technicianConfirmBookingThunk.fulfilled.match(resultAction)) {
-                alert('Bạn đã xác nhận nhận đơn!');
+                toast.success('Bạn đã xác nhận nhận đơn!');
                 dispatch(fetchBookingById(bookingId));
             } else {
-                alert(resultAction.payload || 'Có lỗi xảy ra!');
+                // Hiển thị message lỗi cụ thể từ backend thay vì "Request failed with status code 400"
+                const errorMessage = resultAction.payload || 'Có lỗi xảy ra!';
+                console.log('--- ERROR MESSAGE ---', errorMessage);
+                toast.error(errorMessage);
             }
+        } catch (error) {
+            // Xử lý lỗi network hoặc lỗi khác
+            console.log('--- CATCH ERROR ---', error);
+            const errorMessage = error?.message || 'Có lỗi xảy ra!';
+            toast.error(errorMessage);
         } finally {
             setConfirming(false);
+        }
+    };
+
+    const handleTechnicianReject = async () => {
+        if (!bookingId) return;
+        setRejecting(true);
+        try {
+            console.log('--- TECHNICIAN REJECT DEBUG ---');
+            console.log('Booking ID:', bookingId);
+            console.log('Booking Status:', booking?.status);
+            console.log('User ID:', user?._id);
+            console.log('User Role:', user?.role?.name);
+            console.log('Current Booking:', booking);
+            
+            const resultAction = await dispatch(technicianRejectBookingThunk(bookingId));
+            console.log('--- TECHNICIAN REJECT RESULT ---', resultAction);
+
+            if (technicianRejectBookingThunk.fulfilled.match(resultAction)) {
+                toast.success('Bạn đã từ chối yêu cầu!');
+                navigate('/');
+            } else {
+                // Hiển thị message lỗi cụ thể từ backend
+                const errorMessage = resultAction.payload || 'Có lỗi xảy ra!';
+                console.log('--- ERROR MESSAGE ---', errorMessage);
+                console.log('--- ERROR DETAILS ---', {
+                    type: resultAction.type,
+                    payload: resultAction.payload,
+                    error: resultAction.error
+                });
+                toast.error(errorMessage);
+            }
+        } catch (error) {
+            // Xử lý lỗi network hoặc lỗi khác
+            console.log('--- CATCH ERROR ---', error);
+            console.log('--- CATCH ERROR DETAILS ---', {
+                message: error?.message,
+                response: error?.response?.data,
+                status: error?.response?.status
+            });
+            const errorMessage = error?.message || 'Có lỗi xảy ra!';
+            toast.error(errorMessage);
+        } finally {
+            setRejecting(false);
         }
     };
 
@@ -213,13 +277,13 @@ function BookingDetails({ bookingId }) {
                         </div>
                     </div>
                     <div className="booking-sidebar-body">
-                        {booking?.images.lenght > 0 && (
+                        {Array.isArray(booking?.images) && booking.images.length > 0 && (
                             <div className="booking-car-detail">
                                 <div
                                     className="d-flex flex-nowrap overflow-auto py-2"
                                     style={{ gap: "0.5rem" }}
                                 >
-                                    {booking?.images?.map((image) => (
+                                    {booking.images.map((image) => (
                                         <Image
                                             key={image}
                                             src={image}
@@ -252,7 +316,15 @@ function BookingDetails({ bookingId }) {
                                 </li>
                                 <li>
                                     <h6>Địa chỉ:</h6>
-                                    <h5>{booking?.location?.address || 'Đang cập nhật..'}</h5>
+                                    <h5 style={{
+                                        wordWrap: 'break-word',
+                                        overflowWrap: 'break-word',
+                                        whiteSpace: 'pre-wrap',
+                                        maxWidth: '200px',
+                                        lineHeight: '1.4'
+                                    }}>
+                                        {booking?.location?.address || 'Đang cập nhật..'}
+                                    </h5>
                                 </li>
                                 <li>
                                     <h6>Mô tả:</h6>
@@ -288,6 +360,24 @@ function BookingDetails({ bookingId }) {
                                         {statusConfig.text || 'Đang cập nhật..'}
                                     </h5>
                                 </li>
+                                
+                                {/* Hiển thị giá công và thời gian bảo hành nếu đã có quote và khách đã accept */}
+                                {booking?.quote && booking?.status !== 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL' && (
+                                    <>
+                                        <li>
+                                            <h6>Giá công:</h6>
+                                            <h5>{booking.quote.laborPrice?.toLocaleString() || 0} VNĐ</h5>
+                                        </li>
+                                        <li>
+                                            <h6>Thời gian bảo hành:</h6>
+                                            <h5>{booking.quote.warrantiesDuration || 1} tháng</h5>
+                                        </li>
+                                        <li>
+                                            <h6>Tổng tiền hiện tại:</h6>
+                                            <h5>{booking?.finalPrice?.toLocaleString() || 0} VNĐ</h5>
+                                        </li>
+                                    </>
+                                )}
 
                                 {/* <li className="total-rate">
                                     <h6>Subtotal</h6>
@@ -299,10 +389,16 @@ function BookingDetails({ bookingId }) {
                 </div>
             </div>
 
+            {/* Nút hủy đơn hàng - chỉ hiển thị cho customer hoặc technician sau khi đã chấp nhận */}
             {booking?.status !== 'DONE' && (
+                (user?.role?.name === 'CUSTOMER') || 
+                (user?.role?.name === 'TECHNICIAN' && canTechnicianCancel())
+            ) && (
                 <button onClick={handleCancel} className="btn btn-outline-danger" style={{ width: '100%', marginTop: -5 }}>Hủy đơn hàng</button>
             )}
-            {user?.role?.name === 'TECHNICIAN' && booking?.status === 'AWAITING_CONFIRM' && (
+            
+            {/* Nút chấp nhận yêu cầu cho technician */}
+            {user?.role?.name === 'TECHNICIAN' && booking?.status === 'AWAITING_CONFIRM' && !booking?.technicianId && (
                 <button
                     className="btn btn-outline-success"
                     style={{ width: '100%', marginTop: 5 }}
@@ -310,6 +406,18 @@ function BookingDetails({ bookingId }) {
                     onClick={handleTechnicianConfirm}
                 >
                     {confirming ? 'Đang xác nhận...' : 'Chấp nhận yêu cầu'}
+                </button>
+            )}
+            
+            {/* Nút từ chối yêu cầu cho technician */}
+            {user?.role?.name === 'TECHNICIAN' && booking?.status === 'AWAITING_CONFIRM' && !booking?.technicianId && (
+                <button
+                    className="btn btn-outline-warning"
+                    style={{ width: '100%', marginTop: 5 }}
+                    disabled={rejecting}
+                    onClick={handleTechnicianReject}
+                >
+                    {rejecting ? 'Đang từ chối...' : 'Từ chối yêu cầu'}
                 </button>
             )}
 

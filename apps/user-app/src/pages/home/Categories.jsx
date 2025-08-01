@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 function Categories() {
     const categories = useSelector((state) => state.categories.topCategories);
     const status = useSelector((state) => state.categories.status);
-    // console.log('--- CTER ---', categories);
+    console.log('--- CTER ---', categories);
 
     if (status === 'loading')
         return (
@@ -34,7 +34,7 @@ function Categories() {
 
                     <div className="row yacht-category-lists">
                         {Array.isArray(categories) && categories.length > 0 && categories.map((category) => (
-                            <div className="custom-col" key={category._id} onClick={() => alert(`Đã chọn ${category.categoryName}`)}>
+                            <div className="custom-col" key={category._id || category.categoryName} onClick={() => alert(`Đã chọn ${category.categoryName}`)}>
                                 <div className="yacht-cat-grid">
                                     <div className="yatch-card-img">
                                         <a href="listing-grid.html"><img src="/img/yacht/yacht-01.jpg" className="img-fluid" alt="Motor Yacht" /></a>
