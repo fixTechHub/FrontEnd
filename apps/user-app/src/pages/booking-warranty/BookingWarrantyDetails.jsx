@@ -5,7 +5,7 @@ import { getWarrantyInformationThunk, acceptWarrantyThunk, rejectWarrantyThunk }
 import { formatDateOnly } from "../../utils/formatDate";
 import { BOOKING_WARRANTY_STATUS_CONFIG } from "../../constants/bookingConstants";
 import { toast } from 'react-toastify';
-
+import './Details.css'
 function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const dispatch = useDispatch();
     const { warranty, loading, error } = useSelector((state) => state.warranty);
@@ -73,7 +73,16 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const handleNextImage = () => {
         setSelectedImageIndex((prev) => (prev === (warranty?.images?.length || 0) - 1 ? 0 : prev + 1));
     };
-
+    // Add this helper function at the top of your component, before the return statement:
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'PENDING': return 'bx-time';
+            case 'CONFIRMED': return 'bx-check-circle';
+            case 'DENIED': return 'bx-x-circle';
+            case 'COMPLETED': return 'bx-badge-check';
+            default: return 'bx-info-circle';
+        }
+    };
     const styles = {
         sidebar: {
             width: '100%',
@@ -184,7 +193,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             padding: 0,
             margin: '0 0 20px 0',
         },
-       
+
         warrantyDetailsItem: {
             display: 'flex',
             justifyContent: 'space-between',
@@ -254,10 +263,116 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             gap: '15px',
             marginTop: '20px',
         },
-      
-       
-      
-   
+
+        imageGalleryContainer: {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px',
+            width: '100%',
+        },
+
+        featuredImageContainer: {
+            position: 'relative',
+            width: '100%',
+            height: '200px',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        },
+
+        featuredImage: {
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transition: 'transform 0.3s ease',
+        },
+
+        featuredImageHover: {
+            transform: 'scale(1.05)',
+        },
+
+        imageCounter: {
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            color: '#fff',
+            padding: '4px 8px',
+            borderRadius: '12px',
+            fontSize: '0.8rem',
+            display: 'flex',
+            alignItems: 'center',
+        },
+
+        thumbnailGrid: {
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, 1fr)',
+            gap: '8px',
+        },
+
+        thumbnailContainer: {
+            position: 'relative',
+            width: '100%',
+            height: '60px',
+            borderRadius: '4px',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            border: '2px solid transparent',
+            transition: 'border-color 0.2s ease',
+        },
+
+        thumbnailContainerHover: {
+            borderColor: '#007bff',
+        },
+
+        thumbnailImage: {
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transition: 'opacity 0.2s ease',
+        },
+
+        thumbnailImageHover: {
+            opacity: '0.8',
+        },
+
+        moreImagesOverlay: {
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontSize: '0.9rem',
+            fontWeight: '600',
+        },
+
+        viewAllImagesBtn: {
+            backgroundColor: 'transparent',
+            border: '1px solid #007bff',
+            color: '#007bff',
+            padding: '8px 16px',
+            borderRadius: '6px',
+            fontSize: '0.9rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginTop: '8px',
+        },
+
+        viewAllImagesBtnHover: {
+            backgroundColor: '#007bff',
+            color: '#fff',
+        },
+
+
         imageModalImage: {
             maxWidth: '100%',
             maxHeight: '60vh',
@@ -290,10 +405,162 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
         imageModalNavBtnNext: {
             right: '10px',
         },
+        warrantyDetailsContainer: {
+            padding: '10px 0',
+        },
+        detailCard: {
+            backgroundColor: '#fff',
+            borderRadius: '12px',
+            border: '1px solid #e9ecef',
+            marginBottom: '16px',
+            transition: 'all 0.3s ease',
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        },
+        detailCardHover: {
+            transform: 'translateY(-2px)',
+            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
+            borderColor: '#007bff',
+        },
+        detailCardHeader: {
+            backgroundColor: '#f8f9fa',
+            padding: '12px 16px',
+            borderBottom: '1px solid #e9ecef',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            color: '#495057',
+        },
+        detailCardBody: {
+            padding: '16px',
+        },
+        orderCodeLink: {
+            display: 'inline-flex',
+            alignItems: 'center',
+            textDecoration: 'none',
+            color: '#007bff',
+            fontWeight: '600',
+            fontSize: '1.1rem',
+            transition: 'all 0.2s ease',
+        },
+        detailValue: {
+            fontSize: '1rem',
+            color: '#343a40',
+            fontWeight: '500',
+        },
+        statusBadgeEnhanced: {
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            fontSize: '0.9rem',
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+        },
+        statusContainer: {
+            display: 'flex',
+            flexDirection: 'column',
+        },
+        reportedIssuePreview: {
+            backgroundColor: '#f8f9fa',
+            padding: '12px',
+            borderRadius: '8px',
+            border: '1px solid #e9ecef',
+            fontSize: '0.95rem',
+            color: '#495057',
+            lineHeight: '1.4',
+        },
+        btnViewDetails: {
+            backgroundColor: 'transparent',
+            border: '1px solid #FFA633',
+            color: '#007bff',
+            padding: '6px 12px',
+            borderRadius: '6px',
+            fontSize: '0.85rem',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            display: 'inline-flex',
+            alignItems: 'center',
+        },
+        btnViewDetailsHover: {
+            backgroundColor: '#FFA633',
+            color: '#fff',
+        },
+        warrantyProgressCard: {
+            backgroundColor: '#fff',
+            borderRadius: '12px',
+            border: '1px solid #e9ecef',
+            padding: '20px',
+            marginTop: '20px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+        },
+        progressHeader: {
+            marginBottom: '20px',
+        },
+        progressTitle: {
+            fontSize: '1.1rem',
+            fontWeight: '600',
+            color: '#343a40',
+        },
+        progressSteps: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            position: 'relative',
+        },
+        progressStep: {
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            flex: 1,
+            position: 'relative',
+        },
+        stepIcon: {
+            width: '40px',
+            height: '40px',
+            borderRadius: '50%',
+            backgroundColor: '#e9ecef',
+            border: '2px solid #dee2e6',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: '8px',
+            fontSize: '1.2rem',
+            color: '#6c757d',
+            transition: 'all 0.3s ease',
+        },
+        stepIconCompleted: {
+            backgroundColor: '#28a745',
+            borderColor: '#28a745',
+            color: '#fff',
+        },
+        stepIconRejected: {
+            backgroundColor: '#dc3545',
+            borderColor: '#dc3545',
+            color: '#fff',
+        },
+        stepLabel: {
+            fontSize: '0.85rem',
+            color: '#6c757d',
+            fontWeight: '500',
+            textAlign: 'center',
+        },
+        stepLabelCompleted: {
+            color: '#28a745',
+            fontWeight: '600',
+        },
+        stepLabelRejected: {
+            color: '#dc3545',
+            fontWeight: '600',
+        },
+
     };
 
     return (
         <>
+
             <div style={styles.sidebar} className="booking-sidebar">
                 <div style={styles.sidebarCard} className="booking-sidebar-card">
                     <div style={styles.sidebarHead} className="booking-sidebar-head">
@@ -302,39 +569,89 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                     <div style={styles.sidebarBody} className="booking-sidebar-body">
                         {loading && <p style={styles.loadingText} className="custom-loading-text">Đang tải...</p>}
                         {!loading && !error && warranty && (
-                            <div style={styles.vehicleRates} className="booking-vehicle-rates">
-                                <ul>
-                                    <li style={styles.vehicleRatesLi}>
-                                        <h6 style={styles.vehicleRatesH6}>
-                                            <span style={styles.vehicleRatesSpan}>Mã đơn hàng:</span>
-                                            {' '}
-                                            <a
-                                                style={styles.modalLink}
-                                                onMouseOver={(e) => Object.assign(e.target.style, styles.modalLinkHover)}
-                                                onMouseOut={(e) => Object.assign(e.target.style, {})}
+                            <div className="warranty-details-container">
+                                {/* Order Code Card */}
+                                <div className="detail-card mb-3">
+                                    <div className="detail-card-header">
+                                        <i className="bx bx-receipt me-2"></i>
+                                        <span className="detail-label">Mã đơn hàng</span>
+                                    </div>
+                                    <div className="detail-card-body">
+
+                                        {warranty.bookingId?.bookingCode || 'Không có dữ liệu'}
+                                        <span>
+                                            <Button
+                                                style={{ marginLeft: '5%' }}
+                                                variant="primary" // or any Bootstrap variant like "outline-secondary", "danger", etc.
                                                 onClick={() => setShowWarrantyModal(true)}
-                                                className="custom-modal-link"
                                             >
-                                                {warranty.bookingId?.bookingCode || 'Không có dữ liệu'}
-                                            </a>
-                                        </h6>
-                                    </li>
-                                    <li style={styles.vehicleRatesLi}>
-                                        <h6 style={styles.vehicleRatesH6}>
-                                            <span style={styles.vehicleRatesSpan}>Ngày yêu cầu:</span> {formatDateOnly(warranty.requestDate) || 'Không có dữ liệu'}
-                                        </h6>
-                                    </li>
-                                    <li style={styles.vehicleRatesLi}>
-                                        <h6 style={styles.vehicleRatesH6}>
-                                            <span style={styles.vehicleRatesSpan}>Trạng thái:</span>
-                                            <span style={styles.statusBadge} className={`status-badge ${statusConfig.className}`}>
+                                                Xem chi tiết
+                                            </Button>
+                                        </span>
+                                    </div>
+
+
+
+                                </div>
+
+                                {/* Request Date Card */}
+                                <div className="detail-card mb-3">
+                                    <div className="detail-card-header">
+                                        <i className="bx bx-calendar me-2"></i>
+                                        <span className="detail-label">Ngày yêu cầu</span>
+                                    </div>
+                                    <div className="detail-card-body">
+                                        <span className="detail-value">
+                                            {formatDateOnly(warranty.requestDate) || 'Không có dữ liệu'}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* Status Card */}
+                                <div className="detail-card status-card">
+                                    <div className="detail-card-header">
+                                        <i className="bx bx-info-circle me-2"></i>
+                                        <span className="detail-label">Trạng thái</span>
+                                    </div>
+                                    <div className="detail-card-body">
+                                        <div className="status-container">
+                                            <span style={{color:'white'}} className={`status-badge-enhanced ${statusConfig.className}`}>
+                                                <i className={`bx ${getStatusIcon(warranty?.status)} me-2`}></i>
                                                 {warrantyStatusText}
                                             </span>
-                                        </h6>
-                                    </li>
-                                </ul>
+                                            {isExpired && (
+                                                <small className="text-muted d-block mt-1">
+                                                    <i className="bx bx-time me-1"></i>
+                                                    Yêu cầu đã hết hạn
+                                                </small>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Additional Info Cards */}
+                                {warranty.bookingId?.serviceId?.serviceName && (
+                                    <div className="detail-card mb-3">
+                                        <div className="detail-card-header">
+                                            <i className="bx bx-wrench me-2"></i>
+                                            <span className="detail-label">Dịch vụ</span>
+                                        </div>
+                                        <div className="detail-card-body">
+                                            <span className="detail-value">
+                                                {warranty.bookingId.serviceId.serviceName}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+
+
+
+                                {/* Progress Indicator */}
+
                             </div>
                         )}
+
+
                     </div>
                 </div>
 
@@ -378,20 +695,62 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                     </li>
                                     {warranty.images && warranty.images.length > 0 && (
                                         <li style={styles.warrantyDetailsItem}>
-                                            <span style={styles.detailLabel} className="custom-detail-label">Hình ảnh:</span>
-                                            <div style={styles.imageGallery} className="custom-image-gallery">
-                                                {warranty.images.map((image, index) => (
+                                            <span style={styles.detailLabel} className="custom-detail-label">Hình ảnh ({warranty.images.length}):</span>
+                                            <div style={styles.imageGalleryContainer} className="image-gallery-container">
+                                                {/* Main Featured Image */}
+                                                <div style={styles.featuredImageContainer} className="featured-image-container">
                                                     <img
-                                                        key={index}
-                                                        src={image}
-                                                        alt={`Evidence ${index + 1}`}
-                                                        style={styles.warrantyImage}
-                                                        onMouseOver={(e) => Object.assign(e.target.style, styles.warrantyImageHover)}
-                                                        onMouseOut={(e) => Object.assign(e.target.style, styles.warrantyImage)}
-                                                        onClick={() => handleImageClick(index)}
-                                                        className="custom-warranty-image"
+                                                        src={warranty.images[0]}
+                                                        alt="Featured Evidence"
+                                                        style={styles.featuredImage}
+                                                        onClick={() => handleImageClick(0)}
+                                                        className="featured-image"
                                                     />
-                                                ))}
+                                                    {warranty.images.length > 1 && (
+                                                        <div style={styles.imageCounter} className="image-counter">
+                                                            <i className="bx bx-image me-1"></i>
+                                                            {warranty.images.length} ảnh
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Thumbnail Grid - Only show if more than 1 image */}
+                                                {warranty.images.length > 1 && (
+                                                    <div style={styles.thumbnailGrid} className="thumbnail-grid">
+                                                        {warranty.images.slice(1, warranty.images.length > 4 ? 4 : warranty.images.length).map((image, index) => (
+                                                            <div
+                                                                key={index + 1}
+                                                                style={styles.thumbnailContainer}
+                                                                className="thumbnail-container"
+                                                                onClick={() => handleImageClick(index + 1)}
+                                                            >
+                                                                <img
+                                                                    src={image}
+                                                                    alt={`Thumbnail ${index + 2}`}
+                                                                    style={styles.thumbnailImage}
+                                                                    className="thumbnail-image"
+                                                                />
+                                                                {/* Show "+X more" overlay on last thumbnail if there are more than 4 images */}
+                                                                {index === 2 && warranty.images.length > 4 && (
+                                                                    <div style={styles.moreImagesOverlay} className="more-images-overlay">
+                                                                        <span>+{warranty.images.length - 4}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {/* View All Button */}
+
+                                                <Button
+                                                    style={{ marginLeft: '5%' }}
+                                                    variant="primary" // or any Bootstrap variant like "outline-secondary", "danger", etc.
+                                                    onClick={() => handleImageClick(0)}
+                                                >
+                                                    <i className="bx bx-expand me-2"></i>
+                                                    Xem tất cả ảnh
+                                                </Button>
                                             </div>
                                         </li>
                                     )}
@@ -409,7 +768,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                     </li>
                                     <li style={styles.warrantyDetailsItem}>
                                         <span style={styles.detailLabel} className="custom-detail-label">Trạng thái:</span>
-                                        <span style={{ ...styles.statusBadge, marginRight: '45%' }} className={`status-badge ${statusConfig.className}`}>
+                                        <span style={{ ...styles.statusBadge, marginRight: '45%',color:'white' }} className={`status-badge ${statusConfig.className}`}>
                                             {warrantyStatusText}
                                         </span>
                                     </li>
@@ -467,7 +826,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                 </Button>
                             </>
                         )}
-                     
+
                     </Modal.Footer>
                 </Modal>
 
@@ -485,7 +844,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                         <button
                             style={styles.closeBtn}
                             onClick={() => setShowImageModal(false)}
-                          
+
                         >
                             <span>×</span>
                         </button>
@@ -541,7 +900,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                 setShowRejectModal(false);
                                 setRejectedReason('');
                             }}
-                      
+
                         >
                             <span>×</span>
                         </button>
@@ -566,7 +925,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                             className="custom-custom-btn custom-custom-btn-danger"
                             onClick={handleRejectWarranty}
                             disabled={loading}
-                      
+
                         >
                             {loading ? 'Xử lý...' : 'Xác nhận từ chối'}
                         </Button>
@@ -576,7 +935,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                 setShowRejectModal(false);
                                 setRejectedReason('');
                             }}
-                         
+
                         >
                             Hủy
                         </Button>

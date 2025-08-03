@@ -49,6 +49,15 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
             dispatch(fetchMessagesThunk({ bookingId, bookingWarrantyId }));
         }
     }, [dispatch, bookingId, bookingWarrantyId]);
+    const getRandomColor = () => {
+        const letters = '0123456789ABCDEF';
+        let color = '#';
+        for (let i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    };
+    const [backgroundColor, setBackgroundColor] = useState(getRandomColor());
 
     // useEffect(() => {
     //     if (!bookingId) return;
@@ -84,9 +93,9 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
         const socket = getSocket();
         if (!socket) return;
 
-       
 
-           const cleanup = onReceiveMessage({
+
+        const cleanup = onReceiveMessage({
             socket,
             userId: user._id,
             bookingId,
@@ -109,7 +118,7 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
         if (!socket) return;
 
         const handler = ({ from, name, signal, sessionId, bookingId, warrantyId }) => {
-            console.log('Received callUser event in MessageBox:', { from, name, signal, sessionId,bookingId, warrantyId });
+            console.log('Received callUser event in MessageBox:', { from, name, signal, sessionId, bookingId, warrantyId });
             const isValidCall = (bookingId && bookingId === bookingId) || (warrantyId && warrantyId === bookingWarrantyId);
             if (isValidCall && !incomingCall) { // Only set if no current incoming call
                 setIncomingCall({ from, name, signal, sessionId });
@@ -119,7 +128,7 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
         socket.on('callUser', handler);
         return () => socket.off('callUser', handler);
     }, [incomingCall]); // Depend on incomingCall to avoid overwriting during answer
-   
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, [messages]);
@@ -287,8 +296,8 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
                                         className="avatar-image"
                                     />
                                 ) : (
-                                    <div className="avatar-placeholder">
-
+                                    <div className="avatar-placeholder" style={{ backgroundColor: backgroundColor, color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%', borderRadius: '50%', fontSize: '1.5em', textTransform: 'uppercase' }}>
+                                        {otherParticipant?.fullName ? otherParticipant.fullName.charAt(0).toUpperCase() : '?'}
                                     </div>
                                 )}
                                 <div className="online-indicator"></div>
@@ -325,11 +334,17 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
                                         <div key={msg._id} className={`message-item ${isSent ? 'sent' : 'received'}`}>
                                             {!isSent && (
                                                 <div className="message-avatar">
-                                                    <img
-                                                        src={otherParticipant?.avatar || "/assets/img/profiles/default-avatar.jpg"}
-                                                        alt="User Image"
-                                                        className="message-avatar-img"
-                                                    />
+                                                    {otherParticipant?.avatar ? (
+                                                        <img
+                                                            src={otherParticipant.avatar}
+                                                            alt="User Image"
+                                                            className="message-avatar-img"
+                                                        />
+                                                    ) : (
+                                                        <div className="message-avatar-placeholder" style={{ backgroundColor: backgroundColor, color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '100%', borderRadius: '50%', fontSize: '1.5em', textTransform: 'uppercase' }}>
+                                                            {otherParticipant?.fullName ? otherParticipant.fullName.charAt(0).toUpperCase() : '?'}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                             <div className="message-content-wrapper">

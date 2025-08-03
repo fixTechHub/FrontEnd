@@ -134,11 +134,7 @@ const Notifications = ({ userId }) => {
     });
   };
 
-  const handleViewAllNotifications = () => {
-    dispatch(fetchAllNotificationsThunk({ limit: 50, skip: 0 }));
-    navigate('/notifications/all');
-    setIsOpen(false);
-  };
+
 
   const getTimeAgo = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -222,16 +218,7 @@ const Notifications = ({ userId }) => {
                     >
                       <div className="media d-flex justify-content-between align-items-start">
                         <div className="d-flex flex-grow-1">
-                          <span className="avatar avatar-lg flex-shrink-0">
-                            <img
-                              className="avatar-img rounded-circle"
-                              alt="User Image"
-                              src={
-                                notification.userAvatar ||
-                                '/img/profiles/avatar-01.jpg'
-                              }
-                            />
-                          </span>
+                         
                           <div className="media-body">
                             <p className="noti-details">
                               {notification.title}
@@ -268,17 +255,7 @@ const Notifications = ({ userId }) => {
               )}
             </ul>
           </div>
-          <div className="topnav-dropdown-footer">
-            <a
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                handleViewAllNotifications();
-              }}
-            >
-              Xem tất cả thông báo
-            </a>
-          </div>
+       
         </div>
       )}
     </div>

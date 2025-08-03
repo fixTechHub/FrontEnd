@@ -272,7 +272,7 @@ function BookingWarranty() {
                         </div>
                     </div>
                     <div className="text-end my-4">
-                        {user?.role?.name === 'CUSTOMER' && warranty.status === 'CONFIRMED' && (
+                        {user?.role?.name === 'CUSTOMER' && warranty.proposedSchedule && warranty.confirmedSchedule && warranty.status ==='CONFIRMED' && (
                             <button
                                 className="btn btn-primary me-2"
                                 onClick={handleConfirm}
@@ -328,7 +328,7 @@ function BookingWarranty() {
                                 onChange={(e) => setSolutionNote(e.target.value)}
                                 placeholder="Mô tả giải pháp đã thực hiện..."
                                 rows="4"
-                                required
+                           
                                 onFocus={(e) => Object.assign(e.target.style, styles.textareaFocus)}
                                 onBlur={(e) => Object.assign(e.target.style, styles.textarea)}
                             />
