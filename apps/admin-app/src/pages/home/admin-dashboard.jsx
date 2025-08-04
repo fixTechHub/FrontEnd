@@ -71,6 +71,7 @@ const AdminDashboard = () => {
   const { bookingCountLoading } = useSelector(state => state.bookings);
   const { loading: revenueLoading } = useSelector(state => state.statistics);
   const { technicianCountLoading } = useSelector(state => state.technicians);
+  const { isAuthenticated } = useSelector(state => state.auth);
   // State variables
   const [percentChange, setPercentChange] = useState(0);
   const [percentTechnicianChange, setPercentTechnicianChange] = useState(0);
@@ -94,137 +95,61 @@ const AdminDashboard = () => {
   const nowForBooking = new Date();
   const currentMonthIndex = nowForBooking.getMonth(); // 0-based
   const totalBookings = bookingCounts[currentMonthIndex] || 0;
+  const lastMonthForBooking = currentMonthIndex === 0 ? 12 : currentMonthIndex;
+  const lastYearForBooking = currentMonthIndex === 0 ? nowForBooking.getFullYear() - 1 : nowForBooking.getFullYear();
+  const lastMonthIndex = lastMonthForBooking - 1;
+  const totalLastMonthBookings = bookingCounts[lastMonthIndex] || 0;
   // Tính tổng technician của tháng hiện tại
   const nowForTechnician = new Date();
   const currentMonthIndexTechnician = nowForTechnician.getMonth(); // 0-based
   const totalTechnicians = technicianCounts[currentMonthIndexTechnician] || 0;
+  const lastMonthIndexTechnician = lastMonthIndex;
+  const totalLastMonthTechnicians = technicianCounts[lastMonthIndexTechnician] || 0;
   const now = new Date();
   const currentYear = now.getFullYear();
   const lastYear = currentYear - 1;
+  const currentMonth = now.getMonth() + 1;
+  const lastMonthForRevenue = currentMonth === 1 ? 12 : currentMonth - 1;
+  const lastYearForRevenue = currentMonth === 1 ? lastYear : currentYear;
 
 
   useEffect(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth() + 1;
-    const prevMonth = month === 1 ? 12 : month - 1;
-    const prevYear = month === 1 ? year - 1 : year;
+    // Chỉ load data khi đã đăng nhập
+    if (!isAuthenticated) {
+      return;
+    }
 
-    // Booking count tháng này và tháng trước
-    dispatch(getBookingCountByMonth({ year, month })).then((action) => {
-      const current = action.payload?.count || 0;
-      dispatch(getBookingCountByMonth({ year: prevYear, month: prevMonth })).then((prevAction) => {
-        const prev = prevAction.payload?.count || 0;
-        let percent = 0;
-        if (prev === 0) {
-          percent = current > 0 ? 100 : 0;
-        } else {
-          percent = ((current - prev) / prev) * 100;
-        }
-        setPercentChange(percent);
-      });
-    });
+    setBookingCountLoading(true);
+    bookingAPI.getCountByMonth(currentYear, currentMonth)
+      .then(data => setTotalBookings(data.count))
+      .catch(() => setTotalBookings(0))
+      .finally(() => setBookingCountLoading(false));
 
-    // Technician count tháng này và tháng trước
-    dispatch(getTechnicianCountByMonth({ year, month })).then((action) => {
-      const current = action.payload?.count || 0;
-      dispatch(getTechnicianCountByMonth({ year: prevYear, month: prevMonth })).then((prevAction) => {
-        const prev = prevAction.payload?.count || 0;
-        let percent = 0;
-        if (prev === 0) {
-          percent = current > 0 ? 100 : 0;
-        } else {
-          percent = ((current - prev) / prev) * 100;
-        }
-        setPercentTechnicianChange(percent);
-      });
-    });
-
-    // Doanh thu tháng này
-    dispatch(getMonthlyRevenue({ year, month })).then((action) => {
-      const current = action.payload?.revenue || 0;
-      setCurrentRevenue(current);
-      // Doanh thu tháng trước
-      dispatch(getMonthlyRevenue({ year: prevYear, month: prevMonth })).then((prevAction) => {
-        const prev = prevAction.payload?.revenue || 0;
-        let percent = 0;
-        if (prev === 0) {
-          percent = current > 0 ? 100 : 0;
-        } else {
-          percent = ((current - prev) / prev) * 100;
-        }
-        setPercentRevenueChange(percent);
-      });
-    });
-
-    // Booking chart
-    Promise.all(
-      Array.from({ length: 12 }, (_, i) =>
-        dispatch(getBookingCountByMonth({ year, month: i + 1 }))
-      )
-    ).then(results => {
-      const counts = results.map(r => r.payload?.count || 0);
-      setBookingCounts(counts);
-    });
-    // Revenue chart
-    Promise.all(
-      Array.from({ length: 12 }, (_, i) =>
-        dispatch(getMonthlyRevenue({ year, month: i + 1 }))
-      )
-    ).then(results => {
-      setRevenueCounts(results.map(r => r.payload?.revenue || 0));
-    });
-    // Technician chart
-    Promise.all(
-      Array.from({ length: 12 }, (_, i) =>
-        dispatch(getTechnicianCountByMonth({ year, month: i + 1 }))
-      )
-    ).then(results => {
-      setTechnicianCounts(results.map(r => r.payload?.count || 0));
-    });
+    setBookingCountLoading(true);
+    bookingAPI.getCountByMonth(lastYearForRevenue, lastMonthForRevenue)
+      .then(data => setLastMonthBookings(data.count))
+      .catch(() => setLastMonthBookings(0))
+      .finally(() => setBookingCountLoading(false));
 
     setRecentBookingsLoading(true);
     bookingAPI.getAll()
       .then(async (data) => {
-        // Sắp xếp theo CreatedAt giảm dần, lấy 5 booking mới nhất
+        // Sắp xếp theo createdAt giảm dần, lấy 5 booking gần nhất
         const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-
-        // Lấy tất cả customerId và serviceId duy nhất
-        const customerIds = [...new Set(sorted.map(b => b.customerId).filter(Boolean))];
-        const serviceIds = [...new Set(sorted.map(b => b.serviceId).filter(Boolean))];
-
-        // Tạo map cache
-        const userMap = {};
-        const serviceMap = {};
-
-        // Lấy thông tin user (song song) với deduplication
-        await Promise.all(customerIds.map(async id => {
+        // Lấy thông tin user cho từng booking với deduplication
+        const users = await Promise.all(sorted.map(async b => {
           try {
-            const user = await userAPI.getById(id);
-            userMap[id] = user?.fullName || user?.email || '';
+            if (b.customerId && b.customerId.length === 24) {
+              return await userAPI.getById(b.customerId);
+            } else {
+              return { fullName: '', email: '', avatarUrl: '' };
+            }
           } catch {
-            userMap[id] = '';
+            return { fullName: '', email: '', avatarUrl: '' };
           }
         }));
-
-        // Lấy thông tin service (song song) với deduplication
-        await Promise.all(serviceIds.map(async id => {
-          try {
-            const service = await serviceAPI.getById(id);
-            serviceMap[id] = service?.serviceName || '';
-          } catch {
-            serviceMap[id] = '';
-          }
-        }));
-
-        // Gán tên vào booking
-        const bookingsWithNames = sorted.map(booking => ({
-          ...booking,
-          customerName: userMap[booking.customerId] || '',
-          serviceName: serviceMap[booking.serviceId] || ''
-        }));
-
-        setRecentBookings(bookingsWithNames);
+        const withUser = sorted.map((b, i) => ({ ...b, user: users[i] }));
+        setRecentBookings(withUser);
       })
       .catch(() => setRecentBookings([]))
       .finally(() => setRecentBookingsLoading(false));
@@ -269,7 +194,7 @@ const AdminDashboard = () => {
       setRevenueThisYear(dataThisYear);
       setRevenueLastYear(dataLastYear);
     }).finally(() => setRevenueChartLoading(false));
-  }, [dispatch, currentYear, lastYear]);
+  }, [dispatch, currentYear, lastYear, isAuthenticated]);
 
   useEffect(() => {
     if (showDetailModal && selectedBooking && selectedBooking.technicianId) {

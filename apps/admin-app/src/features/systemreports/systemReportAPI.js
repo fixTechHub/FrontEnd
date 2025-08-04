@@ -12,12 +12,16 @@ export const systemReportAPI = {
     },
 
     // Update system report status
-    updateStatus: async (id, statusValue) => {
+    updateStatus: async (id, statusValue, resolutionNote, resolvedBy) => {
         try {
             if (typeof statusValue !== 'string') {
                 throw new Error('statusValue must be a string');
             }
-            const payload = { status: statusValue.toUpperCase() };
+            const payload = { 
+                status: statusValue.toUpperCase(),
+                resolutionNote: resolutionNote || null,
+                resolvedBy: resolvedBy || null
+            };
             const response = await ApiBE.patch(`/Dashboard/systemreports/${id}/status`, payload);
             return response.data;
         } catch (error) {

@@ -13,7 +13,8 @@ import warrantyReducer from '../features/warranty/warrantySlice';
 import serviceReducer from '../features/service/serviceSlice';
 import statisticReducer from '../features/statistics/statisticSlice';
 import commissionConfigReducer from '../features/commissionConfig/commissionSlice';
-import commissionReducer from '../features/commission/commissionSlice'; 
+import commissionReducer from '../features/commission/commissionSlice';
+import financialReportReducer from '../features/financialReport/financialReportSlice';
 
  const store = configureStore({
   reducer: {
@@ -31,7 +32,8 @@ import commissionReducer from '../features/commission/commissionSlice';
     service: serviceReducer,
     statistics: statisticReducer,
     commissionConfig: commissionConfigReducer,
-    commission: commissionReducer, 
+    commission: commissionReducer,
+    financialReport: financialReportReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

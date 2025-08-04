@@ -471,11 +471,15 @@ const getStatusBadgeClass = (status) => {
                    <td>{getTechnicianAvailability(tech.availability)}</td>
                    <td>
                      <div className="d-flex align-items-center gap-2">
-                       {tech.status === "PENDING" && (
-                         <button className="btn btn-sm btn-primary" onClick={() => handleOpenEditStatus(tech)}>
-                           <i className="ti ti-edit me-1"></i>Edit Status
-                         </button>
-                       )}
+                       <button 
+                         className={`btn btn-sm ${tech.status === "APPROVED" ? "btn-success" : tech.status === "REJECTED" ? "btn-danger" : "btn-primary"}`} 
+                         onClick={() => tech.status === "PENDING" ? handleOpenEditStatus(tech) : null}
+                         disabled={tech.status !== "PENDING"}
+                         style={{ opacity: tech.status !== "PENDING" ? 0.6 : 1 }}
+                       >
+                         <i className="ti ti-edit me-1"></i>
+                         {tech.status === "APPROVED" ? "APPROVED" : tech.status === "REJECTED" ? "REJECTED" : "Edit"}
+                       </button>
                        <Button className="management-action-btn" size="middle" onClick={() => handleOpenDetail(tech)}>
                           <EyeOutlined style={{marginRight: 4}} />View Detail
                         </Button>

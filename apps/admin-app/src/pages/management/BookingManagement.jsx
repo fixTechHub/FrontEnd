@@ -288,7 +288,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              <Select.Option value="IN_PROGRESS">IN PROGRESS</Select.Option>
              <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
              <Select.Option value="DONE">DONE</Select.Option>
-             <Select.Option value="AWAITING_DONE">AWAITING_DONE</Select.Option>
+             <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center">

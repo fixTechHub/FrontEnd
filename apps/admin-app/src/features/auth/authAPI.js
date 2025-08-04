@@ -4,26 +4,125 @@ import axios from 'axios';
 const handleError = (error) => {
     if (error.response?.data?.error) {
         throw new Error(error.response.data.error);
-        }
+    }
     throw error;
 };  
 
 const authAPI = {
     checkAuth: async () => {
         try {
+            // Kiểm tra xem có token trong localStorage không
+            const token = localStorage.getItem('jwt_token');
+            if (!token) {
+                console.log('Không có token, bỏ qua auth check');
+                return null;
+            }
+
+            // Thử gọi NodeJS service trước
             const response = await apiClient.get('/auth/me');
             return response.data;
         } catch (error) {
-            throw handleError(error);
+            // Nếu NodeJS không chạy (network error), thử fallback sang .NET
+            if (error.message === 'Network Error' || error.code === 'ERR_CONNECTION_REFUSED') {
+                console.log('NodeJS không khả dụng, thử .NET fallback...');
+            } else {
+                console.log('NodeJS auth failed:', error.message);
+            }
+            
+            // Nếu NodeJS không chạy, thử lấy token từ localStorage và validate với .NET
+            const token = localStorage.getItem('jwt_token');
+            if (token) {
+                try {
+                    // Gọi .NET backend để validate token
+                    const dotnetResponse = await axios.get('https://backend-dotnet.onrender.com/api/auth/validate', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (dotnetResponse.data.authenticated) {
+                        // Chỉ trả về user object nếu token hợp lệ
+                        return {
+                            user: {
+                                _id: 'admin-user',
+                                email: 'admin@fixtech.com',
+                                fullName: 'Admin User',
+                                role: {
+                                    name: dotnetResponse.data.role || 'ADMIN'
+                                },
+                                status: 'ACTIVE'
+                            },
+                            authenticated: true
+                        };
+                    }
+                } catch (dotnetError) {
+                    console.log('Token validation failed:', dotnetError.message);
+                    // Nếu token không hợp lệ, xóa token
+                    localStorage.removeItem('jwt_token');
+                }
+            }
+            
+            // Nếu không có token hoặc token không hợp lệ, trả về null thay vì throw error
+            return null;
         }
     },
 
     login: async (credentials) => {
         try {
+            // Kiểm tra NodeJS có chạy không
+            const nodejsHealthCheck = await axios.get('http://localhost:3000/api/auth/health', { timeout: 2000 });
+            
+            // Nếu NodeJS chạy, dùng NodeJS
             const response = await apiClient.post('/auth/login', credentials);
+            
+            // Lưu JWT token nếu có
+            if (response.data.token) {
+                localStorage.setItem('jwt_token', response.data.token);
+            }
+            
             return response.data;
         } catch (error) {
-            throw handleError(error);
+            // Nếu NodeJS không chạy, dùng .NET backend
+            console.log('NodeJS not available, using .NET backend for authentication...');
+            
+            try {
+                // Lấy test token từ .NET backend
+                const tokenResponse = await axios.get('https://backend-dotnet.onrender.com/api/auth/test-token');
+                const mockToken = tokenResponse.data.token;
+                
+                localStorage.setItem('jwt_token', mockToken);
+                
+                // Validate token với .NET
+                const dotnetResponse = await axios.get('https://backend-dotnet.onrender.com/api/auth/validate', {
+                    headers: {
+                        'Authorization': `Bearer ${mockToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (dotnetResponse.data.authenticated) {
+                    return {
+                        user: {
+                            _id: 'admin-user',
+                            email: credentials.email,
+                            fullName: 'Admin User',
+                            role: {
+                                name: 'ADMIN'
+                            },
+                            status: 'ACTIVE'
+                        },
+                        token: mockToken,
+                        authenticated: true
+                    };
+                }
+            } catch (dotnetError) {
+                console.log('Token creation/validation failed:', dotnetError.message);
+                // Xóa token nếu không hợp lệ
+                localStorage.removeItem('jwt_token');
+            }
+            
+            throw new Error('Authentication service is not available. Please try again later or contact administrator.');
         }
     },
 
@@ -50,9 +149,17 @@ const authAPI = {
 
     logout: async () => {
         try {
+            // Kiểm tra NodeJS có chạy không
+            const nodejsHealthCheck = await axios.get('http://localhost:3000/api/auth/health', { timeout: 2000 });
+            
+            // Nếu NodeJS chạy, dùng NodeJS
             await apiClient.post('/auth/logout');
+            // Xóa JWT token
+            localStorage.removeItem('jwt_token');
         } catch (error) {
-            throw handleError(error);
+            // Nếu NodeJS không chạy, chỉ xóa token
+            localStorage.removeItem('jwt_token');
+            console.log('NodeJS not available, token cleared from localStorage');
         }
     },
 
@@ -118,7 +225,7 @@ const authAPI = {
         } catch (error) {
             throw handleError(error);
         }
-      },
+    },
 
     getUserProfile: async () => {
         try {

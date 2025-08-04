@@ -36,6 +36,11 @@ export const checkAuthThunk = createAsyncThunk(
     try {
       const result = await authAPI.checkAuth();
       
+      // Nếu không có authentication, trả về null thay vì throw error
+      if (!result) {
+        return null;
+      }
+      
       // Kiểm tra nếu tài khoản bị vô hiệu hóa bởi admin
       if (result.user && result.user.status === 'INACTIVE_ADMIN') {
         // Đăng xuất người dùng và hiển thị thông báo
@@ -500,6 +505,17 @@ const authSlice = createSlice({
       })
       .addCase(checkAuthThunk.fulfilled, (state, action) => {
         state.loading = false;
+        
+        // Nếu payload là null, có nghĩa là không có authentication
+        if (!action.payload) {
+          state.isAuthenticated = false;
+          state.user = null;
+          state.technician = null;
+          state.verificationStatus = null;
+          return;
+        }
+        
+        // Nếu có payload, set authentication như bình thường
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.technician = action.payload.technician;

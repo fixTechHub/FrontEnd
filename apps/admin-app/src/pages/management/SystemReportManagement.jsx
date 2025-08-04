@@ -61,6 +61,9 @@ const SystemReportManagement = () => {
  const [sortField, setSortField] = useState('createdAt');
  const [sortOrder, setSortOrder] = useState('desc');
  const [submittedByUser, setSubmittedByUser] = useState(null);
+ const [adminUsers, setAdminUsers] = useState([]);
+ const [resolvedBy, setResolvedBy] = useState('');
+ const [resolutionNote, setResolutionNote] = useState('');
 
 
  // Redux selectors
@@ -87,8 +90,18 @@ const SystemReportManagement = () => {
      }
    };
 
+   const fetchAdminUsers = async () => {
+     try {
+       const allUsers = await userAPI.getAll();
+       const adminUsersList = allUsers.filter(user => user.role === 'ADMIN' || user.role === 'admin');
+       setAdminUsers(adminUsersList);
+     } catch (error) {
+       console.error('Failed to load admin users:', error);
+     }
+   };
 
    fetchSystemReports();
+   fetchAdminUsers();
  }, [dispatch]);
 
 
@@ -139,9 +152,9 @@ const SystemReportManagement = () => {
  };
 
 
- const handleUpdateStatus = async (id, newStatus) => {
+ const handleUpdateStatus = async (id, newStatus, note, resolvedByUser) => {
    try {
-     const updatedSystemReport = await systemReportAPI.updateStatus(id, statusValue);
+     const updatedSystemReport = await systemReportAPI.updateStatus(id, newStatus, note, resolvedByUser);
      dispatch(updateSystemReport(updatedSystemReport));
      message.success(`Status updated to ${newStatus}`);
      return updatedSystemReport;
@@ -181,16 +194,55 @@ const SystemReportManagement = () => {
 
  const openEditStatusModal = (record) => {
    setEditingStatusId(record.id);
-   setStatusValue(record.status);
+   setStatusValue(record.status || 'PENDING');
+   setResolvedBy(record.resolvedBy || '');
+   setResolutionNote(record.resolutionNote || '');
    setShowEditStatusModal(true);
+ };
+
+ const handleCloseEditModal = () => {
+   setShowEditStatusModal(false);
+   setEditingStatusId(null);
+   setStatusValue('');
+   setResolvedBy('');
+   setResolutionNote('');
  };
 
 
  const handleSaveStatus = async () => {
+   // Validation
+   if (!statusValue) {
+     message.error('Please select a status');
+     return;
+   }
+   
+   if (statusValue === 'RESOLVED' && !resolvedBy) {
+     message.error('Please select an admin user for resolved status');
+     return;
+   }
+   
+   if (statusValue === 'RESOLVED' && !resolutionNote.trim()) {
+     message.error('Please enter a resolution note for resolved status');
+     return;
+   }
+   
+   if (statusValue === 'REJECTED' && !resolutionNote.trim()) {
+     message.error('Please enter a reason for rejected status');
+     return;
+   }
+   
    if (editingStatusId && statusValue) {
-     await handleUpdateStatus(editingStatusId, statusValue.toUpperCase());
-     setShowEditStatusModal(false);
-     setEditingStatusId(null);
+     try {
+       await handleUpdateStatus(editingStatusId, statusValue.toUpperCase(), resolutionNote, resolvedBy);
+       setShowEditStatusModal(false);
+       setEditingStatusId(null);
+       // Reset form
+       setStatusValue('');
+       setResolvedBy('');
+       setResolutionNote('');
+     } catch (error) {
+       message.error('Failed to save status');
+     }
    }
  };
 
@@ -476,24 +528,89 @@ const SystemReportManagement = () => {
 
        {/* Modal Edit Status */}
        <Modal
-         title="Edit Status"
+         title="Edit System Report Status"
          open={showEditStatusModal}
-         onCancel={() => setShowEditStatusModal(false)}
+         onCancel={handleCloseEditModal}
          onOk={handleSaveStatus}
-         okText="Save"
+         okText="Save Changes"
          cancelText="Cancel"
+         width={600}
+         okButtonProps={{
+           disabled: !statusValue || 
+             (statusValue === 'RESOLVED' && (!resolvedBy || !resolutionNote.trim())) ||
+             (statusValue === 'REJECTED' && !resolutionNote.trim())
+         }}
        >
          <div style={{ marginBottom: 16 }}>
+           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+             Status <span style={{ color: 'red' }}>*</span>
+           </label>
            <Select
              value={statusValue}
              style={{ width: '100%' }}
              onChange={setStatusValue}
+             placeholder="Select status"
            >
              <Option value="PENDING">PENDING</Option>
              <Option value="IN_PROGRESS">IN PROGRESS</Option>
              <Option value="RESOLVED">RESOLVED</Option>
              <Option value="REJECTED">REJECTED</Option>
            </Select>
+         </div>
+         
+         <div style={{ marginBottom: 16 }}>
+           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+             Resolved By (Admin) 
+             {statusValue === 'RESOLVED' && <span style={{ color: 'red' }}>*</span>}
+           </label>
+           <Select
+             value={resolvedBy}
+             style={{ width: '100%' }}
+             onChange={setResolvedBy}
+             placeholder="Select admin user"
+             allowClear
+             disabled={statusValue !== 'RESOLVED'}
+           >
+             {adminUsers.map(user => (
+               <Option key={user.id} value={user.id}>
+                 {user.fullName || user.email} ({user.role})
+               </Option>
+             ))}
+           </Select>
+           {statusValue === 'RESOLVED' && !resolvedBy && (
+             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+               Please select an admin user for resolved status
+             </div>
+           )}
+         </div>
+         
+         <div style={{ marginBottom: 16 }}>
+           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+             Resolution Note
+             {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && <span style={{ color: 'red' }}>*</span>}
+           </label>
+           <Input.TextArea
+             value={resolutionNote}
+             onChange={(e) => setResolutionNote(e.target.value)}
+             placeholder={
+               statusValue === 'RESOLVED' ? "Enter resolution note..." :
+               statusValue === 'REJECTED' ? "Enter rejection reason..." :
+               "Enter note (optional)..."
+             }
+             rows={4}
+             style={{ width: '100%' }}
+             disabled={statusValue !== 'RESOLVED' && statusValue !== 'REJECTED'}
+           />
+           {statusValue === 'RESOLVED' && !resolutionNote.trim() && (
+             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+               Please enter a resolution note for resolved status
+             </div>
+           )}
+           {statusValue === 'REJECTED' && !resolutionNote.trim() && (
+             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+               Please enter a rejection reason
+             </div>
+           )}
          </div>
        </Modal>
      </div>

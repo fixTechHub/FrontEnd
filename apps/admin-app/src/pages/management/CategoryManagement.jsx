@@ -27,7 +27,6 @@ const CategoryManagement = () => {
   const categoryState = useSelector((state) => state.categories) || {};
   const { categories = [], loading = false, error = null, success = false } = categoryState;
 
-
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -46,12 +45,10 @@ const CategoryManagement = () => {
    setCurrentPage(page);
  };
 
-
  useEffect(() => {
    dispatch(fetchCategories());
    dispatch(fetchDeletedCategories());
  }, [dispatch]);
-
 
  useEffect(() => {
    if (error) {
@@ -67,7 +64,6 @@ const CategoryManagement = () => {
      dispatch(fetchCategories());
    }
  }, [error, success, dispatch]);
-
 
  const filteredCategories = categories.filter(cat =>
    cat.categoryName?.toLowerCase().includes(searchText.toLowerCase()) &&
@@ -100,100 +96,89 @@ useEffect(() => {
   const exportColumns = [
     { title: 'Category Name', dataIndex: 'categoryName' },
     { title: 'Icon', dataIndex: 'icon' },
-    { title: 'Status', dataIndex: 'status' },
+    { title: 'Status', dataIndex: 'isActive' },
     { title: 'Created At', dataIndex: 'createdAt' },
-    { title: 'Updated At', dataIndex: 'updatedAt' },
   ];
 
-  const exportData = sortedCategories.map(category => ({
-    categoryName: category.categoryName,
-    icon: category.icon,
-    status: category.isActive ? 'ACTIVE' : 'INACTIVE',
-    createdAt: formatDateTime(category.createdAt),
-    updatedAt: formatDateTime(category.updatedAt),
+  const exportData = categories.map(cat => ({
+    categoryName: cat.categoryName,
+    icon: cat.icon,
+    isActive: cat.isActive ? 'Active' : 'Inactive',
+    createdAt: formatDateTime(cat.createdAt),
   }));
 
-  createExportData(exportData, exportColumns, 'categories_export', 'Categories');
-}, [sortedCategories]);
+  window.currentPageExportData = exportData;
+  window.currentPageExportColumns = exportColumns;
+  window.currentPageExportFileName = 'categories_export';
+  window.currentPageExportTitle = 'Categories';
+}, [categories]);
 
-const totalPages = Math.ceil(filteredCategories.length / categoriesPerPage);
  const handleChange = (e) => {
    const { name, value, type, checked } = e.target;
    setFormData(prev => ({
      ...prev,
      [name]: type === 'checkbox' ? checked : value
    }));
+   // Clear validation error when user starts typing
+   if (validationErrors[name]) {
+     setValidationErrors(prev => ({ ...prev, [name]: null }));
+   }
  };
 
 const processErrors = (apiErrors) => {
-  const newErrors = {};
-  const generalErrors = [];
-  Object.entries(apiErrors).forEach(([key, msgs]) => {
-    const mappedKey = key === 'CategoryName' ? 'CategoryName' : key === 'Icon' ? 'Icon' : key;
-    const isTechError = msgs.some(msg =>
-      msg.includes('could not be converted') || msg.includes('System.')
-    );
-    if (isTechError) {
-      generalErrors.push('Nhập vào các trường * bắt buộc');
-    } else if ([ 'CategoryName', 'Icon' ].includes(mappedKey)) {
-      newErrors[mappedKey] = msgs;
-    } else {
-      generalErrors.push(...msgs);
-    }
-  });
-  if (generalErrors.length > 0) {
-    newErrors.general = generalErrors.join(', ');
+  const errors = {};
+  if (apiErrors && typeof apiErrors === 'object') {
+    Object.keys(apiErrors).forEach(key => {
+      if (Array.isArray(apiErrors[key])) {
+        errors[key] = apiErrors[key][0];
+      } else {
+        errors[key] = apiErrors[key];
+      }
+    });
   }
-  return newErrors;
+  return errors;
 };
 
 const handleSubmit = (e) => {
   e.preventDefault();
-  setValidationErrors({});
-  if (!formData.categoryName || !formData.icon) {
-    setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
+  
+  // Validation
+  const errors = {};
+  if (!formData.categoryName.trim()) {
+    errors.categoryName = 'Category name is required';
+  }
+  
+  if (Object.keys(errors).length > 0) {
+    setValidationErrors(errors);
     return;
   }
-  if (showAddModal) {
-    dispatch(createCategory(formData)).then((action) => {
-      if (action.payload && action.payload.errors) {
-        const apiErrors = action.payload.errors;
-        const processed = processErrors(apiErrors);
-        setValidationErrors(processed);
-      }
-    });
-  } else if (showEditModal && selectedCategory) {
-    dispatch(updateCategory({ id: selectedCategory.id, categoryData: formData })).then((action) => {
-      if (action.payload && action.payload.errors) {
-        const apiErrors = action.payload.errors;
-        const processed = processErrors(apiErrors);
-        setValidationErrors(processed);
-      }
-    });
+
+  if (selectedCategory) {
+    // Update
+    dispatch(updateCategory({ id: selectedCategory.id, categoryData: formData }));
+  } else {
+    // Create
+    dispatch(createCategory(formData));
   }
 };
-
 
  const handleSortChange = (value) => {
-  if (value === 'lasted') {
-    setSortField('createdAt');
-    setSortOrder('desc');
-  } else if (value === 'oldest') {
-    setSortField('createdAt');
-    setSortOrder('asc');
-  }
-};
+   if (value === 'lasted') {
+     setSortField('createdAt');
+     setSortOrder('desc');
+   } else if (value === 'oldest') {
+     setSortField('createdAt');
+     setSortOrder('asc');
+   }
+ };
 
-const handleSortByName = () => {
-  if (sortField === 'categoryName') {
-    setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
-  } else {
-    setSortField('categoryName');
-    setSortOrder('asc');
-  }
-};
+ const handleSortByName = () => {
+   setSortField('categoryName');
+   setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+ };
 
 const handleAddCategory = () => {
+  setSelectedCategory(null);
   setFormData(initialFormState);
   setValidationErrors({});
   setShowAddModal(true);
@@ -204,7 +189,7 @@ const handleEditCategory = (category) => {
   setFormData({
     categoryName: category.categoryName || '',
     icon: category.icon || '',
-    isActive: category.isActive ?? true,
+    isActive: category.isActive !== undefined ? category.isActive : true,
   });
   setValidationErrors({});
   setShowEditModal(true);
@@ -220,8 +205,6 @@ const confirmDelete = () => {
     dispatch(deleteCategory(selectedCategory.id));
   }
 };
-
-const deletedCategories = useSelector((state) => state.categories.deletedCategories) || [];
 
 const handleRestoreCategory = async (id) => {
   await dispatch(restoreCategory(id));
@@ -318,22 +301,40 @@ const isDataReady = categories.length > 0;
                    <td colSpan={4} className="text-center">Loading...</td>
                  </tr>
                ) : (
-                 currentCategories.map((cat) => (
-                   <tr key={cat.id}>
-                     <td>{cat.categoryName}</td>
+                 currentCategories.map((category) => (
+                   <tr key={category.id}>
+                     <td>{category.categoryName}</td>
                      <td>
-                       <IconDisplay icon={cat.icon} size={40} />
+                       <IconDisplay icon={category.icon} />
                      </td>
                      <td>
-                       <span className={`badge ${cat.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                         {cat.isActive ? 'ACTIVE' : 'INACTIVE'}
+                       <span className={`badge ${category.isActive ? 'bg-success' : 'bg-danger'}`}>
+                         {category.isActive ? 'Active' : 'Inactive'}
                        </span>
                      </td>
                      <td>
-                       <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditCategory(cat)} style={{ marginRight: 8 }}>
-                        Edit
-                      </Button>
-                       <Button className="management-action-btn" size="middle" danger onClick={() => handleDeleteCategory(cat)}>Delete</Button>
+                       <div className="d-flex gap-2">
+                         <Button
+                           type="text"
+                           icon={<EyeOutlined />}
+                           onClick={() => handleEditCategory(category)}
+                           size="small"
+                         />
+                         <Button
+                           type="text"
+                           icon={<EditOutlined />}
+                           onClick={() => handleEditCategory(category)}
+                           size="small"
+                         />
+                         <Button
+                           type="text"
+                           danger
+                           onClick={() => handleDeleteCategory(category)}
+                           size="small"
+                         >
+                           Delete
+                         </Button>
+                       </div>
                      </td>
                    </tr>
                  ))
@@ -341,187 +342,131 @@ const isDataReady = categories.length > 0;
              </tbody>
            </table>
          </div>
-
-
        )}
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, i) => (
-               <li
-                 key={i}
-                 className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}
-               >
-                 <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                   {i + 1}
-                 </button>
-               </li>
-             ))}
-           </ul>
-         </nav>
-       </div>
-
-
+       
+       {/* Pagination */}
+       {isDataReady && (
+         <div className="d-flex justify-content-between align-items-center mt-3">
+           <div>
+             Showing {indexOfFirstCategory + 1} to {Math.min(indexOfLastCategory, filteredCategories.length)} of {filteredCategories.length} entries
+           </div>
+           <div>
+             <Button
+               disabled={currentPage === 1}
+               onClick={() => handlePageChange(currentPage - 1)}
+               size="small"
+             >
+               Previous
+             </Button>
+             <span className="mx-2">
+               Page {currentPage} of {Math.ceil(filteredCategories.length / categoriesPerPage)}
+             </span>
+             <Button
+               disabled={currentPage >= Math.ceil(filteredCategories.length / categoriesPerPage)}
+               onClick={() => handlePageChange(currentPage + 1)}
+               size="small"
+             >
+               Next
+             </Button>
+           </div>
+         </div>
+       )}
      </div>
 
-     {/* Add Modal */}
+     {/* Add/Edit Modal */}
      <Modal
-       open={showAddModal}
-       onCancel={() => setShowAddModal(false)}
-       footer={null}
-       title="Add Category"
-       width={600}
+       title={selectedCategory ? 'Edit Category' : 'Add Category'}
+       open={showAddModal || showEditModal}
+       onOk={handleSubmit}
+       onCancel={() => {
+         setShowAddModal(false);
+         setShowEditModal(false);
+         setSelectedCategory(null);
+         setFormData(initialFormState);
+         setValidationErrors({});
+       }}
+       okText={selectedCategory ? 'Update' : 'Add'}
+       cancelText="Cancel"
+       confirmLoading={loading}
      >
-       <Form layout="vertical" onSubmit={handleSubmit}>
-         {validationErrors.general && (
-           <div style={{ color: 'red', marginBottom: 8 }}>
-             {validationErrors.general.includes('The dto field is required') ||
-              validationErrors.general.includes('could not be converted') ||
-              validationErrors.general.includes('System.')
-               ? 'Nhập vào các trường * bắt buộc'
-               : validationErrors.general}
-           </div>
-         )}
-         <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+       <Form layout="vertical">
+         <Form.Item
+           label="Category Name"
+           validateStatus={validationErrors.categoryName ? 'error' : ''}
+           help={validationErrors.categoryName}
+         >
            <Input
              name="categoryName"
              value={formData.categoryName}
              onChange={handleChange}
              placeholder="Enter category name"
-             required
            />
          </Form.Item>
-         <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+         
+         <Form.Item label="Icon">
            <IconUploader
              value={formData.icon}
-             onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-             placeholder="Upload icon image"
+             onChange={(icon) => setFormData(prev => ({ ...prev, icon }))}
            />
          </Form.Item>
+         
          <Form.Item label="Status">
            <Switch
-             name="isActive"
              checked={formData.isActive}
-             onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+             onChange={(checked) => setFormData(prev => ({ ...prev, isActive: checked }))}
              checkedChildren="Active"
              unCheckedChildren="Inactive"
            />
          </Form.Item>
-         <div className="d-flex justify-content-end">
-           <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
-             Cancel
-           </Button>
-           <Button type="primary" onClick={handleSubmit}>
-             Save
-           </Button>
-         </div>
        </Form>
      </Modal>
 
-     {/* Edit Modal */}
+     {/* Delete Confirmation Modal */}
      <Modal
-       open={showEditModal}
-       onCancel={() => setShowEditModal(false)}
-       footer={null}
-       title="Update Category"
-       width={600}
-     >
-       <Form layout="vertical" onSubmit={handleSubmit}>
-         {validationErrors.general && (
-           <div style={{ color: 'red', marginBottom: 8 }}>
-             {validationErrors.general.includes('The dto field is required') ||
-              validationErrors.general.includes('could not be converted') ||
-              validationErrors.general.includes('System.')
-               ? 'Nhập vào các trường * bắt buộc'
-               : validationErrors.general}
-           </div>
-         )}
-         <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
-           <Input
-             name="categoryName"
-             value={formData.categoryName}
-             onChange={handleChange}
-             placeholder="Enter category name"
-             required
-           />
-         </Form.Item>
-         <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-           <IconUploader
-             value={formData.icon}
-             onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-             placeholder="Upload icon image"
-           />
-         </Form.Item>
-         <Form.Item label="Status">
-           <Switch
-             name="isActive"
-             checked={formData.isActive}
-             onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-             checkedChildren="Active"
-             unCheckedChildren="Inactive"
-           />
-         </Form.Item>
-         <div className="d-flex justify-content-end">
-           <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
-             Cancel
-           </Button>
-           <Button type="primary" onClick={handleSubmit}>
-             Save
-           </Button>
-         </div>
-       </Form>
-     </Modal>
-
-     {/* Delete Modal */}
-     <Modal
+       title="Delete Category"
        open={showDeleteModal}
-       onCancel={() => setShowDeleteModal(false)}
-       footer={null}
-       title="Delete category"
+       onOk={confirmDelete}
+       onCancel={() => {
+         setShowDeleteModal(false);
+         setSelectedCategory(null);
+       }}
+       okText="Delete"
+       cancelText="Cancel"
+       confirmLoading={loading}
      >
-       <div className="modal-body text-center">
-         <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
-         <h4 className="mb-1">Delete category</h4>
-         <p className="mb-3">Bạn có chắc muốn xóa danh mục này?</p>
-         <div className="d-flex justify-content-center">
-           <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-           <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
-         </div>
-       </div>
+       <p>Are you sure you want to delete "{selectedCategory?.categoryName}"?</p>
      </Modal>
 
      {/* Restore Modal */}
      <Modal
+       title="Restore Deleted Categories"
        open={showRestoreModal}
        onCancel={() => setShowRestoreModal(false)}
        footer={null}
-       title="Restore Category"
        width={800}
      >
-       <div className="custom-datatable-filter table-responsive">
-         <table className="table datatable">
-           <thead className="thead-light">
+       <div className="table-responsive">
+         <table className="table">
+           <thead>
              <tr>
-               <th>NAME</th>
-               <th>ICON</th>
-               <th>STATUS</th>
-               <th>ACTION</th>
+               <th>Category Name</th>
+               <th>Icon</th>
+               <th>Action</th>
              </tr>
            </thead>
            <tbody>
-             {deletedCategories.map((cat) => (
+             {categoryState.deletedCategories?.map((cat) => (
                <tr key={cat.id}>
                  <td>{cat.categoryName}</td>
                  <td>
-                   <IconDisplay icon={cat.icon} size={40} />
+                   <IconDisplay icon={cat.icon} />
                  </td>
                  <td>
-                   <span className={`badge ${cat.isActive ? 'bg-success' : 'bg-danger'}`}>
-                     {cat.isActive ? 'Active' : 'Inactive'}
-                   </span>
-                 </td>
-                 <td>
-                   <Button size="small" type="primary" onClick={() => handleRestoreCategory(cat.id)}>
+                   <Button
+                     type="primary"
+                     size="small"
+                     onClick={() => handleRestoreCategory(cat.id)}
+                   >
                      Restore
                    </Button>
                  </td>
@@ -530,14 +475,10 @@ const isDataReady = categories.length > 0;
            </tbody>
          </table>
        </div>
-       <div className="d-flex justify-content-end mt-3">
-         <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
-       </div>
      </Modal>
    </div>
  );
 };
-
 
 export default CategoryManagement;
 

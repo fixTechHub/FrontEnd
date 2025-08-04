@@ -18,6 +18,7 @@ import AdminDashboard from "../pages/home/admin-dashboard";
 import ServiceManagement from "../pages/management/ServiceManagement";
 import CommissionConfigManagement from '../pages/management/CommissionConfigManagement';
 import CommissionConfigManager from '../pages/admin/commissionConfigManager';
+import FinancialManagement from '../pages/management/FinancialManagement';
 
 //Định nghĩa các route, xác định trang nào sẽ render vào <Outlet /> của AdminLayout, quyết định trang nào là management page.
 export default function AppRoutes() {
@@ -36,7 +37,11 @@ export default function AppRoutes() {
       <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
       <Route path="/technician/:technicianId/booking/:bookingId" element={<TechnicianJobList />} />
       <Route path="/technician/:technicianId/booking" element={<TechnicianJobList />} /> */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/admin" element={
+        <AdminRoute>
+          <AdminLayout />
+        </AdminRoute>
+      }>
         <Route path="booking-management" element={<BookingManagement />} />
         <Route path="coupon-management" element={<CouponManagement />} />
         <Route path="coupon-usage-management" element={<CouponUsageManagement />} />
@@ -49,9 +54,14 @@ export default function AppRoutes() {
         <Route path="admin-dashboard" element={<AdminDashboard />} />
         <Route path="service-management" element={<ServiceManagement/>}/>
         <Route path="commission-config-management" element={<CommissionConfigManagement />} />
+        <Route path="financial-management" element={<FinancialManagement />} />
         <Route index element={<AdminDashboard />} /> {/* Trang mặc định */}
       </Route>
-      <Route path="/admin/commission" element={<CommissionConfigManager />} />
+      <Route path="/admin/commission" element={
+        <AdminRoute>
+          <CommissionConfigManager />
+        </AdminRoute>
+      } />
       <Route path="*" element={<Navigate to="/admin/admin-dashboard" replace />} />
     </Routes>
   );
