@@ -17,6 +17,7 @@ import roleReducer from '../features/roles/roleSlice';
 import warrantyReducer from '../features/booking-warranty/warrantySlice';
 import feedbackReducer from '../features/feedbacks/feedbackSlice';
 import favoritesReducer from '../features/favorites/favoriteSlice';
+import technicianSubscriptionReducer from '../features/package/packageSlice';
 
 export const store = configureStore({
   reducer: {
@@ -37,7 +38,8 @@ export const store = configureStore({
     roles: roleReducer,
     warranty: warrantyReducer,
     feedback: feedbackReducer,
-    favorites: favoritesReducer
+    favorites: favoritesReducer,
+    technicianSubscription: technicianSubscriptionReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

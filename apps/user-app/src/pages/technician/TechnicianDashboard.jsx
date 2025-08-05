@@ -336,9 +336,10 @@ const CardsRow = () => (
 );
 
 function TechnicianDashboard() {
-    const { technician } = useSelector((state) => state.auth);
+    const { technician, user } = useSelector((state) => state.auth);
+    console.log(user);
+    
     const technicianId = technician._id;
-    console.log(technicianId);
 
     return (
         <>
