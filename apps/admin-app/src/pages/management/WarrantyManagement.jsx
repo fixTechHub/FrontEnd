@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllWarranties, updateWarrantyStatus } from '../../features/warranty/warrantySlice';
-import { Modal, Button, Select, Switch, message, Descriptions, Spin } from 'antd';
+import { fetchAllWarranties, updateWarrantyStatus, updateWarrantyDetails } from '../../features/warranty/warrantySlice';
+import { Modal, Button, Select, Switch, message, Descriptions, Spin, Form, Input, Row, Col } from 'antd';
 import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
@@ -27,6 +27,8 @@ const WarrantyManagement = () => {
   const [selected, setSelected] = useState(null);
   const [editStatus, setEditStatus] = useState('');
   const [editReviewed, setEditReviewed] = useState(false);
+  const [editResolutionNote, setEditResolutionNote] = useState('');
+  const [editRejectionReason, setEditRejectionReason] = useState('');
   const [userNames, setUserNames] = useState({});
   const [technicianNames, setTechnicianNames] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
@@ -133,19 +135,14 @@ const currentWarranties = sorted.slice(indexOfFirst, indexOfLast);
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Warranty Code', dataIndex: 'warrantyCode' },
     { title: 'Booking', dataIndex: 'bookingCode' },
     { title: 'Customer', dataIndex: 'customerName' },
     { title: 'Technician', dataIndex: 'technicianName' },
     { title: 'Service', dataIndex: 'serviceName' },
-    { title: 'Warranty Period', dataIndex: 'warrantyPeriod' },
-    { title: 'Start Date', dataIndex: 'startDate' },
-    { title: 'End Date', dataIndex: 'endDate' },
     { title: 'Status', dataIndex: 'status' },
     { title: 'Under Warranty', dataIndex: 'underWarranty' },
     { title: 'Reviewed', dataIndex: 'reviewed' },
-    { title: 'Created At', dataIndex: 'createdAt' },
-    { title: 'Updated At', dataIndex: 'updatedAt' },
+    { title: 'Created At', dataIndex: 'createdAt' }
   ];
 
   const exportData = sorted.map(warranty => ({
@@ -179,13 +176,22 @@ const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
    setSelected(w);
    setEditStatus(w.status);
    setEditReviewed(w.isReviewedByAdmin);
+   setEditResolutionNote(w.resolutionNote || '');
+   setEditRejectionReason(w.rejectionReason || '');
    setShowModal(true);
  };
 
 
  const handleUpdate = async () => {
    try {
-     await dispatch(updateWarrantyStatus({ id: selected.id, data: { status: editStatus, isReviewedByAdmin: editReviewed } })).unwrap();
+     const updateData = {
+       status: editStatus,
+       isReviewedByAdmin: editReviewed,
+       resolutionNote: editResolutionNote.trim() || null,
+       rejectionReason: editRejectionReason.trim() || null
+     };
+     
+     await dispatch(updateWarrantyDetails({ id: selected.id, data: updateData })).unwrap();
      message.success('Cập nhật thành công!');
      setShowModal(false);
    } catch (e) {
@@ -355,6 +361,7 @@ const handleSortByTechnician = () => {
                    <td>{userNames[w.customerId]|| 'UNKNOWN'}</td>
                    <td>{technicianNames[w.technicianId]|| 'UNKNOWN'}</td>
                    <td>{w.status}</td>
+                  
                    <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
                    <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
                    <td>
@@ -392,25 +399,54 @@ const handleSortByTechnician = () => {
      </div>
      <Modal
        open={showModal}
-       onCancel={() => setShowModal(false)}
+       onCancel={() => {
+         setShowModal(false);
+         setEditResolutionNote('');
+         setEditRejectionReason('');
+       }}
        onOk={handleUpdate}
-       title="Update warranty"
+       title="Update Warranty Details"
        okText="Update"
        confirmLoading={loading}
+       width={600}
      >
-       <div style={{ marginBottom: 16 }}>
-         <b>Status:</b>
-         <Select
-           value={editStatus}
-           onChange={setEditStatus}
-           options={statusOptions}
-           style={{ width: '100%' }}
-         />
-       </div>
-       <div>
-         <b>Admin reviewed: </b>
-         <Switch checked={editReviewed} onChange={setEditReviewed} />
-       </div>
+       <Form layout="vertical">
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Status" required>
+               <Select
+                 value={editStatus}
+                 onChange={setEditStatus}
+                 options={statusOptions}
+                 style={{ width: '100%' }}
+               />
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="Admin Reviewed">
+               <Switch checked={editReviewed} onChange={setEditReviewed} />
+             </Form.Item>
+           </Col>
+         </Row>
+         
+         <Form.Item label="Resolution Note">
+           <Input.TextArea
+             value={editResolutionNote}
+             onChange={(e) => setEditResolutionNote(e.target.value)}
+             placeholder="Nhập ghi chú giải quyết (nếu có)"
+             rows={3}
+           />
+         </Form.Item>
+         
+         <Form.Item label="Rejection Reason">
+           <Input.TextArea
+             value={editRejectionReason}
+             onChange={(e) => setEditRejectionReason(e.target.value)}
+             placeholder="Nhập lý do từ chối (nếu có)"
+             rows={3}
+           />
+         </Form.Item>
+       </Form>
      </Modal>
      {/* View Detail Modal */}
      {showDetailModal && selectedWarranty && (

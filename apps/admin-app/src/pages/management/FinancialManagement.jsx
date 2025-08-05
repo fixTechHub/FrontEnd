@@ -913,14 +913,6 @@ const FinancialManagement = () => {
                   { value: 'oldest', label: 'Oldest' },
                 ]}
               />
-              <Button 
-                type="primary" 
-                icon={<FileTextOutlined />}
-                onClick={handleExport}
-                style={{ marginLeft: 8 }}
-              >
-                Export
-              </Button>
             </div>
           </div>
 

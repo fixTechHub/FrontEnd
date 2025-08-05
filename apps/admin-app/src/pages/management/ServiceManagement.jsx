@@ -23,7 +23,6 @@ const initialFormState = {
   icon: '',
   isActive: true,
   description: '',
-  embedding: [],
 };
 
 const ServiceManagement = () => {
@@ -266,10 +265,6 @@ const ServiceManagement = () => {
     }
     // Chuẩn bị data gửi lên BE
     const dataToSend = { ...formData };
-    // Xử lý embedding nếu có
-    if (formData.embedding && formData.embedding.length > 0) {
-      dataToSend.embedding = formData.embedding;
-    }
     if (showAddModal) {
       dispatch(createService(dataToSend)).then((action) => {
         if (action.payload && action.payload.errors) {
@@ -390,7 +385,6 @@ const ServiceManagement = () => {
                     <tr key={svc.id}>
                       <td>{svc.serviceName}</td>
                       <td>{category ? category.categoryName : '-'}</td>
-                      <td>{svc.serviceType}</td>
                       <td>
                         <span className={`badge ${svc.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
                           {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -487,18 +481,6 @@ const ServiceManagement = () => {
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
-              <Form.Item label="Service Type">
-                <Select
-                  name="serviceType"
-                  value={formData.serviceType}
-                  onChange={(value) => handleChange({ target: { name: 'serviceType', value } })}
-                >
-                  <Select.Option value="FIXED">FIXED</Select.Option>
-                  <Select.Option value="COMPLEX">COMPLEX</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
           </Row>
 
           {formData.serviceType === 'COMPLEX' && (
@@ -565,18 +547,22 @@ const ServiceManagement = () => {
           </div>
         </Form>
       </Modal>
-      {/* Modal Xóa */}
+      {/* Delete Modal */}
       <Modal
-        title="Delete service"
         open={showDeleteModal}
         onCancel={() => setShowDeleteModal(false)}
-        onOk={confirmDelete}
-        okText="Delete"
-        cancelText="Cancel"
-        okButtonProps={{ danger: true }}
-        destroyOnHidden
+        footer={null}
+        title="Delete service"
       >
-        <p>Bạn có chắc chắn muốn xóa dịch vụ này?</p>
+        <div className="modal-body text-center">
+          <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
+          <h4 className="mb-1">Delete service</h4>
+          <p className="mb-3">Bạn có chắc muốn xóa dịch vụ này?</p>
+          <div className="d-flex justify-content-center">
+            <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+            <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+          </div>
+        </div>
       </Modal>
       {/* Restore Modal */}
       <Modal
@@ -592,7 +578,6 @@ const ServiceManagement = () => {
               <tr>
                 <th>NAME</th>
                 <th>CATEGORY</th>
-                <th>SERVICE TYPE</th>
                 <th>STATUS</th>
                 <th>ACTION</th>
               </tr>
@@ -602,7 +587,6 @@ const ServiceManagement = () => {
                 <tr key={svc.id}>
                   <td>{svc.serviceName}</td>
                   <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || '-'}</td>
-                  <td>{svc.serviceType}</td>
                   <td>
                     <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
                       {svc.isActive ? 'Active' : 'Inactive'}
@@ -639,7 +623,6 @@ const ServiceManagement = () => {
               <IconDisplay icon={selectedService.icon} size={60} />
             </div>
             <p><strong>Status:</strong> {selectedService.isActive ? 'Active' : 'Inactive'}</p>
-            <p><strong>Service Type:</strong> {selectedService.serviceType}</p>
             <p><strong>Estimated Market Price:</strong> {selectedService.estimatedMarketPrice ? `${selectedService.estimatedMarketPrice.min} - ${selectedService.estimatedMarketPrice.max}` : 'N/A'}</p>
             <p><strong>Description:</strong> {selectedService.description || 'N/A'}</p>
             <p><strong>Created At:</strong> {new Date(selectedService.createdAt).toLocaleDateString()}</p>

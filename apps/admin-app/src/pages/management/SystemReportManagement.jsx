@@ -93,7 +93,14 @@ const SystemReportManagement = () => {
    const fetchAdminUsers = async () => {
      try {
        const allUsers = await userAPI.getAll();
-       const adminUsersList = allUsers.filter(user => user.role === 'ADMIN' || user.role === 'admin');
+       console.log('All users for admin filter:', allUsers.map(u => ({ id: u.id, role: u.role, roleName: u.roleName })));
+       const adminUsersList = allUsers.filter(user => 
+         user.roleName === 'ADMIN' || 
+         user.role === 'ADMIN' || 
+         user.role === 'admin' ||
+         user.roleName === 'admin'
+       );
+       console.log('Admin users found:', adminUsersList.map(u => ({ id: u.id, fullName: u.fullName, roleName: u.roleName })));
        setAdminUsers(adminUsersList);
      } catch (error) {
        console.error('Failed to load admin users:', error);
@@ -108,9 +115,12 @@ const SystemReportManagement = () => {
  useEffect(() => {
    // Lấy tên user cho tất cả submittedBy
    const fetchUserNames = async () => {
-     const userIds = Array.from(new Set((filteredSystemReports || []).map(r => r.submittedBy)));
+     const submittedByIds = Array.from(new Set((filteredSystemReports || []).map(r => r.submittedBy)));
+     const resolvedByIds = Array.from(new Set((filteredSystemReports || []).map(r => r.resolvedBy)));
+     const allUserIds = [...submittedByIds, ...resolvedByIds].filter(id => id);
+     
      const userMapTemp = { ...userMap };
-     await Promise.all(userIds.map(async (id) => {
+     await Promise.all(allUserIds.map(async (id) => {
        if (id && !userMapTemp[id]) {
          try {
            const user = await userAPI.getById(id);
@@ -512,10 +522,10 @@ const SystemReportManagement = () => {
                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Submitted By</div>
                  <div>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || "UNKNOWN"}</div>
                </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolved By</div>
-                 <div>{selectedSystemReport.resolvedBy || 'Chưa có'}</div>
-               </div>
+                               <div>
+                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolved By</div>
+                  <div>{userMap[selectedSystemReport.resolvedBy] || selectedSystemReport.resolvedBy || 'Chưa có'}</div>
+                </div>
                <div style={{gridColumn: '1 / span 2'}}>
                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolution Note</div>
                  <div>{selectedSystemReport.resolutionNote || 'Chưa có'}</div>
@@ -573,7 +583,7 @@ const SystemReportManagement = () => {
            >
              {adminUsers.map(user => (
                <Option key={user.id} value={user.id}>
-                 {user.fullName || user.email} ({user.role})
+                 {user.fullName || user.email} ({user.roleName || user.role})
                </Option>
              ))}
            </Select>

@@ -17,11 +17,7 @@ export const userAPI = {
             const response = await ApiBE.get(`/Dashboard/users/${id}`);
             return response.data;
         } catch (error) {
-            // Don't log 404 errors as they're expected for missing users
-            if (error.response?.status !== 404) {
-            console.error('Get user by ID error:', error);
-            }
-            throw error;
+            return null; // Always return null instead of throwing error
         }
     },
 

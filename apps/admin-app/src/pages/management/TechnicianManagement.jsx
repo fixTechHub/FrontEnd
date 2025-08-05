@@ -608,20 +608,12 @@ const getStatusBadgeClass = (status) => {
                <div>{selectedTechnician.totalWithdrawn ?? 0}</div>
              </div>
              <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Đơn giá kiểm tra</div>
-               <div>{selectedTechnician.rates?.inspectionFee ?? '-'}</div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Phí kiểm tra (Inspection Fee)</div>
+               <div>{selectedTechnician.inspectionFee ?? 0}</div>
              </div>
              <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Đơn giá công (tier1)</div>
-               <div>{selectedTechnician.rates?.laborTiers?.tier1 ?? '-'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Đơn giá công (tier2)</div>
-               <div>{selectedTechnician.rates?.laborTiers?.tier2 ?? '-'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Đơn giá công (tier3)</div>
-               <div>{selectedTechnician.rates?.laborTiers?.tier3 ?? '-'}</div>
+               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Số năm kinh nghiệm</div>
+               <div>{selectedTechnician.experienceYears ?? 0}</div>
              </div>
              <div>
                <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Trạng thái làm việc</div>

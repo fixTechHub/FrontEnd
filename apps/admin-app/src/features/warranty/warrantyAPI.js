@@ -13,4 +13,9 @@ export const warrantyAPI = {
     // data: { status, isReviewedByAdmin }
     return await ApiBE.put(`/Warranty/status/${id}`, data);
   },
+  updateDetails: async (id, data) => {
+    // data: { status, isReviewedByAdmin, resolutionNote?, rejectionReason? }
+    const res = await ApiBE.put(`/Warranty/details/${id}`, data);
+    return res.data;
+  },
 }; 

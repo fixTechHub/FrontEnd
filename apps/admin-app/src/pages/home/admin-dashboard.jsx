@@ -17,6 +17,7 @@ import {
 } from 'chart.js';
 
 // API imports
+import ApiBE from '../../services/ApiBE';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import { serviceAPI } from '../../features/service/serviceAPI';
@@ -49,7 +50,14 @@ const AdminDashboard = () => {
     maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: { enabled: false }
+      tooltip: { 
+        enabled: true,
+        callbacks: {
+          label: function(context) {
+            return Math.round(context.parsed.y).toLocaleString();
+          }
+        }
+      }
     },
     scales: {
       x: {
@@ -60,7 +68,14 @@ const AdminDashboard = () => {
           maxRotation: 0
         }
       },
-      y: { display: false },
+      y: { 
+        display: false,
+        ticks: {
+          callback: function(value) {
+            return Math.round(value).toLocaleString();
+          }
+        }
+      },
     },
     elements: {
       point: { radius: 0 },
@@ -114,20 +129,42 @@ const AdminDashboard = () => {
       .then(async (data) => {
         // Sắp xếp theo createdAt giảm dần, lấy 5 booking gần nhất
         const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-        // Lấy thông tin user cho từng booking với deduplication
+        // Lấy thông tin user và service cho từng booking với deduplication
         const users = await Promise.all(sorted.map(async b => {
-          try {
-            if (b.customerId && b.customerId.length === 24) {
-              return await userAPI.getById(b.customerId);
-            } else {
-              return { fullName: '', email: '', avatarUrl: '' };
+          if (b.customerId && b.customerId.length === 24 && /^[0-9a-fA-F]{24}$/.test(b.customerId)) {
+            try {
+              const user = await userAPI.getById(b.customerId);
+              return user || { fullName: 'Unknown User', email: '', avatarUrl: '' };
+            } catch (error) {
+              console.error(`❌ Error fetching user for booking ${b.id}:`, error);
+              return { fullName: 'Unknown User', email: '', avatarUrl: '' };
             }
-          } catch {
-            return { fullName: '', email: '', avatarUrl: '' };
+          } else {
+            return { fullName: 'Unknown User', email: '', avatarUrl: '' };
           }
         }));
-        const withUser = sorted.map((b, i) => ({ ...b, user: users[i] }));
-        setRecentBookings(withUser);
+        
+        // Lấy thông tin service cho từng booking
+        const services = await Promise.all(sorted.map(async b => {
+          if (b.serviceId && b.serviceId.length === 24 && /^[0-9a-fA-F]{24}$/.test(b.serviceId)) {
+            try {
+              const service = await serviceAPI.getById(b.serviceId);
+              return service || { serviceName: 'Unknown Service', description: '' };
+            } catch (error) {
+              console.error(`❌ Error fetching service for booking ${b.id}:`, error);
+              return { serviceName: 'Unknown Service', description: '' };
+            }
+          } else {
+            return { serviceName: 'Unknown Service', description: '' };
+          }
+        }));
+        
+        const withUserAndService = sorted.map((b, i) => ({ 
+          ...b, 
+          user: users[i],
+          service: services[i]
+        }));
+        setRecentBookings(withUserAndService);
       })
       .catch(() => setRecentBookings([]))
       .finally(() => setRecentBookingsLoading(false));
@@ -135,21 +172,17 @@ const AdminDashboard = () => {
     setTopTechniciansLoading(true);   
     technicianAPI.getAll()
       .then(async (data) => {
-        // Sắp xếp theo ratingAverage giảm dần, lấy top 4
-        const sorted = [...data].sort((a, b) => b.ratingAverage - a.ratingAverage).slice(0, 4);
-        // Lấy thông tin user cho từng technician với deduplication
-        const users = await Promise.all(sorted.map(async t => {
-          try {
-            if (t.userId && t.userId.length === 24) {
-              return await userAPI.getById(t.userId);
-            } else {
-              return { fullName: '', email: '', avatarUrl: '' };
-            }
-          } catch {
-            return { fullName: '', email: '', avatarUrl: '' };
+        // Sắp xếp theo ratingAverage giảm dần, lấy top 5
+        const sorted = [...data].sort((a, b) => b.ratingAverage - a.ratingAverage).slice(0, 5);
+        // Sử dụng thông tin user đã có sẵn trong TechnicianDto từ BE
+        const withUser = sorted.map(t => ({ 
+          ...t, 
+          user: {
+            fullName: t.fullName || 'Unknown User',
+            email: t.email || '',
+            avatarUrl: ''
           }
         }));
-        const withUser = sorted.map((t, i) => ({ ...t, user: users[i] }));
         setTopTechnicians(withUser);
       })
       .catch(() => setTopTechnicians([]))
@@ -159,7 +192,7 @@ const AdminDashboard = () => {
     async function fetchYearlyRevenue(year) {
       const results = await Promise.all(
         Array.from({ length: 12 }, (_, i) =>
-          fetchMonthlyRevenue(year, i + 1).then(res => res.revenue || 0).catch(() => 0)
+          fetchMonthlyRevenue(year, i + 1).then(res => Math.round(res.revenue || 0)).catch(() => 0)
         )
       );
       return results;
@@ -174,20 +207,125 @@ const AdminDashboard = () => {
     }).finally(() => setRevenueChartLoading(false));
   }, [currentYear, lastYear]);
 
+  // Fetch booking counts by month
   useEffect(() => {
-    if (showDetailModal && selectedBooking && selectedBooking.technicianId) {
-      // Use deduplication logic for technician user fetch
-      const technicianId = selectedBooking.technicianId;
-      if (technicianId && technicianId.length === 24) {
-        userAPI.getById(technicianId)
-          .then(user => setTechnicianName(user?.fullName || user?.email || ''))
-          .catch(() => setTechnicianName(''));
+    const fetchBookingCounts = async () => {
+      try {
+        const counts = await Promise.all(
+          Array.from({ length: 12 }, (_, i) => 
+            bookingAPI.getBookingCountByMonth(currentYear, i + 1)
+          )
+        );
+        
+        const bookingData = counts.map(count => {
+          const value = count?.count || count || 0;
+          return typeof value === 'number' ? value : 0;
+        });
+        setBookingCounts(bookingData);
+        
+        // Calculate percent change
+        const currentMonth = new Date().getMonth();
+        const currentCount = bookingData[currentMonth] || 0;
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastCount = bookingData[lastMonth] || 0;
+        const change = lastCount === 0 ? 0 : ((currentCount - lastCount) / lastCount) * 100;
+        setPercentChange(change);
+      } catch (error) {
+        console.error('Error fetching booking counts:', error);
+      }
+    };
+    
+    fetchBookingCounts();
+  }, [currentYear]);
+
+  // Fetch technician counts by month
+  useEffect(() => {
+    const fetchTechnicianCounts = async () => {
+      try {
+        const counts = await Promise.all(
+          Array.from({ length: 12 }, (_, i) => 
+            technicianAPI.getTechnicianCountByMonth(currentYear, i + 1)
+          )
+        );
+        
+        const technicianData = counts.map(count => {
+          const value = count?.count || count || 0;
+          return typeof value === 'number' ? value : 0;
+        });
+        setTechnicianCounts(technicianData);
+        
+        // Calculate percent change
+        const currentMonth = new Date().getMonth();
+        const currentCount = technicianData[currentMonth] || 0;
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastCount = technicianData[lastMonth] || 0;
+        const change = lastCount === 0 ? 0 : ((currentCount - lastCount) / lastCount) * 100;
+        setPercentTechnicianChange(change);
+      } catch (error) {
+        console.error('Error fetching technician counts:', error);
+      }
+    };
+    
+    fetchTechnicianCounts();
+  }, [currentYear]);
+
+  // Fetch revenue data
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        // Fetch revenue counts for all months
+        const revenueCounts = await Promise.all(
+          Array.from({ length: 12 }, (_, i) => 
+            ApiBE.get(`/Dashboard/revenue?year=${currentYear}&month=${i + 1}`)
+          )
+        );
+        
+        const revenueData = revenueCounts.map(response => {
+          const value = response.data.revenue || 0;
+          return typeof value === 'number' ? Math.round(value) : 0;
+        });
+        setRevenueCounts(revenueData);
+        
+        // Set current revenue
+        const currentMonth = new Date().getMonth();
+        const currentRevenue = revenueData[currentMonth] || 0;
+        setCurrentRevenue(currentRevenue);
+        
+        // Calculate percent change
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastRevenueValue = revenueData[lastMonth] || 0;
+        const change = lastRevenueValue === 0 ? 0 : ((currentRevenue - lastRevenueValue) / lastRevenueValue) * 100;
+        setPercentRevenueChange(change);
+      } catch (error) {
+        console.error('Error fetching revenue data:', error);
+      }
+    };
+    
+    fetchRevenueData();
+  }, [currentYear]);
+
+  useEffect(() => {
+    const fetchTechnicianUser = async () => {
+      if (showDetailModal && selectedBooking && selectedBooking.technicianId) {
+        // Use deduplication logic for technician user fetch
+        const technicianId = selectedBooking.technicianId;
+        if (technicianId && technicianId.length === 24 && /^[0-9a-fA-F]{24}$/.test(technicianId)) {
+          try {
+            const user = await userAPI.getById(technicianId);
+            setTechnicianName(user?.fullName || user?.email || 'Unknown User');
+          } catch (error) {
+            console.error('Error fetching technician user:', error);
+            setTechnicianName('Unknown User');
+          }
+        } else {
+          setTechnicianName('Unknown User');
+        }
       } else {
         setTechnicianName('');
       }
-    } else {
-      setTechnicianName('');
-    }
+    };
+    
+    fetchTechnicianUser();
   }, [showDetailModal, selectedBooking]);
 
   return (
@@ -244,7 +382,7 @@ const AdminDashboard = () => {
               <div className="text-muted small mb-0">Total Revenue</div>
               <div className="d-flex justify-content-between align-items-center">
                 <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {currentRevenue.toLocaleString()}
+                  {Math.round(currentRevenue).toLocaleString()}
                 </div>
                 <div className={
                   `px-1 rounded ${percentRevenueChange > 0 ? 'bg-success text-white' : percentRevenueChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
@@ -334,8 +472,12 @@ const AdminDashboard = () => {
                   ) : recentBookings.map((booking) => (
                     <tr key={booking.id}>
                       <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.bookingCode}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.customerName}</td>
-                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.serviceName}</td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>
+                        {typeof booking.user?.fullName === 'string' ? booking.user.fullName : ''}
+                      </td>
+                      <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>
+                        {typeof booking.service?.serviceName === 'string' ? booking.service.serviceName : 'Unknown Service'}
+                      </td>
                       <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>
                         {booking.schedule?.startTime ? new Date(booking.schedule.startTime).toLocaleString() : ''}
                         {booking.schedule?.endTime
@@ -562,7 +704,7 @@ const AdminDashboard = () => {
                       )}
                     </div>
                     <div>
-                        <div style={{fontSize: '0.85rem', fontWeight: 500}}>{tech.user?.fullName || tech.user?.email || 'Technician'}</div>
+                        <div style={{fontSize: '0.85rem', fontWeight: 500}}>{tech.user?.fullName || tech.user?.email || ''}</div>
                         <div className="text-muted" style={{fontSize: '0.7rem'}}>Jobs: {tech.jobCompleted}</div>
                 </div>
                     </div>
