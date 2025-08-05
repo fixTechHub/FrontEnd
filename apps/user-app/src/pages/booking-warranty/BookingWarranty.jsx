@@ -17,7 +17,7 @@ import BookingWarrantySchedule from "./BookingWarrantySchedule";
 
 function BookingWarranty() {
     const styles = {
-       
+
         modalHeader: {
             background: 'rgb(0, 0, 0)',
             padding: '16px 24px',
@@ -102,6 +102,7 @@ function BookingWarranty() {
             backgroundColor: '#5a6268',
             transform: 'translateY(-1px)',
         },
+
     };
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -113,7 +114,7 @@ function BookingWarranty() {
     const [authError, setAuthError] = useState(null);
     const [solutionNote, setSolutionNote] = useState('');
     const [showResolveModal, setShowResolveModal] = useState(false);
-    
+
 
     useEffect(() => {
         if (bookingWarrantyId) {
@@ -159,7 +160,7 @@ function BookingWarranty() {
         const cleanup = onWarrantyUpdated((data) => {
             if (data.bookingWarrantyId === bookingWarrantyId) {
                 dispatch(getWarrantyInformationThunk(bookingWarrantyId));
-               
+
             }
         });
 
@@ -187,7 +188,7 @@ function BookingWarranty() {
             return;
         }
         try {
-            const formData = { status: 'DONE'};
+            const formData = { status: 'DONE' };
             await dispatch(confirmWarrantyThunk({ bookingWarrantyId, formData })).unwrap();
             toast.success('Bảo hành đã được đánh dấu là hoàn tất!', {
                 position: 'top-right',
@@ -202,7 +203,7 @@ function BookingWarranty() {
                 autoClose: 5000,
             });
         }
-       
+
     };
 
     const handleResolveWarranty = async (e) => {
@@ -243,20 +244,21 @@ function BookingWarranty() {
             <BreadcrumbBar title={'Thông tin chi tiết'} subtitle={'Booking Warranties'} />
             <div className="booking-new-module">
                 <div className="container">
-                    <BookingWizard steps={stepsForCurrentUser} activeStep={1} />
+                    <BookingWizard steps={stepsForCurrentUser} activeStep={4} />
                     <div className="booking-detail-info">
-                        <div className="row">
+                        <div className={`row ${!warranty?.bookingId?._id || !(warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed) ? 'equal-height-row' : ''}`}>
                             <div className="col-lg-6">
                                 <BookingWarrantyDetails
                                     bookingWarrantyId={bookingWarrantyId}
                                     onWarrantyUpdated={handleWarrantyUpdated}
                                 />
-                                <BookingWarrantySchedule 
-                                     bookingWarrantyId={bookingWarrantyId}
-                                     onWarrantyUpdated={handleWarrantyUpdated}
-                                />
+                                {(warranty?.bookingId?._id && (warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed)) && (
+                                    <BookingWarrantySchedule
+                                        bookingWarrantyId={bookingWarrantyId}
+                                        onWarrantyUpdated={handleWarrantyUpdated}
+                                    />
+                                )}
                             </div>
-                            
                             <div className="col-lg-6">
                                 {warranty?.bookingId?._id && (warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed) ? (
                                     <MessageBox
@@ -264,15 +266,16 @@ function BookingWarranty() {
                                         bookingWarrantyId={bookingWarrantyId}
                                     />
                                 ) : (
-                                    <div className="alert alert-warning">
-                                        You can't chat or call video.
-                                    </div>
+                                    <BookingWarrantySchedule
+                                        bookingWarrantyId={bookingWarrantyId}
+                                        onWarrantyUpdated={handleWarrantyUpdated}
+                                    />
                                 )}
                             </div>
                         </div>
                     </div>
                     <div className="text-end my-4">
-                        {user?.role?.name === 'CUSTOMER' && warranty.proposedSchedule && warranty.confirmedSchedule && warranty.status ==='CONFIRMED' && (
+                        {user?.role?.name === 'CUSTOMER' && warranty.proposedSchedule && warranty.confirmedSchedule && warranty.status === 'CONFIRMED' && (
                             <button
                                 className="btn btn-primary me-2"
                                 onClick={handleConfirm}
@@ -328,7 +331,7 @@ function BookingWarranty() {
                                 onChange={(e) => setSolutionNote(e.target.value)}
                                 placeholder="Mô tả giải pháp đã thực hiện..."
                                 rows="4"
-                           
+
                                 onFocus={(e) => Object.assign(e.target.style, styles.textareaFocus)}
                                 onBlur={(e) => Object.assign(e.target.style, styles.textarea)}
                             />

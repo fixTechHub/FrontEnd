@@ -7,6 +7,8 @@ export const getTechnicians = async (technicianId) => {
 
 export const  approveTechnician=  async (technicianId) => {
         try {
+            console.log(technicianId);
+            
             const response = await apiClient.put(`/admin/technicians/${technicianId}/approve`);
             return response.data;
         } catch (error) {

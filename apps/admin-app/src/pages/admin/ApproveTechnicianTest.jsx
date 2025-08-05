@@ -6,19 +6,21 @@ import { toast } from 'react-toastify';
 
 const ApproveTechnicianTest = ({ technicianId }) => {
     const dispatch = useDispatch();
-    const { loading } = useSelector(state => state.admin);
-    const { user } = useSelector(state => state.auth);
+    // const { loading } = useSelector(state => state.admin);
+    // const { user } = useSelector(state => state.auth);
 
     // This component should only be visible to Admins
-    if (user?.role?.name !== 'ADMIN') {
-        return <p>Bạn không có quyền làm việc này.</p>;
-    }
-
+    // if (user?.role?.name !== 'ADMIN') {
+    //     return <p>Bạn không có quyền làm việc này.</p>;
+    // }
+    
     const handleApprove = async () => {
         if (!technicianId) {
             toast.error('Không có thợ nào.');
             return;
         }
+    console.log(technicianId);
+
         try {
             await dispatch(approveTechnicianThunk(technicianId)).unwrap();
             toast.success('Duyệt thợ thành công!');
@@ -28,24 +30,23 @@ const ApproveTechnicianTest = ({ technicianId }) => {
     };
 
     return (
-        <div className="card mt-4">
+ 
           
-            <div className="card-body">
+         
                 <div className="input-group mb-3">
                     <button
                         className="btn btn-success"
-                        type="button"
+                        type="submit"
                         onClick={handleApprove}
-                        disabled={loading || !technicianId}
+                        // disabled={loading || !technicianId}
                     >
-                        {loading ? 'Đang duyệt...' : 'Duyệt'}
+                        {/* {loading ? 'Đang duyệt...' : 'Duyệt'} */}
+                        Duyệt
                     </button>
                 </div>
-                <small className="form-text text-muted">
-                    Thao tác này sẽ duyệt thợ, tự động tạo hợp đồng dịch vụ và gửi thông báo cho họ.
-                </small>
-            </div>
-        </div>
+               
+           
+    
     );
 };
 

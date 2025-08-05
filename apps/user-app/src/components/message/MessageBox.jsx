@@ -252,14 +252,14 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
                 <div className="incoming-call-overlay">
                     <div className="incoming-call-modal">
                         <div className="incoming-call-header">
-                            <h3 className="incoming-call-title">{incomingCall.name} is calling...</h3>
+                            <h3 className="incoming-call-title">{incomingCall.name} đang gọi...</h3>
                         </div>
                         <div className="incoming-call-actions">
                             <button className="btn btn-success btn-answer" onClick={handleAnswer}>
-                                <i className="fas fa-phone"></i> Answer
+                                <i className="fas fa-phone"></i> 
                             </button>
                             <button className="btn btn-danger btn-decline" onClick={handleDecline}>
-                                <i className="fas fa-phone-slash"></i> Decline
+                                <i className="fas fa-phone-slash"></i>
                             </button>
                         </div>
                     </div>

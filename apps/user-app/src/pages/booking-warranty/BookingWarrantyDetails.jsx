@@ -444,11 +444,11 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             fontSize: '1.1rem',
             transition: 'all 0.2s ease',
         },
-        detailValue: {
-            fontSize: '1rem',
-            color: '#343a40',
-            fontWeight: '500',
-        },
+        // detailValue: {
+        //     fontSize: '1rem',
+        //     color: '#343a40',
+        //     fontWeight: '500',
+        // },
         statusBadgeEnhanced: {
             display: 'inline-flex',
             alignItems: 'center',

@@ -19,6 +19,8 @@ import { categoryAPI } from "../../features/categories/categoryAPI";
 import { EyeOutlined } from '@ant-design/icons';
 import "../../../public/css/ManagementTableStyle.css";
 import ApproveTechnicianTest from '../admin/ApproveTechnicianTest';
+import { approveTechnicianThunk } from '../../features/admin/adminSlice';
+import { toast } from 'react-toastify';
 
 
 const TechnicianManagement = () => {
@@ -189,8 +191,19 @@ const TechnicianManagement = () => {
     try {
       dispatch(setLoading(true));
       console.log('--- Bắt đầu update status ---');
+     
       await technicianAPI.updateStatus(selectedTechnician.id, statusData.status, statusData.note);
       console.log('--- Update status thành công, fetch lại list ---');
+      console.log(statusData.status);
+      
+      if(statusData.status==='APPROVED'){
+        try {
+          await dispatch(approveTechnicianThunk(selectedTechnician.id)).unwrap();
+          toast.success('Duyệt thợ thành công!');
+        } catch (error) {
+          toast.error('Không thể duyệt thợ: ' + (error.message || 'Lỗi không xác định'));
+        }
+       }
       await fetchTechnicians();
       console.log('--- Fetch xong, show message và đóng modal ---');
       message.success('Technician status updated successfully!');
@@ -298,6 +311,8 @@ const TechnicianManagement = () => {
         return 'bg-secondary-transparent';
     }
   };
+
+ 
 
 
   return (
@@ -496,6 +511,7 @@ const TechnicianManagement = () => {
                 ) : (
                   selectedTechnician.fullName ? selectedTechnician.fullName[0].toUpperCase() : <i className="ti ti-user"></i>
                 )}
+
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 22, fontWeight: 600, marginBottom: 4 }}>{selectedTechnician.fullName || 'UNKNOWN'}</div>
@@ -504,6 +520,7 @@ const TechnicianManagement = () => {
                   <span style={{ marginRight: 12 }}><b>Status:</b> <span style={{ color: getTechnicianStatus(selectedTechnician.status) === 'APPROVED' ? '#52c41a' : getTechnicianStatus(selectedTechnician.status) === 'REJECTED' ? '#cf1322' : '#faad14' }}>{getTechnicianStatus(selectedTechnician.status)}</span></span>
                   <span><b>Phone:</b> {selectedTechnician.phone || "-"}</span>
                 </div>
+
               </div>
             </div>
             <div style={{ borderTop: '1px solid #f0f0f0', marginBottom: 16 }}></div>
@@ -626,13 +643,9 @@ const TechnicianManagement = () => {
               <div style={{ gridColumn: '1 / span 2' }}>
                 <div style={{ fontWeight: 500, color: '#888', marginBottom: 2 }}>Ghi chú</div>
                 <div>{selectedTechnician.note || '-'}</div>
+
               </div>
-              {selectedTechnician.status === 'APPROVED' && (
-                <div style={{ gridColumn: '1 / span 2' }}>
-                  <div style={{ fontWeight: 500, color: '#888', marginBottom: 2 }}>Ghi chú</div>
-                  <ApproveTechnicianTest technicianId={selectedTechnician._id} />
-                </div>
-              )}
+             
 
             </div>
           </div>
