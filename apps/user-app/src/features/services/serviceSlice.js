@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
-import { getPublicServices, getPublicServicesByCategoryId } from "./serviceAPI"
+import { getPublicServices, getPublicServicesByCategoryId, suggestServices } from "./serviceAPI"
 
 export const fetchAllPublicServices = createAsyncThunk(
     'services/fetchAllPublicServices', 
@@ -19,6 +19,14 @@ export const fetchPublicServicesByCategoryId = createAsyncThunk(
     }
 )
 
+export const fetchSuggestServices = createAsyncThunk(
+    'services/fetchSuggestServices',
+    async (descriptionSearch) => {
+        const res = await suggestServices(descriptionSearch);
+        return res.data.data;
+    }
+)
+
 const serviceSlice = createSlice({
     name: 'services',
     initialState: {
@@ -26,6 +34,9 @@ const serviceSlice = createSlice({
         servicesC: [],
         status: 'idle',
         error: null,
+        searchResults: [],
+        searchStatus: 'idle',
+        searchError: null,
     },
     reducers: {},
     extraReducers: (builder) => {
@@ -44,6 +55,19 @@ const serviceSlice = createSlice({
             .addCase(fetchPublicServicesByCategoryId.fulfilled, (state, action) => {
                 state.status = 'succeeded';
                 state.servicesC = action.payload;
+            })
+            // Thêm xử lý cho fetchSuggestServices
+            .addCase(fetchSuggestServices.pending, (state) => {
+                state.searchStatus = 'loading';
+                state.searchError = null;
+            })
+            .addCase(fetchSuggestServices.fulfilled, (state, action) => {
+                state.searchStatus = 'succeeded';
+                state.searchResults = action.payload;
+            })
+            .addCase(fetchSuggestServices.rejected, (state, action) => {
+                state.searchStatus = 'failed';
+                state.searchError = action.error.message;
             })
     }
 });

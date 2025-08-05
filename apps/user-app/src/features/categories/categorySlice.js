@@ -15,7 +15,7 @@ export const fetchTopPublicCategories = createAsyncThunk(
     'categories/fetchTopPublicCategories',
     async () => {
         const res = await getTopCategoriesByBookings();
-        // console.log(res.data.data);
+        console.log(res.data.data);
 
         return res.data.data;
     }
