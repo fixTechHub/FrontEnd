@@ -113,7 +113,6 @@ export default function AppRoutes() {
         } /> */}
 
       
-      {/* <Route
       <Route
         path="/technician/complete-profile"
         element={

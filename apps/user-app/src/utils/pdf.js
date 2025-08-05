@@ -123,7 +123,7 @@ const handlePrintPDF = (selectedReceipt) => {
                   [
                     'Phí Kiểm Tra',
                     '1',
-                    { text: formatCurrency(selectedReceipt?.bookingId?.technicianId?.rates?.inspectionFee || 0), alignment: 'right' },
+                    { text: formatCurrency(selectedReceipt?.bookingId?.technicianId?.inspectionFee || 0), alignment: 'right' },
                   ],
                   ...(selectedReceipt?.bookingId?.quote?.items?.length > 0
                     ? selectedReceipt.bookingId.quote.items.map((item) => [

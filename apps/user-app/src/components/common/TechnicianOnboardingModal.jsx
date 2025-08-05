@@ -27,12 +27,14 @@ const TechnicianOnboardingModal = () => {
     const profileCompleted = (() => {
       if (!technician) return false;
       const hasSpecialties = Array.isArray(technician.specialtiesCategories) && technician.specialtiesCategories.length > 0;
-      const hasCertificates = Array.isArray(technician.certificate) && technician.certificate.length > 0;
       const hasIdentification = technician.identification && technician.identification.trim() !== '';
       const hasFrontIdImage = technician.frontIdImage && technician.frontIdImage.trim() !== '';
       const hasBackIdImage = technician.backIdImage && technician.backIdImage.trim() !== '';
+      const hasBankAccount = technician.bankAccount && technician.bankAccount.bankName && technician.bankAccount.accountNumber;
+      const hasInspectionFee = technician.inspectionFee && Number(technician.inspectionFee) > 0;
+      // Certificates are optional, so not required for profile completion
       
-      return hasSpecialties && hasCertificates && hasIdentification && hasFrontIdImage && hasBackIdImage;
+      return hasSpecialties && hasIdentification && hasFrontIdImage && hasBackIdImage && hasBankAccount && hasInspectionFee;
     })();
     
     const needComplete = verificationStatus?.step === 'COMPLETE_PROFILE' && !profileCompleted && location.pathname !== '/technician/complete-profile';
