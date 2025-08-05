@@ -68,24 +68,28 @@ function Banner() {
     // Thêm state cho endTime nếu đặt lịch
     const [bookingEndTime, setBookingEndTime] = useState("");
     const [showSuggestions, setShowSuggestions] = useState(false);
-    
+    // Thêm state cho search loading
+    const [searchLoading, setSearchLoading] = useState(false);
+    // Tách riêng state cho gợi ý vị trí
+    const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { searchResults, searchStatus, searchError } = useSelector(state => state.services);
-    const { 
-        popularDescriptions, 
-        searchResults: suggestionSearchResults, 
-        popularLoading, 
-        searchLoading: suggestionSearchLoading 
+    const {
+        popularDescriptions,
+        searchResults: suggestionSearchResults,
+        popularLoading,
+        searchLoading: suggestionSearchLoading
     } = useSelector(state => state.suggestions);
-    
+
     const locationInputRef = useRef();
     const searchInputRef = useRef();
     const { suggestions: addressSuggestions, loading: addressLoading, error: addressError } = useHereAddressAutocomplete(bookingLocation);
 
     // Load gợi ý phổ biến khi component mount
     useEffect(() => {
-        dispatch(fetchPopularDescriptions(8));
+        dispatch(fetchPopularDescriptions(5));
     }, [dispatch]);
 
     // Tìm kiếm gợi ý khi user nhập
@@ -104,13 +108,18 @@ function Banner() {
 
     const handleSearch = (e) => {
         e.preventDefault();
-        if (!searchValue.trim()) return;
+        if (!searchValue.trim() || searchLoading) return;
+
+        setSearchLoading(true);
         dispatch(fetchSuggestServices(searchValue)).then(() => {
             setShowSearchModal(true);
             setSelectedServiceIdx(0);
             setShowBookingForm(false);
             setBookingDescription(searchValue);
             setStep(0);
+            setSearchLoading(false);
+        }).catch(() => {
+            setSearchLoading(false);
         });
     };
 
@@ -271,111 +280,94 @@ function Banner() {
                                             onFocus={() => setShowSuggestions(true)}
                                             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                         />
-                                        
+
                                         {/* Gợi ý mô tả */}
                                         {showSuggestions && (
-                                            <div style={{
-                                                position: 'absolute',
-                                                top: '100%',
-                                                left: 0,
-                                                right: 0,
-                                                zIndex: 1000,
-                                                background: '#fff',
-                                                border: '1px solid #ddd',
-                                                borderRadius: '4px',
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                                                maxHeight: '300px',
-                                                overflowY: 'auto'
-                                            }}>
+                                            <div className="banner-search-suggestions">
                                                 {/* Gợi ý tìm kiếm */}
                                                 {searchValue && searchValue.trim().length >= 2 && (
                                                     <>
                                                         {suggestionSearchLoading && (
-                                                            <div style={{ padding: '12px', textAlign: 'center', color: '#666' }}>
-                                                                <Spinner size="sm" animation="border" /> Đang tìm kiếm...
+                                                            <div className="banner-loading-container">
+                                                                <div className="spinner-border text-primary" role="status">
+                                                                    <span className="visually-hidden">Loading...</span>
+                                                                </div>
+                                                                Đang tìm kiếm...
                                                             </div>
                                                         )}
                                                         {suggestionSearchResults.length > 0 && (
                                                             <div>
-                                                                {/* <div style={{ 
-                                                                    padding: '8px 12px', 
-                                                                    background: '#f8f9fa', 
-                                                                    borderBottom: '1px solid #dee2e6',
-                                                                    fontSize: '12px',
-                                                                    fontWeight: 'bold',
-                                                                    color: '#495057'
-                                                                }}>
+                                                                <div className="banner-search-header banner-search-header-blue">
+                                                                    <i className="bx bx-search-alt" style={{ fontSize: '14px' }}></i>
                                                                     Kết quả tìm kiếm
-                                                                </div> */}
+                                                                </div>
                                                                 {suggestionSearchResults.map((suggestion, idx) => (
                                                                     <div
                                                                         key={`search-${idx}`}
-                                                                        style={{
-                                                                            padding: '10px 12px',
-                                                                            cursor: 'pointer',
-                                                                            borderBottom: '1px solid #f0f0f0',
-                                                                            display: 'flex',
-                                                                            justifyContent: 'space-between',
-                                                                            alignItems: 'center'
-                                                                        }}
+                                                                        className="banner-search-item"
                                                                         onMouseDown={() => handleSuggestionClick(suggestion)}
-                                                                        onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
-                                                                        onMouseLeave={(e) => e.target.style.background = '#fff'}
                                                                     >
-                                                                        <span>{suggestion.description}</span>
-                                                                        {/* <small style={{ color: '#6c757d' }}>
-                                                                            {suggestion.count} lần sử dụng
-                                                                        </small> */}
+                                                                        <div className="banner-search-avatar banner-search-avatar-blue">
+                                                                            <i className="bx bx-search-alt"></i>
+                                                                        </div>
+                                                                        <div className="banner-search-content">
+                                                                            <div className="banner-search-title">
+                                                                                {suggestion.description}
+                                                                            </div>
+                                                                            <div className="banner-search-meta">
+                                                                                <i className="bx bx-time" style={{ fontSize: '10px' }}></i>
+                                                                                {suggestion.count || 0} lần sử dụng
+                                                                            </div>
+                                                                        </div>
+                                                                        <i className="bx bx-chevron-right banner-search-arrow"></i>
                                                                     </div>
                                                                 ))}
                                                             </div>
                                                         )}
                                                     </>
                                                 )}
-                                                
+
                                                 {/* Gợi ý phổ biến */}
                                                 {(!searchValue || searchValue.trim().length < 2) && popularDescriptions.length > 0 && (
                                                     <div>
-                                                        {/* <div style={{ 
-                                                            padding: '8px 12px', 
-                                                            background: '#f8f9fa', 
-                                                            borderBottom: '1px solid #dee2e6',
-                                                            fontSize: '12px',
-                                                            fontWeight: 'bold',
-                                                            color: '#495057'
-                                                        }}>
+                                                        <div className="banner-search-header banner-search-header-pink">
+                                                            <i className="bx bx-star" style={{ fontSize: '14px' }}></i>
                                                             Mô tả phổ biến
-                                                        </div> */}
+                                                        </div>
                                                         {popularDescriptions.map((suggestion, idx) => (
                                                             <div
                                                                 key={`popular-${idx}`}
-                                                                style={{
-                                                                    padding: '10px 12px',
-                                                                    cursor: 'pointer',
-                                                                    borderBottom: '1px solid #f0f0f0',
-                                                                    display: 'flex',
-                                                                    justifyContent: 'space-between',
-                                                                    alignItems: 'center'
-                                                                }}
+                                                                className="banner-search-item"
                                                                 onMouseDown={() => handleSuggestionClick(suggestion)}
-                                                                onMouseEnter={(e) => e.target.style.background = '#f8f9fa'}
-                                                                onMouseLeave={(e) => e.target.style.background = '#fff'}
                                                             >
-                                                                <span>{suggestion.description}</span>
-                                                                {/* <small style={{ color: '#6c757d' }}>
-                                                                    {suggestion.count} lần sử dụng
-                                                                </small> */}
+                                                                <div className="banner-search-avatar banner-search-avatar-pink">
+                                                                    <i className="bx bx-star"></i>
+                                                                </div>
+                                                                <div className="banner-search-content">
+                                                                    <div className="banner-search-title">
+                                                                        {suggestion.description}
+                                                                    </div>
+                                                                    <div className="banner-search-meta">
+                                                                        <i className="bx bx-trending-up" style={{ fontSize: '10px' }}></i>
+                                                                        {suggestion.count || 0} lần sử dụng
+                                                                    </div>
+                                                                </div>
+                                                                <i className="bx bx-chevron-right banner-search-arrow"></i>
                                                             </div>
                                                         ))}
                                                     </div>
                                                 )}
-                                                
+
                                                 {/* Thông báo không có kết quả */}
-                                                {/* {searchValue && searchValue.trim().length >= 2 && !suggestionSearchLoading && suggestionSearchResults.length === 0 && (
-                                                    <div style={{ padding: '12px', textAlign: 'center', color: '#666' }}>
-                                                        Không tìm thấy gợi ý phù hợp
+                                                {searchValue && searchValue.trim().length >= 2 && !suggestionSearchLoading && suggestionSearchResults.length === 0 && (
+                                                    <div className="banner-search-empty">
+                                                        <i className="bx bx-search banner-search-empty-icon"></i>
+                                                        <div>Không tìm thấy gợi ý phù hợp</div>
+                                                        <div className="banner-search-empty-title">
+                                                            Thử nhập từ khóa khác
+                                                        </div>
                                                     </div>
-                                                )} */}
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -383,8 +375,21 @@ function Banner() {
                             </div>
 
                             <div className="search-btn">
-                                <button className="btn btn-primary" type="submit">
-                                    <i className="bx bx-search-alt"></i>
+                                <button
+                                    className={`btn ${searchLoading ? 'btn-secondary' : 'btn-primary'} banner-search-btn`}
+                                    type="submit"
+                                    disabled={searchLoading}
+                                >
+                                    {searchLoading ? (
+                                        <>
+                                            <div className="spinner-border spinner-border-sm me-2" role="status">
+                                                <span className="visually-hidden">Loading...</span>
+                                            </div>
+                                            <span>Tìm...</span>
+                                        </>
+                                    ) : (
+                                        <i className="bx bx-search-alt"></i>
+                                    )}
                                 </button>
                             </div>
                         </form>
@@ -396,237 +401,424 @@ function Banner() {
             </section>
 
             {/* Modal kết quả tìm kiếm dịch vụ và đặt lịch */}
-            <Modal show={showSearchModal} onHide={() => { setShowSearchModal(false); setShowBookingForm(false); setStep(0); }}>
-                <Modal.Header closeButton>
-                    <Modal.Title>
+            <Modal
+                show={showSearchModal}
+                onHide={() => { setShowSearchModal(false); setShowBookingForm(false); setStep(0); }}
+            >
+                <Modal.Header
+                    closeButton
+                    className="banner-modal-header"
+                >
+                    <Modal.Title className="banner-modal-title">
                         {step === 0 && 'Kết quả dịch vụ phù hợp'}
                         {step === 1 && 'Chọn loại đặt lịch'}
                         {step === 2 && 'Đặt lịch dịch vụ'}
                     </Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
+                <Modal.Body className="banner-modal-body">
                     {/* Bước 1: Chọn dịch vụ */}
                     {step === 0 && (
                         <>
-                            {searchStatus === 'loading' && <div>Đang tìm kiếm...</div>}
-                            {searchError && <div className="alert alert-danger">{searchError}</div>}
+                            {searchStatus === 'loading' && (
+                                <div className="banner-loading-container">
+                                    <div className="spinner-border text-primary" role="status">
+                                        <span className="visually-hidden">Loading...</span>
+                                    </div>
+                                    <div className="banner-loading-text">
+                                        <div className="banner-loading-title">Đang tìm kiếm dịch vụ phù hợp...</div>
+                                        <div className="banner-loading-subtitle">Dựa trên mô tả: "{searchValue}"</div>
+                                    </div>
+                                </div>
+                            )}
+                            {searchError && (
+                                <div className="alert alert-danger banner-alert-danger">
+                                    <i className="bx bx-error-circle me-2"></i>
+                                    {searchError}
+                                </div>
+                            )}
                             {searchStatus === 'succeeded' && searchResults.length === 0 && (
-                                <div>Không tìm thấy dịch vụ phù hợp.</div>
+                                <div className="banner-empty-container">
+                                    <i className="bx bx-search banner-empty-icon"></i>
+                                    <div className="banner-empty-title">Không tìm thấy dịch vụ phù hợp</div>
+                                    <div className="banner-empty-subtitle">Thử nhập mô tả khác hoặc liên hệ hỗ trợ</div>
+                                </div>
                             )}
                             {searchStatus === 'succeeded' && searchResults.length > 0 && (
-                                <form>
-                                    <ul style={{ listStyle: 'none', padding: 0 }}>
+                                <div>
+                                    {/* Header thông tin tìm kiếm */}
+                                    <div className="banner-info-header">
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                            <i className="bx bx-search-alt banner-info-header-icon"></i>
+                                            <div className="banner-info-header-title">
+                                                Dịch vụ phù hợp với mô tả của bạn
+                                            </div>
+                                        </div>
+                                        <div className="banner-info-header-subtitle">
+                                            Tìm thấy {searchResults.length} dịch vụ dựa trên: "{searchValue}"
+                                        </div>
+                                    </div>
+
+                                    {/* Danh sách dịch vụ */}
+                                    <div className="banner-service-list">
                                         {searchResults.map((service, idx) => (
-                                            <li key={service._id || idx} style={{ marginBottom: 10 }}>
-                                                <label style={{ cursor: 'pointer', width: '100%' }}>
-                                                    <input
-                                                        type="radio"
-                                                        name="selectedService"
-                                                        checked={selectedServiceIdx === idx}
-                                                        onChange={() => setSelectedServiceIdx(idx)}
-                                                        style={{ marginRight: 8 }}
-                                                    />
-                                                    <strong>{service.serviceName}</strong>
-                                                    {service.price && (
-                                                        <span> - {service.price.toLocaleString()} VNĐ</span>
+                                            <div
+                                                key={service._id || idx}
+                                                className={`banner-service-card ${selectedServiceIdx === idx ? 'selected' : ''}`}
+                                                onClick={() => setSelectedServiceIdx(idx)}
+                                            >
+                                                {/* Badge mức độ phù hợp */}
+                                                {idx === 0 && (
+                                                    <div className="banner-service-badge-best">
+                                                        <i className="bx bx-star" style={{ fontSize: '10px' }}></i>
+                                                        Phù hợp nhất
+                                                    </div>
+                                                )}
+                                                {idx === 1 && (
+                                                    <div className="banner-service-badge-good">
+                                                        <i className="bx bx-star" style={{ fontSize: '10px' }}></i>
+                                                        Phù hợp tốt
+                                                    </div>
+                                                )}
+
+                                                {/* Radio button */}
+                                                <div className={`banner-service-radio ${selectedServiceIdx === idx ? 'selected' : ''}`}>
+                                                    {selectedServiceIdx === idx && (
+                                                        <div className="banner-service-radio-dot"></div>
                                                     )}
-                                                    <div className="text-muted">{service.description}</div>
-                                                </label>
-                                            </li>
+                                                </div>
+
+                                                {/* Nội dung dịch vụ */}
+                                                <div className="banner-service-content">
+                                                    <div className="banner-service-header">
+                                                        <div style={{ flex: 1 }}>
+                                                            <div className="banner-service-title">
+                                                                {service.serviceName}
+                                                            </div>
+                                                            <div className="banner-service-description">
+                                                                {service.description}
+                                                            </div>
+                                                        </div>
+                                                        {service.price && (
+                                                            <div className="banner-service-price">
+                                                                {service.price.toLocaleString()} VNĐ
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
                                         ))}
-                                    </ul>
-                                </form>
+                                    </div>
+
+                                    {/* Thông tin thêm */}
+                                    <div className="banner-info-box">
+                                        <i className="bx bx-info-circle banner-info-icon"></i>
+                                        <span>
+                                            Dịch vụ được sắp xếp theo mức độ phù hợp với mô tả của bạn.
+                                            Dịch vụ đầu tiên là phù hợp nhất.
+                                        </span>
+                                    </div>
+                                </div>
                             )}
                         </>
                     )}
+
                     {/* Bước 2: Chọn loại đặt lịch */}
                     {step === 1 && (
-                        <form>
-                            <div className="mb-3">
-                                <section className="">
-                                    <div className="container">
-                                        <div className="row align-items-center">
-                                            <div style={{ justifyContent: 'space-between' }} className="feature-item flex-fill" onClick={() => setBookingType('urgent')}>
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <span className="feature-icon">
-                                                        <i className="bx bxs-info-circle"></i>
-                                                    </span>
-                                                    <div>
-                                                        <h6 className="mb-1">Đặt ngay</h6>
-                                                        <p>(Sẽ đến trong 20 - 40 phút)</p>
-                                                    </div>
-                                                </div>
-                                                <input
-                                                    type="radio"
-                                                    name="bookingType"
-                                                    value="urgent"
-                                                    checked={bookingType === 'urgent'}
-                                                    onChange={() => setBookingType('urgent')}
-                                                />
+                        <div>
+                            <div className="banner-info-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <i className="bx bx-calendar banner-info-header-icon"></i>
+                                    <div className="banner-info-header-title">
+                                        Chọn loại đặt lịch
+                                    </div>
+                                </div>
+                                <div className="banner-info-header-subtitle">
+                                    Bạn muốn đặt lịch ngay hay lên lịch trước?
+                                </div>
+                            </div>
+
+                            <div className="banner-booking-cards">
+                                <div
+                                    className={`banner-booking-card ${bookingType === 'urgent' ? 'selected' : ''}`}
+                                    onClick={() => setBookingType('urgent')}
+                                >
+                                    {/* Radio button */}
+                                    <div className={`banner-service-radio ${bookingType === 'urgent' ? 'selected' : ''}`} style={{ top: '16px', right: '16px', left: 'auto' }}>
+                                        {bookingType === 'urgent' && (
+                                            <div className="banner-service-radio-dot"></div>
+                                        )}
+                                    </div>
+
+                                    <div className="banner-booking-content">
+                                        <div className="banner-booking-icon banner-booking-icon-urgent">
+                                            <i className="bx bxs-bolt"></i>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div className="banner-booking-title">
+                                                Đặt ngay
                                             </div>
-
-                                            <div style={{ justifyContent: 'space-between' }} className="feature-item flex-fill" onClick={() => setBookingType('scheduled')}>
-
-                                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                                    <span className="feature-icon">
-                                                        <i className="bx bx-exclude"></i>
-                                                    </span>
-                                                    <div>
-                                                        <h6 className="mb-1">Đặt lịch</h6>
-                                                        <p>(Chọn thời gian linh hoạt theo lịch của bạn)</p>
-                                                    </div>
-                                                </div>
-                                                <input
-                                                    type="radio"
-                                                    name="bookingType"
-                                                    value="scheduled"
-                                                    checked={bookingType === 'scheduled'}
-                                                    onChange={() => setBookingType('scheduled')}
-                                                />
+                                            <div className="banner-booking-subtitle">
+                                                Kỹ thuật viên sẽ đến trong 20-40 phút
                                             </div>
                                         </div>
                                     </div>
-                                </section>
+                                </div>
+
+                                <div
+                                    className={`banner-booking-card ${bookingType === 'scheduled' ? 'selected' : ''}`}
+                                    onClick={() => setBookingType('scheduled')}
+                                >
+                                    {/* Radio button */}
+                                    <div className={`banner-service-radio ${bookingType === 'scheduled' ? 'selected' : ''}`} style={{ top: '16px', right: '16px', left: 'auto' }}>
+                                        {bookingType === 'scheduled' && (
+                                            <div className="banner-service-radio-dot"></div>
+                                        )}
+                                    </div>
+
+                                    <div className="banner-booking-content">
+                                        <div className="banner-booking-icon banner-booking-icon-scheduled">
+                                            <i className="bx bx-calendar"></i>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div className="banner-booking-title">
+                                                Đặt lịch
+                                            </div>
+                                            <div className="banner-booking-subtitle">
+                                                Chọn thời gian linh hoạt theo lịch của bạn
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
-                        </form>
+                        </div>
                     )}
+
                     {/* Bước 3: Form booking */}
                     {step === 2 && (
-                        <form onSubmit={handleSubmitBooking}>
-                            {/* Hiển thị dịch vụ đã chọn */}
-                            <div className="mb-3 p-2" style={{ background: '#f6f6f6', borderRadius: 8 }}>
-                                <div><b>Dịch vụ đã chọn:</b> {searchResults[selectedServiceIdx]?.serviceName} {searchResults[selectedServiceIdx]?.price && (<span>- {searchResults[selectedServiceIdx].price.toLocaleString()} VNĐ</span>)}
+                        <div>
+                            <div className="banner-info-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <i className="bx bx-edit banner-info-header-icon"></i>
+                                    <div className="banner-info-header-title">
+                                        Thông tin đặt lịch
+                                    </div>
                                 </div>
-                                <div className="text-muted">{searchResults[selectedServiceIdx]?.description}</div>
+                                <div className="banner-info-header-subtitle">
+                                    Vui lòng điền đầy đủ thông tin để đặt lịch dịch vụ
+                                </div>
                             </div>
-                            <div className="mb-3" style={{ position: 'relative' }}>
-                                <label className="form-label">Vị trí <span className="text-danger">*</span></label>
-                                <input
-                                    type="text"
-                                    className="form-control"
-                                    value={bookingLocation}
-                                    onChange={e => {
-                                        setBookingLocation(e.target.value);
-                                        setShowSuggestions(true);
-                                    }}
-                                    onFocus={() => setShowSuggestions(true)}
-                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                    ref={locationInputRef}
-                                    required
-                                    autoComplete="off"
-                                    placeholder="Nhập địa chỉ, ví dụ: 105 lê ..."
-                                />
-                                {addressLoading && <div style={{ fontSize: 13, color: '#888' }}>Đang tìm gợi ý...</div>}
-                                {addressError && <div style={{ color: 'red', fontSize: 13 }}>{addressError}</div>}
-                                {showSuggestions && addressSuggestions.length > 0 && (
-                                    <ul style={{
-                                        position: 'absolute',
-                                        zIndex: 10,
-                                        background: '#fff',
-                                        border: '1px solid #ddd',
-                                        width: '100%',
-                                        maxHeight: 180,
-                                        overflowY: 'auto',
-                                        margin: 0,
-                                        padding: 0,
-                                        listStyle: 'none',
-                                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                                    }}>
-                                        {addressSuggestions.map((s, idx) => (
-                                            <li
-                                                key={s.id || s.title + idx}
-                                                style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}
-                                                onMouseDown={() => {
-                                                    setBookingLocation(s.address?.label || s.title);
-                                                    setShowSuggestions(false);
-                                                    setTimeout(() => locationInputRef.current?.blur(), 0);
-                                                }}
-                                            >
-                                                {s.address?.label || s.title}
-                                            </li>
-                                        ))}
-                                    </ul>
+
+                            <form onSubmit={handleSubmitBooking}>
+                                {/* Hiển thị dịch vụ đã chọn */}
+                                <div className="banner-selected-service">
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                        <i className="bx bx-check-circle" style={{ fontSize: '18px' }}></i>
+                                        <div className="banner-selected-service-title">
+                                            Dịch vụ đã chọn
+                                        </div>
+                                    </div>
+                                    <div className="banner-selected-service-info">
+                                        {searchResults[selectedServiceIdx]?.serviceName}
+                                        {searchResults[selectedServiceIdx]?.price && (
+                                            <span> - {searchResults[selectedServiceIdx].price.toLocaleString()} VNĐ</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="mb-3" style={{ position: 'relative' }}>
+                                    <label className="form-label banner-form-label">
+                                        Vị trí <span className="text-danger">*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className={`form-control banner-form-input ${errors.addressInput ? 'error' : ''}`}
+                                        value={bookingLocation}
+                                        onChange={e => {
+                                            setBookingLocation(e.target.value);
+                                            if (e.target.value.trim().length >= 3) {
+                                                setShowLocationSuggestions(true);
+                                            } else {
+                                                setShowLocationSuggestions(false);
+                                            }
+                                        }}
+                                        onFocus={() => {
+                                            if (bookingLocation.trim().length >= 3) {
+                                                setShowLocationSuggestions(true);
+                                            }
+                                        }}
+                                        onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+                                        ref={locationInputRef}
+                                        required
+                                        autoComplete="off"
+                                        placeholder="Nhập địa chỉ, ví dụ: 105 Lê Duẩn, Đà Nẵng"
+                                    />
+                                    {addressLoading && <div className="banner-form-loading">Đang tìm gợi ý...</div>}
+                                    {addressError && <div className="banner-form-error">{addressError}</div>}
+                                    {showLocationSuggestions && addressSuggestions.length > 0 && (
+                                        <ul className="banner-address-suggestions">
+                                            {addressSuggestions.map((s, idx) => (
+                                                <li
+                                                    key={s.id || s.title + idx}
+                                                    className="banner-address-item"
+                                                    onMouseDown={() => {
+                                                        setBookingLocation(s.address?.label || s.title);
+                                                        setShowLocationSuggestions(false);
+                                                        setTimeout(() => locationInputRef.current?.blur(), 0);
+                                                    }}
+                                                >
+                                                    {s.address?.label || s.title}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                    {errors.addressInput && <div className="banner-form-error">{errors.addressInput}</div>}
+                                </div>
+
+                                <div className="mb-3">
+                                    <label className="form-label banner-form-label">
+                                        Mô tả tình trạng <span className="text-danger">*</span>
+                                    </label>
+                                    <textarea
+                                        className={`form-control banner-form-textarea ${errors.description ? 'error' : ''}`}
+                                        value={bookingDescription}
+                                        onChange={e => setBookingDescription(e.target.value)}
+                                        required
+                                        placeholder="Mô tả chi tiết tình trạng bạn gặp phải..."
+                                    />
+                                    {errors.description && <div className="banner-form-error">{errors.description}</div>}
+                                </div>
+
+                                {/* Nếu là scheduled thì nhập ngày, giờ bắt đầu, giờ kết thúc */}
+                                {bookingType === 'scheduled' && (
+                                    <div className="banner-schedule-section">
+                                        <div className="banner-schedule-header">
+                                            <i className="bx bx-time banner-info-icon"></i>
+                                            <span className="banner-schedule-title">Thông tin lịch hẹn</span>
+                                        </div>
+
+                                        <div className="banner-schedule-inputs">
+                                            <div className="banner-schedule-input-group">
+                                                <label className="form-label banner-form-label">
+                                                    Ngày đặt lịch <span className="text-danger">*</span>
+                                                </label>
+                                                <input
+                                                    type="date"
+                                                    className={`form-control banner-form-input ${errors.scheduleDate ? 'error' : ''}`}
+                                                    value={bookingDate}
+                                                    onChange={e => setBookingDate(e.target.value)}
+                                                    required
+                                                />
+                                                {errors.scheduleDate && <div className="banner-form-error">{errors.scheduleDate}</div>}
+                                            </div>
+                                        </div>
+
+                                        <div className="banner-schedule-time-inputs">
+                                            <label className="form-label banner-form-label">
+                                                Thời gian <span className="text-danger">*</span>
+                                            </label>
+
+                                            <div className="banner-schedule-time-inputs-row">
+                                                <div className="banner-schedule-input-group">
+                                                    <input
+                                                        type="time"
+                                                        className={`form-control banner-form-input ${errors.startTime ? 'error' : ''}`}
+                                                        value={bookingTime}
+                                                        onChange={e => setBookingTime(e.target.value)}
+                                                        required
+                                                        placeholder="Từ"
+                                                    />
+                                                    {errors.startTime && <div className="banner-form-error">{errors.startTime}</div>}
+                                                </div>
+                                                <div className="banner-schedule-input-separator">
+                                                    <span>-</span>
+                                                </div>
+                                                <div className="banner-schedule-input-group">
+                                                    <input
+                                                        type="time"
+                                                        className={`form-control banner-form-input ${errors.endTime ? 'error' : ''}`}
+                                                        value={bookingEndTime}
+                                                        onChange={e => setBookingEndTime(e.target.value)}
+                                                        required
+                                                        placeholder="Đến"
+                                                    />
+                                                    {errors.endTime && <div className="banner-form-error">{errors.endTime}</div>}
+                                                </div>
+                                            </div>
+
+                                            <div className="banner-info-box">
+                                                <i className="bx bx-info-circle banner-info-icon"></i>
+                                                <span>
+                                                    Lưu ý: Đây là khoảng thời gian bạn mong muốn thợ đến, không phải thời gian sửa chữa chính xác.
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
-                                {errors.addressInput && <div style={{ color: 'red', fontSize: 13 }}>{errors.addressInput}</div>}
-                            </div>
-                            <div className="mb-3">
-                                <label className="form-label">Mô tả tình trạng <span className="text-danger">*</span></label>
-                                <textarea
-                                    className="form-control"
-                                    value={bookingDescription}
-                                    onChange={e => setBookingDescription(e.target.value)}
-                                    required
-                                />
-                                {errors.description && <div style={{ color: 'red', fontSize: 13 }}>{errors.description}</div>}
-                            </div>
-                            {/* Nếu là scheduled thì nhập ngày, giờ bắt đầu, giờ kết thúc */}
-                            {bookingType === 'scheduled' && (
-                                <>
-                                    <div className="mb-3">
-                                        <label className="form-label">Ngày đặt lịch <span className="text-danger">*</span></label>
-                                        <input
-                                            type="date"
-                                            className="form-control"
-                                            value={bookingDate}
-                                            onChange={e => setBookingDate(e.target.value)}
-                                            required
-                                        />
-                                        {errors.scheduleDate && <div style={{ color: 'red', fontSize: 13 }}>{errors.scheduleDate}</div>}
+
+                                <div className="mb-3">
+                                    <label className="form-label banner-form-label">
+                                        Hình ảnh (tùy chọn)
+                                    </label>
+                                    <ImageUploader onFilesSelect={handleBookingImages} />
+                                    {errors.images && <div className="banner-form-error">{errors.images}</div>}
+                                </div>
+
+                                {formError && (
+                                    <div className="alert alert-danger banner-alert-danger">
+                                        <i className="bx bx-error-circle"></i>
+                                        {formError}
                                     </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Giờ bắt đầu <span className="text-danger">*</span></label>
-                                        <input
-                                            type="time"
-                                            className="form-control"
-                                            value={bookingTime}
-                                            onChange={e => setBookingTime(e.target.value)}
-                                            required
-                                        />
-                                        {errors.startTime && <div style={{ color: 'red', fontSize: 13 }}>{errors.startTime}</div>}
-                                    </div>
-                                    <div className="mb-3">
-                                        <label className="form-label">Giờ kết thúc <span className="text-danger">*</span></label>
-                                        <input
-                                            type="time"
-                                            className="form-control"
-                                            value={bookingEndTime}
-                                            onChange={e => setBookingEndTime(e.target.value)}
-                                            required
-                                        />
-                                        {errors.endTime && <div style={{ color: 'red', fontSize: 13 }}>{errors.endTime}</div>}
-                                    </div>
-                                </>
-                            )}
-                            <ImageUploader onFilesSelect={handleBookingImages} />
-                            {errors.images && <div style={{ color: 'red', fontSize: 13 }}>{errors.images}</div>}
-                            {formError && <div className="alert alert-danger mt-2">{formError}</div>}
-                        </form>
+                                )}
+                            </form>
+                        </div>
                     )}
                 </Modal.Body>
-                <Modal.Footer>
+                <Modal.Footer className="banner-modal-footer">
                     {step > 0 && (
-                        <Button variant="secondary" onClick={() => setStep(step - 1)}>
+                        <button
+                            type="button"
+                            onClick={() => setStep(step - 1)}
+                            className="banner-btn-outline"
+                        >
                             Quay lại
-                        </Button>
+                        </button>
                     )}
                     {step === 0 && (
-                        <Button variant="primary" onClick={handleContinueService} disabled={searchResults.length === 0}>
+                        <button
+                            type="button"
+                            onClick={handleContinueService}
+                            disabled={searchResults.length === 0}
+                            className="banner-btn-primary"
+                        >
                             Tiếp tục
-                        </Button>
+                        </button>
                     )}
                     {step === 1 && (
-                        <Button variant="primary" onClick={handleContinueType}>
+                        <button
+                            type="button"
+                            onClick={handleContinueType}
+                            className="banner-btn-primary"
+                        >
                             Tiếp tục
-                        </Button>
+                        </button>
                     )}
                     {step === 2 && (
-                        <Button variant="primary" type="submit" onClick={handleSubmitBooking} disabled={submitting}>
-                            {submitting ? <Spinner size="sm" animation="border" /> : 'Đặt lịch & chọn kỹ thuật viên'}
-                        </Button>
+                        <button
+                            type="submit"
+                            onClick={handleSubmitBooking}
+                            disabled={submitting}
+                            className="banner-btn-primary"
+                        >
+                            {submitting ? 'Đang xử lý...' : 'Đặt lịch & chọn kỹ thuật viên'}
+                        </button>
                     )}
-                    <Button variant="secondary" onClick={() => { setShowSearchModal(false); setShowBookingForm(false); setStep(0); }}>
+                    <button
+                        type="button"
+                        onClick={() => { setShowSearchModal(false); setShowBookingForm(false); setStep(0); }}
+                        className="banner-btn-secondary"
+                    >
                         Đóng
-                    </Button>
+                    </button>
                 </Modal.Footer>
             </Modal>
         </>

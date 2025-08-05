@@ -29,7 +29,7 @@ function Categories() {
                 <div className="container">
                     <div className="section-heading" data-aos="fade-down">
                         <h2>Danh Mục Nổi Bật</h2>
-                        <p>Giải pháp sửa chữa nhanh chóng và chuyên nghiệp.</p>
+                        <p>Khám phá những danh mục sản phẩm được yêu thích và tìm kiếm nhiều nhất</p>
                     </div>
 
                     <div className="row yacht-category-lists">

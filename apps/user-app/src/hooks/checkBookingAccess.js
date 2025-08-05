@@ -23,7 +23,24 @@ export const checkBookingAccess = async (dispatch, bookingId, userId, role) => {
         if (role === 'CUSTOMER') {
             isAuthorized = userId === customerId;
         } else if (role === 'TECHNICIAN') {
-            isAuthorized = true;
+            // Kiểm tra xem thợ này có phải là thợ được assign cho booking không
+            // Hoặc booking đang ở trạng thái có thể nhận (chưa có thợ nào được assign)
+            const isAssignedTechnician = userId === technicianId || 
+                                       (booking.technicianId && booking.technicianId.userId && userId === booking.technicianId.userId._id);
+            const canAcceptBooking = (booking.status === 'AWAITING_CONFIRM' && !booking.technicianId) ||
+                                   (booking.status === 'PENDING' && !booking.technicianId);
+            
+            isAuthorized = isAssignedTechnician || canAcceptBooking;
+            
+            // console.log('--- CHECK ACCESS DEBUG ---');
+            // console.log('userId:', userId);
+            // console.log('technicianId:', technicianId);
+            // console.log('booking.status:', booking.status);
+            // console.log('booking.technicianId:', booking.technicianId);
+            // console.log('booking.technicianId.userId:', booking.technicianId?.userId);
+            // console.log('isAssignedTechnician:', isAssignedTechnician);
+            // console.log('canAcceptBooking:', canAcceptBooking);
+            // console.log('isAuthorized:', isAuthorized);
         }
         // console.log(isAuthorized);
         

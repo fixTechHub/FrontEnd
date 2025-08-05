@@ -5,23 +5,26 @@ import BookingWizard from './common/BookingHeader';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { useBookingParams } from '../../hooks/useBookingParams';
-import { selectTechnicianThunk, fetchBookingRequests, fetchTechniciansFound } from '../../features/bookings/bookingSlice';
+import { selectTechnicianThunk, fetchBookingRequests, fetchTechniciansFound, fetchBookingById } from '../../features/bookings/bookingSlice';
 import { Button, Form, Modal, Spinner } from 'react-bootstrap';
 import Rating from 'react-rating';
 import TechnicianProfile from '../../components/profile/TechnicianProfile';
 import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
+import { formatDateOnly, formatTimeOnly } from '../../utils/formatDate';
+import { onBookingRequestAccepted, onBookingRequestRejected, onBookingRequestStatusUpdate } from '../../services/socket';
 
 function ChooseTechnician() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { newBooking, status: createBookingStatus, requests } = useSelector(state => state.booking);
+    const { newBooking, status: createBookingStatus, requests, booking } = useSelector(state => state.booking);
     const { techniciansFound, status: techniciansFoundStatus } = useSelector(state => state.booking);
     const { bookingId, stepsForCurrentUser } = useBookingParams();
     const [confirming, setConfirming] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const [selectedTechnician, setSelectedTechnician] = useState(null);
+    const [showBookingDetails, setShowBookingDetails] = useState(false);
 
     // Filter state
     const [price, setPrice] = useState([0, 10000000]); // [min, max] giá, có thể chỉnh lại range phù hợp
@@ -36,9 +39,7 @@ function ChooseTechnician() {
     // Lọc danh sách thợ
     const filteredTechnicians = (techniciansFound || []).filter(technician => {
         // Lấy giá hiển thị
-        let techPrice = 0;
-        if (technician?.serviceType === 'FIXED') techPrice = technician?.fixedPrice || 0;
-        else techPrice = technician?.tier1Price || 0;
+        let techPrice = technician?.servicePrice || 0;
         // Lọc theo giá
         if (techPrice < price[0] || techPrice > price[1]) return false;
         // Lọc theo trạng thái
@@ -52,14 +53,14 @@ function ChooseTechnician() {
     let sortedTechnicians = [...filteredTechnicians];
     if (sort === 'price-asc') {
         sortedTechnicians.sort((a, b) => {
-            const priceA = a.serviceType === 'FIXED' ? a.fixedPrice || 0 : a.tier1Price || 0;
-            const priceB = b.serviceType === 'FIXED' ? b.fixedPrice || 0 : b.tier1Price || 0;
+            const priceA = a.servicePrice || 0;
+            const priceB = b.servicePrice || 0;
             return priceA - priceB;
         });
     } else if (sort === 'price-desc') {
         sortedTechnicians.sort((a, b) => {
-            const priceA = a.serviceType === 'FIXED' ? a.fixedPrice || 0 : a.tier1Price || 0;
-            const priceB = b.serviceType === 'FIXED' ? b.fixedPrice || 0 : b.tier1Price || 0;
+            const priceA = a.servicePrice || 0;
+            const priceB = b.servicePrice || 0;
             return priceB - priceA;
         });
     } else if (sort === 'rating-desc') {
@@ -88,8 +89,12 @@ function ChooseTechnician() {
     useEffect(() => {
         if (bookingId) {
             dispatch(fetchBookingRequests(bookingId));
+            // Fetch booking details nếu chưa có hoặc khác với bookingId hiện tại
+            if (!booking || booking._id !== bookingId) {
+                dispatch(fetchBookingById(bookingId));
+            }
         }
-    }, [bookingId, dispatch]);
+    }, [bookingId, dispatch, booking]);
 
     // Khi bookingId thay đổi, luôn fetch lại danh sách technician
     useEffect(() => {
@@ -103,7 +108,47 @@ function ChooseTechnician() {
         }
     }, [bookingId, dispatch]);
 
+    // Socket listeners cho booking request status updates
+    useEffect(() => {
+        if (!bookingId) return;
+
+        // Lắng nghe khi thợ chấp nhận booking request
+        const unsubscribeAccepted = onBookingRequestAccepted((data) => {
+            console.log('Booking request accepted:', data);
+            if (data.bookingId === bookingId) {
+                // Refresh booking requests để cập nhật trạng thái nút
+                dispatch(fetchBookingRequests(bookingId));
+            }
+        });
+
+        // Lắng nghe khi thợ từ chối booking request
+        const unsubscribeRejected = onBookingRequestRejected((data) => {
+            console.log('Booking request rejected:', data);
+            if (data.bookingId === bookingId) {
+                // Refresh booking requests để cập nhật trạng thái nút
+                dispatch(fetchBookingRequests(bookingId));
+            }
+        });
+
+        // Lắng nghe khi có cập nhật trạng thái booking request
+        const unsubscribeStatusUpdate = onBookingRequestStatusUpdate((data) => {
+            console.log('Booking request status update:', data);
+            if (data.bookingId === bookingId) {
+                // Refresh booking requests để cập nhật trạng thái nút
+                dispatch(fetchBookingRequests(bookingId));
+            }
+        });
+
+        // Cleanup listeners khi component unmount hoặc bookingId thay đổi
+        return () => {
+            unsubscribeAccepted();
+            unsubscribeRejected();
+            unsubscribeStatusUpdate();
+        };
+    }, [bookingId, dispatch]);
+
     console.log('--- CREATE BOOKING LOG ---', newBooking);
+    console.log('--- BOOKING DETAIL LOG ---', booking);
     console.log('--- TECHNICIAN FOUND LOG ---', techniciansFound);
 
     const handleShowProfile = (technician) => {
@@ -116,42 +161,26 @@ function ChooseTechnician() {
         setSelectedTechnician(null); // Clear data on close
     };
 
-    const handleComfirm = async (technicianId) => {
-        if (!window.confirm('Bạn muốn chọn kỹ thuật viên này?')) return;
-        setConfirming(true);
-        try {
-            const resultAction = await dispatch(selectTechnicianThunk({ bookingId, technicianId }));
-            if (selectTechnicianThunk.fulfilled.match(resultAction)) {
-                alert('Đã gửi yêu cầu xác nhận đến kỹ thuật viên!');
-                navigate(`/booking/booking-processing?bookingId=${bookingId}`);
-            } else {
-                alert(resultAction.payload || 'Có lỗi xảy ra!');
-            }
-        } finally {
-            setConfirming(false);
-        }
-    };
-
     const getTechnicianStatus = (technicianId) => {
         const req = requests.find(r => r.technicianId === technicianId);
         return req ? req.status : null;
     };
 
     const handleSendRequest = async (technicianId) => {
-        const pending = requests.find(r => r.status === 'PENDING');
-        if (pending) {
-            // Kiểm tra thời gian đã gửi
-            const createdAt = new Date(pending.createdAt).getTime();
-            const now = Date.now();
-            const FIVE_MINUTES = 5 * 60 * 1000;
-            if (now - createdAt < FIVE_MINUTES) {
-                const secondsLeft = Math.ceil((FIVE_MINUTES - (now - createdAt)) / 1000);
-                const minutes = Math.floor(secondsLeft / 60);
-                const seconds = secondsLeft % 60;
-                alert(`Bạn chỉ có thể gửi yêu cầu cho 1 thợ mỗi lần. Vui lòng đợi ${minutes} phút ${seconds} giây hoặc khi thợ phản hồi.`);
-                return;
-            }
-        }
+        // const pending = requests.find(r => r.status === 'PENDING');
+        // if (pending) {
+        //     // Kiểm tra thời gian đã gửi
+        //     const createdAt = new Date(pending.createdAt).getTime();
+        //     const now = Date.now();
+        //     const FIVE_MINUTES = 5 * 60 * 1000;
+        //     if (now - createdAt < FIVE_MINUTES) {
+        //         const secondsLeft = Math.ceil((FIVE_MINUTES - (now - createdAt)) / 1000);
+        //         const minutes = Math.floor(secondsLeft / 60);
+        //         const seconds = secondsLeft % 60;
+        //         alert(`Bạn chỉ có thể gửi yêu cầu cho 1 thợ mỗi lần. Vui lòng đợi ${minutes} phút ${seconds} giây hoặc khi thợ phản hồi.`);
+        //         return;
+        //     }
+        // }
         try {
             await dispatch(selectTechnicianThunk({ bookingId, technicianId })).unwrap();
             dispatch(fetchBookingRequests(bookingId));
@@ -188,10 +217,24 @@ function ChooseTechnician() {
                         <div className="container">
                             <div className="row">
                                 <div className="col-xl-3 col-lg-4 col-sm-12 col-12 theiaStickySidebar">
+
+                                    {/* Nút xem chi tiết đơn hàng */}
+                                    {(newBooking || booking) && (
+                                        <div className="text-center mb-4">
+                                            <button
+                                                className="btn btn-primary choose-technician-booking-details-btn"
+                                                onClick={() => setShowBookingDetails(true)}
+                                            >
+                                                <i className="feather-info"></i>
+                                                Xem chi tiết đơn hàng
+                                            </button>
+                                        </div>
+                                    )}
+
                                     <form onSubmit={handleFilterSubmit} autoComplete="off" className="sidebar-form">
                                         <div className="product-availability">
                                             <h6>Bộ lọc tìm kiếm</h6>
-                                            </div>
+                                        </div>
 
                                         {/* <Form.Group className='mb-3'>
                                             <Form.Label><strong>Khoảng giá</strong></Form.Label>
@@ -226,11 +269,11 @@ function ChooseTechnician() {
                                                         { value: 10000000, label: '10tr' }
                                                     ]}
                                                     disableSwap
-                                                                        />
+                                                />
                                                 <div className="d-flex justify-content-between mt-2">
                                                     <span>{price[0].toLocaleString()} VNĐ</span>
                                                     <span>{price[1].toLocaleString()} VNĐ</span>
-                                                                    </div>
+                                                </div>
                                             </Box>
                                         </Form.Group>
 
@@ -239,17 +282,17 @@ function ChooseTechnician() {
                                             <div className="mb-2">
                                                 <Form.Check
                                                     className='mb-3'
-                                                                            type="radio"
+                                                    type="radio"
                                                     id="sort-none"
                                                     name="sort"
                                                     label="Mặc định"
                                                     value="none"
                                                     checked={sort === 'none'}
                                                     onChange={e => setSort(e.target.value)}
-                                                                        />
+                                                />
                                                 <Form.Check
                                                     className='mb-3'
-                                                                            type="radio"
+                                                    type="radio"
                                                     id="sort-price-asc"
                                                     name="sort"
                                                     label="Giá tăng dần"
@@ -259,17 +302,17 @@ function ChooseTechnician() {
                                                 />
                                                 <Form.Check
                                                     className='mb-3'
-                                                                            type="radio"
+                                                    type="radio"
                                                     id="sort-price-desc"
                                                     name="sort"
                                                     label="Giá giảm dần"
                                                     value="price-desc"
                                                     checked={sort === 'price-desc'}
                                                     onChange={e => setSort(e.target.value)}
-                                                                        />
+                                                />
                                                 <Form.Check
                                                     className='mb-3'
-                                                                            type="radio"
+                                                    type="radio"
                                                     id="sort-rating-desc"
                                                     name="sort"
                                                     label="Đánh giá cao nhất"
@@ -277,7 +320,7 @@ function ChooseTechnician() {
                                                     checked={sort === 'rating-desc'}
                                                     onChange={e => setSort(e.target.value)}
                                                 />
-                                                                    </div>
+                                            </div>
                                         </Form.Group>
 
                                         <Form.Group className='mb-3'>
@@ -285,17 +328,17 @@ function ChooseTechnician() {
                                             <div className="mb-2">
                                                 <Form.Check
                                                     className='mb-3'
-                                                                            type="radio"
+                                                    type="radio"
                                                     id="status-all"
                                                     name="status"
                                                     label="Tất cả"
                                                     value="ALL"
                                                     checked={status === 'ALL'}
                                                     onChange={e => setStatus(e.target.value)}
-                                                                        />
+                                                />
                                                 <Form.Check
                                                     className='mb-3'
-                                                                            type="radio"
+                                                    type="radio"
                                                     id="status-free"
                                                     name="status"
                                                     label="Sẵn sàng nhận việc"
@@ -304,22 +347,22 @@ function ChooseTechnician() {
                                                     onChange={e => setStatus(e.target.value)}
                                                 />
                                                 <Form.Check
-                                                                            type="radio"
+                                                    type="radio"
                                                     id="status-onjob"
                                                     name="status"
                                                     label="Có thể nhận sau"
                                                     value="ONJOB"
                                                     checked={status === 'ONJOB'}
                                                     onChange={e => setStatus(e.target.value)}
-                                                                        />
-                                                                    </div>
+                                                />
+                                            </div>
                                         </Form.Group>
 
                                         <Form.Group className='mb-3'>
                                             <Form.Label><strong>Xếp hạng</strong></Form.Label>
 
                                             <Form.Check
-                                                                            type="radio"
+                                                type="radio"
                                                 name="rating"
                                                 id="star-0"
                                                 value={0}
@@ -334,7 +377,7 @@ function ChooseTechnician() {
                                                 {[5, 4, 3, 2, 1].map((star) => (
                                                     <Form.Check
                                                         key={star}
-                                                                            type="radio"
+                                                        type="radio"
                                                         name="rating"
                                                         id={`star-${star}`}
                                                         value={star}
@@ -345,7 +388,7 @@ function ChooseTechnician() {
                                                         onChange={() => setRating(star)}
                                                     />
                                                 ))}
-                                                                    </div>
+                                            </div>
                                         </Form.Group>
 
                                         <button
@@ -368,195 +411,189 @@ function ChooseTechnician() {
                                             <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: 200 }}>
                                                 <Spinner animation="border" role="status" />
                                                 <div className="mt-3">Hệ thống đang tìm thợ phù hợp với yêu cầu của bạn...</div>
-                                                            </div>
+                                            </div>
                                         )}
-                                        {createBookingStatus === 'loading' && (
+                                        {/* {createBookingStatus === 'loading' && (
                                             <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: 200 }}>
                                                 <Spinner animation="border" role="status" />
                                                 <div className="mt-3">Hệ thống đang tìm thợ phù hợp...</div>
-                                                        </div>
-                                        )}
-                                        {/* Nếu filter không có kết quả */}
+                                            </div>
+                                        )} */}
                                         {techniciansFound && techniciansFound.length > 0 && sortedTechnicians.length === 0 && (
                                             <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: 200 }}>
                                                 <div className="mt-3">Không có thợ nào phù hợp với bộ lọc hiện tại.</div>
-                                                                    </div>
+                                            </div>
                                         )}
                                         {/* Nếu có thợ, render như cũ */}
                                         {paginatedTechnicians.map((technician) => (
-                                            <>
-                                                <div className="listview-car" key={technician._id}>
-                                                    <div className="card">
-                                                        <div className="blog-widget d-flex">
-                                                            <div className="blog-img">
-                                                                <a href="listing-details.html">
-                                                                    <img
-                                                                        style={{ width: 230, height: 194 }}
-                                                                        src={technician?.userInfo?.avatar || ''}
-                                                                        className="img-fluid"
-                                                                        alt="blog-img"
-                                                                    />
+                                            <div className="listview-car" key={technician._id}>
+                                                <div className="card">
+                                                    <div className="blog-widget d-flex">
+                                                        <div className="blog-img">
+                                                            <a href="listing-details.html">
+                                                                <img
+                                                                    style={{ width: 230, height: 194 }}
+                                                                    src={technician?.userInfo?.avatar || ''}
+                                                                    className="img-fluid"
+                                                                    alt="blog-img"
+                                                                />
+                                                            </a>
+                                                            <div className="fav-item justify-content-end">
+                                                                <a href="#" className="fav-icon">
+                                                                    <i className="feather-heart" />
                                                                 </a>
-                                                                <div className="fav-item justify-content-end">
-                                                                    <a href="#" className="fav-icon">
-                                                                        <i className="feather-heart" />
-                                                                    </a>
-                                                                </div>
                                                             </div>
-                                                            <div className="bloglist-content w-100">
-                                                                <div className="card-body">
-                                                                    <div className="blog-list-head d-flex">
-                                                                        <div className="blog-list-title">
-                                                                            <h3>
-                                                                                <a onClick={(e) => { e.preventDefault(); handleShowProfile(technician); }}>
-                                                                                    {technician?.userInfo?.fullName}
-                                                                                </a>
-                                                                            </h3>
+                                                        </div>
+                                                        <div className="bloglist-content w-100">
+                                                            <div className="card-body">
+                                                                <div className="blog-list-head d-flex">
+                                                                    <div className="blog-list-title">
+                                                                        <h3>
+                                                                            <a onClick={(e) => { e.preventDefault(); handleShowProfile(technician); }}>
+                                                                                {technician?.userInfo?.fullName}
+                                                                            </a>
+                                                                        </h3>
 
-                                                                            {/* {technician?.category.map((category) => (
+                                                                        {/* {technician?.category.map((category) => (
                                                                                 <h6>
                                                                                     {category?.categoryName}
                                                                                 </h6>
                                                                             ))} */}
-                                                                            {/* <h6>
+                                                                        {/* <h6>
                                                                                 Kinh nghiệm: <span>{technician?.experienceYears} năm</span>
                                                                             </h6> */}
-                                                                            {/* <h6>
+                                                                        {/* <h6>
                                                                                 Loại dịch vụ: <span>{technician?.serviceType === 'COMPLEX' ? 'Phức tạp' : 'Đơn giản'}</span>
                                                                             </h6> */}
-                                                                            {/* <h6>
+                                                                        {/* <h6>
                                                                                 {technician?.serviceName}
                                                                             </h6> */}
+                                                                        <h6>
+                                                                            <span>
+                                                                                <i className="feather-check-circle me-2" />
+                                                                                Đã xác minh
+                                                                            </span>
+                                                                        </h6>
+                                                                    </div>
+                                                                    <div style={{ textAlign: 'end' }} className="blog-list-rate">
+                                                                        {technician?.servicePrice ? (
                                                                             <h6>
-                                                                                <span>
-                                                                                    <i className="feather-check-circle me-2" />
-                                                                                    Đã xác minh
-                                                                                </span>
+                                                                                {technician?.servicePrice?.toLocaleString()}<span>VNĐ</span>
                                                                             </h6>
-                                                                        </div>
-                                                                        <div style={{ textAlign: 'end' }} className="blog-list-rate">
-                                                                            {technician?.serviceType === 'FIXED' && (
+                                                                        ) : (
+                                                                            <h6>
+                                                                                <span>Chưa có giá</span>
+                                                                            </h6>
+                                                                        )}
+
+                                                                        <Rating
+                                                                            initialRating={technician?.ratingAverage}
+                                                                            readonly
+                                                                            fullSymbol={<i style={{ color: '#FFA633' }} className="fas fa-star filled" />}
+                                                                            emptySymbol={<i style={{ color: '#FFA633' }} className="far fa-star" />}
+                                                                        />
+                                                                        <span>({(technician?.ratingAverage).toFixed(1)})</span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="listing-details-group">
+                                                                    <ul>
+                                                                        <li title={'Đơn đã hoàn thành: ' + technician?.jobCompleted}>
+                                                                            <span>
+                                                                                <i className="feather-award me-2" />
+                                                                            </span>
+                                                                            <p>{technician?.jobCompleted} đơn</p>
+                                                                        </li>
+
+                                                                        <li title={'Kinh nghiệm: ' + technician?.experienceYears + ' năm'}>
+                                                                            <span>
+                                                                                <i className="feather-clock me-2" />
+                                                                            </span>
+                                                                            <p>{technician?.experienceYears} năm</p>
+                                                                        </li>
+
+                                                                        <li title={'Trạng thái: ' + technician?.availability}>
+                                                                            <span>
+                                                                                <i className="feather-activity me-2" />
+                                                                            </span>
+                                                                            <p>{technician?.availability === 'FREE' ? 'Sẵn sàng nhận việc' : 'Đang có việc – có thể nhận sau'}</p>
+                                                                        </li>
+
+                                                                    </ul>
+                                                                </div>
+                                                                <div className="blog-list-head list-head-bottom d-flex">
+                                                                    <div className="blog-list-title">
+                                                                        <div className="title-bottom">
+                                                                            <div className="address-info">
                                                                                 <h6>
-                                                                                    {technician?.fixedPrice?.toLocaleString() || '0'}<span>VNĐ</span>
+                                                                                    <i className="feather-map-pin" />
+                                                                                    {technician?.userInfo?.address?.city || 'Đang cập nhật'}
                                                                                 </h6>
-                                                                            )}
-                                                                            {technician?.serviceType === 'COMPLEX' && (
-                                                                            <h6>
-                                                                                <span>Từ </span>
-                                                                                <span></span>
-                                                                                    {technician?.tier1Price?.toLocaleString() || '0'}<span>VNĐ</span>
-                                                                            </h6>
-                                                                            )}
-
-                                                                            <Rating
-                                                                                initialRating={technician?.ratingAverage}
-                                                                                readonly
-                                                                                fullSymbol={<i style={{ color: '#FFA633' }} className="fas fa-star filled" />}
-                                                                                emptySymbol={<i style={{ color: '#FFA633' }} className="far fa-star" />}
-                                                                            />
-                                                                            <span>({(technician?.ratingAverage).toFixed(1)})</span>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="listing-details-group">
-                                                                        <ul>
-                                                                            <li title={'Đơn đã hoàn thành: ' + technician?.jobCompleted}>
-                                                                                <span>
-                                                                                    <i className="feather-award me-2" />
+                                                                            </div>
+                                                                            <div className="list-km">
+                                                                                <span className="km-count">
+                                                                                    <img src="/img/icons/map-pin.svg" alt="author" />
+                                                                                    {technician?.distanceInKm + 'km'}
                                                                                 </span>
-                                                                                <p>{technician?.jobCompleted} đơn</p>
-                                                                            </li>
-
-                                                                            <li title={'Kinh nghiệm: ' + technician?.experienceYears + ' năm'}>
-                                                                                <span>
-                                                                                    <i className="feather-clock me-2" />
-                                                                                </span>
-                                                                                <p>{technician?.experienceYears} năm</p>
-                                                                            </li>
-
-                                                                            <li title={'Trạng thái: ' + technician?.availability}>
-                                                                                <span>
-                                                                                    <i className="feather-activity me-2" />
-                                                                                </span>
-                                                                                <p>{technician?.availability === 'FREE' ? 'Sẵn sàng nhận việc' : 'Đang có việc – có thể nhận sau'}</p>
-                                                                            </li>
-
-                                                                        </ul>
-                                                                    </div>
-                                                                    <div className="blog-list-head list-head-bottom d-flex">
-                                                                        <div className="blog-list-title">
-                                                                            <div className="title-bottom">
-                                                                                <div className="address-info">
-                                                                                    <h6>
-                                                                                        <i className="feather-map-pin" />
-                                                                                        {technician?.userInfo?.address?.city || 'Đang cập nhật'}
-                                                                                    </h6>
-                                                                                </div>
-                                                                                <div className="list-km">
-                                                                                    <span className="km-count">
-                                                                                        <img src="/img/icons/map-pin.svg" alt="author" />
-                                                                                        {technician?.distanceInKm + 'km'}
-                                                                                    </span>
-                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="listing-button">
-                                                                            <button
-                                                                                className="btn btn-order"
-                                                                                disabled={confirming}
-                                                                                onClick={() => handleSendRequestClick(technician)}
-                                                                            >
-                                                                                <span>
-                                                                                    <i className="feather-user-check me-2" />
-                                                                                </span>
-                                                                                {getTechnicianStatus(technician._id) === 'PENDING'
-                                                                                    ? 'Đã gửi, chờ phản hồi'
-                                                                                    : getTechnicianStatus(technician._id) === 'ACCEPTED'
-                                                                                        ? 'Đã nhận đơn'
-                                                                                        : getTechnicianStatus(technician._id) === 'REJECTED'
-                                                                                            ? 'Đã từ chối'
-                                                                                            : 'Gửi yêu cầu'}
-                                                                            </button>
-                                                                        </div>
+                                                                    </div>
+                                                                    <div className="listing-button">
+                                                                        <button
+                                                                            className="btn btn-order"
+                                                                            disabled={confirming}
+                                                                            onClick={() => handleSendRequestClick(technician)}
+                                                                        >
+                                                                            <span>
+                                                                                <i className="feather-user-check me-2" />
+                                                                            </span>
+                                                                            {getTechnicianStatus(technician._id) === 'PENDING'
+                                                                                ? 'Đã gửi, chờ phản hồi'
+                                                                                : getTechnicianStatus(technician._id) === 'ACCEPTED'
+                                                                                    ? 'Đã nhận đơn'
+                                                                                    : getTechnicianStatus(technician._id) === 'REJECTED'
+                                                                                        ? 'Đã từ chối'
+                                                                                        : 'Gửi yêu cầu'}
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </>
+                                            </div>
 
                                         ))}
 
                                     </div>
 
                                     {totalPages > 1 && (
-                                    <div className="blog-pagination">
-                                        <nav>
-                                            <ul className="pagination page-item justify-content-center">
+                                        <div className="blog-pagination">
+                                            <nav>
+                                                <ul className="pagination page-item justify-content-center">
                                                     <li className={`previtem ${page === 1 ? ' disabled' : ''}`}>
                                                         <a className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>
                                                             <i className="fas fa-regular fa-arrow-left" />
-                                                    </a>
-                                                </li>
-                                                <li className="justify-content-center pagination-center">
-                                                    <div className="page-group">
-                                                        <ul>
+                                                        </a>
+                                                    </li>
+                                                    <li className="justify-content-center pagination-center">
+                                                        <div className="page-group">
+                                                            <ul>
                                                                 {Array.from({ length: totalPages }, (_, idx) => (
                                                                     <li className="page-item" key={idx}>
                                                                         <a className={`${page === idx + 1 ? ' active page-link' : 'page-link'}`} onClick={() => setPage(idx + 1)}>{idx + 1}</a>
-                                                            </li>
+                                                                    </li>
                                                                 ))}
-                                                        </ul>
-                                                    </div>
-                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                    </li>
                                                     <li className={`nextlink ${page === totalPages ? ' disabled' : ''}`}>
                                                         <a className="page-link" onClick={() => setPage(page + 1)} disabled={page === totalPages}>
                                                             <i className="fas fa-regular fa-arrow-right" />
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </nav>
-                                    </div>
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                        </div>
                                     )}
 
                                 </div>
@@ -591,6 +628,88 @@ function ChooseTechnician() {
                 </Modal.Footer> */}
             </Modal>
 
+            {/* Modal chi tiết đơn hàng - Phiên bản cực đơn giản */}
+            <Modal
+                show={showBookingDetails}
+                onHide={() => setShowBookingDetails(false)}
+                size="md"
+                centered
+                className="choose-technician-booking-details-minimal"
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <i className="feather-info me-2"></i>
+                        Chi tiết đơn hàng
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {(newBooking || booking) && (
+                        <div className="choose-technician-booking-details-minimal-content">
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Dịch vụ:</span>
+                                <span className="value">{booking?.serviceId?.serviceName}</span>
+                            </div>
+
+                            {(newBooking || booking).description && (
+                                <div className="choose-technician-detail-row">
+                                    <span className="label">Mô tả:</span>
+                                    <span className="value">{(newBooking || booking).description}</span>
+                                </div>
+                            )}
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Địa chỉ:</span>
+                                <span className="value">{(newBooking || booking).location?.address || (newBooking || booking).address}</span>
+                            </div>
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Thời gian:</span>
+                                {/* <span className="value">{(newBooking || booking).schedule?.startTime || (newBooking || booking).preferredTime}</span> */}
+                                <span className="value">
+                                    {booking?.schedule?.startTime && booking?.schedule?.expectedEndTime
+                                        ? `${formatDateOnly(booking?.schedule?.startTime)}  ${formatTimeOnly(booking?.schedule?.startTime)} - ${formatTimeOnly(booking?.schedule?.expectedEndTime)}`
+                                        : 'Thời gian không hợp lệ'}
+                                </span>
+                            </div>
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Phương thức:</span>
+                                <span className="value method">
+                                    {(newBooking || booking).isUrgent === false ? 'Đặt lịch' : 'Đặt ngay'}
+                                </span>
+                            </div>
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Trạng thái:</span>
+                                <span className="value status">
+                                    <span className="choose-technician-status-badge">
+                                        <i className="feather-search me-1"></i>
+                                        Đang tìm thợ
+                                    </span>
+                                </span>
+                            </div>
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Ngày tạo:</span>
+                                <span className="value">{new Date((newBooking || booking).createdAt).toLocaleDateString('vi-VN')}</span>
+                            </div>
+
+                            {(newBooking || booking).estimatedPrice && (
+                                <div className="choose-technician-detail-row">
+                                    <span className="label">Giá ước tính:</span>
+                                    <span className="value price">{(newBooking || booking).estimatedPrice.toLocaleString()} VNĐ</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowBookingDetails(false)}>
+                        Đóng
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
             {/* Modal xác nhận gửi yêu cầu */}
             <Modal show={showConfirm}
                 onHide={() => setShowConfirm(false)}
@@ -605,7 +724,7 @@ function ChooseTechnician() {
                         <p>
                             <strong>Phí kiểm tra:</strong>{' '}
                             <span style={{ color: 'red', fontWeight: 'bold' }}>
-                                {selectedTechnician?.rates?.inspectionFee?.toLocaleString() || 0} VNĐ
+                                {selectedTechnician?.inspectionFee?.toLocaleString() || 0} VNĐ
                             </span>
                         </p>
 

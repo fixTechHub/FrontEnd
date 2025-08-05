@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BreadcrumbBar from "../../components/common/BreadcrumbBar";
 import Header from "../../components/common/Header";
@@ -8,10 +8,9 @@ import MessageBox from "../../components/message/MessageBox";
 import { useBookingParams } from "../../hooks/useBookingParams";
 import { checkBookingAccess } from "../../hooks/checkBookingAccess";
 import { useDispatch, useSelector } from "react-redux";
-
 import { onBookingStatusUpdate } from "../../services/socket";
+import { onAdditionalItemsAdded, onAdditionalItemsStatusUpdate, onAdditionalItemsAccepted, onAdditionalItemsRejected } from "../../services/socket";
 import { confirmJobDoneByTechnician } from '../../features/bookings/bookingAPI';
-import { Accordion } from "react-bootstrap";
 import { fetchBookingById, customerAcceptQuoteThunk, customerRejectQuoteThunk, technicianSendQuoteThunk } from "../../features/bookings/bookingSlice";
 import { BOOKING_STATUS } from "../../constants/bookingConstants";
 import { Modal, Button } from "react-bootstrap";
@@ -25,10 +24,10 @@ function BookingProcessing() {
     const [isChecking, setIsChecking] = useState(false);
     const [isAuthorized, setIsAuthorized] = useState(null);
     const [authError, setAuthError] = useState(null);
-    const [technicianRates, setTechnicianRates] = useState(null);
+
     const [technicianServicePrice, setTechnicianServicePrice] = useState(null);
     const [selectedLaborPrice, setSelectedLaborPrice] = useState(0);
-    const [selectedWarrantyDuration, setSelectedWarrantyDuration] = useState(30);
+    const [selectedWarrantyDuration, setSelectedWarrantyDuration] = useState(0);
     const [items, setItems] = useState([]);
     const [modalItem, setModalItem] = useState({
         name: '',
@@ -42,32 +41,25 @@ function BookingProcessing() {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const lastCancelBy = useSelector((state) => state.booking.lastCancelBy);
     const [showAdditionalPopup, setShowAdditionalPopup] = useState(false);
-    const [additionalItems, setAdditionalItems] = useState([]);
 
-    // Load thông tin technician rates khi booking thay đổi
+    // Load thông tin technician service khi booking thay đổi
     useEffect(() => {
         if (booking?.technicianId && booking?.serviceId) {
-            // Lấy rates từ technician
-            if (booking.technicianId.rates) {
-                setTechnicianRates(booking.technicianId.rates);
-            }
-
-            // Lấy giá từ TechnicianService nếu là dịch vụ FIXED
-            if (booking.serviceId.serviceType === 'FIXED') {
-                if (booking.technicianService) {
-                    setTechnicianServicePrice(booking.technicianService.price);
-                    setSelectedLaborPrice(booking.technicianService.price);
-                }
+            // Lấy giá từ TechnicianService
+            if (booking.technicianService) {
+                setTechnicianServicePrice(booking.technicianService.price);
+                setSelectedLaborPrice(booking.technicianService.price);
+                setSelectedWarrantyDuration(booking.technicianService.warrantyDuration || 0);
             }
 
             // Nếu đã có quote, lấy thông tin từ quote để set giá công và warranty
             if (booking.quote) {
                 setSelectedLaborPrice(booking.quote.laborPrice || 0);
-                setSelectedWarrantyDuration(booking.quote.warrantiesDuration || 1);
+                setSelectedWarrantyDuration(booking.quote.warrantiesDuration || 0);
             } else {
                 // Nếu chưa có quote, reset về giá trị mặc định
                 setSelectedLaborPrice(0);
-                setSelectedWarrantyDuration(1);
+                setSelectedWarrantyDuration(0);
             }
         }
     }, [booking]);
@@ -123,6 +115,51 @@ function BookingProcessing() {
         });
         return unsubscribe;
     }, [bookingId, dispatch, user._id, lastCancelBy]);
+
+    // Socket listeners cho thiết bị phát sinh
+    useEffect(() => {
+        if (!bookingId) return;
+
+        // Lắng nghe khi thợ thêm thiết bị phát sinh
+        const unsubscribeAdded = onAdditionalItemsAdded((data) => {
+            console.log('Additional items added:', data);
+            if (data.bookingId === bookingId) {
+                dispatch(fetchBookingById(bookingId));
+            }
+        });
+
+        // Lắng nghe khi có cập nhật trạng thái thiết bị phát sinh
+        const unsubscribeStatusUpdate = onAdditionalItemsStatusUpdate((data) => {
+            console.log('Additional items status update:', data);
+            if (data.bookingId === bookingId) {
+                dispatch(fetchBookingById(bookingId));
+            }
+        });
+
+        // Lắng nghe khi user chấp nhận thiết bị phát sinh
+        const unsubscribeAccepted = onAdditionalItemsAccepted((data) => {
+            console.log('Additional items accepted:', data);
+            if (data.bookingId === bookingId) {
+                dispatch(fetchBookingById(bookingId));
+            }
+        });
+
+        // Lắng nghe khi user từ chối thiết bị phát sinh
+        const unsubscribeRejected = onAdditionalItemsRejected((data) => {
+            console.log('Additional items rejected:', data);
+            if (data.bookingId === bookingId) {
+                dispatch(fetchBookingById(bookingId));
+            }
+        });
+
+        // Cleanup listeners khi component unmount hoặc bookingId thay đổi
+        return () => {
+            unsubscribeAdded();
+            unsubscribeStatusUpdate();
+            unsubscribeAccepted();
+            unsubscribeRejected();
+        };
+    }, [bookingId, dispatch]);
 
     const handleComfirm = () => {
         if (!bookingId) {
@@ -200,46 +237,7 @@ function BookingProcessing() {
         } catch (err) {
             alert(
                 // 'Xác nhận hoàn thành thất bại: ' +
-                 (err?.response?.data?.message || err.message));
-        }
-    };
-
-    const handleSendLaborPriceQuote = async () => {
-        if (!bookingId) {
-            alert('Không tìm thấy booking!');
-            return;
-        }
-
-        if (selectedLaborPrice === 0) {
-            alert('Vui lòng chọn mức giá công trước!');
-            return;
-        }
-
-        setSending(true);
-        try {
-            const quoteData = {
-                laborPrice: selectedLaborPrice,
-                items: [],
-                warrantiesDuration: selectedWarrantyDuration,
-                totalAmount: selectedLaborPrice,
-                note: 'Yêu cầu xác nhận giá công và thời gian bảo hành'
-            };
-            
-            console.log('--- FRONTEND QUOTE DATA ---', quoteData);
-            
-            console.log('--- FRONTEND QUOTE DATA ---', quoteData);
-
-            const resultAction = await dispatch(technicianSendQuoteThunk({ bookingId, quoteData }));
-            if (technicianSendQuoteThunk.fulfilled.match(resultAction)) {
-                alert('Đã gửi yêu cầu xác nhận giá công cho khách!');
-                dispatch(fetchBookingById(bookingId));
-            } else {
-                alert(resultAction.payload || 'Có lỗi xảy ra!');
-            }
-        } catch (error) {
-            alert(error?.message || 'Có lỗi xảy ra!');
-        } finally {
-            setSending(false);
+                (err?.response?.data?.message || err.message));
         }
     };
 
@@ -249,9 +247,9 @@ function BookingProcessing() {
             return;
         }
 
-        // Kiểm tra khác nhau cho FIXED và COMPLEX services
-        if (booking?.serviceId?.serviceType === 'COMPLEX' && selectedLaborPrice === 0 && !booking?.quote?.laborPrice) {
-            alert('Vui lòng chọn mức giá công trước!');
+        // Kiểm tra có items không trước khi gửi
+        if (items.length === 0) {
+            alert('Vui lòng thêm ít nhất một thiết bị phát sinh trước khi gửi yêu cầu!');
             return;
         }
 
@@ -259,18 +257,16 @@ function BookingProcessing() {
         try {
             const itemsTotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-            // Lấy giá công đã chọn hoặc từ quote hiện tại cho FIXED service
-            let laborPrice = 0;
-            if (booking?.serviceId?.serviceType === 'FIXED') {
-                laborPrice = booking.quote?.laborPrice || selectedLaborPrice || 0;
-            } else {
-                laborPrice = selectedLaborPrice || 0;
-            }
+            // Lấy giá công và thời gian bảo hành từ TechnicianService (đã có sẵn)
+            const laborPrice = booking.technicianService?.price || 0;
+            const warrantyDuration = booking.technicianService?.warrantyDuration || 0;
 
+            // Đảm bảo sử dụng giá trị từ TechnicianService thay vì từ quote cũ
+            // Lưu ý: warrantyDuration có thể là 0, nhưng backend sẽ fallback về 1 nếu không có giá trị
             const quoteData = {
                 laborPrice: laborPrice,
                 items: items,
-                warrantiesDuration: selectedWarrantyDuration,
+                warrantiesDuration: warrantyDuration, // Luôn lấy từ TechnicianService (có thể là 0)
                 totalAmount: laborPrice + itemsTotal,
                 note: additionalReason || 'Yêu cầu phát sinh thiết bị'
             };
@@ -321,11 +317,6 @@ function BookingProcessing() {
     };
 
     const handleShowAdditionalRequest = () => {
-        console.log('--- DEBUG POPUP ---');
-        console.log('Quote note:', booking?.quote?.note);
-        console.log('Quote items:', booking?.quote?.items);
-        console.log('Booking status:', booking?.status);
-        console.log('Note comparison:', booking?.quote?.note === 'Yêu cầu xác nhận giá công và thời gian bảo hành');
         setShowAdditionalPopup(true);
     };
 
@@ -349,11 +340,102 @@ function BookingProcessing() {
 
                     <div className="booking-detail-info">
                         <div className="row">
-                            <div className="col-lg-4">
+                            <div className="col-lg-8">
                                 <BookingDetails bookingId={bookingId} />
+
+                                {items.length > 0 && (
+                                    <div className="booking-processing-items-section">
+                                        <div className="booking-processing-items-header">
+                                            <div>
+                                                <div className="booking-processing-items-title">
+                                                    {/* <i className="feather-tool"></i> */}
+                                                    Thiết bị phát sinh mới
+                                                    <span className="booking-processing-items-count">
+                                                        {items.length} hạng mục
+                                                    </span>
+                                                </div>
+                                                {booking?.quote?.items && booking.quote.items.length > 0 && (
+                                                    <div className="booking-processing-items-subtitle">
+                                                        Sẽ thêm vào danh sách hiện có
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="booking-processing-items-content">
+                                            <div className="booking-processing-items-alert">
+                                                <i className="feather-info booking-processing-alert-icon"></i>
+                                                <div className="booking-processing-alert-text">
+                                                    Các thiết bị này sẽ được gửi cho khách xác nhận
+                                                </div>
+                                            </div>
+
+                                            <div className="booking-processing-items-table">
+                                                <table className="table">
+                                                    <thead className="booking-processing-table-header">
+                                                        <tr>
+                                                            <th>Tên thiết bị</th>
+                                                            <th>Giá tiền</th>
+                                                            <th>Số lượng</th>
+                                                            <th>Ghi chú</th>
+                                                            <th>Hành động</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {items.map((item, idx) => (
+                                                            <tr key={idx} className="booking-processing-table-row">
+                                                                <td className="booking-processing-item-name">
+                                                                    {item.name}
+                                                                </td>
+                                                                <td className="booking-processing-item-price">
+                                                                    {item.price.toLocaleString()} VNĐ
+                                                                </td>
+                                                                <td className="booking-processing-item-quantity">
+                                                                    {item.quantity}
+                                                                </td>
+                                                                <td className="booking-processing-item-note">
+                                                                    {item.note || '-'}
+                                                                </td>
+                                                                <td>
+                                                                    <div className="booking-processing-actions">
+                                                                        <button
+                                                                            type="button"
+                                                                            className="booking-processing-btn-edit"
+                                                                            onClick={() => handleEdit(idx)}
+                                                                            title="Sửa thiết bị"
+                                                                        >
+                                                                            <i className="feather-edit-2"></i>
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            className="booking-processing-btn-delete"
+                                                                            onClick={() => handleDelete(idx)}
+                                                                            title="Xóa thiết bị"
+                                                                        >
+                                                                            <i className="feather-trash-2"></i>
+                                                                        </button>
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+
+                                            <div className="booking-processing-items-summary">
+                                                <div className="booking-processing-summary-label">
+                                                    Tổng giá thiết bị mới:
+                                                </div>
+                                                <div className="booking-processing-summary-value">
+                                                    {items.reduce((total, item) => total + (item.price * item.quantity), 0).toLocaleString()} VNĐ
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
-                            <div className="col-lg-8">
+                            <div className="col-lg-4">
                                 {booking?.isChatAllowed && booking?.isVideoCallAllowed ? (
                                     <div style={{ paddingBottom: 10 }}>
                                         <MessageBox bookingId={bookingId} />
@@ -363,233 +445,6 @@ function BookingProcessing() {
                                         You can't chat or call video.
                                     </div>
                                 )}
-
-                                {user?.role?.name === 'TECHNICIAN' && booking?.serviceId?.serviceType === 'FIXED' && selectedLaborPrice > 0 && (
-                                    <div className="alert alert-info mb-3">
-                                        <strong>Giá công cố định:</strong> {selectedLaborPrice.toLocaleString()} VNĐ
-                                        {booking?.quote && (
-                                            <span className="text-muted ms-2">(từ yêu cầu phát sinh trước)</span>
-                                        )}
-                                    </div>
-                                )}
-
-                                {/* Chỉ hiển thị cho COMPLEX service khi thợ đã chấp nhận yêu cầu và chưa có quote */}
-                                {user?.role?.name === 'TECHNICIAN' && booking?.serviceId?.serviceType === 'COMPLEX' && booking?.status === 'IN_PROGRESS' && !booking?.quote && (
-                                    <div className="card mb-3">
-                                        <div className="card-header">
-                                            <h5>Chọn mức giá công và thời gian bảo hành</h5>
-                                        </div>
-                                        <div className="card-body">
-                                            <div className="row">
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Mức giá công</label>
-                                                    <select
-                                                        className="form-control"
-                                                        value={selectedLaborPrice}
-                                                        onChange={e => setSelectedLaborPrice(Number(e.target.value))}
-                                                    >
-                                                        <option value={0}>Chọn mức giá công</option>
-                                                        {technicianRates?.laborTiers?.tier1 && (
-                                                            <option value={technicianRates.laborTiers.tier1}>
-                                                                Tier 1 - Cơ bản: {technicianRates.laborTiers.tier1.toLocaleString()} VNĐ
-                                                            </option>
-                                                        )}
-                                                        {technicianRates?.laborTiers?.tier2 && (
-                                                            <option value={technicianRates.laborTiers.tier2}>
-                                                                Tier 2 - Trung bình: {technicianRates.laborTiers.tier2.toLocaleString()} VNĐ
-                                                            </option>
-                                                        )}
-                                                        {technicianRates?.laborTiers?.tier3 && (
-                                                            <option value={technicianRates.laborTiers.tier3}>
-                                                                Tier 3 - Cao cấp: {technicianRates.laborTiers.tier3.toLocaleString()} VNĐ
-                                                            </option>
-                                                        )}
-                                                    </select>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label">Thời gian bảo hành (tháng)</label>
-                                                                                                            <select
-                                                            className="form-control"
-                                                            value={selectedWarrantyDuration}
-                                                            onChange={e => setSelectedWarrantyDuration(Number(e.target.value))}
-                                                        >
-                                                            <option value={1}>1 tháng</option>
-                                                            <option value={3}>3 tháng</option>
-                                                            <option value={6}>6 tháng</option>
-                                                            <option value={9}>9 tháng</option>
-                                                            <option value={12}>12 tháng</option>
-                                                        </select>
-                                                </div>
-                                            </div>
-                                            {selectedLaborPrice > 0 && (
-                                                <div className="mt-3">
-                                                    <button
-                                                        className="btn btn-primary"
-                                                        onClick={() => handleSendLaborPriceQuote()}
-                                                        disabled={sending}
-                                                    >
-                                                        {sending ? 'Đang gửi...' : 'Gửi yêu cầu xác nhận giá công'}
-                                                    </button>
-                                                    <small className="text-muted d-block mt-2">
-                                                        Gửi yêu cầu xác nhận giá công và thời gian bảo hành cho khách
-                                                    </small>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Hiển thị thông tin cho FIXED service */}
-                                {user?.role?.name === 'TECHNICIAN' && booking?.serviceId?.serviceType === 'FIXED' && (
-                                    <div className="card mb-3">
-                                        <div className="card-header">
-                                            <h5>Thông tin dịch vụ cố định</h5>
-                                        </div>
-                                        <div className="card-body">
-                                            {booking?.quote ? (
-                                                <div className="alert alert-success">
-                                                    <h6>Đã có báo giá cố định:</h6>
-                                                    <p><strong>Giá công:</strong> {booking.quote.laborPrice?.toLocaleString()} VNĐ</p>
-                                                    <p><strong>Thời gian bảo hành:</strong> {booking.quote.warrantiesDuration} tháng</p>
-                                                    <p><strong>Tổng tiền:</strong> {booking.quote.totalAmount?.toLocaleString()} VNĐ</p>
-                                                </div>
-                                            ) : (
-                                                <div className="row">
-                                                    <div className="col-md-6">
-                                                        <label className="form-label">Giá công cố định</label>
-                                                        <input
-                                                            type="text"
-                                                            className="form-control"
-                                                            value={technicianServicePrice ? `${technicianServicePrice.toLocaleString()} VNĐ` : 'Chưa có giá'}
-                                                            readOnly
-                                                        />
-                                                    </div>
-                                                    <div className="col-md-6">
-                                                        <label className="form-label">Thời gian bảo hành (tháng)</label>
-                                                        <select
-                                                            className="form-control"
-                                                            value={selectedWarrantyDuration}
-                                                            onChange={e => setSelectedWarrantyDuration(Number(e.target.value))}
-                                                        >
-                                                            <option value={1}>1 tháng</option>
-                                                            <option value={3}>3 tháng</option>
-                                                            <option value={6}>6 tháng</option>
-                                                            <option value={9}>9 tháng</option>
-                                                            <option value={12}>12 tháng</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Hiển thị thông tin báo giá hiện tại nếu đã có và đã chọn giá công */}
-                                {user?.role?.name === 'TECHNICIAN' && booking?.quote && (selectedLaborPrice > 0 || booking?.quote?.laborPrice > 0) && (
-                                    <div className="card mb-3">
-                                        <div className="card-header">
-                                            <h5>Thông tin báo giá hiện tại</h5>
-                                        </div>
-                                        <div className="card-body">
-                                            <div className="alert alert-info">
-                                                <h6>Báo giá đã được tạo:</h6>
-                                                <p><strong>Giá công:</strong> {booking?.quote?.laborPrice?.toLocaleString()} VNĐ</p>
-                                                <p><strong>Thời gian bảo hành:</strong> {booking?.quote?.warrantiesDuration} tháng</p>
-                                                {booking?.quote?.items && booking?.quote?.items?.length > 0 && (
-                                                    <div>
-                                                        <p><strong>Thiết bị phát sinh:</strong></p>
-                                                        <ul className="list-unstyled">
-                                                            {booking?.quote?.items.map((item, idx) => (
-                                                                <li key={idx} className={`mb-1 ${item.status === 'REJECTED' ? 'text-muted' : item.status === 'ACCEPTED' ? 'text-success' : ''}`}>
-                                                                    • {item.name} - {item.price.toLocaleString()} VNĐ x {item.quantity}
-                                                                    {item.status === 'PENDING' && <span className="badge bg-warning">Chờ xác nhận</span>}
-                                                                    {item.status === 'ACCEPTED' && <span className="badge bg-success">Đã chấp nhận</span>}
-                                                                    {item.status === 'REJECTED' && <span className="badge bg-danger">Đã từ chối</span>}
-                                                                    {item.note && <span className="text-muted"> ({item.note})</span>}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                                <p><strong>Tổng tiền:</strong> {booking?.finalPrice?.toLocaleString()} VNĐ</p>
-                                                <p><strong>Trạng thái:</strong>
-                                                    <span className={`badge ${booking?.quote?.status === 'PENDING' ? 'bg-warning' : 'bg-info'}`}>
-                                                        {booking?.quote?.status === 'PENDING' ? 'Có yêu cầu phát sinh chờ xác nhận' : 'Không có yêu cầu phát sinh chờ xác nhận'}
-                                                    </span>
-                                                </p>
-                                                {booking?.quote?.items?.some(item => item.status === 'PENDING') && (
-                                                    <div className="alert alert-warning mt-2">
-                                                        <strong>⚠ Có yêu cầu phát sinh đang chờ khách xác nhận!</strong>
-                                                    </div>
-                                                )}
-                                                {booking?.quote?.items?.some(item => item.status === 'ACCEPTED') && (
-                                                    <div className="alert alert-success mt-2">
-                                                        <strong>✓ Có thiết bị đã được khách chấp nhận!</strong> Bạn có thể tiếp tục thêm thiết bị phát sinh nếu cần.
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {items.length > 0 && (
-                                    <Accordion defaultActiveKey={['0']} alwaysOpen>
-                                        <Accordion.Item eventKey="0">
-                                            <Accordion.Header>
-                                                Thiết bị phát sinh mới ({items.length} hạng mục)
-                                                {booking?.quote?.items && booking.quote.items.length > 0 && (
-                                                    <span className="text-muted ms-2">
-                                                        (Sẽ thêm vào danh sách hiện có)
-                                                    </span>
-                                                )}
-                                            </Accordion.Header>
-                                            <Accordion.Body className="p-0">
-                                                {items.length > 0 && (
-                                                    <div className="table-responsive" style={{ marginBottom: 15 }}>
-                                                        <table className="table table-center table-hover">
-                                                            <thead className="thead-light">
-                                                                <tr>
-                                                                    <th>Tên thiết bị</th>
-                                                                    <th>Giá tiền</th>
-                                                                    <th>Số lượng</th>
-                                                                    <th>Ghi chú</th>
-                                                                    <th>Hành động</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {items.map((item, idx) => (
-                                                                    <tr key={idx}>
-                                                                        <td>{item.name}</td>
-                                                                        <td>{item.price.toLocaleString()}</td>
-                                                                        <td>{item.quantity}</td>
-                                                                        <td>{item.note}</td>
-                                                                        <td>
-                                                                            <button
-                                                                                type="button"
-                                                                                className="btn btn-sm btn-warning me-2"
-                                                                                onClick={() => handleEdit(idx)}
-                                                                            >
-                                                                                Sửa
-                                                                            </button>
-                                                                            <button
-                                                                                type="button"
-                                                                                className="btn btn-sm btn-danger"
-                                                                                onClick={() => handleDelete(idx)}
-                                                                            >
-                                                                                Xóa
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                )}
-                                            </Accordion.Body>
-                                        </Accordion.Item>
-                                    </Accordion>
-                                )}
-
                             </div>
                         </div>
                     </div>
@@ -737,33 +592,26 @@ function BookingProcessing() {
                                     />
                                 </div>
 
-                                {/* Thông báo giá công đã chọn cho COMPLEX service */}
-                                {user?.role?.name === 'TECHNICIAN' && booking?.serviceId?.serviceType === 'COMPLEX' && selectedLaborPrice > 0 && (
+                                {/* Thông báo giá công đã chọn */}
+                                {/* {user?.role?.name === 'TECHNICIAN' && selectedLaborPrice > 0 && (
                                     <div className="alert alert-info">
-                                        <strong>Giá công đã chọn:</strong> {selectedLaborPrice.toLocaleString()} VNĐ
+                                        <strong>Giá công:</strong> {selectedLaborPrice.toLocaleString()} VNĐ
                                     </div>
-                                )}
-
-                                {/* Thông báo giá công cố định cho FIXED service */}
-                                {user?.role?.name === 'TECHNICIAN' && booking?.serviceId?.serviceType === 'FIXED' && selectedLaborPrice > 0 && (
-                                    <div className="alert alert-success">
-                                        <strong>Giá công cố định:</strong> {selectedLaborPrice.toLocaleString()} VNĐ
-                                    </div>
-                                )}
+                                )} */}
 
                                 {/* Thông báo thời gian bảo hành đã chọn */}
-                                {user?.role?.name === 'TECHNICIAN' && selectedWarrantyDuration > 0 && (
+                                {/* {user?.role?.name === 'TECHNICIAN' && selectedWarrantyDuration > 0 && (
                                     <div className="alert alert-info">
                                         <strong>Thời gian bảo hành đã chọn:</strong> {selectedWarrantyDuration} tháng
                                     </div>
-                                )}
+                                )} */}
 
-                                {/* Thông báo cho FIXED service */}
-                                {user?.role?.name === 'TECHNICIAN' && booking?.serviceId?.serviceType === 'FIXED' && booking?.quote && (
+                                {/* Thông báo cho dịch vụ */}
+                                {/* {user?.role?.name === 'TECHNICIAN' && booking?.technicianService && (
                                     <div className="alert alert-success">
-                                        <strong>Dịch vụ cố định:</strong> Giá công đã được tự động lưu ({booking.quote.laborPrice?.toLocaleString()} VNĐ)
+                                        <strong>Thông báo:</strong> Giá công ({booking.technicianService.price?.toLocaleString()} VNĐ) và thời gian bảo hành ({booking.technicianService.warrantyDuration || 0} tháng) sẽ được tự động lấy từ cấu hình dịch vụ của bạn
                                     </div>
-                                )}
+                                )} */}
 
                                 {/* Thông báo về tích lũy yêu cầu phát sinh */}
                                 {user?.role?.name === 'TECHNICIAN' && booking?.quote?.items && booking.quote.items.length > 0 && (
@@ -803,110 +651,137 @@ function BookingProcessing() {
 
             {/* Popup cho khách xác nhận yêu cầu phát sinh */}
             {user?.role?.name === 'CUSTOMER' && booking?.status === BOOKING_STATUS.WAITING_CUSTOMER_CONFIRM_ADDITIONAL && booking?.quote && showAdditionalPopup && (
-                <Modal show={showAdditionalPopup} onHide={() => setShowAdditionalPopup(false)}>
+                <Modal show={showAdditionalPopup} onHide={() => setShowAdditionalPopup(false)} className="booking-processing-modal">
                     <Modal.Header closeButton>
                         <Modal.Title>
-                            {booking?.quote?.note === 'Yêu cầu xác nhận giá công và thời gian bảo hành' 
-                                ? 'Xác nhận giá công và thời gian bảo hành' 
-                                : 'Yêu cầu phát sinh từ kỹ thuật viên'
-                            }
+                            <i className="feather-info"></i>
+                            Yêu cầu phát sinh từ kỹ thuật viên
                         </Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        {booking?.quote?.note === 'Yêu cầu xác nhận giá công và thời gian bảo hành' ? (
-                            // Nội dung cho xác nhận giá công
-                            <>
-                                <div className="text-center mb-4">
-                                    <h5>Thợ đề xuất giá công cho dịch vụ này:</h5>
-                                    <h3 className="text-primary">{booking.quote.laborPrice?.toLocaleString()} VNĐ</h3>
-                                </div>
-                                
-                                <div className="text-center mb-4">
-                                    <h5>Thời gian bảo hành:</h5>
-                                    <h3 className="text-success">{booking.quote.warrantiesDuration} tháng</h3>
-                                </div>
-                                
-                                <div className="alert alert-info">
-                                    <strong>Lưu ý:</strong> Sau khi xác nhận, thợ sẽ bắt đầu thực hiện dịch vụ với mức giá và thời gian bảo hành đã thống nhất.
-                                </div>
-                            </>
-                        ) : (
-                            // Nội dung cho yêu cầu phát sinh thiết bị
-                            <>
-                                <p>Kỹ thuật viên yêu cầu thêm các thiết bị sau:</p>
-                                {booking.quote.items && booking.quote.items.filter(item => item.status === 'PENDING').length > 0 ? (
-                                    <ul>
+                        <div className="booking-processing-modal-content">
+                            {booking.quote.items && booking.quote.items.filter(item => item.status === 'PENDING').length > 0 ? (
+                                <div className="booking-processing-items-list">
+                                    <div className="booking-processing-items-list-header">
+                                        <i className="feather-tool"></i>
+                                        Thiết bị phát sinh mới
+                                    </div>
+                                    <div className="booking-processing-items-list-content">
                                         {booking.quote.items
                                             .filter(item => item.status === 'PENDING')
                                             .map((item, idx) => (
-                                                <li key={idx}>
-                                                    <strong>{item.name}</strong> - {item.price.toLocaleString()} VNĐ x {item.quantity}
-                                                    {item.note && <span className="text-muted"> ({item.note})</span>}
-                                                </li>
+                                                <div key={idx} className="booking-processing-item-row">
+                                                    <div className="booking-processing-item-info">
+                                                        <div className="booking-processing-item-name">
+                                                            {item.name}
+                                                        </div>
+                                                        <div className="booking-processing-item-details">
+                                                            Số lượng: {item.quantity}
+                                                            {item.note && ` • ${item.note}`}
+                                                        </div>
+                                                    </div>
+                                                    <div className="booking-processing-item-price">
+                                                        {(item.price * item.quantity).toLocaleString()} VNĐ
+                                                    </div>
+                                                </div>
                                             ))}
-                                    </ul>
-                                ) : (
-                                    <div className="alert alert-warning">
-                                        <strong>Không có thiết bị mới nào đang chờ xác nhận.</strong>
                                     </div>
-                                )}
-                                
-                                {/* Tính tổng thiết bị chỉ từ items PENDING */}
-                                {booking.quote.items && booking.quote.items.filter(item => item.status === 'PENDING').length > 0 && (
-                                    <div className="alert alert-info">
-                                        <strong>Tổng thiết bị mới:</strong> {booking.quote.items
-                                            .filter(item => item.status === 'PENDING')
-                                            .reduce((total, item) => total + (item.price * item.quantity), 0).toLocaleString()} VNĐ
+                                </div>
+                            ) : (
+                                <div className="booking-processing-note-section">
+                                    <div className="booking-processing-note-header">
+                                        <i className="feather-alert-triangle"></i>
+                                        Thông báo
                                     </div>
-                                )}
+                                    <div className="booking-processing-note-content">
+                                        Không có thiết bị mới nào đang chờ xác nhận.
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Tính tổng và breakdown */}
+                            {(() => {
+                                const pendingItems = booking.quote.items.filter(item => item.status === 'PENDING');
                                 
-                                {/* Tính tổng cộng: giá công + giá thiết bị đã chấp nhận + giá thiết bị pending */}
-                                {(() => {
-                                    const pendingItems = booking.quote.items.filter(item => item.status === 'PENDING');
+                                if (pendingItems.length > 0) {
+                                    const acceptedItemsTotal = booking.quote.items
+                                        .filter(item => item.status === 'ACCEPTED')
+                                        .reduce((total, item) => total + (item.price * item.quantity), 0);
                                     
-                                    if (pendingItems.length > 0) {
-                                        const acceptedItemsTotal = booking.quote.items
-                                            .filter(item => item.status === 'ACCEPTED')
-                                            .reduce((total, item) => total + (item.price * item.quantity), 0);
-                                        
-                                        const pendingItemsTotal = pendingItems
-                                            .reduce((total, item) => total + (item.price * item.quantity), 0);
-                                        
-                                        const totalAmount = (booking.quote.laborPrice || 0) + acceptedItemsTotal + pendingItemsTotal;
-                                        
-                                        return (
-                                            <div className="alert alert-success">
-                                                <strong>Tổng cộng:</strong> {totalAmount.toLocaleString()} VNĐ
+                                    const pendingItemsTotal = pendingItems
+                                        .reduce((total, item) => total + (item.price * item.quantity), 0);
+                                    
+                                    // Lấy giá công từ TechnicianService (đã có sẵn từ trước)
+                                    // Lưu ý: booking.quote.warrantiesDuration có thể khác với booking.technicianService.warrantyDuration
+                                    // do quote được tạo trước đó với logic cũ. Luôn sử dụng TechnicianService để đảm bảo tính nhất quán.
+                                    const laborPrice = booking.technicianService?.price || 0;
+                                    const totalAmount = laborPrice + acceptedItemsTotal + pendingItemsTotal;
+                                    
+                                    return (
+                                        <div className="booking-processing-summary-section">
+                                            <div className="booking-processing-summary-header">
+                                                <div className="booking-processing-summary-label">
+                                                    Tổng cộng
+                                                </div>
+                                                <div className="booking-processing-summary-value">
+                                                    {totalAmount.toLocaleString()} VNĐ
+                                                </div>
                                             </div>
-                                        );
-                                    }
-                                    
-                                    return null;
-                                })()}
+                                            
+                                            <div className="booking-processing-summary-breakdown">
+                                                <div className="booking-processing-breakdown-item">
+                                                    <span className="booking-processing-breakdown-label">Giá công (từ cấu hình dịch vụ)</span>
+                                                    <span className="booking-processing-breakdown-value">
+                                                        {laborPrice.toLocaleString()} VNĐ
+                                                    </span>
+                                                </div>
+                                                {acceptedItemsTotal > 0 && (
+                                                    <div className="booking-processing-breakdown-item">
+                                                        <span className="booking-processing-breakdown-label">Thiết bị đã chấp nhận</span>
+                                                        <span className="booking-processing-breakdown-value">
+                                                            {acceptedItemsTotal.toLocaleString()} VNĐ
+                                                        </span>
+                                                    </div>
+                                                )}
+                                                <div className="booking-processing-breakdown-item">
+                                                    <span className="booking-processing-breakdown-label">Thiết bị mới</span>
+                                                    <span className="booking-processing-breakdown-value">
+                                                        {pendingItemsTotal.toLocaleString()} VNĐ
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                }
                                 
-                                {booking.quote.note && (
-                                    <div className="alert alert-warning">
-                                        <strong>Ghi chú:</strong> {booking.quote.note}
-                                    </div>
-                                )}
-                            </>
-                        )}
+                                return null;
+                            })()}
+
+                            {/* Thông tin giá công và thời gian bảo hành từ cấu hình dịch vụ */}
+                            {/* <div className="booking-processing-note-section">
+                                <div className="booking-processing-note-header">
+                                    <i className="feather-info"></i>
+                                    Thông tin dịch vụ
+                                </div>
+                                <div className="booking-processing-note-content">
+                                    <strong>Giá công:</strong> {(booking.technicianService?.price || 0).toLocaleString()} VNĐ
+                                    <br />
+                                    <strong>Thời gian bảo hành:</strong> {(booking.technicianService?.warrantyDuration || 0)} tháng
+                                    <br />
+                                    <em>(Thông tin này được lấy từ cấu hình dịch vụ của thợ, không phụ thuộc vào quote cũ)</em>
+                                </div>
+                            </div> */}
+                        </div>
                     </Modal.Body>
                     <Modal.Footer>
-                        <Button variant="success" onClick={handleAcceptAdditional}>
+                        <Button className="booking-processing-btn-accept" onClick={handleAcceptAdditional}>
+                            <i className="feather-check me-2"></i>
                             Đồng ý
                         </Button>
-                        <Button variant="danger" onClick={handleRejectAdditional}>
+                        <Button className="booking-processing-btn-reject" onClick={handleRejectAdditional}>
+                            <i className="feather-x me-2"></i>
                             Từ chối
                         </Button>
-                        {booking?.quote?.note === 'Yêu cầu xác nhận giá công và thời gian bảo hành' && (
-                            <Button variant="secondary" onClick={() => {
-                                setShowAdditionalPopup(false);
-                                navigate('/');
-                            }}>
-                                Hủy đơn hàng
-                            </Button>
-                        )}
                     </Modal.Footer>
                 </Modal>
             )}

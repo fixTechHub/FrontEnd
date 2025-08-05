@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, selectTechnician, technicianConfirmBooking, technicianRejectBooking, technicianSendQuote, customerAcceptQuote, customerRejectQuote, fetchBookingRequests as fetchBookingRequestsAPI, fetchTechniciansFoundByBookingId } from './bookingAPI';
+import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, selectTechnician, technicianConfirmBooking, technicianRejectBooking, technicianSendQuote, customerAcceptQuote, customerRejectQuote, fetchBookingRequests as fetchBookingRequestsAPI, fetchTechniciansFoundByBookingId, getAcceptedBooking } from './bookingAPI';
 
 export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',
@@ -42,10 +42,12 @@ export const fetchUserBookingHistory = createAsyncThunk(
     async ({ limit, skip }, { rejectWithValue }) => {
         try {
             const response = await getUserBookingHistory({ limit, skip })
-            
+
             return response;
         } catch (error) {
-            return rejectWithValue(error.response?.data || 'Failed to fetch booking history');}})
+            return rejectWithValue(error.response?.data || 'Failed to fetch booking history');
+        }
+    })
 export const fetchTopBookedServices = createAsyncThunk(
     'booking/fetchTopBookedServices',
     async () => {
@@ -75,23 +77,34 @@ export const getAcceptedBookingThunk = createAsyncThunk(
     async (bookingId, { rejectWithValue }) => {
         try {
             const response = await getAcceptedBooking(bookingId);
-            
+
             if (!response.data.success) {
                 return rejectWithValue(response.data.message);
             }
-            
+
             return response.data.data;
         } catch (error) {
             console.error('Get Accepted Booking Error:', error);
-            return rejectWithValue(error.response?.data?.message || 'Failed to fetch accepted booking');}})
-export const technicianConfirmBookingThunk = createAsyncThunk(
-    'booking/technicianConfirmBooking',
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch accepted booking');
+        }
+    })
+
+export const technicianAcceptBookingThunk = createAsyncThunk(
+    'booking/technicianAcceptBooking',
     async (bookingId, { rejectWithValue }) => {
         try {
+            console.log('--- THUNK: Bắt đầu gọi API ---');
             const res = await technicianConfirmBooking(bookingId);
+            console.log('--- THUNK: API response ---', res);
             return res.data;
         } catch (error) {
+            console.log('--- THUNK: Error object ---', error);
+            console.log('--- THUNK: Error response ---', error?.response);
+            console.log('--- THUNK: Error response data ---', error?.response?.data);
+            console.log('--- THUNK: Error message ---', error?.message);
+            
             const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            console.log('--- THUNK: Final error message ---', message);
             return rejectWithValue(message);
         }
     }
@@ -304,14 +317,14 @@ const bookingSlice = createSlice({
                 state.error = action.payload;
             })
 
-            .addCase(technicianConfirmBookingThunk.pending, (state) => {
+            .addCase(technicianAcceptBookingThunk.pending, (state) => {
                 state.status = 'loading';
             })
-            .addCase(technicianConfirmBookingThunk.fulfilled, (state, action) => {
+            .addCase(technicianAcceptBookingThunk.fulfilled, (state, action) => {
                 state.status = 'succeeded';
                 // Có thể cập nhật trạng thái booking nếu muốn
             })
-            .addCase(technicianConfirmBookingThunk.rejected, (state, action) => {
+            .addCase(technicianAcceptBookingThunk.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.payload;
             })

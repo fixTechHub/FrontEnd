@@ -222,10 +222,10 @@ function ServiceList() {
 
     if (categoryStatus === 'loading' || serviceStatus === 'loading')
         return (
-            <>
-                <Spinner animation="border" variant="warning" />
-                <h6>Đang tải dữ liệu</h6>
-            </>
+            <div className="service-list-loading-container">
+                <Spinner animation="border" variant="primary" />
+                <div className="service-list-loading-text">Đang tải dữ liệu</div>
+            </div>
         );
 
     return (
@@ -234,285 +234,240 @@ function ServiceList() {
 
             <BreadcrumbBar title={'Danh Sách Dịch Vụ'} subtitle={'Services List'} />
 
-            <div className="main-wrapper listing-page mt-3  ">
-                <div className="sort-section">
-                    <div className="container">
-                        <div className="sortby-sec">
-                            <div className="sorting-div">
-                                <div className="row d-flex align-items-center">
-                                    <div className="col-xl-4 col-lg-3 col-sm-12 col-12">
-                                        {/* <div className="count-search">
-                                            <p>Showing 1-9 of 154 Cars</p>
-                                        </div> */}
-                                    </div>
-                                    <div className="col-xl-8 col-lg-9 col-sm-12 col-12">
-                                        <div className="product-filter-group">
-                                            <div className="sortbyset">
-                                                <ul>
-                                                    <li>
-                                                        <span className="sortbytitle">Sort By </span>
-                                                        <div className="sorting-select select-two">
-                                                            <select className="form-control select">
-                                                                <option>Newest</option>
-                                                                <option>Relevance</option>
-                                                                <option>Best Rated</option>
-                                                            </select>
-                                                        </div>
-                                                    </li>
-                                                </ul>
-                                            </div>
+            <div className="main-wrapper listing-page mt-3">
+                <div className="container">
+                    <div className="row">
+                        <div className="col-xl-3 col-lg-4 col-sm-12 col-12 theiaStickySidebar">
+                            <div className="service-list-filter-section">
+                                <div className="service-list-search-box">
+                                    <input
+                                        type="text"
+                                        className="service-list-search-input"
+                                        placeholder="Tìm kiếm dịch vụ..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
+                                    />
+                                    <i className="bx bx-search service-list-search-icon"></i>
+                                </div>
 
-                                        </div>
+                                <div className="service-list-category-section">
+                                    <div className="service-list-category-title">
+                                        <i className="bx bx-category me-2"></i>
+                                        Danh mục dịch vụ
                                     </div>
+                                    {categories.map((category) => (
+                                        <div key={category._id} className="service-list-category-item">
+                                            <input
+                                                type="checkbox"
+                                                className="service-list-category-checkbox"
+                                                id={`category-${category._id}`}
+                                                value={category._id}
+                                                checked={selectedCategories.includes(category._id)}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setSelectedCategories((prev) =>
+                                                        prev.includes(value)
+                                                            ? prev.filter((id) => id !== value)
+                                                            : [...prev, value]
+                                                    );
+                                                }}
+                                            />
+                                            <label htmlFor={`category-${category._id}`} style={{ cursor: 'pointer', margin: 0, flex: 1 }}>
+                                                {category.categoryName}
+                                            </label>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
+                        </div>
+
+                        <div className="col-lg-9">
+                            {currentServices.length === 0 ? (
+                                <div className="service-list-empty-state">
+                                    <i className="bx bx-search service-list-empty-icon"></i>
+                                    <div className="service-list-empty-title">Không tìm thấy dịch vụ phù hợp</div>
+                                    <div className="service-list-empty-subtitle">
+                                        Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="row">
+                                    {currentServices.map((service) => (
+                                        <div key={service._id} className="col-xxl-4 col-lg-6 col-md-6 col-12 mb-4">
+                                            <div className="service-list-card">
+                                                <div className="service-list-card-image">
+                                                    <img 
+                                                        src={service.icon} 
+                                                        alt={service.serviceName}
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                    <div className="service-list-card-fallback" style={{ display: 'none' }}>
+                                                        <i className="bx bx-cog" style={{ fontSize: '60px', color: '#6c757d' }}></i>
+                                                    </div>
+                                                    <div className="service-list-card-badge">
+                                                        <i className="bx bx-star"></i>
+                                                        Popular
+                                                    </div>
+                                                </div>
+
+                                                <div className="service-list-card-content">
+                                                    <h3 className="service-list-card-title">
+                                                        {service.serviceName}
+                                                    </h3>
+                                                    
+                                                    <p className="service-list-card-description">
+                                                        {service.description}
+                                                    </p>
+
+                                                    {service.price && (
+                                                        <div className="service-list-card-price">
+                                                            {service.price.toLocaleString()} VNĐ
+                                                        </div>
+                                                    )}
+
+                                                    <div className="service-list-card-buttons">
+                                                        <button 
+                                                            className="service-list-card-btn service-list-card-btn-primary"
+                                                            onClick={() => handleOpenBookingModal(service, 'scheduled')}
+                                                        >
+                                                            <i className="bx bx-calendar"></i>
+                                                            Đặt Lịch
+                                                        </button>
+                                                        <button 
+                                                            className="service-list-card-btn service-list-card-btn-secondary"
+                                                            onClick={() => handleOpenBookingModal(service, 'urgent')}
+                                                        >
+                                                            <i className="bx bx-bolt"></i>
+                                                            Đặt Ngay
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {totalPages > 1 && (
+                                <div className="service-list-pagination">
+                                    <nav>
+                                        <ul className="pagination justify-content-center">
+                                            <li className={`service-list-page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                                <a 
+                                                    className={`service-list-page-link ${currentPage === 1 ? 'disabled' : ''}`}
+                                                    onClick={() => handlePageChange(currentPage - 1)}
+                                                    style={{ cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                                                >
+                                                    <i className="bx bx-chevron-left"></i>
+                                                </a>
+                                            </li>
+
+                                            {[...Array(totalPages)].map((_, index) => (
+                                                <li key={index} className="service-list-page-item">
+                                                    <a
+                                                        className={`service-list-page-link ${currentPage === index + 1 ? 'active' : ''}`}
+                                                        onClick={() => handlePageChange(index + 1)}
+                                                        style={{ cursor: 'pointer' }}
+                                                    >
+                                                        {index + 1}
+                                                    </a>
+                                                </li>
+                                            ))}
+
+                                            <li className={`service-list-page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                                <a 
+                                                    className={`service-list-page-link ${currentPage === totalPages ? 'disabled' : ''}`}
+                                                    onClick={() => handlePageChange(currentPage + 1)}
+                                                    style={{ cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                                                >
+                                                    <i className="bx bx-chevron-right"></i>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </nav>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-
-                <section className="section car-listing pt-0">
-                    <div className="container">
-                        <div className="row">
-                            <div className="col-xl-3 col-lg-4 col-sm-12 col-12 theiaStickySidebar">
-                                <form action="#" autoComplete="off" className="sidebar-form">
-                                    <div className="product-search">
-                                        <div className="form-custom">
-                                            <input
-                                                type="text"
-                                                className="form-control"
-                                                id="member_search1"
-                                                placeholder="Nhập để tìm kiếm"
-                                                value={searchTerm}
-                                                onChange={(e) => setSearchTerm(e.target.value.toLowerCase())}
-                                            />
-
-                                            <span><img src="/img/icons/search.svg" alt="Search" /></span>
-                                        </div>
-                                    </div>
-
-                                    <div className="accord-list">
-                                        <div className="accordion" id="accordionMain1">
-                                            <div className="card-header-new" id="headingOne">
-                                                <h6 className="filter-title">
-                                                    <a href="javascript:void(0);" className="w-100" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
-                                                        Danh mục
-                                                        <span className="float-end"><i className="fa-solid fa-chevron-down"></i></span>
-                                                    </a>
-                                                </h6>
-                                            </div>
-                                            <div id="collapseOne" className="collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample1">
-                                                <div className="card-body-chat">
-                                                    <div className="row">
-                                                        <div className="col-md-12">
-                                                            <div id="checkBoxes1">
-                                                                <div className="selectBox-cont">
-                                                                    {categories.map((category) => (
-                                                                        <label className="custom_check w-100">
-                                                                            <input
-                                                                                type="checkbox"
-                                                                                name="categories"
-                                                                                value={category._id}
-                                                                                checked={selectedCategories.includes(category._id)}
-                                                                                onChange={(e) => {
-                                                                                    const value = e.target.value;
-                                                                                    setSelectedCategories((prev) =>
-                                                                                        prev.includes(value)
-                                                                                            ? prev.filter((id) => id !== value)
-                                                                                            : [...prev, value]
-                                                                                    );
-                                                                                }}
-                                                                            />
-                                                                            <span className="checkmark"></span>  {category.categoryName}
-                                                                        </label>
-                                                                    ))}
-
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    {/* <button type="submit" className="d-inline-flex align-items-center justify-content-center btn w-100 btn-primary filter-btn">
-                                        <span><i className="feather-filter me-2"></i></span>Filter results
-                                    </button>
-                                    <a href="#" className="reset-filter">Reset Filter</a> */}
-                                </form>
-                            </div>
-
-                            <div className="col-lg-9">
-                                <div className="row">
-                                    {currentServices.length === 0 ? (
-                                        <div className="col-12 text-center py-5">
-                                            <h5>Không tìm thấy dịch vụ phù hợp.</h5>
-                                        </div>
-                                    ) : (
-                                        currentServices.map((service) => (
-                                            <div className="col-xxl-4 col-lg-6 col-md-6 col-12">
-                                                <div className="listing-item">
-                                                    <div className="listing-img" style={{ height: 184 }}>
-                                                        <a href="listing-details.html">
-                                                            <img src={service.icon} className="img-fluid" alt="Audi" />
-                                                        </a>
-                                                    </div>
-
-                                                    <div className="listing-content">
-                                                        <div className="listing-features d-flex align-items-end justify-content-between"
-                                                            style={{ paddingBottom: 5, marginBottom: 8 }}
-                                                        >
-                                                            <div className="list-rating">
-                                                                <h3 className="listing-title">
-                                                                    <a href="listing-details.html"
-                                                                        title={service?.serviceName}
-                                                                    >{service?.serviceName}</a>
-                                                                </h3>
-                                                                {/* <div className="list-rating">
-                                                            <>Loại dịch vụ: <>Đơn giản</></>
-                                                        </div> */}
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="listing-details-group two-line-ellipsis" title={service?.description}>
-                                                            <p>{service?.description}</p>
-                                                        </div>
-
-                                                        {/* <div className="listing-location-details" style={{ marginTop: 30 }}>
-                                                            <div className="listing-price">
-                                                                <span>
-                                                                    <i className="feather-map-pin"></i>
-                                                                </span>
-                                                                Mức Giá
-                                                            </div>
-
-                                                            <div className="listing-price">
-                                                                <h6><span>Liên hệ</span></h6>
-                                                            </div>
-                                                        </div> */}
-
-                                                        <div className="button-container">
-                                                            <button href="listing-details.html" className="custom-button"
-                                                                onClick={() => handleOpenBookingModal(service, 'scheduled')}
-                                                            >
-                                                                <i className="feather-calendar me-2"></i>
-                                                                Đặt Lịch
-                                                            </button>
-                                                            <button href="contact.html" className="custom-button-secondary"
-                                                                onClick={() => handleOpenBookingModal(service, 'urgent')}
-                                                            >
-                                                                <i className="feather-calendar me-2"></i>
-                                                                Đặt Ngay
-                                                            </button>
-                                                        </div>
-
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )))}
-
-                                </div>
-
-                                {totalPages > 1 && (
-                                    <div className="blog-pagination">
-                                        <nav>
-                                            <ul className="pagination page-item justify-content-center">
-                                                {/* <li className="previtem">
-                                                <a className="page-link" href="#">
-                                                    <i className="fas fa-regular fa-arrow-left me-2"></i> Prev
-                                                </a>
-                                            </li> */}
-                                                <li className={`previtem ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                    <a className="page-link" onClick={() => handlePageChange(currentPage - 1)}>
-                                                        <i className="fas fa-regular fa-arrow-left"></i>
-                                                    </a>
-                                                </li>
-
-                                                <li className="justify-content-center pagination-center">
-                                                    <div className="page-group">
-                                                        <ul>
-                                                            {[...Array(totalPages)].map((_, index) => (
-                                                                <li key={index} className="page-item">
-                                                                    <a
-                                                                        className={`${currentPage === index + 1 ? 'active page-link' : 'page-link'}`}
-                                                                        onClick={() => handlePageChange(index + 1)}>
-                                                                        {index + 1}
-                                                                    </a>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                </li>
-
-                                                <li className={`nextlink ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                                    <a className="page-link" onClick={() => handlePageChange(currentPage + 1)}>
-                                                        <i className="fas fa-regular fa-arrow-right"></i>
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </nav>
-                                    </div>
-                                )}
-                            </div>
-
-                        </div>
-                    </div>
-                </section>
             </div>
 
             {/* Modal đặt lịch */}
             <Modal show={showBookingModal} onHide={handleCloseBookingModal} size="lg">
-                <Modal.Header closeButton>
-                    <Modal.Title>
+                <Modal.Header closeButton className="service-list-modal-header">
+                    <Modal.Title className="service-list-modal-title">
                         Đặt lịch dịch vụ - {selectedService?.serviceName}
                     </Modal.Title>
                 </Modal.Header>
-                <Modal.Body>
+                <Modal.Body className="service-list-modal-body">
                     <form onSubmit={handleSubmitBooking}>
                         {/* Hiển thị dịch vụ đã chọn */}
-                        <div className="mb-3 p-2" style={{ background: '#f6f6f6', borderRadius: 8 }}>
-                            <div><b>Dịch vụ đã chọn:</b> {selectedService?.serviceName} {selectedService?.price && (<span>- {selectedService.price.toLocaleString()} VNĐ</span>)}
+                        <div className="service-list-selected-service">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                <i className="bx bx-check-circle" style={{ fontSize: '18px' }}></i>
+                                <div className="service-list-selected-service-title">
+                                    Dịch vụ đã chọn
+                                </div>
                             </div>
-                            <div className="text-muted">{selectedService?.description}</div>
+                            <div className="service-list-selected-service-info">
+                                {selectedService?.serviceName}
+                                {selectedService?.price && (
+                                    <span> - {selectedService.price.toLocaleString()} VNĐ</span>
+                                )}
+                            </div>
                         </div>
 
                         {/* Loại đặt lịch */}
-                        <div className="mb-3">
-                            <label className="form-label">Loại đặt lịch <span className="text-danger">*</span></label>
-                            <div className="row">
-                                <div className="col-md-6">
-                                    <div className="form-check">
-                                        <input
-                                            className="form-check-input"
-                                            type="radio"
-                                            name="bookingType"
-                                            id="urgent"
-                                            value="urgent"
-                                            checked={bookingType === 'urgent'}
-                                            onChange={() => setBookingType('urgent')}
-                                        />
-                                        <label className="form-check-label" htmlFor="urgent">
-                                            <strong>Đặt ngay</strong>
-                                            <br />
-                                            <small className="text-muted">(Sẽ đến trong 20 - 40 phút)</small>
-                                        </label>
+                        <div className="service-list-info-header">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                <i className="bx bx-calendar service-list-info-header-icon"></i>
+                                <div className="service-list-info-header-title">
+                                    Chọn loại đặt lịch
+                                </div>
+                            </div>
+                            <div className="service-list-info-header-subtitle">
+                                Bạn muốn đặt lịch ngay hay lên lịch trước?
+                            </div>
+                        </div>
+
+                        <div className="service-list-booking-cards">
+                            <div 
+                                className={`service-list-booking-card ${bookingType === 'urgent' ? 'selected' : ''}`}
+                                onClick={() => setBookingType('urgent')}
+                            >
+                                <div className="service-list-booking-content">
+                                    <div className="service-list-booking-icon service-list-booking-icon-urgent">
+                                        <i className="bx bxs-bolt"></i>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div className="service-list-booking-title">
+                                            Đặt ngay
+                                        </div>
+                                        <div className="service-list-booking-subtitle">
+                                            Kỹ thuật viên sẽ đến trong 20-40 phút
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="col-md-6">
-                                    <div className="form-check">
-                                        <input
-                                            className="form-check-input"
-                                            type="radio"
-                                            name="bookingType"
-                                            id="scheduled"
-                                            value="scheduled"
-                                            checked={bookingType === 'scheduled'}
-                                            onChange={() => setBookingType('scheduled')}
-                                        />
-                                        <label className="form-check-label" htmlFor="scheduled">
-                                            <strong>Đặt lịch</strong>
-                                            <br />
-                                            <small className="text-muted">(Chọn thời gian linh hoạt theo lịch của bạn)</small>
-                                        </label>
+                            </div>
+
+                            <div 
+                                className={`service-list-booking-card ${bookingType === 'scheduled' ? 'selected' : ''}`}
+                                onClick={() => setBookingType('scheduled')}
+                            >
+                                <div className="service-list-booking-content">
+                                    <div className="service-list-booking-icon service-list-booking-icon-scheduled">
+                                        <i className="bx bx-calendar"></i>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div className="service-list-booking-title">
+                                            Đặt lịch
+                                        </div>
+                                        <div className="service-list-booking-subtitle">
+                                            Chọn thời gian linh hoạt theo lịch của bạn
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -520,42 +475,40 @@ function ServiceList() {
 
                         {/* Địa chỉ */}
                         <div className="mb-3" style={{ position: 'relative' }}>
-                            <label className="form-label">Vị trí <span className="text-danger">*</span></label>
+                            <label className="form-label service-list-form-label">
+                                Vị trí <span className="text-danger">*</span>
+                            </label>
                             <input
                                 type="text"
-                                className="form-control"
+                                className={`form-control service-list-form-input ${errors.addressInput ? 'error' : ''}`}
                                 value={bookingLocation}
                                 onChange={e => {
                                     setBookingLocation(e.target.value);
-                                    setShowAddressSuggestions(true);
+                                    if (e.target.value.trim().length >= 3) {
+                                        setShowAddressSuggestions(true);
+                                    } else {
+                                        setShowAddressSuggestions(false);
+                                    }
                                 }}
-                                onFocus={() => setShowAddressSuggestions(true)}
+                                onFocus={() => {
+                                    if (bookingLocation.trim().length >= 3) {
+                                        setShowAddressSuggestions(true);
+                                    }
+                                }}
                                 onBlur={() => setTimeout(() => setShowAddressSuggestions(false), 200)}
                                 ref={locationInputRef}
                                 required
                                 autoComplete="off"
-                                placeholder="Nhập địa chỉ, ví dụ: 105 lê ..."
+                                placeholder="Nhập địa chỉ, ví dụ: 105 Lê Duẩn, Đà Nẵng"
                             />
-                            {addressLoading && <div style={{ fontSize: 13, color: '#888' }}>Đang tìm gợi ý...</div>}
-                            {addressError && <div style={{ color: 'red', fontSize: 13 }}>{addressError}</div>}
+                            {addressLoading && <div className="service-list-form-loading">Đang tìm gợi ý...</div>}
+                            {addressError && <div className="service-list-form-error">{addressError}</div>}
                             {showAddressSuggestions && addressSuggestions.length > 0 && (
-                                <ul style={{
-                                    position: 'absolute',
-                                    zIndex: 10,
-                                    background: '#fff',
-                                    border: '1px solid #ddd',
-                                    width: '100%',
-                                    maxHeight: 180,
-                                    overflowY: 'auto',
-                                    margin: 0,
-                                    padding: 0,
-                                    listStyle: 'none',
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
-                                }}>
+                                <ul className="service-list-address-suggestions">
                                     {addressSuggestions.map((s, idx) => (
                                         <li
                                             key={s.id || s.title + idx}
-                                            style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid #f0f0f0' }}
+                                            className="service-list-address-item"
                                             onMouseDown={() => {
                                                 setBookingLocation(s.address?.label || s.title);
                                                 setShowAddressSuggestions(false);
@@ -567,79 +520,118 @@ function ServiceList() {
                                     ))}
                                 </ul>
                             )}
-                            {errors.addressInput && <div style={{ color: 'red', fontSize: 13 }}>{errors.addressInput}</div>}
+                            {errors.addressInput && <div className="service-list-form-error">{errors.addressInput}</div>}
                         </div>
 
                         {/* Mô tả */}
                         <div className="mb-3">
-                            <label className="form-label">Mô tả tình trạng <span className="text-danger">*</span></label>
+                            <label className="form-label service-list-form-label">
+                                Mô tả tình trạng <span className="text-danger">*</span>
+                            </label>
                             <textarea
-                                className="form-control"
+                                className={`form-control service-list-form-textarea ${errors.description ? 'error' : ''}`}
                                 value={bookingDescription}
                                 onChange={e => setBookingDescription(e.target.value)}
                                 required
-                                rows={3}
                                 placeholder="Mô tả chi tiết tình trạng bạn gặp phải..."
                             />
-                            {errors.description && <div style={{ color: 'red', fontSize: 13 }}>{errors.description}</div>}
+                            {errors.description && <div className="service-list-form-error">{errors.description}</div>}
                         </div>
 
                         {/* Nếu là scheduled thì nhập ngày, giờ bắt đầu, giờ kết thúc */}
                         {bookingType === 'scheduled' && (
-                            <>
-                                <div className="mb-3">
-                                    <label className="form-label">Ngày đặt lịch <span className="text-danger">*</span></label>
-                                    <input
-                                        type="date"
-                                        className="form-control"
-                                        value={bookingDate}
-                                        onChange={e => setBookingDate(e.target.value)}
-                                        required
-                                    />
-                                    {errors.scheduleDate && <div style={{ color: 'red', fontSize: 13 }}>{errors.scheduleDate}</div>}
+                            <div className="service-list-schedule-section">
+                                <div className="service-list-schedule-header">
+                                    <i className="bx bx-time service-list-info-header-icon"></i>
+                                    <span className="service-list-schedule-title">Thông tin lịch hẹn</span>
                                 </div>
-                                <div className="mb-3">
-                                    <label className="form-label">Giờ bắt đầu <span className="text-danger">*</span></label>
-                                    <input
-                                        type="time"
-                                        className="form-control"
-                                        value={bookingTime}
-                                        onChange={e => setBookingTime(e.target.value)}
-                                        required
-                                    />
-                                    {errors.startTime && <div style={{ color: 'red', fontSize: 13 }}>{errors.startTime}</div>}
+                                
+                                <div className="service-list-schedule-inputs">
+                                    <div className="service-list-schedule-input-group">
+                                        <label className="form-label service-list-form-label">
+                                            Ngày đặt lịch <span className="text-danger">*</span>
+                                        </label>
+                                        <input
+                                            type="date"
+                                            className={`form-control service-list-form-input ${errors.scheduleDate ? 'error' : ''}`}
+                                            value={bookingDate}
+                                            onChange={e => setBookingDate(e.target.value)}
+                                            required
+                                        />
+                                        {errors.scheduleDate && <div className="service-list-form-error">{errors.scheduleDate}</div>}
+                                    </div>
                                 </div>
-                                <div className="mb-3">
-                                    <label className="form-label">Giờ kết thúc <span className="text-danger">*</span></label>
-                                    <input
-                                        type="time"
-                                        className="form-control"
-                                        value={bookingEndTime}
-                                        onChange={e => setBookingEndTime(e.target.value)}
-                                        required
-                                    />
-                                    {errors.endTime && <div style={{ color: 'red', fontSize: 13 }}>{errors.endTime}</div>}
+
+                                <div className="service-list-schedule-time-inputs">
+                                    <div className="service-list-schedule-time-label">
+                                        <label className="form-label service-list-form-label">
+                                            Thời gian mong muốn thợ đến sửa chữa <span className="text-danger">*</span>
+                                        </label>
+                                    </div>
+                                    <div className="service-list-schedule-time-inputs-row">
+                                        <div className="service-list-schedule-input-group">
+                                            <input
+                                                type="time"
+                                                className={`form-control service-list-form-input ${errors.startTime ? 'error' : ''}`}
+                                                value={bookingTime}
+                                                onChange={e => setBookingTime(e.target.value)}
+                                                required
+                                                placeholder="Từ"
+                                            />
+                                            {errors.startTime && <div className="service-list-form-error">{errors.startTime}</div>}
+                                        </div>
+                                        <div className="service-list-schedule-input-separator">
+                                            <span>đến</span>
+                                        </div>
+                                        <div className="service-list-schedule-input-group">
+                                            <input
+                                                type="time"
+                                                className={`form-control service-list-form-input ${errors.endTime ? 'error' : ''}`}
+                                                value={bookingEndTime}
+                                                onChange={e => setBookingEndTime(e.target.value)}
+                                                required
+                                                placeholder="Đến"
+                                            />
+                                            {errors.endTime && <div className="service-list-form-error">{errors.endTime}</div>}
+                                        </div>
+                                    </div>
                                 </div>
-                            </>
+                            </div>
                         )}
 
                         {/* Upload ảnh */}
                         <div className="mb-3">
-                            <label className="form-label">Hình ảnh (tùy chọn)</label>
+                            <label className="form-label service-list-form-label">
+                                Hình ảnh (tùy chọn)
+                            </label>
                             <ImageUploader onFilesSelect={handleBookingImages} />
-                            {errors.images && <div style={{ color: 'red', fontSize: 13 }}>{errors.images}</div>}
+                            {errors.images && <div className="service-list-form-error">{errors.images}</div>}
                         </div>
 
-                        {formError && <div className="alert alert-danger mt-2">{formError}</div>}
+                        {formError && (
+                            <div className="alert alert-danger service-list-alert-danger">
+                                <i className="bx bx-error-circle"></i>
+                                {formError}
+                            </div>
+                        )}
                     </form>
                 </Modal.Body>
-                <Modal.Footer>
-                    <Button variant="secondary" onClick={handleCloseBookingModal}>
+                <Modal.Footer className="service-list-modal-footer">
+                    <button 
+                        type="button"
+                        onClick={handleCloseBookingModal}
+                        className="service-list-btn-secondary"
+                    >
                         Hủy
-                    </Button>
-                    <Button variant="primary" type="submit" onClick={handleSubmitBooking} disabled={submitting}>
-                        {submitting ? <Spinner size="sm" animation="border" /> : 'Đặt lịch & chọn kỹ thuật viên'}
-                    </Button>
+                    </button>
+                    <button 
+                        type="submit"
+                        onClick={handleSubmitBooking}
+                        disabled={submitting}
+                        className="service-list-btn-primary"
+                    >
+                        {submitting ? 'Đang xử lý...' : 'Đặt lịch & chọn kỹ thuật viên'}
+                    </button>
                 </Modal.Footer>
             </Modal>
         </>
