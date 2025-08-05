@@ -233,7 +233,12 @@ function ViewTechnicianProfile() {
                                                     <div className="col-md-6">
                                                         <div className="profile-form-group">
                                                             <label>Kinh nghiệm:  {technician?.experienceYears} năm</label>
+                                                        </div>
+                                                    </div>
 
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Số job hoàn thành: {technician?.jobCompleted || 0}</label>
                                                         </div>
                                                     </div>
 
@@ -252,10 +257,70 @@ function ViewTechnicianProfile() {
                                                                 />
                                                                 <span>({technician?.ratingAverage})</span>
                                                             </div>
-
-
                                                         </div>
                                                     </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Trạng thái: {technician?.status}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Khả dụng: {technician?.availability}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Số dư: {technician?.balance || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Tổng thu nhập: {technician?.totalEarning || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Tổng hoa hồng đã trả: {technician?.totalCommissionPaid || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Tổng giữ lại: {technician?.totalHoldingAmount || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Tổng đã rút: {technician?.totalWithdrawn || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Phí kiểm tra: {technician?.inspectionFee || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Ngày cập nhật giá: {technician?.pricesLastUpdatedAt ? new Date(technician.pricesLastUpdatedAt).toLocaleDateString() : 'Chưa cập nhật'}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    {technician?.note && (
+                                                        <div className="col-md-12">
+                                                            <div className="profile-form-group">
+                                                                <label>Ghi chú: {technician.note}</label>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     <div className="col-md-12">
                                                         <div className="profile-form-group">
                                                             <label>Chứng chỉ:</label>

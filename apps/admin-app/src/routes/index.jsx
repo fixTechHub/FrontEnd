@@ -1,5 +1,4 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
 import AdminRoute from "./access/AdminRoute";
 import AdminLayout from "../components/layout/AdminLayout";
 import ReportManagement from "../pages/management/ReportManagement";
@@ -10,9 +9,6 @@ import CouponManagement from "../pages/management/CouponManagement";
 import CouponUsageManagement from "../pages/management/CouponUsageManagement";
 import CategoryManagement from "../pages/management/CategoryManagement";
 import BookingManagement from "../pages/management/BookingManagement";
-// import ViewEarningAndCommission from "../pages/technician-dashboard/ViewEarningAndCommission";
-// import TechnicianJobList from "../pages/technician-dashboard/TechnicianJob";
-// import ViewTechnicianProfile from "../pages/technician-dashboard/TechnicianProfile";
 import WarrantyManagement from "../pages/management/WarrantyManagement";
 import AdminDashboard from "../pages/home/admin-dashboard";
 import ServiceManagement from "../pages/management/ServiceManagement";
@@ -22,21 +18,8 @@ import FinancialManagement from '../pages/management/FinancialManagement';
 
 //Định nghĩa các route, xác định trang nào sẽ render vào <Outlet /> của AdminLayout, quyết định trang nào là management page.
 export default function AppRoutes() {
-  const dispatch = useDispatch();
-  const { user, registrationData, loading } = useSelector((state) => state.auth);
-
-  if (loading) {
-    return (
-      <div>...</div>
-    );
-  }
   return (
     <Routes>
-      {/* Technician routes */}
-      {/* <Route path="/technician/profile/:technicianId" element={<ViewTechnicianProfile />} />
-      <Route path="/technician/:technicianId/earning" element={<ViewEarningAndCommission />} />
-      <Route path="/technician/:technicianId/booking/:bookingId" element={<TechnicianJobList />} />
-      <Route path="/technician/:technicianId/booking" element={<TechnicianJobList />} /> */}
       <Route path="/admin" element={
         <AdminRoute>
           <AdminLayout />

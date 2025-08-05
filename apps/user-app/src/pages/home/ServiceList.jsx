@@ -200,6 +200,16 @@ function ServiceList() {
                                                             <p>{service?.description}</p>
                                                         </div>
 
+                                                        {service?.embedding && service.embedding.length > 0 && (
+                                                            <div className="listing-details-group">
+                                                                <p><small>AI Embedding: {service.embedding.length} dimensions</small></p>
+                                                            </div>
+                                                        )}
+
+                                                        <div className="listing-details-group">
+                                                            <p><small>Cập nhật: {service?.updatedAt ? new Date(service.updatedAt).toLocaleDateString() : 'Chưa cập nhật'}</small></p>
+                                                        </div>
+
                                                         <div className="listing-location-details" style={{ marginTop: 30 }}>
                                                             <div className="listing-price">
                                                                 <span>

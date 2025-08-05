@@ -7,7 +7,6 @@ import userReducer from '../features/users/userSlice';
 import reportReducer from '../features/reports/reportSlice';
 import technicianReducer from '../features/technicians/technicianSlice';
 import systemReportReducer from '../features/systemReports/systemReportSlice';
-import authReducer from '../features/auth/authSlice';
 import categoryReducer from '../features/categories/categorySlice';
 import warrantyReducer from '../features/warranty/warrantySlice';
 import serviceReducer from '../features/service/serviceSlice';
@@ -25,7 +24,6 @@ import financialReportReducer from '../features/financialReport/financialReportS
     reports: reportReducer,
     technicians: technicianReducer,
     systemReports: systemReportReducer,
-    auth: authReducer,
     categories: categoryReducer,
     warranty: warrantyReducer,
     transaction: transactionReducer,
@@ -34,11 +32,7 @@ import financialReportReducer from '../features/financialReport/financialReportS
     commissionConfig: commissionConfigReducer,
     commission: commissionReducer,
     financialReport: financialReportReducer,
-  },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: false,
-    }),
+  }
 });
 
 

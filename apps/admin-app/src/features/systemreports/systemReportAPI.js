@@ -4,7 +4,7 @@ export const systemReportAPI = {
     // Get all system reports
     getAll: async () => {
         try {
-            const response = await ApiBE.get('/Dashboard/systemreports');
+            const response = await ApiBE.get('/Dashboard/system-reports');
             return response.data;
         } catch (error) {
             throw error;
@@ -22,7 +22,7 @@ export const systemReportAPI = {
                 resolutionNote: resolutionNote || null,
                 resolvedBy: resolvedBy || null
             };
-            const response = await ApiBE.patch(`/Dashboard/systemreports/${id}/status`, payload);
+            const response = await ApiBE.patch(`/Dashboard/system-reports/${id}/status`, payload);
             return response.data;
         } catch (error) {
             throw error;

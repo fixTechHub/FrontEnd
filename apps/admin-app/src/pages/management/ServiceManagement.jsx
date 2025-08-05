@@ -22,9 +22,8 @@ const initialFormState = {
   categoryId: '',
   icon: '',
   isActive: true,
-  serviceType: 'FIXED',
-  estimatedMarketPrice: { min: '', max: '' },
   description: '',
+  embedding: [],
 };
 
 const ServiceManagement = () => {
@@ -122,9 +121,8 @@ const ServiceManagement = () => {
       categoryId: service.categoryId || '',
       icon: service.icon || '',
       isActive: service.isActive ?? true,
-      serviceType: service.serviceType || 'FIXED',
-      estimatedMarketPrice: service.estimatedMarketPrice || { min: '', max: '' },
       description: service.description || '',
+      embedding: service.embedding || [],
     });
     setValidationErrors({});
     setShowEditModal(true);
@@ -189,11 +187,9 @@ const ServiceManagement = () => {
     const exportColumns = [
       { title: 'Service Name', dataIndex: 'serviceName' },
       { title: 'Category', dataIndex: 'categoryName' },
-      { title: 'Service Type', dataIndex: 'serviceType' },
       { title: 'Status', dataIndex: 'status' },
-      { title: 'Min Price', dataIndex: 'minPrice' },
-      { title: 'Max Price', dataIndex: 'maxPrice' },
       { title: 'Description', dataIndex: 'description' },
+      { title: 'Embedding Dimensions', dataIndex: 'embeddingDimensions' },
       { title: 'Created At', dataIndex: 'createdAt' },
       { title: 'Updated At', dataIndex: 'updatedAt' },
     ];
@@ -203,11 +199,9 @@ const ServiceManagement = () => {
       return {
         serviceName: service.serviceName,
         categoryName: category?.categoryName || service.categoryId,
-        serviceType: service.serviceType,
         status: service.isActive ? 'ACTIVE' : 'INACTIVE',
-        minPrice: service.estimatedMarketPrice?.min ? formatCurrency(service.estimatedMarketPrice.min) : '',
-        maxPrice: service.estimatedMarketPrice?.max ? formatCurrency(service.estimatedMarketPrice.max) : '',
         description: service.description,
+        embeddingDimensions: service.embedding?.length || 0,
         createdAt: formatDateTime(service.createdAt),
         updatedAt: formatDateTime(service.updatedAt),
       };
@@ -272,13 +266,9 @@ const ServiceManagement = () => {
     }
     // Chuẩn bị data gửi lên BE
     const dataToSend = { ...formData };
-    if (formData.serviceType === 'COMPLEX') {
-      dataToSend.estimatedMarketPrice = {
-        min: Number(formData.estimatedMarketPrice.min),
-        max: Number(formData.estimatedMarketPrice.max)
-      };
-    } else {
-      delete dataToSend.estimatedMarketPrice;
+    // Xử lý embedding nếu có
+    if (formData.embedding && formData.embedding.length > 0) {
+      dataToSend.embedding = formData.embedding;
     }
     if (showAddModal) {
       dispatch(createService(dataToSend)).then((action) => {
@@ -381,17 +371,16 @@ const ServiceManagement = () => {
                       </span>
                     )}
                   </th>
-                  <th style={{ cursor: 'pointer' }} onClick={handleSortByCategory}>
-                    CATEGORY
-                    {sortField === 'category' && (
-                      <span style={{ marginLeft: 4 }}>
-                        {sortOrder === 'asc' ? '▲' : '▼'}
-                      </span>
-                    )}
-                  </th>
-                  <th>SERVICE TYPE</th>
-                  <th>STATUS</th>
-                  <th>ACTION</th>
+                                     <th style={{ cursor: 'pointer' }} onClick={handleSortByCategory}>
+                     CATEGORY
+                     {sortField === 'category' && (
+                       <span style={{ marginLeft: 4 }}>
+                         {sortOrder === 'asc' ? '▲' : '▼'}
+                       </span>
+                     )}
+                   </th>
+                   <th>STATUS</th>
+                   <th>ACTION</th>
                 </tr>
               </thead>
               <tbody>

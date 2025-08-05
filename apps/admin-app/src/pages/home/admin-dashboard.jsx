@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { Card, Button } from 'react-bootstrap';
 import { Line, Bar } from 'react-chartjs-2';
 import { Modal } from 'antd';
@@ -67,11 +66,8 @@ const AdminDashboard = () => {
       point: { radius: 0 },
     },
   };
-  const dispatch = useDispatch();
-  const { bookingCountLoading } = useSelector(state => state.bookings);
-  const { loading: revenueLoading } = useSelector(state => state.statistics);
-  const { technicianCountLoading } = useSelector(state => state.technicians);
-  const { isAuthenticated } = useSelector(state => state.auth);
+
+  const navigate = useNavigate();
   // State variables
   const [percentChange, setPercentChange] = useState(0);
   const [percentTechnicianChange, setPercentTechnicianChange] = useState(0);
@@ -90,7 +86,7 @@ const AdminDashboard = () => {
   const [revenueLastYear, setRevenueLastYear] = useState(Array(12).fill(0));
   const [revenueChartLoading, setRevenueChartLoading] = useState(false);
   const [technicianName, setTechnicianName] = useState('');
-  const navigate = useNavigate();
+  
   // Tính tổng booking của tháng hiện tại
   const nowForBooking = new Date();
   const currentMonthIndex = nowForBooking.getMonth(); // 0-based
@@ -112,25 +108,7 @@ const AdminDashboard = () => {
   const lastMonthForRevenue = currentMonth === 1 ? 12 : currentMonth - 1;
   const lastYearForRevenue = currentMonth === 1 ? lastYear : currentYear;
 
-
   useEffect(() => {
-    // Chỉ load data khi đã đăng nhập
-    if (!isAuthenticated) {
-      return;
-    }
-
-    setBookingCountLoading(true);
-    bookingAPI.getCountByMonth(currentYear, currentMonth)
-      .then(data => setTotalBookings(data.count))
-      .catch(() => setTotalBookings(0))
-      .finally(() => setBookingCountLoading(false));
-
-    setBookingCountLoading(true);
-    bookingAPI.getCountByMonth(lastYearForRevenue, lastMonthForRevenue)
-      .then(data => setLastMonthBookings(data.count))
-      .catch(() => setLastMonthBookings(0))
-      .finally(() => setBookingCountLoading(false));
-
     setRecentBookingsLoading(true);
     bookingAPI.getAll()
       .then(async (data) => {
@@ -194,7 +172,7 @@ const AdminDashboard = () => {
       setRevenueThisYear(dataThisYear);
       setRevenueLastYear(dataLastYear);
     }).finally(() => setRevenueChartLoading(false));
-  }, [dispatch, currentYear, lastYear, isAuthenticated]);
+  }, [currentYear, lastYear]);
 
   useEffect(() => {
     if (showDetailModal && selectedBooking && selectedBooking.technicianId) {
@@ -211,7 +189,6 @@ const AdminDashboard = () => {
       setTechnicianName('');
     }
   }, [showDetailModal, selectedBooking]);
-
 
   return (
     <div className="modern-page- wrapper">
@@ -235,14 +212,13 @@ const AdminDashboard = () => {
               <div className="text-muted small mb-0">Total Bookings</div>
               <div className="d-flex justify-content-between align-items-center">
                 <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {bookingCountLoading ? '...' : totalBookings}
+                  {totalBookings}
                 </div>
                 <div className={
                   `px-1 rounded ${percentChange > 0 ? 'bg-success text-white' : percentChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
                 } style={{fontSize: '0.55rem'}}>
-                  {bookingCountLoading ? '' :
-                    percentChange > 0 ? `+${percentChange.toFixed(0)}%` :
-                    percentChange < 0 ? `${percentChange.toFixed(0)}%` : '0%'}
+                  {percentChange > 0 ? `+${percentChange.toFixed(0)}%` :
+                   percentChange < 0 ? `${percentChange.toFixed(0)}%` : '0%'}
                 </div>
               </div>
               <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
@@ -268,14 +244,13 @@ const AdminDashboard = () => {
               <div className="text-muted small mb-0">Total Revenue</div>
               <div className="d-flex justify-content-between align-items-center">
                 <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {revenueLoading ? '...' : currentRevenue.toLocaleString()}
+                  {currentRevenue.toLocaleString()}
                 </div>
                 <div className={
                   `px-1 rounded ${percentRevenueChange > 0 ? 'bg-success text-white' : percentRevenueChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
                 } style={{fontSize: '0.55rem'}}>
-                  {revenueLoading ? '' :
-                    percentRevenueChange > 0 ? `+${percentRevenueChange.toFixed(0)}%` :
-                    percentRevenueChange < 0 ? `${percentRevenueChange.toFixed(0)}%` : '0%'}
+                  {percentRevenueChange > 0 ? `+${percentRevenueChange.toFixed(0)}%` :
+                   percentRevenueChange < 0 ? `${percentRevenueChange.toFixed(0)}%` : '0%'}
                 </div>
               </div>
               <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
@@ -301,14 +276,13 @@ const AdminDashboard = () => {
               <div className="text-muted small mb-0">Total Technicians</div>
               <div className="d-flex justify-content-between align-items-center">
                 <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {technicianCountLoading ? '...' : totalTechnicians}
+                  {totalTechnicians}
                 </div>
                 <div className={
                   `px-1 rounded ${percentTechnicianChange > 0 ? 'bg-success text-white' : percentTechnicianChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
                 } style={{fontSize: '0.55rem'}}>
-                  {technicianCountLoading ? '' :
-                    percentTechnicianChange > 0 ? `+${percentTechnicianChange.toFixed(0)}%` :
-                    percentTechnicianChange < 0 ? `${percentTechnicianChange.toFixed(0)}%` : '0%'}
+                  {percentTechnicianChange > 0 ? `+${percentTechnicianChange.toFixed(0)}%` :
+                   percentTechnicianChange < 0 ? `${percentTechnicianChange.toFixed(0)}%` : '0%'}
                 </div>
               </div>
               <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
@@ -578,26 +552,26 @@ const AdminDashboard = () => {
                 <div>No data</div>
               ) : topTechnicians.map((tech, idx) => (
                 <div className="d-flex justify-content-between align-items-center mb-2" key={tech.id}>
-                <div className="d-flex align-items-center">
-                  <div className="d-flex align-items-center justify-content-center rounded-circle me-2 bg-primary-subtle" 
-                        style={{width: "28px", height: "28px", overflow: 'hidden'}}>
-                    {tech.user?.avatarUrl ? (
-                      <img src={tech.user.avatarUrl} alt="avatar" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                    ) : (
-                      <i className="bi bi-person" style={{fontSize: '1.2rem', color: '#888'}}></i>
-                    )}
-                  </div>
-                  <div>
-                      <div style={{fontSize: '0.85rem', fontWeight: 500}}>{tech.user?.fullName || tech.user?.email || 'Technician'}</div>
-                      <div className="text-muted" style={{fontSize: '0.7rem'}}>Jobs: {tech.jobCompleted}</div>
-              </div>
-                  </div>
-                  <div style={{fontSize: '0.85rem', fontWeight: 500}}>
-                    <i className="bi bi-star-fill text-warning" style={{marginRight: 2}}></i>
-                    {tech.ratingAverage?.toFixed(2) ?? '0.00'}
-                  </div>
+                  <div className="d-flex align-items-center">
+                    <div className="d-flex align-items-center justify-content-center rounded-circle me-2 bg-primary-subtle" 
+                          style={{width: "28px", height: "28px", overflow: 'hidden'}}>
+                      {tech.user?.avatarUrl ? (
+                        <img src={tech.user.avatarUrl} alt="avatar" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
+                      ) : (
+                        <i className="bi bi-person" style={{fontSize: '1.2rem', color: '#888'}}></i>
+                      )}
+                    </div>
+                    <div>
+                        <div style={{fontSize: '0.85rem', fontWeight: 500}}>{tech.user?.fullName || tech.user?.email || 'Technician'}</div>
+                        <div className="text-muted" style={{fontSize: '0.7rem'}}>Jobs: {tech.jobCompleted}</div>
                 </div>
-              ))}
+                    </div>
+                    <div style={{fontSize: '0.85rem', fontWeight: 500}}>
+                      <i className="bi bi-star-fill text-warning" style={{marginRight: 2}}></i>
+                      {tech.ratingAverage?.toFixed(2) ?? '0.00'}
+                    </div>
+                  </div>
+                ))}
             </Card.Body>
           </Card>
         </div>
