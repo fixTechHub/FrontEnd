@@ -11,6 +11,10 @@ export default defineConfig({
     sourcemap: true,
     outDir: 'dist'
   },
+  
+  server: {
+    port: 5174
+  },
 
   // server: {
   //   port: 5174, // Explicitly set frontend port

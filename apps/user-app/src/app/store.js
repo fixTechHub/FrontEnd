@@ -18,6 +18,8 @@ import warrantyReducer from '../features/booking-warranty/warrantySlice';
 import feedbackReducer from '../features/feedbacks/feedbackSlice';
 import favoritesReducer from '../features/favorites/favoriteSlice';
 import aiChatReducer from '../features/chatbox/chatboxSlice'
+import suggestionReducer from '../features/suggestions/suggestionSlice';
+
 export const store = configureStore({
   reducer: {
     auth: authReducer,
@@ -38,7 +40,8 @@ export const store = configureStore({
     warranty: warrantyReducer,
     feedback: feedbackReducer,
     favorites: favoritesReducer,
-    aiChat: aiChatReducer
+    aiChat: aiChatReducer,
+    suggestions: suggestionReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
