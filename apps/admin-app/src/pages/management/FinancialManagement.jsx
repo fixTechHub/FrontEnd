@@ -421,9 +421,10 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'bookingCode',
       key: 'bookingCode',
+      width: 120,
       render: (text) => (
-        <div style={{ maxWidth: 200, fontWeight: 500 }}>
-          {text?.length > 20 ? `${text.substring(0, 20)}...` : text}
+        <div style={{ maxWidth: 120, fontWeight: 500, fontSize: '12px' }}>
+          {text?.length > 15 ? `${text.substring(0, 15)}...` : text}
         </div>
       ),
     },
@@ -440,8 +441,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'finalPrice',
       key: 'finalPrice',
+      width: 100,
       render: (price) => (
-        <span style={{ fontWeight: 600, color: '#52c41a' }}>
+        <span style={{ fontWeight: 600, color: '#52c41a', fontSize: '12px' }}>
           {formatCurrency(price)}
         </span>
       ),
@@ -459,8 +461,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'holdingAmount',
       key: 'holdingAmount',
+      width: 100,
       render: (amount) => (
-        <span style={{ fontWeight: 600, color: '#faad14' }}>
+        <span style={{ fontWeight: 600, color: '#faad14', fontSize: '12px' }}>
           {formatCurrency(amount)}
         </span>
       ),
@@ -478,8 +481,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'commissionAmount',
       key: 'commissionAmount',
+      width: 100,
       render: (amount) => (
-        <span style={{ fontWeight: 600, color: '#1890ff' }}>
+        <span style={{ fontWeight: 600, color: '#1890ff', fontSize: '12px' }}>
           {formatCurrency(amount)}
         </span>
       ),
@@ -497,8 +501,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'technicianEarning',
       key: 'technicianEarning',
+      width: 120,
       render: (earning) => (
-        <span style={{ fontWeight: 600, color: '#722ed1' }}>
+        <span style={{ fontWeight: 600, color: '#722ed1', fontSize: '12px' }}>
           {formatCurrency(earning)}
         </span>
       ),
@@ -507,8 +512,9 @@ const FinancialManagement = () => {
       title: 'STATUS',
       dataIndex: 'status',
       key: 'status',
+      width: 100,
       render: (status) => (
-        <Tag color={getStatusColor(status)}>
+        <Tag color={getStatusColor(status)} style={{fontSize: '11px'}}>
           {formatStatus(status)?.toUpperCase()}
         </Tag>
       ),
@@ -517,8 +523,9 @@ const FinancialManagement = () => {
       title: 'PAYMENT',
       dataIndex: 'paymentStatus',
       key: 'paymentStatus',
+      width: 100,
       render: (paymentStatus) => (
-        <Tag color={getPaymentColor(paymentStatus)}>
+        <Tag color={getPaymentColor(paymentStatus)} style={{fontSize: '11px'}}>
           {formatStatus(paymentStatus)?.toUpperCase()}
         </Tag>
       ),
@@ -1033,9 +1040,10 @@ const FinancialManagement = () => {
             onCancel={() => setIsTechnicianModalVisible(false)}
             footer={null}
             title={null}
-            width={800}
+            width={900}
+            style={{top: 20}}
           >
-            <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
+            <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 24}}>
               <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
                 <div style={{flex: 1}}>
                   <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>
@@ -1075,18 +1083,24 @@ const FinancialManagement = () => {
                 <>
                   <Divider />
                   <div style={{marginBottom: 16}}>
-                    <div style={{fontWeight: 500, color: '#222', marginBottom: 8}}>Booking History</div>
-                    <Table
-                      columns={bookingColumns.filter(col => !['actions', 'customer', 'technician'].includes(col.key))}
-                      dataSource={selectedTechnician.bookings}
-                      rowKey="id"
-                      pagination={{
-                        pageSize: 5,
-                        showSizeChanger: true,
-                        showQuickJumper: true
-                      }}
-                      size="small"
-                    />
+                    <div style={{fontWeight: 500, color: '#222', marginBottom: 12, fontSize: '14px'}}>Booking History</div>
+                    <div style={{overflowX: 'auto', maxWidth: '100%', border: '1px solid #f0f0f0', borderRadius: '6px'}}>
+                      <Table
+                        columns={bookingColumns.filter(col => !['actions', 'customer', 'technician'].includes(col.key))}
+                        dataSource={selectedTechnician.bookings}
+                        rowKey="id"
+                        pagination={{
+                          pageSize: 5,
+                          showSizeChanger: true,
+                          showQuickJumper: true,
+                          size: 'small'
+                        }}
+                        size="small"
+                        scroll={{ x: 600 }}
+                        style={{minWidth: 600}}
+                        className="compact-table"
+                      />
+                    </div>
                   </div>
                 </>
               )}
