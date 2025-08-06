@@ -477,14 +477,17 @@ function BookingProcessing() {
                                     </>
                                 )}
 
-                                <button
-                                    style={{ marginLeft: 10 }}
-                                    className="btn btn-primary"
-                                    onClick={handleComfirm}
-                                >
-                                    Xác nhận và Thanh toán
-                                </button>
-
+                                {booking.status === 'AWAITING_DONE'
+                                    // && booking.status === 'WAITING_CONFIRM'
+                                    && (
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={handleComfirm}
+                                        >
+                                            Xác nhận và Thanh toán
+                                        </button>
+                                    )
+                                }
 
                             </>
                         )}
