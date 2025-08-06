@@ -13,7 +13,7 @@ import { checkOutCustomerAccess } from "../../hooks/checkBookingAccess";
 import { formatCurrency } from '../../utils/formatDuration';
 import { formatDateOnly, formatDate, formatTimeOnly } from '../../utils/formatDate';
 import { Modal, Button, Card } from 'react-bootstrap';
-
+import { useBookingParams } from '../../hooks/useBookingParams';
 const CouponModal = ({ show, onHide, coupons, onSelectCoupon, subTotal }) => {
     const [selectedCoupon, setSelectedCoupon] = useState(null);
 

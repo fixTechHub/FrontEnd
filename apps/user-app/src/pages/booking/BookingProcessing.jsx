@@ -14,6 +14,7 @@ import { confirmJobDoneByTechnician } from '../../features/bookings/bookingAPI';
 import { fetchBookingById, customerAcceptQuoteThunk, customerRejectQuoteThunk, technicianSendQuoteThunk } from "../../features/bookings/bookingSlice";
 import { BOOKING_STATUS } from "../../constants/bookingConstants";
 import { Modal, Button } from "react-bootstrap";
+import { FaSpinner } from "react-icons/fa";
 
 function BookingProcessing() {
     const navigate = useNavigate();
@@ -325,7 +326,9 @@ function BookingProcessing() {
     }
 
     if (!isAuthorized) {
-        return <div>Error: {authError}</div>;
+        return <div className="d-flex align-items-center justify-content-center">
+            <FaSpinner className="me-2 fa-spin" /> Đang tải...
+        </div>
     }
 
     return (
@@ -702,21 +705,21 @@ function BookingProcessing() {
                             {/* Tính tổng và breakdown */}
                             {(() => {
                                 const pendingItems = booking.quote.items.filter(item => item.status === 'PENDING');
-                                
+
                                 if (pendingItems.length > 0) {
                                     const acceptedItemsTotal = booking.quote.items
                                         .filter(item => item.status === 'ACCEPTED')
                                         .reduce((total, item) => total + (item.price * item.quantity), 0);
-                                    
+
                                     const pendingItemsTotal = pendingItems
                                         .reduce((total, item) => total + (item.price * item.quantity), 0);
-                                    
+
                                     // Lấy giá công từ TechnicianService (đã có sẵn từ trước)
                                     // Lưu ý: booking.quote.warrantiesDuration có thể khác với booking.technicianService.warrantyDuration
                                     // do quote được tạo trước đó với logic cũ. Luôn sử dụng TechnicianService để đảm bảo tính nhất quán.
                                     const laborPrice = booking.technicianService?.price || 0;
                                     const totalAmount = laborPrice + acceptedItemsTotal + pendingItemsTotal;
-                                    
+
                                     return (
                                         <div className="booking-processing-summary-section">
                                             <div className="booking-processing-summary-header">
@@ -727,7 +730,7 @@ function BookingProcessing() {
                                                     {totalAmount.toLocaleString()} VNĐ
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="booking-processing-summary-breakdown">
                                                 <div className="booking-processing-breakdown-item">
                                                     <span className="booking-processing-breakdown-label">Giá công (từ cấu hình dịch vụ)</span>
@@ -753,7 +756,7 @@ function BookingProcessing() {
                                         </div>
                                     );
                                 }
-                                
+
                                 return null;
                             })()}
 

@@ -252,12 +252,12 @@ function BookingWarranty() {
                                     bookingWarrantyId={bookingWarrantyId}
                                     onWarrantyUpdated={handleWarrantyUpdated}
                                 />
-                                {(warranty?.bookingId?._id && (warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed)) && (
+                                {/* {(warranty?.bookingId?._id && (warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed)) && (
                                     <BookingWarrantySchedule
                                         bookingWarrantyId={bookingWarrantyId}
                                         onWarrantyUpdated={handleWarrantyUpdated}
                                     />
-                                )}
+                                )} */}
                             </div>
                             <div className="col-lg-6">
                                 {warranty?.bookingId?._id && (warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed) ? (
