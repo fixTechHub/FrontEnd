@@ -29,54 +29,54 @@ const BreadcrumbSection = () => (
 
 // ---------- Widget Item component -----------
 const WidgetItem = ({ icon, title, value, color, link }) => (
-  <div className="col-lg-3 col-md-6 d-flex">
-    <div className="widget-box flex-fill">
-      <div className="widget-header">
-        <div className="widget-content">
-          <h6>{title}</h6>
-          <h3>{value}</h3>
-        </div>
-        <div className="widget-icon">
-          <span className={color ? `bg-${color}` : ""}>
-            <img src={`/img/icons/${icon}-icon.svg`} alt="icon" />
-          </span>
-        </div>
-      </div>
+    <div className="col-lg-3 col-md-6 d-flex">
+        <div className="widget-box flex-fill">
+            <div className="widget-header">
+                <div className="widget-content">
+                    <h6>{title}</h6>
+                    <h3>{value}</h3>
+                </div>
+                <div className="widget-icon">
+                    <span className={color ? `bg-${color}` : ""}>
+                        <img src={`/img/icons/${icon}-icon.svg`} alt="icon" />
+                    </span>
+                </div>
+            </div>
 
-      {link ? (
-        <Link to={link} className="view-link">
-          View Details <i className="feather-arrow-right" />
-        </Link>
-      ) : (
-        <a href="#" className="view-link">
-          View Details <i className="feather-arrow-right" />
-        </a>
-      )}
+            {link ? (
+                <Link to={link} className="view-link">
+                    View Details <i className="feather-arrow-right" />
+                </Link>
+            ) : (
+                <a href="#" className="view-link">
+                    View Details <i className="feather-arrow-right" />
+                </a>
+            )}
+        </div>
     </div>
-  </div>
 );
 
 // ---------- Widgets Row -----------
 const WidgetsRow = () => {
-  const { bookings } = useSelector((state) => state.technician);
-  const { technician } = useSelector((state) => state.auth);
-  console.log(technician);
-  
+    const { bookings } = useSelector((state) => state.technician);
+    const { technician } = useSelector((state) => state.auth);
+    console.log(technician);
 
-  return (
-    <div className="row">
-      <WidgetItem icon="book" title="My Bookings" value={bookings.length} link="/technician/bookings" />
-      <WidgetItem icon="balance" title="Wallet Balance" value={technician.balance} color="/technician/deposit" />
-      <WidgetItem icon="transaction" title="Total Transactions" value="$15,210" color="success" link="/technician/earning"/>
-      <WidgetItem icon="cars" title="Wishlist Cars" value="24" color="danger" />
-    </div>
-  );
+
+    return (
+        <div className="row">
+            <WidgetItem icon="book" title="My Bookings" value={bookings.length} link="/technician/booking" />
+            <WidgetItem icon="balance" title="Wallet Balance" value={technician.balance.toLocaleString('vi-VN')} link="/technician/deposit" />
+            <WidgetItem icon="transaction" title="Total Transactions" value="$15,210" color="success" link="/technician/earning" />
+            <WidgetItem icon="cars" title="Wishlist Cars" value="24" color="danger" />
+        </div>
+    );
 };
 
 function ViewEarningAndCommission() {
     const dispatch = useDispatch();
-    const {technician } = useSelector((state) => state.auth);
-    const  technicianId  = technician._id;
+    const { technician } = useSelector((state) => state.auth);
+    const technicianId = technician._id;
 
     const { earnings, loading, error } = useSelector((state) => state.technician);
 
@@ -124,16 +124,18 @@ function ViewEarningAndCommission() {
                                                 </thead>
                                                 <tbody>
                                                     {Array.isArray(earnings) && earnings.length > 0 ? (
-                                                        earnings.map((item, index) => (
-                                                            <tr key={item.bookingId ?? item._id ?? index}>
-                                                                <td>{item.bookingInfo?.customerName ?? 'Không có'}</td>
-                                                                <td>{item.bookingInfo?.service ?? 'Không có'}</td>
-                                                                <td>{item.commissionAmount?.toLocaleString() ?? '0'} VNĐ</td>
-                                                                <td>{item.holdingAmount?.toLocaleString() ?? '0'} VNĐ</td>
-                                                                <td>{item.technicianEarning?.toLocaleString() ?? '0'} VNĐ</td>
-                                                                <td>{item.finalPrice?.toLocaleString() ?? '0'} VNĐ</td>
-                                                            </tr>
-                                                        ))
+                                                        earnings
+                                                            .slice(0, 5)
+                                                            .map((item, index) => (
+                                                                <tr key={item.bookingId ?? item._id ?? index}>
+                                                                    <td>{item.bookingInfo?.customerName ?? 'Không có'}</td>
+                                                                    <td>{item.bookingInfo?.service ?? 'Không có'}</td>
+                                                                    <td>{item.commissionAmount?.toLocaleString() ?? '0'} VNĐ</td>
+                                                                    <td>{item.holdingAmount?.toLocaleString() ?? '0'} VNĐ</td>
+                                                                    <td>{item.technicianEarning?.toLocaleString() ?? '0'} VNĐ</td>
+                                                                    <td>{item.finalPrice?.toLocaleString() ?? '0'} VNĐ</td>
+                                                                </tr>
+                                                            ))
                                                     ) : (
                                                         <tr>
                                                             <td colSpan="6" className="text-center">
@@ -158,8 +160,8 @@ function ViewEarningAndCommission() {
 
 const TechnicianJobList = () => {
     const dispatch = useDispatch();
-    const {technician } = useSelector((state) => state.auth);
-    const  technicianId  = technician._id;
+    const { technician } = useSelector((state) => state.auth);
+    const technicianId = technician._id;
     const { bookings, loading, error } = useSelector((state) => state.technician);
 
     useEffect(() => {
@@ -279,7 +281,9 @@ const TechnicianJobList = () => {
                                             <td colSpan="7" className="text-center">Không có đơn đặt lịch nào</td>
                                         </tr>
                                     ) : (
-                                        bookings.map((b) => (
+                                        bookings
+                                        .slice(0, 5)
+                                        .map((b) => (
                                             <tr key={b.bookingId || b._id}>
                                                 <td>{b.bookingCode}</td>
                                                 <td>{b.customerName}</td>
@@ -332,10 +336,10 @@ const CardsRow = () => (
 );
 
 function TechnicianDashboard() {
-    const {technician } = useSelector((state) => state.auth);
-    const technicianId  = technician._id;
+    const { technician } = useSelector((state) => state.auth);
+    const technicianId = technician._id;
     console.log(technicianId);
-    
+
     return (
         <>
             <div class="main-wrapper">
@@ -392,7 +396,7 @@ function TechnicianDashboard() {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/profile/${technicianId}`}>
+                                            <Link to={`/profile`}>
                                                 <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
                                                 <span>Settings</span>
                                             </Link>

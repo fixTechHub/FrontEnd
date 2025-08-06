@@ -6,6 +6,9 @@ import { setCall, setCallAccepted, setCallEnded, setCurrentSessionId, initiateCa
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import { getSocket } from '../../services/socket';
 import './VideoCallPage.css'
+import { MdCallEnd } from 'react-icons/md';
+import { toast } from 'react-toastify';
+
 // Polyfill for process.nextTick if needed
 if (typeof process === 'undefined') {
   window.process = { nextTick: (fn) => setTimeout(fn, 0) };
@@ -28,6 +31,44 @@ const VideoCallPage = () => {
   const [retryCount, setRetryCount] = useState(0);
   const maxRetries = 3;
   const hasStopped = useRef(false); // Flag to prevent multiple stops
+  const bookingWarrantyId = location.state?.bookingWarrantyId;
+
+  useEffect(() => {
+    // Redirect if not navigated from MessageBox
+    if (!location.state?.fromMessageBox) {
+      console.warn('Direct access to VideoCallPage detected, redirecting...');
+      toast.warn('Unauthorized access: Please start the video call from the message box.', {
+        position: 'top-right',
+        autoClose: 5000,
+      });
+      // const redirectPath = bookingWarrantyId
+      //   ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+      //   : `/booking/booking-processing?bookingId=${bookingId}`;
+      navigate(-1, { replace: true });
+      return;
+    }
+
+    // Fetch booking details to verify user participation
+    dispatch(fetchBookingById(bookingId));
+
+    // Verify user is part of the booking
+    if (booking && user) {
+      const isCustomer = booking.customerId?._id === user._id;
+      const isTechnician = booking.technicianId?.userId?._id === user._id;
+      if (!isCustomer && !isTechnician) {
+        console.warn('User not part of booking, redirecting...');
+        toast.warn('Access denied: You are not a participant in this booking.', {
+          position: 'top-right',
+          autoClose: 5000,
+        });
+        // const redirectPath = bookingWarrantyId
+        //   ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+        //   : `/booking/booking-processing?bookingId=${bookingId}`;
+        navigate(-1, { replace: true });
+      }
+    }
+  }, [dispatch, bookingId, navigate, booking, user, bookingWarrantyId, location.state]);
+
 
   const stopStream = (reason = 'unknown') => {
     if (stream && !hasStopped.current) {
@@ -86,7 +127,10 @@ const VideoCallPage = () => {
 
     const handleCallUser = (data) => {
       console.log('Received callUser event:', data);
-      if (!callAccepted && !hasCalled.current) {
+      const { from, name, signal, sessionId, bookingId: incomingBookingId, warrantyId: incomingWarrantyId } = data;
+      const isValidCall = (incomingBookingId && incomingBookingId === bookingId) ||
+        (incomingWarrantyId && incomingWarrantyId === bookingWarrantyId);
+      if (isValidCall && !callAccepted && !hasCalled.current) {
         // Reset hasCalled if not in a call
         hasCalled.current = false;
         setStream(null); // Clear stream to force reinitialization
@@ -109,7 +153,11 @@ const VideoCallPage = () => {
           connectionRef.current = null;
         }
         stopStream('call ended');
-        navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
+        hasCalled.current = false;
+        const redirectPath = bookingWarrantyId
+          ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+          : `/booking/booking-processing?bookingId=${bookingId}`;
+        navigate(redirectPath, { replace: true });
         window.location.reload();
       }
     };
@@ -122,7 +170,12 @@ const VideoCallPage = () => {
       stopStream('call declined');
       dispatch(setCallEnded(true)); // Reset call state
       hasCalled.current = false; // Allow initiating a new call
-      navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
+      socket.emit('callDeclined', { to: data.from, from: user._id, sessionId: currentSessionId }); // Ensure notification
+      toast.info(`Call declined by ${data.from}`, { position: 'top-right', autoClose: 3000 });
+      const redirectPath = bookingWarrantyId
+        ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+        : `/booking/booking-processing?bookingId=${bookingId}`;
+      navigate(redirectPath, { replace: true });
       window.location.reload();
     };
     socket.on('callUser', handleCallUser);
@@ -175,7 +228,8 @@ const VideoCallPage = () => {
             // Fallback: emit decline event directly
             socket.emit('callDeclined', {
               to: otherUserId,
-              from: user._id
+              from: user._id,
+              sessionId: currentSessionId
             });
           });
         }
@@ -240,9 +294,17 @@ const VideoCallPage = () => {
           bookingId,
           to: id,
           signalData: data,
-          name: user.fullName
+          name: user.fullName,
+          warrantyId: bookingWarrantyId || null
         })).unwrap();
-
+        socket.emit('callUser', {
+          userToCall: id,
+          signalData: data,
+          from: user._id,
+          name: user.fullName,
+          bookingId: bookingWarrantyId ? null : bookingId,
+          warrantyId: bookingWarrantyId || null
+        });
         console.log('Call initiated successfully with sessionId:', result.sessionId);
       } catch (error) {
         console.error('Failed to initiate call:', error);
@@ -283,8 +345,12 @@ const VideoCallPage = () => {
       dispatch(setCallAccepted(true));
       peer.signal(signal);
     });
-
+  
     connectionRef.current = peer;
+    return () => {
+      socket.off('callAccepted');
+      
+    };
   };
 
   const answerIncomingCall = (incomingCallData) => {
@@ -356,10 +422,11 @@ const VideoCallPage = () => {
           sessionId: currentSessionId,
           to: otherUserId
         })).unwrap();
-
+        socket.emit('callEnded', { to: otherUserId, sessionId: currentSessionId });
         console.log('Call ended successfully');
       } catch (error) {
         console.error('Failed to end call:', error);
+        socket.emit('callEnded', { to: otherUserId, sessionId: currentSessionId });
       }
     }
 
@@ -368,7 +435,10 @@ const VideoCallPage = () => {
       connectionRef.current = null;
     }
     stopStream('manual hang up');
-    navigate(`/booking/booking-processing?bookingId=${bookingId}`, { replace: true });
+    const redirectPath = bookingWarrantyId
+      ? `/warranty?bookingWarrantyId=${bookingWarrantyId}`
+      : `/booking/booking-processing?bookingId=${bookingId}`;
+    navigate(redirectPath, { replace: true });
     window.location.reload();
   };
   useEffect(() => {
@@ -419,9 +489,11 @@ const VideoCallPage = () => {
         </div>
       </div>
       <div className="custom-controls">
-        <button className="custom-btn-hangup" onClick={leaveCall}>
-          🛑
-        </button>
+        {callAccepted && !callEnded && (
+          <button className="custom-btn-hangup" onClick={leaveCall}>
+          <MdCallEnd size={24} color="white" />
+          </button>
+        )}
       </div>
     </div>
   );

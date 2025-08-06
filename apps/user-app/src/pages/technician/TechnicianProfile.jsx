@@ -10,27 +10,45 @@ import { Link } from 'react-router-dom';
 function ViewTechnicianProfile() {
     const dispatch = useDispatch();
     const { profile, loading, error } = useSelector(state => state.technician);
-    // const { user,technician } = useSelector((state) => state.auth);
-    const { technicianId } = useParams();
-
+    const technician  = useSelector((state) => state.auth);
+    const  technicianId = technician.technician?._id ;
+    
     useEffect(() => {
         if (technicianId) {
             console.log("Dispatching technicianId:", technicianId);
-            dispatch(fetchTechnicianProfile(technicianId));
+            dispatch(fetchTechnicianProfile(technicianId))
+            .then((result) => {
+                    console.log("=== PROFILE DEBUG ===");
+                    console.log("Full result:", result);
+                    console.log("Result payload:", result.payload);
+                    console.log("Profile data:", profile);
+                })
+                .catch((err) => {
+                    console.error("Error fetching profile:", err);
+                });
         }
     }, [dispatch, technicianId]);
+    console.log(technicianId);
+    console.log("tech", technician);
+    
+    
+
+    const certificates = Array.isArray(profile[1])
+  ? profile[1].filter(item => item.status === 'APPROVED')
+  : [];
+
+    console.log("profile", profile);
+    
+    const user = technician?.user ?? {};
+    
+    
+    const specialties = profile[0]?.specialtiesCategories ?? [];
+    console.log(specialties);
+    
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p style={{ color: 'red' }}>{error}</p>;
     if (!profile) return <p>No profile data.</p>;
-
-    
-
-    const [technician, certificates] = profile ?? []; 
-    console.log("profile", profile);
-    
-    const user = technician?.userId ?? {};
-    const specialties = technician?.specialtiesCategories ?? [];
 
     return (
         <>
@@ -250,12 +268,12 @@ function ViewTechnicianProfile() {
 
                                                             <div className="review-rating">
                                                                 <Rating
-                                                                    initialRating={technician?.ratingAverage}
+                                                                    initialRating={technician?.technician?.ratingAverage}
                                                                     readonly
                                                                     fullSymbol={<i className="fas fa-star filled"></i>}
                                                                     emptySymbol={<i className="far fa-star"></i>}
                                                                 />
-                                                                <span>({technician?.ratingAverage})</span>
+                                                                <span>({technician?.technician?.ratingAverage})</span>
                                                             </div>
                                                         </div>
                                                     </div>

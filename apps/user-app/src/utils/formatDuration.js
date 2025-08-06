@@ -42,3 +42,20 @@ export const formatDurationMMSS = (seconds) => {
 
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
 }; 
+
+
+export  const formatCurrency = (number) => {
+    return Math.round(number).toLocaleString('vi-VN');
+};
+
+export const maskTransactionId = (transactionId) => {
+    if (!transactionId) return '';
+    
+    if (transactionId.length <= 6) {
+      return transactionId[0] + 'XXX' + transactionId[transactionId.length - 1];
+    }
+    
+    const firstPart = transactionId.substring(0, 3);
+    const lastPart = transactionId.substring(transactionId.length - 3);
+    return firstPart + 'XXX' + lastPart;
+  };

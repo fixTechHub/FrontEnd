@@ -67,20 +67,71 @@ export const sendMessage = (message) => {
   }
 };
 
-export const onReceiveMessage = (callback) => {
-  if (socket) {
+// export const onReceiveMessage = (callback) => {
+//   if (socket) {
+//     const listener = (message) => {
+//       console.log('Received message:', message);
+//       callback(message);
+//     };
+//     socket.on('receiveMessage', listener);
+//     // return () => {
+//     //   if (socket) socket.off('receiveMessage', listener);
+//     //   console.log('Removed receiveMessage listener');
+//     // };
+//     const room = socket.bookingWarrantyId
+//             ? `warranty:${socket.bookingWarrantyId}:user:${socket.userId}`
+//             : socket.bookingId
+//                 ? `booking:${socket.bookingId}:user:${socket.userId}`
+//                 : `user:${socket.userId}`;
+//         socket.emit('joinChatRoom', room);
+
+//         return () => {
+//             if (socket) {
+//                 socket.off('receiveMessage', listener);
+//                 socket.emit('leaveRoom', room);
+//                 console.log('Removed receiveMessage listener and left room:', room);
+//             }
+//         };
+//   }
+// };
+export const onReceiveMessage = ({
+  socket,
+  userId,
+  bookingId = null,
+  bookingWarrantyId = null,
+  callback,
+}) => {
+  if (socket && userId) {
+    // 1️⃣ Prepare listener
     const listener = (message) => {
       console.log('Received message:', message);
       callback(message);
     };
     socket.on('receiveMessage', listener);
+
+    // 2️⃣ Build room name
+    const room = bookingWarrantyId
+      ? `warranty:${bookingWarrantyId}:user:${userId}`
+      : bookingId
+        ? `booking:${bookingId}:user:${userId}`
+        : `user:${userId}`; // fallback, but you probably won’t use this for messages
+
+    // 3️⃣ Join room
+    socket.emit('joinChatRoom', {
+      type: bookingWarrantyId ? 'warranty' : 'booking',
+      bookingId,
+      warrantyId: bookingWarrantyId,
+    });
+    console.log('Joined room:', room);
+
+    // 4️⃣ Cleanup
     return () => {
-      if (socket) socket?.off('receiveMessage', listener);
-      console.log('Removed receiveMessage listener');
+      socket.off('receiveMessage', listener);
+      socket.emit('leaveRoom', { room });
+      console.log('Removed listener & left room:', room);
     };
   }
 };
-
 export const onReceiveNotification = (callback) => {
   if (socket) {
     const listener = (notification) => {
@@ -177,6 +228,19 @@ export const onNotificationsCleared = (callback) => {
   return () => socket?.off('notificationsCleared', callback);
 };
 
+export const onWarrantyUpdated = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received warranty update:', data);
+      callback(data);
+    };
+    socket.on('warrantyUpdated', listener);
+    return () => {
+      if (socket) socket.off('warrantyUpdated', listener);
+      console.log('Removed warrantyUpdated listener');
+    };
+  }
+}
 export const onBookingNew = (callback) => {
   if (socket) {
     const listener = (data) => callback(data);
@@ -242,6 +306,99 @@ export const onBookingStatusUpdate = (callback) => {
     const listener = (data) => callback(data);
     socket.on('booking:statusUpdate', listener);
     return () => socket?.off('booking:statusUpdate', listener);
+  }
+
+  return () => {};
+};
+
+// Thêm các hàm socket mới cho booking request
+export const onBookingRequestAccepted = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received booking request accepted:', data);
+      callback(data);
+    };
+    socket.on('booking:requestAccepted', listener);
+    return () => socket?.off('booking:requestAccepted', listener);
+  }
+
+  return () => {};
+};
+
+export const onBookingRequestRejected = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received booking request rejected:', data);
+      callback(data);
+    };
+    socket.on('booking:requestRejected', listener);
+    return () => socket?.off('booking:requestRejected', listener);
+  }
+
+  return () => {};
+};
+
+export const onBookingRequestStatusUpdate = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received booking request status update:', data);
+      callback(data);
+    };
+    socket.on('booking:requestStatusUpdate', listener);
+    return () => socket?.off('booking:requestStatusUpdate', listener);
+  }
+
+  return () => {};
+};
+
+// Thêm các hàm socket mới cho thiết bị phát sinh
+export const onAdditionalItemsAdded = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received additional items added:', data);
+      callback(data);
+    };
+    socket.on('booking:additionalItemsAdded', listener);
+    return () => socket?.off('booking:additionalItemsAdded', listener);
+  }
+
+  return () => {};
+};
+
+export const onAdditionalItemsStatusUpdate = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received additional items status update:', data);
+      callback(data);
+    };
+    socket.on('booking:additionalItemsStatusUpdate', listener);
+    return () => socket?.off('booking:additionalItemsStatusUpdate', listener);
+  }
+
+  return () => {};
+};
+
+export const onAdditionalItemsAccepted = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received additional items accepted:', data);
+      callback(data);
+    };
+    socket.on('booking:additionalItemsAccepted', listener);
+    return () => socket?.off('booking:additionalItemsAccepted', listener);
+  }
+
+  return () => {};
+};
+
+export const onAdditionalItemsRejected = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received additional items rejected:', data);
+      callback(data);
+    };
+    socket.on('booking:additionalItemsRejected', listener);
+    return () => socket?.off('booking:additionalItemsRejected', listener);
   }
 
   return () => {};

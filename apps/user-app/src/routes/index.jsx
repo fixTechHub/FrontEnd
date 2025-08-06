@@ -30,12 +30,16 @@ import TechnicianJob from "../pages/technician/TechnicianJobDetail";
 import CertificateList from "../pages/technician/Certificate";
 import SendQuotation from "../pages/technician/SendQuotation";
 import WaitingConfirm from "../pages/technician/WaitingConfirm";
+import TechnicianIncome from "../pages/technician/TechnicianIncome";
 import CustomerDashboard from "../pages/customer/CustomerDashboard";
 import ListFeedback from "../pages/technician/ListFeedback";
 import VideoCallPage from "../pages/video-call/VideoCallPage";
 import NotificationsPage from "../pages/notifications/NotificationPage";
 import ReceiptPage from "../pages/receipt/ReceiptPage";
 import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
+import BookingWarranty from "../pages/booking-warranty/BookingWarranty";
+import BookingHistory from "../pages/booking/common/BookingHistory";
+// import { checkAuthThunk } from '../features/auth/authSlice';
 import UploadCertificateForm from "../pages/technician/UploadCer";
 import SubmitFeedback from "../pages/feedback/SubmitFeedback";
 import ServiceList from "../pages/home/ServiceList";
@@ -218,9 +222,25 @@ export default function AppRoutes() {
       <Route
         path="/video-call/:bookingId"
         element={
-          <PrivateRoute isAllowed={!!user}>
+          // <PrivateRoute isAllowed={!!user}>
             <VideoCallPage />
-          </PrivateRoute>
+          //  </PrivateRoute>
+        }
+      />
+      <Route
+        path="/warranty"
+        element={
+          // <PrivateRoute isAllowed={!!user}>
+            <BookingWarranty />
+        // </PrivateRoute>
+        }
+      />
+      <Route
+        path="/booking/history"
+        element={
+          // <PrivateRoute isAllowed={!!user}>
+            <BookingHistory />
+          // </PrivateRoute>
         }
       />
       {/* Thêm các route cần user đăng nhập ở đây, ví dụ: */}
@@ -280,6 +300,15 @@ export default function AppRoutes() {
       />
 
       <Route
+        path="/technician-income/:bookingId"
+        element={
+          <PrivateRoute isAllowed={!!user && user?.role?.name === "TECHNICIAN"}>
+            <TechnicianIncome />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
         path="/dashboard"
         element={
           <PrivateRoute
@@ -291,7 +320,7 @@ export default function AppRoutes() {
       />
 
       {/* ================= FALLBACK ROUTE ================= */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {/* <Route path="*" element={<Navigate to="/" replace />} /> */}
 
     </Routes>
   );

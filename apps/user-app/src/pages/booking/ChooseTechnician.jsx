@@ -1,42 +1,155 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../../components/common/Header';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import BookingWizard from './common/BookingHeader';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
 import { useBookingParams } from '../../hooks/useBookingParams';
-import { selectTechnicianThunk } from '../../features/bookings/bookingSlice';
+import { selectTechnicianThunk, fetchBookingRequests, fetchTechniciansFound, fetchBookingById } from '../../features/bookings/bookingSlice';
+import { Button, Form, Modal, Spinner } from 'react-bootstrap';
 import Rating from 'react-rating';
 import TechnicianProfile from '../../components/profile/TechnicianProfile';
-import { Button, Modal } from 'react-bootstrap';
+import Slider from '@mui/material/Slider';
+import Box from '@mui/material/Box';
+import { formatDateOnly, formatTimeOnly } from '../../utils/formatDate';
+import { onBookingRequestAccepted, onBookingRequestRejected, onBookingRequestStatusUpdate } from '../../services/socket';
 
 function ChooseTechnician() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [modalShow, setModalShow] = useState(false);
-    const { profile, loading, error } = useSelector(state => state.technician);
-    const { newBooking, status: createBookingStatus } = useSelector(state => state.booking);
+    const { newBooking, status: createBookingStatus, requests, booking } = useSelector(state => state.booking);
     const { techniciansFound, status: techniciansFoundStatus } = useSelector(state => state.booking);
     const { bookingId, stepsForCurrentUser } = useBookingParams();
-    const [selectedTechnicianId, setSelectedTechnicianId] = useState(null);
     const [confirming, setConfirming] = useState(false);
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [showConfirm, setShowConfirm] = useState(false);
+    const [selectedTechnician, setSelectedTechnician] = useState(null);
+    const [showBookingDetails, setShowBookingDetails] = useState(false);
 
-    const technician = profile?.technician;
-    const certificates = profile?.certificates;
-    const user = technician?.userId ?? {};
-    const specialties = technician?.specialtiesCategories ?? [];
+    // Filter state
+    const [price, setPrice] = useState([0, 10000000]); // [min, max] giá, có thể chỉnh lại range phù hợp
+    const [status, setStatus] = useState('ALL'); // 'ALL', 'FREE', 'ONJOB'
+    const [rating, setRating] = useState(0); // số sao tối thiểu
+    const [sort, setSort] = useState('none'); // 'none', 'price-asc', 'price-desc', 'rating-asc', 'rating-desc'
 
-    const handleShowTechnicianInfo = (id) => {
-        setSelectedTechnicianId(id);
-        dispatch(fetchTechnicianProfile(id));
+    // Phân trang
+    const [page, setPage] = useState(1);
+    const pageSize = 4;
+
+    // Lọc danh sách thợ
+    const filteredTechnicians = (techniciansFound || []).filter(technician => {
+        // Lấy giá hiển thị
+        let techPrice = technician?.servicePrice || 0;
+        // Lọc theo giá
+        if (techPrice < price[0] || techPrice > price[1]) return false;
+        // Lọc theo trạng thái
+        if (status !== 'ALL' && technician?.availability !== status) return false;
+        // Lọc theo rating
+        if (rating && Math.round(technician?.ratingAverage) !== rating) return false;
+        return true;
+    });
+
+    // Sắp xếp danh sách thợ
+    let sortedTechnicians = [...filteredTechnicians];
+    if (sort === 'price-asc') {
+        sortedTechnicians.sort((a, b) => {
+            const priceA = a.servicePrice || 0;
+            const priceB = b.servicePrice || 0;
+            return priceA - priceB;
+        });
+    } else if (sort === 'price-desc') {
+        sortedTechnicians.sort((a, b) => {
+            const priceA = a.servicePrice || 0;
+            const priceB = b.servicePrice || 0;
+            return priceB - priceA;
+        });
+    } else if (sort === 'rating-desc') {
+        sortedTechnicians.sort((a, b) => (b.ratingAverage || 0) - (a.ratingAverage || 0));
+    }
+
+    const totalPages = Math.ceil(sortedTechnicians.length / pageSize);
+    const paginatedTechnicians = sortedTechnicians.slice((page - 1) * pageSize, page * pageSize);
+
+    // Khi filter/sort thay đổi, reset về trang 1
+    useEffect(() => {
+        setPage(1);
+    }, [price, status, rating, sort, techniciansFound]);
+
+    // Xử lý form filter
+    const handleFilterSubmit = (e) => {
+        e.preventDefault();
+    };
+    const handleResetFilter = (e) => {
+        e.preventDefault();
+        setPrice([0, 10000000]);
+        setStatus('ALL');
+        setRating(0);
     };
 
-    console.log('--- CREATE BOOKING LOG ---', newBooking);
-    console.log('--- TECHNICIAN FOUND LOG ---', techniciansFound);
+    useEffect(() => {
+        if (bookingId) {
+            dispatch(fetchBookingRequests(bookingId));
+            // Fetch booking details nếu chưa có hoặc khác với bookingId hiện tại
+            if (!booking || booking._id !== bookingId) {
+                dispatch(fetchBookingById(bookingId));
+            }
+        }
+    }, [bookingId, dispatch, booking]);
 
-    const [showProfileModal, setShowProfileModal] = useState(false);
-    const [selectedTechnician, setSelectedTechnician] = useState(null);
+    // Khi bookingId thay đổi, luôn fetch lại danh sách technician
+    useEffect(() => {
+        if (bookingId) {
+            dispatch(fetchTechniciansFound(bookingId));
+            setPage(1);
+            setPrice([0, 10000000]);
+            setStatus('ALL');
+            setRating(0);
+            setSort('none');
+        }
+    }, [bookingId, dispatch]);
+
+    // Socket listeners cho booking request status updates
+    useEffect(() => {
+        if (!bookingId) return;
+
+        // Lắng nghe khi thợ chấp nhận booking request
+        const unsubscribeAccepted = onBookingRequestAccepted((data) => {
+            console.log('Booking request accepted:', data);
+            if (data.bookingId === bookingId) {
+                // Refresh booking requests để cập nhật trạng thái nút
+                dispatch(fetchBookingRequests(bookingId));
+            }
+        });
+
+        // Lắng nghe khi thợ từ chối booking request
+        const unsubscribeRejected = onBookingRequestRejected((data) => {
+            console.log('Booking request rejected:', data);
+            if (data.bookingId === bookingId) {
+                // Refresh booking requests để cập nhật trạng thái nút
+                dispatch(fetchBookingRequests(bookingId));
+            }
+        });
+
+        // Lắng nghe khi có cập nhật trạng thái booking request
+        const unsubscribeStatusUpdate = onBookingRequestStatusUpdate((data) => {
+            console.log('Booking request status update:', data);
+            if (data.bookingId === bookingId) {
+                // Refresh booking requests để cập nhật trạng thái nút
+                dispatch(fetchBookingRequests(bookingId));
+            }
+        });
+
+        // Cleanup listeners khi component unmount hoặc bookingId thay đổi
+        return () => {
+            unsubscribeAccepted();
+            unsubscribeRejected();
+            unsubscribeStatusUpdate();
+        };
+    }, [bookingId, dispatch]);
+
+    console.log('--- CREATE BOOKING LOG ---', newBooking);
+    console.log('--- BOOKING DETAIL LOG ---', booking);
+    console.log('--- TECHNICIAN FOUND LOG ---', techniciansFound);
 
     const handleShowProfile = (technician) => {
         setSelectedTechnician(technician);
@@ -48,19 +161,45 @@ function ChooseTechnician() {
         setSelectedTechnician(null); // Clear data on close
     };
 
-    const handleComfirm = async (technicianId) => {
-        if (!window.confirm('Bạn muốn chọn kỹ thuật viên này?')) return;
-        setConfirming(true);
+    const getTechnicianStatus = (technicianId) => {
+        const req = requests.find(r => r.technicianId === technicianId);
+        return req ? req.status : null;
+    };
+
+    const handleSendRequest = async (technicianId) => {
+        // const pending = requests.find(r => r.status === 'PENDING');
+        // if (pending) {
+        //     // Kiểm tra thời gian đã gửi
+        //     const createdAt = new Date(pending.createdAt).getTime();
+        //     const now = Date.now();
+        //     const FIVE_MINUTES = 5 * 60 * 1000;
+        //     if (now - createdAt < FIVE_MINUTES) {
+        //         const secondsLeft = Math.ceil((FIVE_MINUTES - (now - createdAt)) / 1000);
+        //         const minutes = Math.floor(secondsLeft / 60);
+        //         const seconds = secondsLeft % 60;
+        //         alert(`Bạn chỉ có thể gửi yêu cầu cho 1 thợ mỗi lần. Vui lòng đợi ${minutes} phút ${seconds} giây hoặc khi thợ phản hồi.`);
+        //         return;
+        //     }
+        // }
         try {
-            const resultAction = await dispatch(selectTechnicianThunk({ bookingId, technicianId }));
-            if (selectTechnicianThunk.fulfilled.match(resultAction)) {
-                alert('Đã gửi yêu cầu xác nhận đến kỹ thuật viên!');
-                navigate(`/booking/booking-processing?bookingId=${bookingId}`);
-            } else {
-                alert(resultAction.payload || 'Có lỗi xảy ra!');
-            }
-        } finally {
-            setConfirming(false);
+            await dispatch(selectTechnicianThunk({ bookingId, technicianId })).unwrap();
+            dispatch(fetchBookingRequests(bookingId));
+        } catch (err) {
+            // Hiển thị đúng message lỗi từ backend
+            alert(err?.message || err || 'Gửi yêu cầu thất bại!');
+        }
+    };
+
+    // Khi nhấn gửi yêu cầu, show modal xác nhận
+    const handleSendRequestClick = (technician) => {
+        setSelectedTechnician(technician);
+        setShowConfirm(true);
+    };
+    // Khi xác nhận gửi
+    const handleConfirmSend = async () => {
+        setShowConfirm(false);
+        if (selectedTechnician) {
+            await handleSendRequest(selectedTechnician._id);
         }
     };
 
@@ -78,1228 +217,385 @@ function ChooseTechnician() {
                         <div className="container">
                             <div className="row">
                                 <div className="col-xl-3 col-lg-4 col-sm-12 col-12 theiaStickySidebar">
-                                    <form action="#" autoComplete="off" className="sidebar-form">
-                                        <div className="sidebar-heading">
-                                            <h3>What Are You Looking For</h3>
+
+                                    {/* Nút xem chi tiết đơn hàng */}
+                                    {(newBooking || booking) && (
+                                        <div className="text-center mb-4">
+                                            <button
+                                                className="btn btn-primary choose-technician-booking-details-btn"
+                                                onClick={() => setShowBookingDetails(true)}
+                                            >
+                                                <i className="feather-info"></i>
+                                                Xem chi tiết đơn hàng
+                                            </button>
                                         </div>
-                                        <div className="product-search">
-                                            <div className="form-custom">
-                                                <input
-                                                    type="text"
-                                                    className="form-control"
-                                                    id="member_search1"
-                                                    placeholder=""
-                                                />
-                                                <span>
-                                                    <img src="/img/icons/search.svg" alt="img" />
-                                                </span>
-                                            </div>
-                                        </div>
+                                    )}
+
+                                    <form onSubmit={handleFilterSubmit} autoComplete="off" className="sidebar-form">
                                         <div className="product-availability">
-                                            <h6>Availability</h6>
-                                            <div className="status-toggle">
-                                                <input
-                                                    id="mobile_notifications"
-                                                    className="check"
-                                                    type="checkbox"
-                                                    defaultChecked=""
+                                            <h6>Bộ lọc tìm kiếm</h6>
+                                        </div>
+
+                                        {/* <Form.Group className='mb-3'>
+                                            <Form.Label><strong>Khoảng giá</strong></Form.Label>
+                                            <Form.Range
+                                                min={0}
+                                                max={10000000}
+                                                step={100000}
+                                                value={price[1]}
+                                                onChange={e => setPrice([0, Number(e.target.value)])}
+                                            />
+                                            <div className="d-flex justify-content-between">
+                                                <span>0</span>
+                                                <span>{price[1].toLocaleString()} VNĐ</span>
+                                                                    </div>
+                                        </Form.Group> */}
+
+                                        <Form.Group className='mb-3'>
+                                            <Form.Label><strong>Khoảng giá</strong></Form.Label>
+                                            <Box sx={{ px: 1, pb: 2 }}>
+                                                <Slider
+                                                    value={price}
+                                                    onChange={(e, newValue) => setPrice(newValue)}
+                                                    valueLabelDisplay="auto"
+                                                    min={0}
+                                                    max={10000000}
+                                                    step={50000}
+                                                    marks={[
+                                                        { value: 0, label: '0' },
+                                                        { value: 1000000, label: '1tr' },
+                                                        { value: 2000000, label: '2tr' },
+                                                        { value: 5000000, label: '5tr' },
+                                                        { value: 10000000, label: '10tr' }
+                                                    ]}
+                                                    disableSwap
                                                 />
-                                                <label
-                                                    htmlFor="mobile_notifications"
-                                                    className="checktoggle"
-                                                >
-                                                    checkbox
-                                                </label>
+                                                <div className="d-flex justify-content-between mt-2">
+                                                    <span>{price[0].toLocaleString()} VNĐ</span>
+                                                    <span>{price[1].toLocaleString()} VNĐ</span>
+                                                </div>
+                                            </Box>
+                                        </Form.Group>
+
+                                        <Form.Group className='mb-3'>
+                                            <Form.Label><strong>Sắp xếp</strong></Form.Label>
+                                            <div className="mb-2">
+                                                <Form.Check
+                                                    className='mb-3'
+                                                    type="radio"
+                                                    id="sort-none"
+                                                    name="sort"
+                                                    label="Mặc định"
+                                                    value="none"
+                                                    checked={sort === 'none'}
+                                                    onChange={e => setSort(e.target.value)}
+                                                />
+                                                <Form.Check
+                                                    className='mb-3'
+                                                    type="radio"
+                                                    id="sort-price-asc"
+                                                    name="sort"
+                                                    label="Giá tăng dần"
+                                                    value="price-asc"
+                                                    checked={sort === 'price-asc'}
+                                                    onChange={e => setSort(e.target.value)}
+                                                />
+                                                <Form.Check
+                                                    className='mb-3'
+                                                    type="radio"
+                                                    id="sort-price-desc"
+                                                    name="sort"
+                                                    label="Giá giảm dần"
+                                                    value="price-desc"
+                                                    checked={sort === 'price-desc'}
+                                                    onChange={e => setSort(e.target.value)}
+                                                />
+                                                <Form.Check
+                                                    className='mb-3'
+                                                    type="radio"
+                                                    id="sort-rating-desc"
+                                                    name="sort"
+                                                    label="Đánh giá cao nhất"
+                                                    value="rating-desc"
+                                                    checked={sort === 'rating-desc'}
+                                                    onChange={e => setSort(e.target.value)}
+                                                />
                                             </div>
-                                        </div>
-                                        <div className="accord-list">
-                                            <div className="accordion" id="accordionMain1">
-                                                <div className="card-header-new" id="headingOne">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapseOne"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapseOne"
-                                                        >
-                                                            Car Brand
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapseOne"
-                                                    className="collapse show"
-                                                    aria-labelledby="headingOne"
-                                                    data-bs-parent="#accordionExample1"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div className="row">
-                                                            <div className="col-md-12">
-                                                                <div id="checkBoxes1">
-                                                                    <div className="selectBox-cont">
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Tesla
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Ford
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Mercediz Benz
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Audi
-                                                                        </label>
-                                                                        {/* View All */}
-                                                                        <div className="view-content">
-                                                                            <div className="viewall-One">
-                                                                                <label className="custom_check w-100">
-                                                                                    <input type="checkbox" name="username" />
-                                                                                    <span className="checkmark" /> Kia
-                                                                                </label>
-                                                                                <label className="custom_check w-100">
-                                                                                    <input type="checkbox" name="username" />
-                                                                                    <span className="checkmark" /> Honda
-                                                                                </label>
-                                                                                <label className="custom_check w-100">
-                                                                                    <input type="checkbox" name="username" />
-                                                                                    <span className="checkmark" /> Toyota
-                                                                                </label>
-                                                                            </div>
-                                                                        </div>
-                                                                        {/* /View All */}
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        </Form.Group>
+
+                                        <Form.Group className='mb-3'>
+                                            <Form.Label><strong>Trạng thái</strong></Form.Label>
+                                            <div className="mb-2">
+                                                <Form.Check
+                                                    className='mb-3'
+                                                    type="radio"
+                                                    id="status-all"
+                                                    name="status"
+                                                    label="Tất cả"
+                                                    value="ALL"
+                                                    checked={status === 'ALL'}
+                                                    onChange={e => setStatus(e.target.value)}
+                                                />
+                                                <Form.Check
+                                                    className='mb-3'
+                                                    type="radio"
+                                                    id="status-free"
+                                                    name="status"
+                                                    label="Sẵn sàng nhận việc"
+                                                    value="FREE"
+                                                    checked={status === 'FREE'}
+                                                    onChange={e => setStatus(e.target.value)}
+                                                />
+                                                <Form.Check
+                                                    type="radio"
+                                                    id="status-onjob"
+                                                    name="status"
+                                                    label="Có thể nhận sau"
+                                                    value="ONJOB"
+                                                    checked={status === 'ONJOB'}
+                                                    onChange={e => setStatus(e.target.value)}
+                                                />
                                             </div>
-                                            <div className="accordion" id="accordionMain2">
-                                                <div className="card-header-new" id="headingTwo">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapseTwo"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapseTwo"
-                                                        >
-                                                            Car Category
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapseTwo"
-                                                    className="collapse"
-                                                    aria-labelledby="headingTwo"
-                                                    data-bs-parent="#accordionExample2"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div id="checkBoxes2">
-                                                            <div className="selectBox-cont">
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> Convertible (25)
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> Coupe (15)
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> Sedan (10)
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> EV (5)
-                                                                </label>
-                                                                {/* View All */}
-                                                                <div className="view-content">
-                                                                    <div className="viewall-One">
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Hatchback (123)
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Luxury (06)
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> SUV (6)
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Wagon (5)
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-                                                                {/* /View All */}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                        </Form.Group>
+
+                                        <Form.Group className='mb-3'>
+                                            <Form.Label><strong>Xếp hạng</strong></Form.Label>
+
+                                            <Form.Check
+                                                type="radio"
+                                                name="rating"
+                                                id="star-0"
+                                                value={0}
+                                                label=" Tất cả"
+                                                className="mb-2"
+                                                // style={{ fontSize: 20 }}
+                                                checked={rating === 0}
+                                                onChange={() => setRating(0)}
+                                            />
+
+                                            <div className="mb-2">
+                                                {[5, 4, 3, 2, 1].map((star) => (
+                                                    <Form.Check
+                                                        key={star}
+                                                        type="radio"
+                                                        name="rating"
+                                                        id={`star-${star}`}
+                                                        value={star}
+                                                        label={`${'★'.repeat(star)}${'☆'.repeat(5 - star)}`}
+                                                        className="mb-2"
+                                                        style={{ color: '#FFA633', fontSize: 20 }}
+                                                        checked={rating === star}
+                                                        onChange={() => setRating(star)}
+                                                    />
+                                                ))}
                                             </div>
-                                            <div className="accordion" id="accordionMain3">
-                                                <div className="card-header-new" id="headingYear">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapseYear"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapseYear"
-                                                        >
-                                                            Year
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapseYear"
-                                                    className="collapse"
-                                                    aria-labelledby="headingYear"
-                                                    data-bs-parent="#accordionExample2"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div id="checkBoxes02">
-                                                            <div className="selectBox-cont">
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> 2024
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> 2022
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> 2021
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> 2020
-                                                                </label>
-                                                                {/* View All */}
-                                                                <div className="view-content">
-                                                                    <div className="viewall-One">
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> 2019
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> 2018
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> 2019
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-                                                                {/* /View All */}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain04">
-                                                <div className="card-header-new" id="headingfuel">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapsefuel"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapsefuel"
-                                                        >
-                                                            Fuel Type
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapsefuel"
-                                                    className="collapse"
-                                                    aria-labelledby="headingfuel"
-                                                    data-bs-parent="#accordionExample2"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div className="fuel-list">
-                                                            <ul>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="petrol"
-                                                                            value="red"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="petrol">Petrol</label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="diesel"
-                                                                            value="red"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="diesel">Diesel</label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="electric"
-                                                                            value="red"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="electric">Electric</label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="cng"
-                                                                            value="red"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="cng">CNG</label>
-                                                                    </div>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain5">
-                                                <div className="card-header-new" id="headingmileage">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapsemileage"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapsemileage"
-                                                        >
-                                                            Mileage
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapsemileage"
-                                                    className="collapse"
-                                                    aria-labelledby="headingmileage"
-                                                    data-bs-parent="#accordionExample2"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div className="fuel-list">
-                                                            <ul>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="mileage"
-                                                                            id="limited"
-                                                                            value="red"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="limited">Limited</label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="mileage"
-                                                                            id="unlimited"
-                                                                            value="red"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="unlimited">Unlimited</label>
-                                                                    </div>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain6">
-                                                <div className="card-header-new" id="headingrental">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapserental"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapserental"
-                                                        >
-                                                            Rental Type
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapserental"
-                                                    className="collapse"
-                                                    aria-labelledby="headingrental"
-                                                    data-bs-parent="#accordionExample2"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div className="fuel-list">
-                                                            <ul>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input type="radio" name="any" id="any" />
-                                                                        <label htmlFor="any">Any</label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="day"
-                                                                            id="day"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="day">Per Day</label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="hour"
-                                                                            id="hour"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="hour">Per Hour</label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input type="radio" name="week" id="week" />
-                                                                        <label htmlFor="week">Per Week</label>
-                                                                    </div>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain06">
-                                                <div className="card-header-new" id="headingspec">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapsespec"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapsespec"
-                                                        >
-                                                            Car Specifications
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapsespec"
-                                                    className="collapse"
-                                                    aria-labelledby="headingspec"
-                                                    data-bs-parent="#accordionExample2"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div id="checkBoxes20">
-                                                            <div className="selectBox-cont">
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> Air Conditioners
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> Keyless
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> Panoramic
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" /> Bluetooth
-                                                                </label>
-                                                                {/* View All */}
-                                                                <div className="view-content">
-                                                                    <div className="viewall-One">
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Aux
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Top Window
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Speakers
-                                                                        </label>
-                                                                        <label className="custom_check w-100">
-                                                                            <input type="checkbox" name="username" />
-                                                                            <span className="checkmark" /> Automatic Window
-                                                                        </label>
-                                                                    </div>
-                                                                </div>
-                                                                {/* /View All */}
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain7">
-                                                <div className="card-header-new" id="headingColor">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapseColor"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapseColor"
-                                                        >
-                                                            Colors
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapseColor"
-                                                    className="collapse"
-                                                    aria-labelledby="headingColor"
-                                                    data-bs-parent="#accordionExample2"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div className="theme-colorsset">
-                                                            <ul>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="greenColor"
-                                                                            value="red"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label
-                                                                            htmlFor="greenColor"
-                                                                            className="green-clr"
-                                                                        />
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="yellowColor"
-                                                                            value="yellow"
-                                                                        />
-                                                                        <label
-                                                                            htmlFor="yellowColor"
-                                                                            className="yellow-clr"
-                                                                        />
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="brownColor"
-                                                                            value="blue"
-                                                                        />
-                                                                        <label
-                                                                            htmlFor="brownColor"
-                                                                            className="brown-clr"
-                                                                        />
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="blackColor"
-                                                                            value="green"
-                                                                        />
-                                                                        <label
-                                                                            htmlFor="blackColor"
-                                                                            className="black-clr"
-                                                                        />
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="redColor"
-                                                                            value="red"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="redColor" className="red-clr" />
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="grayColor"
-                                                                            value="blue"
-                                                                        />
-                                                                        <label htmlFor="grayColor" className="gray-clr" />
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="gray100Color"
-                                                                            value="green"
-                                                                        />
-                                                                        <label
-                                                                            htmlFor="gray100Color"
-                                                                            className="gray100-clr"
-                                                                        />
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="blueColor"
-                                                                            value="yellow"
-                                                                        />
-                                                                        <label htmlFor="blueColor" className="blue-clr" />
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-themeselects">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="color"
-                                                                            id="whiteColor"
-                                                                            value="yellow"
-                                                                        />
-                                                                        <label htmlFor="whiteColor" className="white-clr" />
-                                                                    </div>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain8">
-                                                <div className="card-header-new" id="headingThree">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapseThree"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapseThree"
-                                                        >
-                                                            Capacity
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapseThree"
-                                                    className="collapse"
-                                                    aria-labelledby="headingThree"
-                                                    data-bs-parent="#accordionExample3"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div id="checkBoxes3">
-                                                            <div className="selectBox-cont">
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="bystatus" />
-                                                                    <span className="checkmark" /> 2 Seater
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="bystatus" />
-                                                                    <span className="checkmark" /> 4 Seater
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="bystatus" />
-                                                                    <span className="checkmark" /> 5 Seater
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="bystatus" />
-                                                                    <span className="checkmark" /> 7 Seater
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain9">
-                                                <div className="card-header-new" id="headingFour">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapseFour"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapseFour"
-                                                        >
-                                                            Price
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapseFour"
-                                                    className="collapse"
-                                                    aria-labelledby="headingFour"
-                                                    data-bs-parent="#accordionExample4"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div className="filter-range">
-                                                            <input type="text" className="input-range" />
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain4">
-                                                <div className="card-header-new" id="headingtransmiss">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapsetransmission"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapsetransmission"
-                                                        >
-                                                            Transmission
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapsetransmission"
-                                                    className="collapse"
-                                                    aria-labelledby="headingtransmiss"
-                                                    data-bs-parent="#accordionExample2"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div className="fuel-list">
-                                                            <ul>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="transmission"
-                                                                            id="manual"
-                                                                            defaultChecked=""
-                                                                        />
-                                                                        <label htmlFor="manual">Manual </label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input type="radio" name="transmission" id="semi" />
-                                                                        <label htmlFor="semi">Semi Automatic</label>
-                                                                    </div>
-                                                                </li>
-                                                                <li>
-                                                                    <div className="input-selection">
-                                                                        <input
-                                                                            type="radio"
-                                                                            name="transmission"
-                                                                            id="automatic"
-                                                                        />
-                                                                        <label htmlFor="automatic">Automatic</label>
-                                                                    </div>
-                                                                </li>
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain10">
-                                                <div className="card-header-new" id="headingFive">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapseFive"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapseFive"
-                                                        >
-                                                            Rating
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapseFive"
-                                                    className="collapse"
-                                                    aria-labelledby="headingFive"
-                                                    data-bs-parent="#accordionExample5"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div id="checkBoxes4">
-                                                            <div className="selectBox-cont">
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="category" />
-                                                                    <span className="checkmark" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <span className="rating-count">5.0</span>
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="category" />
-                                                                    <span className="checkmark" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star" />
-                                                                    <span className="rating-count">4.0</span>
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="category" />
-                                                                    <span className="checkmark" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star" />
-                                                                    <i className="fas fa-star" />
-                                                                    <span className="rating-count">3.0</span>
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="category" />
-                                                                    <span className="checkmark" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star" />
-                                                                    <i className="fas fa-star" />
-                                                                    <i className="fas fa-star" />
-                                                                    <span className="rating-count">2.0</span>
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="username" />
-                                                                    <span className="checkmark" />
-                                                                    <i className="fas fa-star filled" />
-                                                                    <i className="fas fa-star" />
-                                                                    <i className="fas fa-star" />
-                                                                    <i className="fas fa-star" />
-                                                                    <i className="fas fa-star" />
-                                                                    <span className="rating-count">1.0</span>
-                                                                </label>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="accordion" id="accordionMain11">
-                                                <div className="card-header-new" id="headingSix">
-                                                    <h6 className="filter-title">
-                                                        <a
-                                                            href="javascript:void(0);"
-                                                            className="w-100 collapsed"
-                                                            data-bs-toggle="collapse"
-                                                            data-bs-target="#collapseSix"
-                                                            aria-expanded="true"
-                                                            aria-controls="collapseSix"
-                                                        >
-                                                            Customer Recommendation
-                                                            <span className="float-end">
-                                                                <i className="fa-solid fa-chevron-down" />
-                                                            </span>
-                                                        </a>
-                                                    </h6>
-                                                </div>
-                                                <div
-                                                    id="collapseSix"
-                                                    className="collapse"
-                                                    aria-labelledby="headingSix"
-                                                    data-bs-parent="#accordionExample6"
-                                                >
-                                                    <div className="card-body-chat">
-                                                        <div id="checkBoxes5">
-                                                            <div className="selectBox-cont">
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="category" />
-                                                                    <span className="checkmark" /> 70% &amp; up
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="category" />
-                                                                    <span className="checkmark" /> 60% &amp; up
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="category" />
-                                                                    <span className="checkmark" /> 50% &amp; up
-                                                                </label>
-                                                                <label className="custom_check w-100">
-                                                                    <input type="checkbox" name="category" />
-                                                                    <span className="checkmark" /> 40% &amp; up
-                                                                </label>
-                                                                <div className="viewall-Two">
-                                                                    <label className="custom_check w-100">
-                                                                        <input type="checkbox" name="username" />
-                                                                        <span className="checkmark" />
-                                                                        30% &amp; up
-                                                                    </label>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                        </Form.Group>
+
                                         <button
                                             type="submit"
                                             className="d-inline-flex align-items-center justify-content-center btn w-100 btn-primary filter-btn"
+                                            onClick={handleResetFilter}
                                         >
                                             <span>
                                                 <i className="feather-filter me-2" />
                                             </span>
-                                            Filter results
+                                            Đặt lại bộ lọc
                                         </button>
-                                        <a href="#" className="reset-filter">
-                                            Reset Filter
-                                        </a>
                                     </form>
                                 </div>
 
                                 <div className="col-lg-9">
                                     <div className="row">
-
-                                        {techniciansFound && techniciansFound.map((technician) => (
-                                            <>
-                                                {/* <div className="col-xxl-4 col-lg-6 col-md-6 col-12">
-                                                    <div className="listing-item">
-                                                        <div className="listing-img">
+                                        {/* Hiển thị spinner khi đang tìm thợ */}
+                                        {techniciansFound && techniciansFound.length === 0 && (
+                                            <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: 200 }}>
+                                                <Spinner animation="border" role="status" />
+                                                <div className="mt-3">Hệ thống đang tìm thợ phù hợp với yêu cầu của bạn...</div>
+                                            </div>
+                                        )}
+                                        {/* {createBookingStatus === 'loading' && (
+                                            <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: 200 }}>
+                                                <Spinner animation="border" role="status" />
+                                                <div className="mt-3">Hệ thống đang tìm thợ phù hợp...</div>
+                                            </div>
+                                        )} */}
+                                        {techniciansFound && techniciansFound.length > 0 && sortedTechnicians.length === 0 && (
+                                            <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: 200 }}>
+                                                <div className="mt-3">Không có thợ nào phù hợp với bộ lọc hiện tại.</div>
+                                            </div>
+                                        )}
+                                        {/* Nếu có thợ, render như cũ */}
+                                        {paginatedTechnicians.map((technician) => (
+                                            <div className="listview-car" key={technician._id}>
+                                                <div className="card">
+                                                    <div className="blog-widget d-flex">
+                                                        <div className="blog-img">
                                                             <a href="listing-details.html">
                                                                 <img
-                                                                    style={{ height: 282 }}
+                                                                    style={{ width: 230, height: 194 }}
                                                                     src={technician?.userInfo?.avatar || ''}
                                                                     className="img-fluid"
-                                                                    alt="Audi"
+                                                                    alt="blog-img"
                                                                 />
                                                             </a>
                                                             <div className="fav-item justify-content-end">
-                                                                <a href="javascript:void(0)" className="fav-icon">
+                                                                <a href="#" className="fav-icon">
                                                                     <i className="feather-heart" />
                                                                 </a>
                                                             </div>
                                                         </div>
-                                                        <div className="listing-content">
-                                                            <div className="listing-features d-flex align-items-end justify-content-between">
-                                                                <div className="list-rating">
-                                                                    <h3 className="listing-title">
-                                                                        <a href="#">{technician?.userInfo?.fullName}</a>
-                                                                    </h3>
+                                                        <div className="bloglist-content w-100">
+                                                            <div className="card-body">
+                                                                <div className="blog-list-head d-flex">
+                                                                    <div className="blog-list-title">
+                                                                        <h3>
+                                                                            <a onClick={(e) => { e.preventDefault(); handleShowProfile(technician); }}>
+                                                                                {technician?.userInfo?.fullName}
+                                                                            </a>
+                                                                        </h3>
 
-                                                                    <div className="list-rating">
-                                                                        <Rating
-                                                                            style={{ marginLeft: -2 }}
-                                                                            initialRating={technician?.ratingAverage}
-                                                                            readonly
-                                                                            fullSymbol={<i className="fas fa-star filled" />}
-                                                                            emptySymbol={<i className="far fa-star" />}
-                                                                        />
-                                                                        <span>({(technician?.ratingAverage).toFixed(1)})</span>
-                                                                        <div style={{ marginTop: 3 }}>150 Reviews</div>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="list-km">
-                                                                    <span className="km-count">
-                                                                        <img src="/img/icons/map-pin.svg" alt="author" />
-                                                                        {technician?.distanceInKm + 'km'}
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="listing-details-group">
-                                                                <ul>
-                                                                    <li>
-                                                                        <span>
-                                                                            <img
-                                                                                src="/img/icons/car-parts-04.svg"
-                                                                                alt="Power"
-                                                                            />
-                                                                        </span>
-                                                                        <p>{technician?.availability}</p>
-                                                                    </li>
-                                                                    <li>
-                                                                        <span>
-                                                                            <img
-                                                                                src="/img/icons/car-parts-05.svg"
-                                                                                alt="2019"
-                                                                            />
-                                                                        </span>
-                                                                        <p>{technician?.experienceYears} năm</p>
-                                                                    </li>
-                                                                    <li>
-                                                                        <span>
-                                                                            <img
-                                                                                src="/img/icons/car-parts-06.svg"
-                                                                                alt="Persons"
-                                                                            />
-                                                                        </span>
-                                                                        <p>{technician?.jobCompleted} đơn</p>
-                                                                    </li>
-                                                                </ul>
-                                                            </div>
-
-                                                            <div className="listing-location-details">
-                                                                <div className="listing-price">
-                                                 
-                                                                </div>
-                                                                <div className="listing-price">
-                                                                    <h6>
-                                                                        $45 <span>/ Day</span>
-                                                                    </h6>
-                                                                </div>
-                                                            </div>
-
-                                                            <div className="listing-button">
-                                                                <a href="listing-details.html" className="btn btn-order">
-                                                                    Xác nhận
-                                                                </a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div> */}
-
-                                                <div className="listview-car">
-                                                    <div className="card">
-                                                        <div className="blog-widget d-flex">
-                                                            <div className="blog-img">
-                                                                <a href="listing-details.html">
-                                                                    <img
-                                                                        style={{ width: 230, height: 194 }}
-                                                                        src={technician?.userInfo?.avatar || ''}
-                                                                        className="img-fluid"
-                                                                        alt="blog-img"
-                                                                    />
-                                                                </a>
-                                                                <div className="fav-item justify-content-end">
-                                                                    <a href="#" className="fav-icon">
-                                                                        <i className="feather-heart" />
-                                                                    </a>
-                                                                </div>
-                                                            </div>
-                                                            <div className="bloglist-content w-100">
-                                                                <div className="card-body">
-                                                                    <div className="blog-list-head d-flex">
-                                                                        <div className="blog-list-title">
-                                                                            <h3>
-                                                                                <a onClick={(e) => { e.preventDefault(); handleShowProfile(technician); }}>
-                                                                                    {technician?.userInfo?.fullName}
-                                                                                </a>
-                                                                            </h3>
-
-                                                                            {/* {technician?.category.map((category) => (
+                                                                        {/* {technician?.category.map((category) => (
                                                                                 <h6>
                                                                                     {category?.categoryName}
                                                                                 </h6>
                                                                             ))} */}
-                                                                            {/* <h6>
+                                                                        {/* <h6>
                                                                                 Kinh nghiệm: <span>{technician?.experienceYears} năm</span>
                                                                             </h6> */}
-                                                                            {/* <h6>
+                                                                        {/* <h6>
                                                                                 Loại dịch vụ: <span>{technician?.serviceType === 'COMPLEX' ? 'Phức tạp' : 'Đơn giản'}</span>
                                                                             </h6> */}
-                                                                            {/* <h6>
+                                                                        {/* <h6>
                                                                                 {technician?.serviceName}
                                                                             </h6> */}
-                                                                            <h6>
-                                                                                <span>
-                                                                                    <i className="feather-check-circle me-2" />
-                                                                                    Đã xác minh
-                                                                                </span>
-                                                                            </h6>
-                                                                        </div>
-                                                                        <div style={{ textAlign: 'end' }} className="blog-list-rate">
-                                                                            <h6>
-                                                                                <span>Từ </span>
-                                                                                <span></span>
-                                                                                {technician?.tier1Price.toLocaleString()}<span>VNĐ</span>
-                                                                            </h6>
-
-                                                                            <Rating
-                                                                                initialRating={technician?.ratingAverage}
-                                                                                readonly
-                                                                                fullSymbol={<i style={{ color: '#FFA633' }} className="fas fa-star filled" />}
-                                                                                emptySymbol={<i style={{ color: '#FFA633' }} className="far fa-star" />}
-                                                                            />
-                                                                            <span>({(technician?.ratingAverage).toFixed(1)})</span>
-                                                                        </div>
+                                                                        <h6>
+                                                                            <span>
+                                                                                <i className="feather-check-circle me-2" />
+                                                                                Đã xác minh
+                                                                            </span>
+                                                                        </h6>
                                                                     </div>
-                                                                    <div className="listing-details-group">
-                                                                        <ul>
-                                                                            <li title={'Đơn đã hoàn thành: ' + technician?.jobCompleted}>
-                                                                                <span>
-                                                                                    <i className="feather-award me-2" />
-                                                                                </span>
-                                                                                <p>{technician?.jobCompleted} đơn</p>
-                                                                            </li>
+                                                                    <div style={{ textAlign: 'end' }} className="blog-list-rate">
+                                                                        {technician?.servicePrice ? (
+                                                                            <h6>
+                                                                                {technician?.servicePrice?.toLocaleString()}<span>VNĐ</span>
+                                                                            </h6>
+                                                                        ) : (
+                                                                            <h6>
+                                                                                <span>Chưa có giá</span>
+                                                                            </h6>
+                                                                        )}
 
-                                                                            <li title={'Kinh nghiệm: ' + technician?.experienceYears + ' năm'}>
-                                                                                <span>
-                                                                                    <i className="feather-clock me-2" />
-                                                                                </span>
-                                                                                <p>{technician?.experienceYears} năm</p>
-                                                                            </li>
-
-                                                                            <li title={'Trạng thái: ' + technician?.availability}>
-                                                                                <span>
-                                                                                    <i className="feather-activity me-2" />
-                                                                                </span>
-                                                                                <p>{technician?.availability === 'FREE' ? 'Sẵn sàng nhận việc' : 'Bận'}</p>
-                                                                            </li>
-
-                                                                        </ul>
+                                                                        <Rating
+                                                                            initialRating={technician?.ratingAverage}
+                                                                            readonly
+                                                                            fullSymbol={<i style={{ color: '#FFA633' }} className="fas fa-star filled" />}
+                                                                            emptySymbol={<i style={{ color: '#FFA633' }} className="far fa-star" />}
+                                                                        />
+                                                                        <span>({(technician?.ratingAverage).toFixed(1)})</span>
                                                                     </div>
-                                                                    <div className="blog-list-head list-head-bottom d-flex">
-                                                                        <div className="blog-list-title">
-                                                                            <div className="title-bottom">
-                                                                                <div className="address-info">
-                                                                                    <h6>
-                                                                                        <i className="feather-map-pin" />
-                                                                                        {technician?.userInfo?.address?.city || 'Đang cập nhật'}
-                                                                                    </h6>
-                                                                                </div>
-                                                                                <div className="list-km">
-                                                                                    <span className="km-count">
-                                                                                        <img src="/img/icons/map-pin.svg" alt="author" />
-                                                                                        {technician?.distanceInKm + 'km'}
-                                                                                    </span>
-                                                                                </div>
+                                                                </div>
+                                                                <div className="listing-details-group">
+                                                                    <ul>
+                                                                        <li title={'Đơn đã hoàn thành: ' + technician?.jobCompleted}>
+                                                                            <span>
+                                                                                <i className="feather-award me-2" />
+                                                                            </span>
+                                                                            <p>{technician?.jobCompleted} đơn</p>
+                                                                        </li>
+
+                                                                        <li title={'Kinh nghiệm: ' + technician?.experienceYears + ' năm'}>
+                                                                            <span>
+                                                                                <i className="feather-clock me-2" />
+                                                                            </span>
+                                                                            <p>{technician?.experienceYears} năm</p>
+                                                                        </li>
+
+                                                                        <li title={'Trạng thái: ' + technician?.availability}>
+                                                                            <span>
+                                                                                <i className="feather-activity me-2" />
+                                                                            </span>
+                                                                            <p>{technician?.availability === 'FREE' ? 'Sẵn sàng nhận việc' : 'Đang có việc – có thể nhận sau'}</p>
+                                                                        </li>
+
+                                                                    </ul>
+                                                                </div>
+                                                                <div className="blog-list-head list-head-bottom d-flex">
+                                                                    <div className="blog-list-title">
+                                                                        <div className="title-bottom">
+                                                                            <div className="address-info">
+                                                                                <h6>
+                                                                                    <i className="feather-map-pin" />
+                                                                                    {technician?.userInfo?.address?.city || 'Đang cập nhật'}
+                                                                                </h6>
+                                                                            </div>
+                                                                            <div className="list-km">
+                                                                                <span className="km-count">
+                                                                                    <img src="/img/icons/map-pin.svg" alt="author" />
+                                                                                    {technician?.distanceInKm + 'km'}
+                                                                                </span>
                                                                             </div>
                                                                         </div>
-                                                                        <div className="listing-button">
-                                                                            <button
-                                                                                className="btn btn-order"
-                                                                                disabled={confirming}
-                                                                                onClick={() => handleComfirm(technician._id)}
-                                                                            >
-                                                                                <span>
-                                                                                    <i className="feather-user-check me-2" />
-                                                                                </span>
-                                                                                {confirming && selectedTechnicianId === technician._id ? 'Đang gửi yêu cầu...' : 'Gửi yêu cầu'}
-                                                                            </button>
-                                                                        </div>
+                                                                    </div>
+                                                                    <div className="listing-button">
+                                                                        <button
+                                                                            className="btn btn-order"
+                                                                            disabled={confirming}
+                                                                            onClick={() => handleSendRequestClick(technician)}
+                                                                        >
+                                                                            <span>
+                                                                                <i className="feather-user-check me-2" />
+                                                                            </span>
+                                                                            {getTechnicianStatus(technician._id) === 'PENDING'
+                                                                                ? 'Đã gửi, chờ phản hồi'
+                                                                                : getTechnicianStatus(technician._id) === 'ACCEPTED'
+                                                                                    ? 'Đã nhận đơn'
+                                                                                    : getTechnicianStatus(technician._id) === 'REJECTED'
+                                                                                        ? 'Đã từ chối'
+                                                                                        : 'Gửi yêu cầu'}
+                                                                        </button>
                                                                     </div>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </div>
-                                            </>
+                                            </div>
 
                                         ))}
 
                                     </div>
-                                    {/*Pagination*/}
-                                    <div className="blog-pagination">
-                                        <nav>
-                                            <ul className="pagination page-item justify-content-center">
-                                                <li className="previtem">
-                                                    <a className="page-link" href="#">
-                                                        <i className="fas fa-regular fa-arrow-left me-2" /> Prev
-                                                    </a>
-                                                </li>
-                                                <li className="justify-content-center pagination-center">
-                                                    <div className="page-group">
-                                                        <ul>
-                                                            <li className="page-item">
-                                                                <a className="page-link" href="#">
-                                                                    1
-                                                                </a>
-                                                            </li>
-                                                            <li className="page-item">
-                                                                <a className="active page-link" href="#">
-                                                                    2 <span className="visually-hidden">(current)</span>
-                                                                </a>
-                                                            </li>
-                                                            <li className="page-item">
-                                                                <a className="page-link" href="#">
-                                                                    3
-                                                                </a>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-                                                </li>
-                                                <li className="nextlink">
-                                                    <a className="page-link" href="#">
-                                                        Next <i className="fas fa-regular fa-arrow-right ms-2" />
-                                                    </a>
-                                                </li>
-                                            </ul>
-                                        </nav>
-                                    </div>
-                                    {/* /Pagination */}
+
+                                    {totalPages > 1 && (
+                                        <div className="blog-pagination">
+                                            <nav>
+                                                <ul className="pagination page-item justify-content-center">
+                                                    <li className={`previtem ${page === 1 ? ' disabled' : ''}`}>
+                                                        <a className="page-link" onClick={() => setPage(page - 1)} disabled={page === 1}>
+                                                            <i className="fas fa-regular fa-arrow-left" />
+                                                        </a>
+                                                    </li>
+                                                    <li className="justify-content-center pagination-center">
+                                                        <div className="page-group">
+                                                            <ul>
+                                                                {Array.from({ length: totalPages }, (_, idx) => (
+                                                                    <li className="page-item" key={idx}>
+                                                                        <a className={`${page === idx + 1 ? ' active page-link' : 'page-link'}`} onClick={() => setPage(idx + 1)}>{idx + 1}</a>
+                                                                    </li>
+                                                                ))}
+                                                            </ul>
+                                                        </div>
+                                                    </li>
+                                                    <li className={`nextlink ${page === totalPages ? ' disabled' : ''}`}>
+                                                        <a className="page-link" onClick={() => setPage(page + 1)} disabled={page === totalPages}>
+                                                            <i className="fas fa-regular fa-arrow-right" />
+                                                        </a>
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    )}
+
                                 </div>
                             </div>
                         </div>
@@ -1330,6 +626,127 @@ function ChooseTechnician() {
                         Save Changes
                     </Button>
                 </Modal.Footer> */}
+            </Modal>
+
+            {/* Modal chi tiết đơn hàng - Phiên bản cực đơn giản */}
+            <Modal
+                show={showBookingDetails}
+                onHide={() => setShowBookingDetails(false)}
+                size="md"
+                centered
+                className="choose-technician-booking-details-minimal"
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <i className="feather-info me-2"></i>
+                        Chi tiết đơn hàng
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {(newBooking || booking) && (
+                        <div className="choose-technician-booking-details-minimal-content">
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Dịch vụ:</span>
+                                <span className="value">{booking?.serviceId?.serviceName}</span>
+                            </div>
+
+                            {(newBooking || booking).description && (
+                                <div className="choose-technician-detail-row">
+                                    <span className="label">Mô tả:</span>
+                                    <span className="value">{(newBooking || booking).description}</span>
+                                </div>
+                            )}
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Địa chỉ:</span>
+                                <span className="value">{(newBooking || booking).location?.address || (newBooking || booking).address}</span>
+                            </div>
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Thời gian:</span>
+                                {/* <span className="value">{(newBooking || booking).schedule?.startTime || (newBooking || booking).preferredTime}</span> */}
+                                <span className="value">
+                                    {booking?.schedule?.startTime && booking?.schedule?.expectedEndTime
+                                        ? `${formatDateOnly(booking?.schedule?.startTime)}  ${formatTimeOnly(booking?.schedule?.startTime)} - ${formatTimeOnly(booking?.schedule?.expectedEndTime)}`
+                                        : 'Thời gian không hợp lệ'}
+                                </span>
+                            </div>
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Phương thức:</span>
+                                <span className="value method">
+                                    {(newBooking || booking).isUrgent === false ? 'Đặt lịch' : 'Đặt ngay'}
+                                </span>
+                            </div>
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Trạng thái:</span>
+                                <span className="value status">
+                                    <span className="choose-technician-status-badge">
+                                        <i className="feather-search me-1"></i>
+                                        Đang tìm thợ
+                                    </span>
+                                </span>
+                            </div>
+
+                            <div className="choose-technician-detail-row">
+                                <span className="label">Ngày tạo:</span>
+                                <span className="value">{new Date((newBooking || booking).createdAt).toLocaleDateString('vi-VN')}</span>
+                            </div>
+
+                            {(newBooking || booking).estimatedPrice && (
+                                <div className="choose-technician-detail-row">
+                                    <span className="label">Giá ước tính:</span>
+                                    <span className="value price">{(newBooking || booking).estimatedPrice.toLocaleString()} VNĐ</span>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowBookingDetails(false)}>
+                        Đóng
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Modal xác nhận gửi yêu cầu */}
+            <Modal show={showConfirm}
+                onHide={() => setShowConfirm(false)}
+                centered
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>Xác nhận gửi yêu cầu</Modal.Title>
+                </Modal.Header>
+
+                <Modal.Body>
+                    <div style={{ fontSize: 16, lineHeight: 1.6 }}>
+                        <p>
+                            <strong>Phí kiểm tra:</strong>{' '}
+                            <span style={{ color: 'red', fontWeight: 'bold' }}>
+                                {selectedTechnician?.inspectionFee?.toLocaleString() || 0} VNĐ
+                            </span>
+                        </p>
+
+                        <p style={{ fontSize: 12, color: '#6c757d', marginBottom: 12 }}>
+                            (*) Phí này chỉ thu nếu bạn không đồng ý sửa chữa. Nếu tiếp tục sửa, bạn <strong>không cần thanh toán</strong> phí kiểm tra.
+                        </p>
+
+                        <p>
+                            Bạn có chắc chắn muốn gửi yêu cầu cho kỹ thuật viên{' '}
+                            <strong>{selectedTechnician?.userInfo?.fullName}</strong> không?
+                        </p>
+                    </div>
+                </Modal.Body>
+
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowConfirm(false)}>
+                        Hủy
+                    </Button>
+                    <Button variant="primary" onClick={handleConfirmSend}>
+                        Gửi yêu cầu
+                    </Button>
+                </Modal.Footer>
             </Modal>
         </>
     );

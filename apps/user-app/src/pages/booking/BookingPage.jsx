@@ -102,11 +102,11 @@ function BookingPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const newErrors = validateBookingData(bookingData, addressInput, geoJson, type);
-        setErrors(newErrors);
-        if (Object.keys(newErrors).length > 0) {
-            return;
-        }
+        // const newErrors = validateBookingData(bookingData, addressInput, geoJson, type);
+        // setErrors(newErrors);
+        // if (Object.keys(newErrors).length > 0) {
+        //     return;
+        // }
 
         const startDateTime = new Date(`${bookingData?.scheduleDate}T${bookingData?.startTime}`);
         const endDateTime = new Date(`${bookingData?.scheduleDate}T${bookingData?.endTime}`);

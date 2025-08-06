@@ -24,8 +24,8 @@ import BreadcrumbBar from "../../components/common/BreadcrumbBar";
 import { ROLE_NAMES } from "../../constants/roles";
 import styled from "@emotion/styled";
 import authAPI from "../../features/auth/authAPI";
-import ContractStatus from '../../components/contracts/ContractStatus';
-import ApproveTechnicianTest from '../../components/admin/ApproveTechnicianTest'
+// import ContractStatus from '../../components/contracts/ContractStatus';
+// import ApproveTechnicianTest from '../../components/admin/ApproveTechnicianTest'
 import apiClient from "../../services/apiClient";
 import TechnicianOnboardingModal from "../../components/common/TechnicianOnboardingModal";
 import { FaCheckCircle, FaTimesCircle, FaUserCircle } from 'react-icons/fa';
@@ -1788,8 +1788,8 @@ function ProfilePage() {
                </div>
              )}
 
-            <ApproveTechnicianTest />
-            <ContractStatus />
+            {/* <ApproveTechnicianTest />
+            <ContractStatus /> */}
           <SettingsWrapper>
             {renderSidebar()}
             <SettingsContent>
