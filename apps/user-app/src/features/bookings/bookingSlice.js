@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cancelBookingById, createBooking, getBookingById, getQuatationsByBookingId,getUserBookingHistory,getAcceptedBooking,getTopBookedServices, selectTechnician, technicianConfirmBooking } from './bookingAPI';
+import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, selectTechnician, technicianConfirmBooking, technicianRejectBooking, technicianSendQuote, customerAcceptQuote, customerRejectQuote, fetchBookingRequests as fetchBookingRequestsAPI, fetchTechniciansFoundByBookingId, getAcceptedBooking } from './bookingAPI';
 
 export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',
@@ -42,10 +42,12 @@ export const fetchUserBookingHistory = createAsyncThunk(
     async ({ limit, skip }, { rejectWithValue }) => {
         try {
             const response = await getUserBookingHistory({ limit, skip })
-            
+
             return response;
         } catch (error) {
-            return rejectWithValue(error.response?.data || 'Failed to fetch booking history');}})
+            return rejectWithValue(error.response?.data || 'Failed to fetch booking history');
+        }
+    })
 export const fetchTopBookedServices = createAsyncThunk(
     'booking/fetchTopBookedServices',
     async () => {
@@ -63,7 +65,8 @@ export const selectTechnicianThunk = createAsyncThunk(
             const res = await selectTechnician(bookingId, technicianId);
             return res.data;
         } catch (error) {
-            const message = error?.response?.data?.error || error.message || 'Đã xảy ra lỗi';
+            // Sửa lại lấy message đúng chuẩn backend
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
             return rejectWithValue(message);
         }
     }
@@ -74,23 +77,111 @@ export const getAcceptedBookingThunk = createAsyncThunk(
     async (bookingId, { rejectWithValue }) => {
         try {
             const response = await getAcceptedBooking(bookingId);
-            
+
             if (!response.data.success) {
                 return rejectWithValue(response.data.message);
             }
-            
+
             return response.data.data;
         } catch (error) {
             console.error('Get Accepted Booking Error:', error);
-            return rejectWithValue(error.response?.data?.message || 'Failed to fetch accepted booking');}})
-export const technicianConfirmBookingThunk = createAsyncThunk(
-    'booking/technicianConfirmBooking',
+            return rejectWithValue(error.response?.data?.message || 'Failed to fetch accepted booking');
+        }
+    })
+
+export const technicianAcceptBookingThunk = createAsyncThunk(
+    'booking/technicianAcceptBooking',
     async (bookingId, { rejectWithValue }) => {
         try {
+            console.log('--- THUNK: Bắt đầu gọi API ---');
             const res = await technicianConfirmBooking(bookingId);
+            console.log('--- THUNK: API response ---', res);
             return res.data;
         } catch (error) {
-            const message = error?.response?.data?.error || error.message || 'Đã xảy ra lỗi';
+            console.log('--- THUNK: Error object ---', error);
+            console.log('--- THUNK: Error response ---', error?.response);
+            console.log('--- THUNK: Error response data ---', error?.response?.data);
+            console.log('--- THUNK: Error message ---', error?.message);
+            
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            console.log('--- THUNK: Final error message ---', message);
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const technicianSendQuoteThunk = createAsyncThunk(
+    'booking/technicianSendQuote',
+    async ({ bookingId, quoteData }, { rejectWithValue }) => {
+        try {
+            const res = await technicianSendQuote(bookingId, quoteData);
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const customerAcceptQuoteThunk = createAsyncThunk(
+    'booking/customerAcceptQuote',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await customerAcceptQuote(bookingId);
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const customerRejectQuoteThunk = createAsyncThunk(
+    'booking/customerRejectQuote',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await customerRejectQuote(bookingId);
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const fetchBookingRequests = createAsyncThunk(
+    'booking/fetchBookingRequests',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await fetchBookingRequestsAPI(bookingId);
+            return res.data.data; // [{ technicianId, status, ... }]
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
+            return rejectWithValue(message);
+        }
+    }
+);
+
+export const fetchTechniciansFound = createAsyncThunk(
+    'booking/fetchTechniciansFound',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await fetchTechniciansFoundByBookingId(bookingId);
+            return res.data.data; // [{...}]
+        } catch (error) {
+            return rejectWithValue(error?.response?.data?.message || error.message);
+        }
+    }
+);
+
+export const technicianRejectBookingThunk = createAsyncThunk(
+    'booking/technicianRejectBooking',
+    async (bookingId, { rejectWithValue }) => {
+        try {
+            const res = await technicianRejectBooking(bookingId);
+            return res.data;
+        } catch (error) {
+            const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
             return rejectWithValue(message);
         }
     }
@@ -114,7 +205,19 @@ const initialState = {
 
 const bookingSlice = createSlice({
     name: 'booking',
-    initialState,
+    initialState: {
+        newBooking: null,
+        techniciansFound: [],
+        booking: null,
+        detailsBooking: null,
+        topBookedServices: [],
+        status: 'idle',
+        createBookingStatus: 'idle',
+        selectTechnicianStatus: 'idle',
+        error: null,
+        requests: [],
+        techniciansStatus: 'idle',
+    },
     reducers: {
         clearError: (state) => {
             state.error = null;
@@ -142,15 +245,15 @@ const bookingSlice = createSlice({
             })
 
             .addCase(createNewBooking.pending, (state) => {
-                state.status = 'loading';
+                state.createBookingStatus = 'loading';
             })
             .addCase(createNewBooking.fulfilled, (state, action) => {
-                state.status = 'succeeded';
+                state.createBookingStatus = 'succeeded';
                 state.newBooking = action.payload.booking;
-                state.techniciansFound = action.payload.technicians_found || [];
+                // state.techniciansFound = action.payload.technicians_found || [];
             })
             .addCase(createNewBooking.rejected, (state, action) => {
-                state.status = 'failed';
+                state.createBookingStatus = 'failed';
                 state.error = action.error.message;
             })
 
@@ -204,25 +307,92 @@ const bookingSlice = createSlice({
             })
 
             .addCase(selectTechnicianThunk.pending, (state) => {
+                state.selectTechnicianStatus = 'loading';
+            })
+            .addCase(selectTechnicianThunk.fulfilled, (state) => {
+                state.selectTechnicianStatus = 'succeeded';
+            })
+            .addCase(selectTechnicianThunk.rejected, (state, action) => {
+                state.selectTechnicianStatus = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(technicianAcceptBookingThunk.pending, (state) => {
                 state.status = 'loading';
             })
-            .addCase(selectTechnicianThunk.fulfilled, (state, action) => {
+            .addCase(technicianAcceptBookingThunk.fulfilled, (state, action) => {
                 state.status = 'succeeded';
                 // Có thể cập nhật trạng thái booking nếu muốn
             })
-            .addCase(selectTechnicianThunk.rejected, (state, action) => {
+            .addCase(technicianAcceptBookingThunk.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.payload;
             })
 
-            .addCase(technicianConfirmBookingThunk.pending, (state) => {
+            .addCase(technicianSendQuoteThunk.pending, (state) => {
                 state.status = 'loading';
             })
-            .addCase(technicianConfirmBookingThunk.fulfilled, (state, action) => {
+            .addCase(technicianSendQuoteThunk.fulfilled, (state, action) => {
                 state.status = 'succeeded';
-                // Có thể cập nhật trạng thái booking nếu muốn
             })
-            .addCase(technicianConfirmBookingThunk.rejected, (state, action) => {
+            .addCase(technicianSendQuoteThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(customerAcceptQuoteThunk.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(customerAcceptQuoteThunk.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+            })
+            .addCase(customerAcceptQuoteThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(customerRejectQuoteThunk.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(customerRejectQuoteThunk.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+            })
+            .addCase(customerRejectQuoteThunk.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(fetchBookingRequests.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(fetchBookingRequests.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+                state.requests = action.payload;
+            })
+            .addCase(fetchBookingRequests.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(fetchTechniciansFound.pending, (state) => {
+                state.techniciansStatus = 'loading';
+            })
+            .addCase(fetchTechniciansFound.fulfilled, (state, action) => {
+                state.techniciansStatus = 'succeeded';
+                state.techniciansFound = action.payload;
+            })
+            .addCase(fetchTechniciansFound.rejected, (state, action) => {
+                state.techniciansStatus = 'failed';
+                state.error = action.payload;
+            })
+
+            .addCase(technicianRejectBookingThunk.pending, (state) => {
+                state.status = 'loading';
+            })
+            .addCase(technicianRejectBookingThunk.fulfilled, (state, action) => {
+                state.status = 'succeeded';
+            })
+            .addCase(technicianRejectBookingThunk.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.payload;
             })
