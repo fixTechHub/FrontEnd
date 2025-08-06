@@ -20,6 +20,8 @@ const getStatusColor = (status) => {
         'CANCELLED': '#dc3545',
         'ACCEPTED': '#20c997',
         'REJECTED': '#FF0000',
+         'WAITING_CUSTOMER_CONFIRM_ADDITIONAL': '#fd7e14',
+
         'AWAITING_CONFIRM': '#0d6efd',
         'AWAITING_DONE': '#e83e8c',
         'DONE': '#198754'
@@ -36,7 +38,7 @@ const getStatusLabel = (status) => {
         case 'CONFIRM_ADDITIONAL': return 'Chấp nhận thêm chi phí';
         case 'CANCELLED': return 'Hủy';
         case 'ACCEPTED': return 'Đồng ý';
-        // case 'CANCELLED': return 'Từ chối';
+        case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL': return 'Chờ chấp nhận chi phí thêm';
         case 'AWAITING_CONFIRM': return 'Chờ chấp nhận';
         case 'AWAITING_DONE': return 'Chờ thanh toán';
         case 'DONE': return 'Đã thanh toán';
@@ -792,7 +794,6 @@ const BookingHistory = () => {
                                                     <p className="mb-1 opacity-75">Giá</p>
                                                     <h6 className="price-tag mb-0">
                                                         {formatCurrency(booking.finalPrice)}
-                                                        <small className="opacity-75 fw-normal">/dịch vụ</small>
                                                     </h6>
                                                 </div>
                                             </div>
@@ -902,8 +903,7 @@ const BookingHistory = () => {
                                                 <div className="col-4 text-end">
                                                     <p className="mb-1 opacity-75">Giá</p>
                                                     <h6 className="price-tag mb-0">
-                                                        {formatCurrency(booking.quote?.laborPrice)}
-                                                        <small className="opacity-75 fw-normal">/dịch vụ</small>
+                                                        {formatCurrency(booking.finalPrice)}
                                                     </h6>
                                                 </div>
                                             </div>
