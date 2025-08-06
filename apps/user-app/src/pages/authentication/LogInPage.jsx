@@ -49,12 +49,12 @@ function LogInPage() {
 
   const checkEmailExists = async (email) => {
     if (!email || !validateEmail(email)) return;
-    
+
     setIsCheckingEmail(true);
     try {
       const response = await authAPI.checkExist(email);
       setEmailExists(response.exists);
-      
+
       // Nếu email không tồn tại, hiển thị thông báo
       if (!response.exists) {
         setErrors(prev => ({
@@ -160,13 +160,15 @@ function LogInPage() {
       } else {
         toast.success("Đăng nhập thành công!");
       }
-      
+
       // Điều hướng sau khi đăng nhập Google
       if (result.user.role?.name === "PENDING" || !result.user.role) {
         // Người dùng mới cần chọn vai trò
         navigate('/choose-role', { replace: true });
       } else if (result.user.role.name === "ADMIN") {
         navigate("/admin/dashboard", { replace: true });
+      } else if (result.user.role.name === "TECHNICIAN") {
+        navigate("/technician", { replace: true });
       } else {
         navigate("/", { replace: true });
       }
@@ -215,6 +217,8 @@ function LogInPage() {
               navigate('/choose-role', { replace: true });
             } else if (result.user.role.name === "ADMIN") {
               navigate("/admin/dashboard", { replace: true });
+            } else if (result.user.role.name === "TECHNICIAN") {
+              navigate("/technician", { replace: true });
             } else {
               navigate("/", { replace: true });
             }
