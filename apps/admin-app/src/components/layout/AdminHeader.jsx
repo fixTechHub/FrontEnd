@@ -143,21 +143,7 @@ const AdminHeader = () => {
     {
       type: 'divider'
     },
-    {
-      key: 'server',
-      label: (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
-          <span style={{ fontSize: '12px' }}>Backend:</span>
-          <Switch
-            size="small"
-            checked={useDotNetBackend}
-            onChange={handleServerSwitch}
-            checkedChildren=".NET"
-            unCheckedChildren="NodeJS"
-          />
-        </div>
-      )
-    }
+    
   ];
 
   return (
@@ -168,34 +154,8 @@ const AdminHeader = () => {
         </button>
         <FaBell className="icon" style={{ fontSize: 22, color: '#FFA726', marginLeft: 8, cursor: 'pointer' }} />
         
-        {/* Server indicator */}
-        <div style={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: '6px', 
-          padding: '4px 8px', 
-          borderRadius: '4px', 
-          background: useDotNetBackend ? '#e6f7ff' : '#f6ffed',
-          border: `1px solid ${useDotNetBackend ? '#91d5ff' : '#b7eb8f'}`
-        }}>
-          <FaServer style={{ fontSize: '12px', color: useDotNetBackend ? '#1890ff' : '#52c41a' }} />
-          <span style={{ fontSize: '12px', color: useDotNetBackend ? '#1890ff' : '#52c41a' }}>
-            {useDotNetBackend ? '.NET' : 'NodeJS'}
-          </span>
-        </div>
         
-        <Dropdown
-          menu={{ items: userMenuItems }}
-          placement="bottomRight"
-          trigger={['click']}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', padding: '4px 8px', borderRadius: '6px', background: '#f5f5f5' }}>
-            <FaUserCircle style={{ fontSize: 20, color: '#666' }} />
-            <span style={{ fontSize: '14px', color: '#333' }}>
-              Admin User
-            </span>
-          </div>
-        </Dropdown>
+        <FaUserCircle className="icon" style={{ fontSize: 28, color: '#888', marginLeft: 8, cursor: 'pointer' }} />
       </div>
 
       {/* Export Modal */}

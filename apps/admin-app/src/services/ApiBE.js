@@ -18,8 +18,8 @@ const ApiBE = axios.create({
 // Add request interceptor for JWT token
 ApiBE.interceptors.request.use(
   (config) => {
-    // Lấy JWT token từ localStorage
-    const token = localStorage.getItem('jwt_token');
+    // Lấy JWT token từ cookie (NodeJS lưu token trong cookie với tên 'token')
+    const token = getCookie('token') || getCookie('jwt_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -29,6 +29,14 @@ ApiBE.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Helper function để đọc cookie
+function getCookie(name) {
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop().split(';').shift();
+  return null;
+}
 
 // Add response interceptor for error handling
 ApiBE.interceptors.response.use(

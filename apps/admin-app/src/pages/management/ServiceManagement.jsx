@@ -238,13 +238,16 @@ const ServiceManagement = () => {
     const newErrors = {};
     const generalErrors = [];
     Object.entries(apiErrors).forEach(([key, msgs]) => {
-      const mappedKey = key === 'ServiceName' ? 'ServiceName' : key === 'Icon' ? 'Icon' : key;
+      const mappedKey = key === 'ServiceName' ? 'ServiceName' : 
+                       key === 'CategoryId' ? 'CategoryId' :
+                       key === 'Icon' ? 'Icon' : 
+                       key === 'Description' ? 'Description' : key;
       const isTechError = msgs.some(msg =>
         msg.includes('could not be converted') || msg.includes('System.')
       );
       if (isTechError) {
         generalErrors.push('Nhập vào các trường * bắt buộc');
-      } else if ([ 'ServiceName', 'Icon' ].includes(mappedKey)) {
+      } else if ([ 'ServiceName', 'CategoryId', 'Icon', 'Description' ].includes(mappedKey)) {
         newErrors[mappedKey] = msgs;
       } else {
         generalErrors.push(...msgs);
@@ -256,31 +259,31 @@ const ServiceManagement = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationErrors({});
-    if (!formData.serviceName || !formData.categoryId) {
+    if (!formData.serviceName || !formData.categoryId || !formData.icon || !formData.description) {
       setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
       return;
     }
-    // Chuẩn bị data gửi lên BE
-    const dataToSend = { ...formData };
-    if (showAddModal) {
-      dispatch(createService(dataToSend)).then((action) => {
-        if (action.payload && action.payload.errors) {
-          const apiErrors = action.payload.errors;
-          const processed = processErrors(apiErrors);
-          setValidationErrors(processed);
-        }
-      });
-    } else if (showEditModal && selectedService) {
-      dispatch(updateService({ id: selectedService.id, serviceData: dataToSend })).then((action) => {
-        if (action.payload && action.payload.errors) {
-          const apiErrors = action.payload.errors;
-          const processed = processErrors(apiErrors);
-          setValidationErrors(processed);
-        }
-      });
+    // Chuẩn bị data gửi lên BE - chuyển đổi từ camelCase sang PascalCase
+    const dataToSend = {
+      ServiceName: formData.serviceName,
+      CategoryId: formData.categoryId,
+      Icon: formData.icon || '',
+      Description: formData.description || '',
+      IsActive: formData.isActive,
+      Embedding: formData.embedding || []
+    };
+    try {
+      if (showAddModal) {
+        await dispatch(createService(dataToSend));
+      } else if (showEditModal && selectedService) {
+        await dispatch(updateService({ id: selectedService.id, serviceData: dataToSend }));
+      }
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      message.error('Có lỗi xảy ra');
     }
   };
 
@@ -430,6 +433,7 @@ const ServiceManagement = () => {
         }}
         footer={null}
         width={800}
+        style={{ top: 20 }}
         destroyOnHidden
       >
         <Form layout="vertical" onSubmit={handleSubmit}>
@@ -443,45 +447,56 @@ const ServiceManagement = () => {
             </div>
           )}
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="Service Name" required validateStatus={validationErrors.ServiceName ? 'error' : ''} help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}>
-                <Input
-                  name="serviceName"
-                  value={formData.serviceName}
-                  onChange={handleChange}
-                  placeholder="Enter service name"
-                  required
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="Category" required validateStatus={validationErrors.CategoryId ? 'error' : ''} help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}>
-                <Select
-                  placeholder="Choose category"
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={(value) => handleChange({ target: { name: 'categoryId', value } })}
-                  required
-                >
-                  {categories.map(cat => (
-                    <Select.Option key={cat.id} value={cat.id}>{cat.categoryName}</Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
+                         <Col span={12}>
+               <Form.Item label="Service Name *" required validateStatus={validationErrors.ServiceName ? 'error' : ''} help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}>
+                 <Input
+                   name="serviceName"
+                   value={formData.serviceName}
+                   onChange={handleChange}
+                   placeholder="Enter service name"
+                   required
+                 />
+               </Form.Item>
+             </Col>
+             <Col span={12}>
+               <Form.Item label="Category *" required validateStatus={validationErrors.CategoryId ? 'error' : ''} help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}>
+                 <Select
+                   placeholder="Choose category"
+                   name="categoryId"
+                   value={formData.categoryId}
+                   onChange={(value) => handleChange({ target: { name: 'categoryId', value } })}
+                   required
+                 >
+                   {categories.map(cat => (
+                     <Select.Option key={cat.id} value={cat.id}>{cat.categoryName}</Select.Option>
+                   ))}
+                 </Select>
+               </Form.Item>
+             </Col>
           </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="Icon" validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-                <IconUploader
-                  value={formData.icon}
-                  onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-                  placeholder="Upload icon image"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
+                     <Row gutter={16}>
+             <Col span={12}>
+               <Form.Item label="Icon *" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+                 <IconUploader
+                   value={formData.icon}
+                   onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                   placeholder="Upload icon image"
+                 />
+               </Form.Item>
+             </Col>
+             <Col span={12}>
+               <Form.Item label="Status">
+                 <Switch
+                   name="isActive"
+                   checked={formData.isActive}
+                   onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                   checkedChildren="Active"
+                   unCheckedChildren="Inactive"
+                 />
+               </Form.Item>
+             </Col>
+           </Row>
 
           {formData.serviceType === 'COMPLEX' && (
             <Row gutter={16}>
@@ -514,25 +529,15 @@ const ServiceManagement = () => {
             </Row>
           )}
 
-          <Form.Item label="Description">
-            <Input.TextArea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Enter service description"
-            />
-          </Form.Item>
-
-          <Form.Item label="Status">
-            <Switch
-              name="isActive"
-              checked={formData.isActive}
-              onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-              checkedChildren="Active"
-              unCheckedChildren="Inactive"
-            />
-          </Form.Item>
+                     <Form.Item label="Description *" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
+             <Input.TextArea
+               name="description"
+               value={formData.description}
+               onChange={handleChange}
+               rows={3}
+               placeholder="Enter service description"
+             />
+           </Form.Item>
 
           <div className="d-flex justify-content-end">
             <Button onClick={() => {
