@@ -36,6 +36,18 @@ export const depositBalance = createAsyncThunk(
   }
 );
 
+export const subscriptionBalance = createAsyncThunk(
+  'transaction/subscriptionBalance',
+  async (amount, { rejectWithValue }) => {
+    try {
+      const response = await transactionAPI.subscriptionBalance(amount);
+      return response.data.data.depositURL;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to subscription balance');
+    }
+  }
+);
+
 export const withdrawBalance = createAsyncThunk(
   'transaction/withdrawBalance',
   async (amount, { rejectWithValue }) => {
@@ -51,12 +63,29 @@ export const withdrawBalance = createAsyncThunk(
   }
 );
 
+export const extendSubscription = createAsyncThunk(
+  'transaction/extendSubscription',
+  async ({ technicianId, packageId, days }, { rejectWithValue }) => {
+    try {
+      const result = await transactionAPI.extendSubscription({ technicianId, packageId, days });
+      return result.checkoutUrl; // Giả sử API trả về URL thanh toán
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Gia hạn thất bại'
+      );
+    }
+  }
+);
+
 
 
 // Slice
 const transactionSlice = createSlice({
   name: 'transaction',
-  initialState,
+  initialState: {
+    extendStatus: 'idle',
+    extendError: null,
+  },
   reducers: {
     clearError: (state) => {
       state.error = null;
@@ -113,6 +142,18 @@ const transactionSlice = createSlice({
       .addCase(withdrawBalance.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+       .addCase(extendSubscription.pending, (state) => {
+        state.extendStatus = 'loading';
+        state.extendError = null;
+      })
+      .addCase(extendSubscription.fulfilled, (state) => {
+        state.extendStatus = 'succeeded';
+      })
+      .addCase(extendSubscription.rejected, (state, action) => {
+        state.extendStatus = 'failed';
+        state.extendError = action.payload;
       });
   }
 });
