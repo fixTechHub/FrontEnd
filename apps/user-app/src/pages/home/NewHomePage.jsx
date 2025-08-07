@@ -57,7 +57,7 @@ import "swiper/css/pagination"
 import Header from "../../components/common/Header"
 import Footer from "../../components/common/Footer"
 
-function HomePage() {
+function NewHomePage() {
   const [isVisible, setIsVisible] = useState(false)
   
 
@@ -587,4 +587,4 @@ function HomePage() {
   )
 }
 
-export default HomePage
+export default NewHomePage

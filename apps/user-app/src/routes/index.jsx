@@ -49,7 +49,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* ================= PUBLIC ROUTES ================= */}
-      <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />

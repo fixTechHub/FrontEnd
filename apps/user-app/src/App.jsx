@@ -8,6 +8,7 @@ import { fetchAllRoles } from './features/roles/roleSlice';
 import { fetchTopBookedServices } from './features/bookings/bookingSlice';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
+import './styles/hero-banner.css';
 
 function App() {
     const dispatch = useDispatch();

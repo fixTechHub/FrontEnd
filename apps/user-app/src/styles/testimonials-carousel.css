@@ -1,0 +1,92 @@
+.testi-carousel{
+  display:flex;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  gap:1.5rem;
+  padding:1rem 0;
+  scroll-behavior:smooth;
+}
+.testi-carousel::-webkit-scrollbar{display:none;}
+
+/* Card base */
+.testi-carousel .testimonial-card{
+  flex:0 0 85%;
+  max-width:320px;
+  scroll-snap-align:center;
+  background:rgba(255,255,255,0.96);
+  color:#1f2937;
+  border:1px solid #ECECEC;
+  border-radius:1.25rem;
+  padding:2rem 1.5rem;
+  box-shadow:0 6px 24px rgba(0,0,0,.06);
+  transform:scale(.9);
+  transition:transform .4s cubic-bezier(.4,0,.2,1),box-shadow .4s cubic-bezier(.4,0,.2,1);
+  position:relative;
+}
+@media(min-width:768px){
+  .testi-carousel .testimonial-card{flex:0 0 60%;}
+}
+@media(min-width:1024px){
+  .testi-carousel .testimonial-card{flex:0 0 30%;}
+}
+.testi-carousel .testimonial-card:hover{
+  transform:scale(1);
+  box-shadow:0 16px 48px rgba(0,0,0,.12);
+}
+/* subtle glow border on hover */
+.testi-carousel .testimonial-card::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  box-shadow:0 0 0 0 #fe9307;
+  transition:box-shadow .35s ease;
+}
+.testi-carousel .testimonial-card:hover::after{
+  box-shadow:0 0 0 2px #fe9307;
+}
+
+/* Avatar */
+.testimonial-card .testi-avatar{
+  width:70px;
+  height:70px;
+  border-radius:50%;
+  overflow:hidden;
+  margin:0 auto 1rem;
+  box-shadow:0 0 0 3px #fe9307;
+}
+
+/* Name / location */
+.testimonial-card .testi-name{
+  font-size:1.125rem;
+  font-weight:700;
+  color:#0f172a;
+  margin:.25rem 0;
+  text-align:center;
+}
+.testimonial-card .testi-location{
+  color:#6b7280;
+  font-size:.875rem;
+  margin-bottom:.5rem;
+  text-align:center;
+}
+
+/* Stars */
+.testimonial-card .testi-stars{
+  display:flex;
+  justify-content:center;
+  gap:.2rem;
+  margin-bottom:.75rem;
+}
+
+/* Content */
+.testimonial-card .testi-content{
+  font-style:italic;
+  color:#374151;
+  text-align:center;
+  line-height:1.6;
+  max-height:4.5rem;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}

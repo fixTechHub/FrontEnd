@@ -1,0 +1,40 @@
+import "./ServiceCardDark.css";
+import { RiStarFill as Star, RiPhoneFill as Phone } from "react-icons/ri";
+
+export default function ServiceCardDark({ icon: Icon, title, price, rating, reviews, color, bg, description, features }) {
+  return (
+    <div className="glass-card" style={{ "--icon-bg": bg, "--icon-color": color }}>
+      {/* Front content */}
+      <div className="front">
+        <div className="icon-glass">
+          <Icon size={26} />
+        </div>
+        <h3 className="glass-title">{title}</h3>
+        <span className="price-dark">{price}</span>
+        <div className="rating-wrap">
+          <div className="rating-dark">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} size={14} fill={i < Math.round(rating) ? "#FBBF24" : "transparent"} color="#FBBF24" />
+            ))}
+          </div>
+          <small>{rating} ({reviews})</small>
+        </div>
+        <span className="contact-tag"><Star size={13} style={{marginRight:"0.3rem"}}/>Phổ biến</span>
+      </div>
+
+      {/* Overlay description with pills */}
+      <div className="details-overlay">
+        {features && (
+          <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center" }}>
+            {features.slice(0, 6).map((feat, idx) => (
+              <span key={idx} className="pill">
+                <feat.icon size={12} /> {feat.text}
+              </span>
+            ))}
+          </div>
+        )}
+        {description && <p style={{ margin: 0 }}>{description}</p>}
+      </div>
+    </div>
+  );
+}
