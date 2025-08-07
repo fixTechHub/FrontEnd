@@ -244,7 +244,7 @@ const BookingHistory = () => {
                                   if (booking.status === 'PENDING') {
                                     navigate(`/booking/choose-technician?bookingId=${booking._id}`);
                                   } else if (booking.status !== 'CANCELLED') {
-                                    navigate(`/booking/booking-processing?bookingId=${booking._id}`);
+                                        navigate(`/booking/booking-processing?bookingId=${booking._id}`);
                                   }
                                 }}
                                 className="text-primary"
