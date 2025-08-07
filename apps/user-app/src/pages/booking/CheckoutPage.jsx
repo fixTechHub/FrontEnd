@@ -27,11 +27,11 @@ const CouponModal = ({ show, onHide, coupons, onSelectCoupon }) => {
                 <Modal.Title style={{ color: '#333', fontSize: '18px' }}>Chọn Mã Giảm Giá</Modal.Title>
             </Modal.Header>
             <Modal.Body style={{ padding: '20px' }}>
-                {coupons.length === 0 ? (
+                {coupons?.length === 0 ? (
                     <p style={{ color: '#666', textAlign: 'center' }}>Không có mã giảm giá nào khả dụng.</p>
                 ) : (
                     <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
-                        {coupons.map((coupon) => (
+                        {coupons?.map((coupon) => (
                             <Card
                                 key={coupon._id}
                                 className={selectedCoupon?._id === coupon._id ? 'border-primary' : ''}

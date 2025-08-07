@@ -311,4 +311,97 @@ export const onBookingStatusUpdate = (callback) => {
   return () => {};
 };
 
+// Thêm các hàm socket mới cho booking request
+export const onBookingRequestAccepted = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received booking request accepted:', data);
+      callback(data);
+    };
+    socket.on('booking:requestAccepted', listener);
+    return () => socket?.off('booking:requestAccepted', listener);
+  }
+
+  return () => {};
+};
+
+export const onBookingRequestRejected = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received booking request rejected:', data);
+      callback(data);
+    };
+    socket.on('booking:requestRejected', listener);
+    return () => socket?.off('booking:requestRejected', listener);
+  }
+
+  return () => {};
+};
+
+export const onBookingRequestStatusUpdate = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received booking request status update:', data);
+      callback(data);
+    };
+    socket.on('booking:requestStatusUpdate', listener);
+    return () => socket?.off('booking:requestStatusUpdate', listener);
+  }
+
+  return () => {};
+};
+
+// Thêm các hàm socket mới cho thiết bị phát sinh
+export const onAdditionalItemsAdded = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received additional items added:', data);
+      callback(data);
+    };
+    socket.on('booking:additionalItemsAdded', listener);
+    return () => socket?.off('booking:additionalItemsAdded', listener);
+  }
+
+  return () => {};
+};
+
+export const onAdditionalItemsStatusUpdate = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received additional items status update:', data);
+      callback(data);
+    };
+    socket.on('booking:additionalItemsStatusUpdate', listener);
+    return () => socket?.off('booking:additionalItemsStatusUpdate', listener);
+  }
+
+  return () => {};
+};
+
+export const onAdditionalItemsAccepted = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received additional items accepted:', data);
+      callback(data);
+    };
+    socket.on('booking:additionalItemsAccepted', listener);
+    return () => socket?.off('booking:additionalItemsAccepted', listener);
+  }
+
+  return () => {};
+};
+
+export const onAdditionalItemsRejected = (callback) => {
+  if (socket) {
+    const listener = (data) => {
+      console.log('Received additional items rejected:', data);
+      callback(data);
+    };
+    socket.on('booking:additionalItemsRejected', listener);
+    return () => socket?.off('booking:additionalItemsRejected', listener);
+  }
+
+  return () => {};
+};
+
 export const getSocket = () => socket;

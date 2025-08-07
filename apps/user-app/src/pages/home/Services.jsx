@@ -12,18 +12,18 @@ function Services() {
                 <div className="container">
                     <div className="section-heading" data-aos="fade-down">
                         <h2>Dịch Vụ Nổi Bật</h2>
-                        <p>Here's a list of some of the most popular cars globally, based on sales and customer preferences</p>
+                        <p>Khám phá các dịch vụ chất lượng cao được khách hàng tin tưởng và lựa chọn nhiều nhất</p>
                     </div>
 
                     <div className="tab-content">
                         <div className="tab-pane active" id="Carmazda">
                             <div className="row">
                                 {topBookedServices && topBookedServices.map((service) => (
-                                    <div className="col-lg-4 col-md-6 col-12" data-aos="fade-down">
+                                    <div className="col-lg-4 col-md-6 col-12" data-aos="fade-down" key={service?.service?._id || service?.service?.serviceName || Math.random()}>
                                         <div className="listing-item">
                                             <div className="listing-img">
-                                                <a href="listing-details.html">
-                                                    <img src="/img/cars/car-03.jpg" className="img-fluid" alt="Audi" />
+                                                <a>
+                                                    <img src={service?.service?.icon} className="img-fluid" alt="Audi" />
                                                 </a>
                                             </div>
 
@@ -41,7 +41,7 @@ function Services() {
                                                     </div>
                                                 </div>
 
-                                                <div className="listing-location-details">
+                                                {/* <div className="listing-location-details">
                                                     <div className="listing-price">
                                                         <span>
                                                             <i className="feather-map-pin"></i>
@@ -49,14 +49,10 @@ function Services() {
                                                         Mức Giá
                                                     </div>
 
-                                                    {/* <div className="listing-price">
-                                                    <h6>$160 <span>/ Day</span></h6>
-                                                </div> */}
-
                                                     <div className="listing-price">
                                                         <h6><span>Liên hệ</span></h6>
                                                     </div>
-                                                </div>
+                                                </div> */}
 
                                                 <div className="listing-details-group">
                                                     <p>{service?.service?.description}</p>

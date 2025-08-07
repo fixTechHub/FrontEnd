@@ -1,6 +1,6 @@
 export const customerSteps = [
     { id: 1, label: "Tạo yêu cầu", icon: "/img/icons/booking-head-icon-01.svg" },
-    { id: 2, label: "Chờ báo giá", icon: "/img/icons/booking-head-icon-02.svg" },
+    { id: 2, label: "Chọn kỹ thuật viên", icon: "/img/icons/booking-head-icon-02.svg" },
     { id: 3, label: "Tiến hành sửa chữa", icon: "/img/icons/booking-head-icon-03.svg" },
     { id: 4, label: "Thanh toán", icon: "/img/icons/booking-head-icon-04.svg" },
     { id: 5, label: "Hoàn thành", icon: "/img/icons/booking-head-icon-05.svg" },
