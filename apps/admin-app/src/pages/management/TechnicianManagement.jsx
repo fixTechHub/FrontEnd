@@ -507,8 +507,6 @@ const getStatusBadgeClass = (status) => {
            </ul>
          </nav>
        </div>
-
-
      </div>
 
 
@@ -521,138 +519,215 @@ const getStatusBadgeClass = (status) => {
          title={null}
          width={800}
        >
-         <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
-           <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
-             <div style={{width: 80, height: 80, borderRadius: '50%', overflow: 'hidden', background: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#888'}}>
-               {selectedTechnician.avatar ? (
-                 <img src={selectedTechnician.avatar.startsWith('http') ? selectedTechnician.avatar : `${process.env.REACT_APP_API_URL || ''}${selectedTechnician.avatar}`}
-                      alt="avatar"
-                      style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-               ) : (
-                 selectedTechnician.fullName ? selectedTechnician.fullName[0].toUpperCase() : <i className="ti ti-user"></i>
-               )}
-             </div>
-             <div style={{flex: 1}}>
-               <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>{selectedTechnician.fullName || 'UNKNOWN'}</div>
-               <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>{selectedTechnician.email || "-" }</div>
-               <div style={{fontSize: 13, color: '#888'}}>
-                 <span style={{marginRight: 12}}><b>Status:</b> <span style={{color: getTechnicianStatus(selectedTechnician.status) === 'APPROVED' ? '#52c41a' : getTechnicianStatus(selectedTechnician.status) === 'REJECTED' ? '#cf1322' : '#faad14'}}>{getTechnicianStatus(selectedTechnician.status)}</span></span>
-                 <span><b>Phone:</b> {selectedTechnician.phone || "-"}</span>
+         <div style={{background: '#ffffff', borderRadius: 12, overflow: 'hidden'}}>
+           {/* Header Section */}
+           <div style={{background: 'linear-gradient(135deg, #000 0%, #FFAF47 100%)', padding: '24px', color: 'white'}}>
+             <div style={{display: 'flex', alignItems: 'center', gap: '20px'}}>
+               <div style={{
+                 width: '80px', 
+                 height: '80px', 
+                 borderRadius: '50%', 
+                 overflow: 'hidden', 
+                 background: 'rgba(255,255,255,0.2)', 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 justifyContent: 'center', 
+                 fontSize: '32px', 
+                 color: 'white',
+                 border: '3px solid rgba(255,255,255,0.3)'
+               }}>
+                 {selectedTechnician.avatar ? (
+                   <img 
+                     src={selectedTechnician.avatar.startsWith('http') ? selectedTechnician.avatar : `${process.env.REACT_APP_API_URL || ''}${selectedTechnician.avatar}`}
+                     alt="avatar"
+                     style={{width: '100%', height: '100%', objectFit: 'cover'}} 
+                   />
+                 ) : (
+                   selectedTechnician.fullName ? selectedTechnician.fullName[0].toUpperCase() : 'T'
+                 )}
+               </div>
+               <div style={{flex: 1}}>
+                 <div style={{fontSize: '24px', fontWeight: 700, marginBottom: '4px'}}>
+                   {selectedTechnician.fullName || 'UNKNOWN'}
+                 </div>
+                 <div style={{fontSize: '14px', opacity: 0.9, marginBottom: '8px'}}>
+                   {selectedTechnician.email || "-"}
+                 </div>
+                 <div style={{display: 'flex', gap: '16px', alignItems: 'center'}}>
+                   <div style={{
+                     background: 'rgba(255,255,255,0.2)', 
+                     padding: '4px 12px', 
+                     borderRadius: '20px',
+                     fontSize: '12px',
+                     fontWeight: 600
+                   }}>
+                     {getTechnicianStatus(selectedTechnician.status)}
+                   </div>
+                   <div style={{fontSize: '12px', opacity: 0.8}}>
+                     {selectedTechnician.phone || "-"}
+                   </div>
+                 </div>
                </div>
              </div>
            </div>
-           <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
-           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Kinh nghiệm (năm)</div>
-               <div>{selectedTechnician.experienceYears ?? '-'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Số job hoàn thành</div>
-               <div>{selectedTechnician.jobCompleted ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Rating trung bình</div>
-               <div>{selectedTechnician.ratingAverage ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Chuyên môn</div>
-               <div style={{display: 'flex', flexWrap: 'wrap', gap: 4}}>
-                 {[...new Set(selectedTechnician.specialtiesCategories || [])].map(catIdRaw => {
-                   let catId = catIdRaw && typeof catIdRaw === 'object' && catIdRaw.$oid
-                     ? catIdRaw.$oid
-                     : (catIdRaw.id || catIdRaw._id || catIdRaw).toString().trim();
-                   return (
-                     <span key={catId} className="badge bg-secondary mb-1">
-                       {categoryMap[catId] || catId}
-                     </span>
-                   );
-                 })}
+
+           {/* Main Content */}
+           <div style={{padding: '24px'}}>
+             {/* Basic Information Grid */}
+             <div style={{marginBottom: '24px'}}>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Basic Information</div>
+               <div style={{
+                 display: 'grid',
+                 gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                 gap: '16px'
+               }}>
+                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Experience (Years)</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {selectedTechnician.experienceYears ?? '-'} years
+                   </div>
+                 </div>
+                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Jobs Completed</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {selectedTechnician.jobCompleted ?? 0}
+                   </div>
+                 </div>
+                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Average Rating</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {selectedTechnician.ratingAverage?.toFixed(1) ?? '0.0'} ⭐
+                   </div>
+                 </div>
+                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Availability</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {getTechnicianAvailability(selectedTechnician.availability)}
+                   </div>
+                 </div>
                </div>
              </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Chứng chỉ</div>
-               <div>{(selectedTechnician.certificate && selectedTechnician.certificate.length > 0) ? selectedTechnician.certificate.join(', ') : '-'}</div>
+
+             {/* Financial Information Section */}
+             <div style={{marginBottom: '24px'}}>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Financial Information</div>
+               <div style={{
+                 display: 'grid',
+                 gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                 gap: '12px'
+               }}>
+                 <div style={{textAlign: 'center', background: '#e6f7ff', padding: '12px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Balance</div>
+                   <div style={{fontSize: '13px', fontWeight: 600, color: '#1890ff'}}>
+                     ${selectedTechnician.balance?.toLocaleString() ?? '0'}
+                   </div>
+                 </div>
+                 <div style={{textAlign: 'center', background: '#f6ffed', padding: '12px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Total Earnings</div>
+                   <div style={{fontSize: '13px', fontWeight: 600, color: '#52c41a'}}>
+                     ${selectedTechnician.totalEarning?.toLocaleString() ?? '0'}
+                   </div>
+                 </div>
+                 <div style={{textAlign: 'center', background: '#fffbe6', padding: '12px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Commission Paid</div>
+                   <div style={{fontSize: '13px', fontWeight: 600, color: '#faad14'}}>
+                     ${selectedTechnician.totalCommissionPaid?.toLocaleString() ?? '0'}
+                   </div>
+                 </div>
+                 <div style={{textAlign: 'center', background: '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Holding Amount</div>
+                   <div style={{fontSize: '13px', fontWeight: 600, color: '#888'}}>
+                     ${selectedTechnician.totalHoldingAmount?.toLocaleString() ?? '0'}
+                   </div>
+                 </div>
+               </div>
              </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tài khoản ngân hàng</div>
-               <div>
+
+             {/* Specialties Section */}
+             <div style={{marginBottom: '24px'}}>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Specialties</div>
+               <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                 <div style={{display: 'flex', flexWrap: 'wrap', gap: '8px'}}>
+                   {[...new Set(selectedTechnician.specialtiesCategories || [])].map(catIdRaw => {
+                     let catId = catIdRaw && typeof catIdRaw === 'object' && catIdRaw.$oid
+                       ? catIdRaw.$oid
+                       : (catIdRaw.id || catIdRaw._id || catIdRaw).toString().trim();
+                     return (
+                       <span 
+                         key={catId} 
+                         style={{
+                           background: '#667eea',
+                           color: 'white',
+                           padding: '4px 12px',
+                           borderRadius: '20px',
+                           fontSize: '12px',
+                           fontWeight: 500
+                         }}
+                       >
+                         {categoryMap[catId] || catId}
+                       </span>
+                     );
+                   })}
+                   {(!selectedTechnician.specialtiesCategories || selectedTechnician.specialtiesCategories.length === 0) && (
+                     <span style={{color: '#999', fontSize: '14px'}}>No specialties listed</span>
+                   )}
+                 </div>
+               </div>
+             </div>
+
+             {/* Certificates Section */}
+             <div style={{marginBottom: '24px'}}>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Certificates</div>
+               <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                 <div style={{fontSize: '14px', color: '#333', lineHeight: '1.5'}}>
+                   {(selectedTechnician.certificate && selectedTechnician.certificate.length > 0) 
+                     ? selectedTechnician.certificate.join(', ') 
+                     : 'No certificates listed'}
+                 </div>
+               </div>
+             </div>
+
+             {/* Bank Account Section */}
+             <div>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Bank Account</div>
+               <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
                  {selectedTechnician.bankAccount ? (
-                   <>
-                     <div>Ngân hàng: {selectedTechnician.bankAccount.bankName}</div>
-                     <div>Số TK: {selectedTechnician.bankAccount.accountNumber}</div>
-                     <div>Chủ TK: {selectedTechnician.bankAccount.accountHolder}</div>
-                     <div>Chi nhánh: {selectedTechnician.bankAccount.branch}</div>
-                   </>
-                 ) : '-'}
+                   <div style={{
+                     display: 'grid',
+                     gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                     gap: '12px'
+                   }}>
+                     <div>
+                       <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Bank Name</div>
+                       <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                         {selectedTechnician.bankAccount.bankName}
+                       </div>
+                     </div>
+                     <div>
+                       <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Account Number</div>
+                       <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                         {selectedTechnician.bankAccount.accountNumber}
+                       </div>
+                     </div>
+                     <div>
+                       <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Account Holder</div>
+                       <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                         {selectedTechnician.bankAccount.accountHolder}
+                       </div>
+                     </div>
+                     <div>
+                       <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Branch</div>
+                       <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                         {selectedTechnician.bankAccount.branch}
+                       </div>
+                     </div>
+                   </div>
+                 ) : (
+                   <div style={{color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px'}}>
+                     No bank account information available
+                   </div>
+                 )}
                </div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Số dư</div>
-               <div>{selectedTechnician.balance ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tổng thu nhập</div>
-               <div>{selectedTechnician.totalEarning ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tổng hoa hồng đã trả</div>
-               <div>{selectedTechnician.totalCommissionPaid ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tổng giữ lại</div>
-               <div>{selectedTechnician.totalHoldingAmount ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Tổng đã rút</div>
-               <div>{selectedTechnician.totalWithdrawn ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Phí kiểm tra (Inspection Fee)</div>
-               <div>{selectedTechnician.inspectionFee ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Số năm kinh nghiệm</div>
-               <div>{selectedTechnician.experienceYears ?? 0}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Trạng thái làm việc</div>
-               <div>{getTechnicianAvailability(selectedTechnician.availability)}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ảnh mặt trước CCCD</div>
-               <div>{selectedTechnician.frontIdImage ? <img src={selectedTechnician.frontIdImage.startsWith('http') ? selectedTechnician.frontIdImage : `${process.env.REACT_APP_API_URL || ''}${selectedTechnician.frontIdImage}`} alt="frontId" style={{ maxWidth: 120, borderRadius: 8 }} /> : '-'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ảnh mặt sau CCCD</div>
-               <div>{selectedTechnician.backIdImage ? <img src={selectedTechnician.backIdImage.startsWith('http') ? selectedTechnician.backIdImage : `${process.env.REACT_APP_API_URL || ''}${selectedTechnician.backIdImage}`} alt="backId" style={{ maxWidth: 120, borderRadius: 8 }} /> : '-'}</div>
-             </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Vị trí hiện tại</div>
-               <div>
-                 {selectedTechnician.currentLocation ? (
-                   <>
-                     <div>Type: {selectedTechnician.currentLocation.type}</div>
-                     <div>Toạ độ: {selectedTechnician.currentLocation.coordinates?.join(', ')}</div>
-                   </>
-                 ) : '-'}
-               </div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ngày chờ xoá</div>
-               <div>{selectedTechnician.pendingDeletionAt ? new Date(selectedTechnician.pendingDeletionAt).toLocaleString() : '-'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ngày xoá</div>
-               <div>{selectedTechnician.deletedAt ? new Date(selectedTechnician.deletedAt).toLocaleString() : '-'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ngày cập nhật giá</div>
-               <div>{selectedTechnician.pricesLastUpdatedAt ? new Date(selectedTechnician.pricesLastUpdatedAt).toLocaleString() : '-'}</div>
-             </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Ghi chú</div>
-               <div>{selectedTechnician.note || '-'}</div>
              </div>
            </div>
          </div>

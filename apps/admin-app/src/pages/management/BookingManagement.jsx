@@ -397,86 +397,148 @@ const isDataReady = isUserMapReady && isServiceMapReady;
          onCancel={() => setShowDetailModal(false)}
          footer={null}
          title={null}
-         width={650}
+         width={700}
        >
-         <div style={{background: '#f8fafc', borderRadius: 16, boxShadow: '0 2px 16px rgba(0,0,0,0.10)', padding: 0}}>
-           {/* Section: Main Info */}
-           <div style={{padding: 24, borderBottom: '1px solid #eee', background: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16}}>
-             <div style={{fontSize: 22, fontWeight: 700, marginBottom: 8, color: '#222'}}>Booking Detail</div>
-             <div style={{display: 'flex', flexWrap: 'wrap', gap: 24}}>
+         <div style={{background: '#ffffff', borderRadius: 12, overflow: 'hidden'}}>
+           {/* Header Section */}
+           <div style={{background: 'linear-gradient(135deg, #000 0%, #FFAF47 100%)', padding: '24px', color: 'white'}}>
+             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Booking Code</div>
-                 <div>{selectedBooking.bookingCode || selectedBooking.id}</div>
+                 <div style={{fontSize: '24px', fontWeight: 700, marginBottom: '4px'}}>Booking Details</div>
+                 <div style={{fontSize: '14px', opacity: 0.9}}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
                </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Customer</div>
-                 <div>{userMap[selectedBooking.customerId] || selectedBooking.customerId || "UNKNOWN"}</div>
-               </div>
-               <div>
-                <div style={{fontWeight: 500, color: '#888'}}>Technician</div>
-                <div>{selectedBooking?.technicianId
-                  ? (technicianMap[selectedBooking.technicianId] ? technicianMap[selectedBooking.technicianId] : "-")
-                  : "UNKNOWN"}
-                </div>
-              </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Service</div>
-                 <div>{serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}</div>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Location</div>
-                 <div>{selectedBooking.location?.address}</div>
+               <div style={{textAlign: 'right'}}>
+                 <div style={{fontSize: '12px', opacity: 0.8, marginBottom: '4px'}}>Status</div>
+                 <div style={{
+                   background: 'rgba(255,255,255,0.2)', 
+                   padding: '6px 12px', 
+                   borderRadius: '20px',
+                   fontSize: '12px',
+                   fontWeight: 600
+                 }}>
+                   {selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}
+                 </div>
                </div>
              </div>
            </div>
-           {/* Section: Status & Payment */}
-           <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#f6faff'}}>
-             <div style={{display: 'flex', gap: 24, flexWrap: 'wrap'}}>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Status</div>
-                 <span style={{background: '#e6f7ff', color: '#1890ff', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}</span>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Payment</div>
-                 <span style={{background: '#f6ffed', color: '#52c41a', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.paymentStatus}</span>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Is Urgent</div>
-                 <span style={{background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', color: selectedBooking.isUrgent ? '#faad14' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</span>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Customer Confirmed</div>
-                 <span style={{background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</span>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Technician Confirmed</div>
-                 <span style={{background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</span>
+
+           {/* Main Content */}
+           <div style={{padding: '24px'}}>
+             {/* Basic Information Grid */}
+             <div style={{marginBottom: '24px'}}>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Basic Information</div>
+               <div style={{
+                 display: 'grid',
+                 gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                 gap: '16px'
+               }}>
+                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Customer</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {userMap[selectedBooking.customerId] || selectedBooking.customerId || "UNKNOWN"}
+                   </div>
+                 </div>
+                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Technician</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {selectedBooking?.technicianId
+                       ? (technicianMap[selectedBooking.technicianId] ? technicianMap[selectedBooking.technicianId] : "-")
+                       : "UNKNOWN"}
+                   </div>
+                 </div>
+                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Service</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}
+                   </div>
+                 </div>
+                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Location</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {selectedBooking.location?.address || 'N/A'}
+                   </div>
+                 </div>
                </div>
              </div>
-           </div>
-           {/* Section: Schedule & Description */}
-           <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#fff'}}>
-             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Schedule</div>
-             <div style={{marginBottom: 12}}>
-                {selectedBooking.schedule?.startTime
-                  ? dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')
-                  : ''}
-                {selectedBooking.schedule?.endTime
-                  ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
-                  : (selectedBooking.schedule?.expectedEndTime
-                      ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
-                      : '')}
-              </div>
-             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
-             <div>{selectedBooking.description}</div>
-           </div>
-           {/* Section: Images */}
-           <div style={{padding: 20, background: '#f6faff', borderBottomLeftRadius: 16, borderBottomRightRadius: 16}}>
-             <div style={{fontWeight: 500, color: '#888', marginBottom: 8}}>Images</div>
-             <div style={{display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 60}}>
-               {selectedBooking.images && selectedBooking.images.length > 0 ? selectedBooking.images.map((img, idx) => (
-                 <img key={idx} src={img} alt="img" style={{maxWidth: 120, maxHeight: 120, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', objectFit: 'cover'}} />
-               )) : <span style={{color: '#aaa'}}>N/A</span>}
+
+             {/* Status & Payment Section */}
+             <div style={{marginBottom: '24px'}}>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Status & Payment</div>
+               <div style={{
+                 display: 'grid',
+                 gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                 gap: '12px'
+               }}>
+                 <div style={{textAlign: 'center', background: '#e6f7ff', padding: '12px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Payment Status</div>
+                   <div style={{fontSize: '13px', fontWeight: 600, color: '#1890ff'}}>{selectedBooking.paymentStatus}</div>
+                 </div>
+                 <div style={{textAlign: 'center', background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Urgent</div>
+                   <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888'}}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</div>
+                 </div>
+                 <div style={{textAlign: 'center', background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Customer Confirmed</div>
+                   <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888'}}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</div>
+                 </div>
+                 <div style={{textAlign: 'center', background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
+                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Technician Confirmed</div>
+                   <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888'}}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</div>
+                 </div>
+               </div>
+             </div>
+
+             {/* Schedule & Description Section */}
+             <div style={{marginBottom: '24px'}}>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Schedule & Description</div>
+               <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                 <div style={{marginBottom: '12px'}}>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Schedule</div>
+                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
+                     {selectedBooking.schedule?.startTime
+                       ? dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')
+                       : ''}
+                     {selectedBooking.schedule?.endTime
+                       ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                       : (selectedBooking.schedule?.expectedEndTime
+                           ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                           : '')}
+                   </div>
+                 </div>
+                 <div>
+                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Description</div>
+                   <div style={{fontSize: '14px', color: '#333', lineHeight: '1.5'}}>
+                     {selectedBooking.description || 'No description provided'}
+                   </div>
+                 </div>
+               </div>
+             </div>
+
+             {/* Images Section */}
+             <div>
+               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Images</div>
+               <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
+                 {selectedBooking.images && selectedBooking.images.length > 0 ? (
+                   <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
+                     {selectedBooking.images.map((img, idx) => (
+                       <img 
+                         key={idx} 
+                         src={img} 
+                         alt="booking" 
+                         style={{
+                           width: '80px', 
+                           height: '80px', 
+                           borderRadius: '6px', 
+                           objectFit: 'cover',
+                           border: '1px solid #e9ecef'
+                         }} 
+                       />
+                     ))}
+                   </div>
+                 ) : (
+                   <div style={{color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px'}}>No images available</div>
+                 )}
+               </div>
              </div>
            </div>
          </div>

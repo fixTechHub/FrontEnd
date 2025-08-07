@@ -421,10 +421,10 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'bookingCode',
       key: 'bookingCode',
-      width: 120,
+      width: 180,
       render: (text) => (
-        <div style={{ maxWidth: 120, fontWeight: 500, fontSize: '12px' }}>
-          {text?.length > 15 ? `${text.substring(0, 15)}...` : text}
+        <div style={{ maxWidth: 180, fontWeight: 500 }}>
+          {text?.length > 20 ? `${text.substring(0, 20)}...` : text}
         </div>
       ),
     },
@@ -441,9 +441,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'finalPrice',
       key: 'finalPrice',
-      width: 100,
+      width: 120,
       render: (price) => (
-        <span style={{ fontWeight: 600, color: '#52c41a', fontSize: '12px' }}>
+        <span style={{ fontWeight: 600, color: '#52c41a' }}>
           {formatCurrency(price)}
         </span>
       ),
@@ -461,9 +461,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'holdingAmount',
       key: 'holdingAmount',
-      width: 100,
+      width: 120,
       render: (amount) => (
-        <span style={{ fontWeight: 600, color: '#faad14', fontSize: '12px' }}>
+        <span style={{ fontWeight: 600, color: '#faad14' }}>
           {formatCurrency(amount)}
         </span>
       ),
@@ -481,9 +481,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'commissionAmount',
       key: 'commissionAmount',
-      width: 100,
+      width: 120,
       render: (amount) => (
-        <span style={{ fontWeight: 600, color: '#1890ff', fontSize: '12px' }}>
+        <span style={{ fontWeight: 600, color: '#1890ff' }}>
           {formatCurrency(amount)}
         </span>
       ),
@@ -501,9 +501,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'technicianEarning',
       key: 'technicianEarning',
-      width: 120,
+      width: 150,
       render: (earning) => (
-        <span style={{ fontWeight: 600, color: '#722ed1', fontSize: '12px' }}>
+        <span style={{ fontWeight: 600, color: '#722ed1' }}>
           {formatCurrency(earning)}
         </span>
       ),
@@ -514,7 +514,7 @@ const FinancialManagement = () => {
       key: 'status',
       width: 100,
       render: (status) => (
-        <Tag color={getStatusColor(status)} style={{fontSize: '11px'}}>
+        <Tag color={getStatusColor(status)}>
           {formatStatus(status)?.toUpperCase()}
         </Tag>
       ),
@@ -525,7 +525,7 @@ const FinancialManagement = () => {
       key: 'paymentStatus',
       width: 100,
       render: (paymentStatus) => (
-        <Tag color={getPaymentColor(paymentStatus)} style={{fontSize: '11px'}}>
+        <Tag color={getPaymentColor(paymentStatus)}>
           {formatStatus(paymentStatus)?.toUpperCase()}
         </Tag>
       ),
@@ -533,6 +533,7 @@ const FinancialManagement = () => {
     {
       title: 'ACTIONS',
       key: 'actions',
+      width: 120,
       render: (_, record) => (
         <Space>
           <Button className="management-action-btn" size="middle" onClick={() => handleViewBookingDetails(record)}>
