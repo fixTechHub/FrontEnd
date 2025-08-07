@@ -445,7 +445,7 @@ function BookingProcessing() {
                                     </div>
                                 ) : (
                                     <div className="alert alert-warning">
-                                        You can't chat or call video.
+                                        Bạn không thể nhắn tin hoặc gọi nữa
                                     </div>
                                 )}
                             </div>

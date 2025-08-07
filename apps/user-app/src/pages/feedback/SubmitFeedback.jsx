@@ -54,6 +54,7 @@ const SubmitFeedback = () => {
     files.forEach((file) => formData.append('files', file)); // key 'files' phải trùng multer.array('files')
 
     dispatch(submitFeedbackThunk({ bookingId, formData }));
+    toast.success('Bạn đã đánh giá thành công thợ!')
   };
   useEffect(() => {
     if (successMessage) {

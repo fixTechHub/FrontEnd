@@ -266,10 +266,9 @@ function BookingWarranty() {
                                         bookingWarrantyId={bookingWarrantyId}
                                     />
                                 ) : (
-                                    <BookingWarrantySchedule
-                                        bookingWarrantyId={bookingWarrantyId}
-                                        onWarrantyUpdated={handleWarrantyUpdated}
-                                    />
+                                    <div className="alert alert-warning">
+                                   Bạn không thể nhắn tin hoặc gọi nữa
+                                </div>
                                 )}
                             </div>
                         </div>

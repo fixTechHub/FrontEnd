@@ -4,6 +4,7 @@ import { sendChatMessage, addUserMessage, clearConversation } from '../../featur
 import { Button, Form } from 'react-bootstrap';
 import ReactMarkdown from 'react-markdown';
 import { MdSupportAgent } from 'react-icons/md';
+import { toast } from 'react-toastify';
 
 // Custom renderer for links to replace specific text with "chọn thợ"
 const transformMessage = (text) => {
@@ -28,7 +29,7 @@ const AIChatbox = () => {
 
   const handleSendMessage = () => {
     if (!input.trim()) {
-      alert('Vui lòng nhập nội dung cần hỗ trợ.');
+      toast.error('Vui lòng nhập nội dung cần hỗ trợ.');
       return;
     }
 

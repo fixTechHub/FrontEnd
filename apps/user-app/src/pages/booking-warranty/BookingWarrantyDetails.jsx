@@ -27,7 +27,8 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const { user } = useSelector((state) => state.auth);
     const [rejectedReason, setRejectedReason] = useState('');
     const [showDescriptionModal, setShowDescriptionModal] = useState(false);
-    const [selectedImage, setSelectedImage] = useState(null);
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [showImageModal, setShowImageModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showProposeModal, setShowProposeModal] = useState(false);
     const [showConfirmModal, setShowConfirmModal] = useState(false);
@@ -38,12 +39,60 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const [expectedEndDate, setExpectedEndDate] = useState("");
     const [expectedEndTime, setExpectedEndTime] = useState("");
     const [rejectError, setRejectError] = useState('');
-
+    const [zoomLevel, setZoomLevel] = useState(1);
     const isCustomer = user?.role?.name === 'CUSTOMER';
     const isTechnician = user?.role?.name === 'TECHNICIAN';
     const displayName = isCustomer
         ? warranty?.technicianId?.userId?.fullName || 'Không có dữ liệu'
         : warranty?.customerId?.fullName || 'Không có dữ liệu';
+
+    const styles = {
+        modalHeader: {
+            backgroundColor: '#f8f9fa',
+            borderBottom: '1px solid #dee2e6',
+            padding: '15px 20px'
+        },
+        modalBody: {
+            padding: '20px',
+            maxHeight: '80vh',
+            overflowY: 'auto'
+        },
+        imageModalImage: {
+            maxWidth: '100%',
+            maxHeight: '70vh',
+            objectFit: 'contain',
+            borderRadius: '8px'
+        },
+        imageModalNavBtn: {
+            position: 'absolute',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 15px',
+            fontSize: '24px',
+            cursor: 'pointer',
+            borderRadius: '50%',
+            transition: 'background-color 0.3s'
+        },
+        imageModalNavBtnPrev: {
+            left: '20px'
+        },
+        imageModalNavBtnNext: {
+            right: '20px'
+        },
+        imageModalNavBtnHover: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)'
+        },
+        closeBtn: {
+            background: 'none',
+            border: 'none',
+            fontSize: '24px',
+            cursor: 'pointer',
+            color: '#6c757d'
+        }
+    };
 
     useEffect(() => {
         if (bookingWarrantyId) {
@@ -143,6 +192,18 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
         } catch (error) {
             toast.error(`Lỗi: ${error?.message || error || "Đã xảy ra lỗi"}`);
         }
+    };
+
+    const handlePrevImage = () => {
+        setSelectedImageIndex((prevIndex) =>
+            prevIndex === 0 ? warranty.images.length - 1 : prevIndex - 1
+        );
+    };
+
+    const handleNextImage = () => {
+        setSelectedImageIndex((prevIndex) =>
+            prevIndex === warranty.images.length - 1 ? 0 : prevIndex + 1
+        );
     };
 
     const getStatusIcon = (status) => {
@@ -247,7 +308,10 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                                         key={index}
                                                         className="booking-details-image-item stacked"
                                                         style={{ zIndex: warranty.images.length - index }}
-                                                        onClick={() => setSelectedImage(image)}
+                                                        onClick={() => {
+                                                            setSelectedImageIndex(index);
+                                                            setShowImageModal(true);
+                                                        }}
                                                     >
                                                         <img src={image} alt={`Warranty ${index + 1}`} />
                                                         <div className="booking-details-image-overlay">
@@ -647,20 +711,70 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 </Modal.Footer>
             </Modal>
 
-            {selectedImage && (
-                <div className="booking-details-image-modal" onClick={() => setSelectedImage(null)}>
-                    <div className="booking-details-image-modal-content" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                            variant="light"
-                            className="booking-details-image-modal-close"
-                            onClick={() => setSelectedImage(null)}
+            <Modal
+                show={showImageModal}
+                onHide={() => {
+                    setShowImageModal(false);
+                    setZoomLevel(1); // Reset zoom on close
+                }}
+                centered
+                size="lg"
+                backdrop="static"
+                keyboard={false}
+            >
+                <Modal.Header style={styles.modalHeader}>
+                    <Modal.Title>Hình ảnh bảo hành</Modal.Title>
+                    <button
+                        style={styles.closeBtn}
+                        onClick={() => {
+                            setShowImageModal(false);
+                            setZoomLevel(1); // Reset zoom on close
+                        }}
+                    >
+                        <span>×</span>
+                    </button>
+                </Modal.Header>
+                <Modal.Body style={{ ...styles.modalBody, position: 'relative' }}>
+                    {warranty?.images && warranty.images.length > 0 && (
+                        <div
+                            style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}
+                            onWheel={(e) => {
+                                e.preventDefault();
+                                setZoomLevel((prev) => {
+                                    const newZoom = prev + (e.deltaY < 0 ? 0.1 : -0.1);
+                                    return Math.max(0.5, Math.min(newZoom, 3)); // Limit zoom between 0.5x and 3x
+                                });
+                            }}
                         >
-                            <FaTimes />
-                        </Button>
-                        <img src={selectedImage} alt="Zoom" />
-                    </div>
-                </div>
-            )}
+                            <img
+                                src={warranty.images[selectedImageIndex]}
+                                alt={`Warranty ${selectedImageIndex + 1}`}
+                                style={{ ...styles.imageModalImage, transform: `scale(${zoomLevel})` }}
+                            />
+                            {warranty.images.length > 1 && (
+                                <>
+                                    <button
+                                        style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnPrev, position: 'absolute', left: '10px' }}
+                                        onClick={handlePrevImage}
+                                        onMouseOver={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtnHover })}
+                                        onMouseOut={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtn, position: 'absolute', left: '10px' })}
+                                    >
+                                        &lt;
+                                    </button>
+                                    <button
+                                        style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnNext, position: 'absolute', right: '10px' }}
+                                        onClick={handleNextImage}
+                                        onMouseOver={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtnHover })}
+                                        onMouseOut={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtn, position: 'absolute', right: '10px' })}
+                                    >
+                                        &gt;
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </Modal.Body>
+            </Modal>
         </div>
     );
 }
