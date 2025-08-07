@@ -233,13 +233,11 @@ function Banner() {
                             <div className="col-lg-5" data-aos="fade-down">
                                 <div className="banner-content">
                                     <h1>
-                                        Explore our <span>Verified & Professional</span> Cars
+                                        Đặt lịch <span>thợ sửa chữa chuyên nghiệp</span> dễ dàng
                                     </h1>
                                     <p>
-                                        Modern design sports cruisers for those who crave adventure & grandeur Cars for relaxing
-                                        with your loved ones.
+                                        Nhanh chóng kết nối với thợ sửa chữa đáng tin cậy, đúng chuyên môn – đặt lịch chỉ với vài bước đơn giản ngay hôm nay.
                                     </p>
-
                                 </div>
                             </div>
 
