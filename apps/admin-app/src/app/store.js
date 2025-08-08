@@ -14,8 +14,11 @@ import statisticReducer from '../features/statistics/statisticSlice';
 import commissionConfigReducer from '../features/commissionConfig/commissionSlice';
 import commissionReducer from '../features/commission/commissionSlice';
 import financialReportReducer from '../features/financialReport/financialReportSlice';
+import adminReducer from '../features/admin/adminSlice';
+import packageReducer from '../features/packages/packageSlice';
+import feedbackReducer from '../features/feedback/feedbackSlice';
 
- const store = configureStore({
+const store = configureStore({
   reducer: {
     bookings: bookingReducer,
     coupon: couponReducer,
@@ -32,9 +35,15 @@ import financialReportReducer from '../features/financialReport/financialReportS
     commissionConfig: commissionConfigReducer,
     commission: commissionReducer,
     financialReport: financialReportReducer,
-  }
+    admin: adminReducer,
+    adminPackages: packageReducer,
+    adminFeedback: feedbackReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: false,
+    }),
 });
-
 
 export default store;
 

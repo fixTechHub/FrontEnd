@@ -236,6 +236,37 @@ const totalPages = Math.ceil(technicians.length / techniciansPerPage);
  };
 
 
+ const handleUpdateStatusWithAction = async (action, technician = null) => {
+   const targetTechnician = technician || selectedTechnician;
+   
+   if (action === 'REJECTED' && !statusData.note.trim()) {
+     message.error('Please provide a reason for rejection');
+     return;
+   }
+
+   if (!targetTechnician) return;
+   
+   try {
+     dispatch(setLoading(true));
+     const note = action === 'REJECTED' ? statusData.note : '';
+     await technicianAPI.updateStatus(targetTechnician.id, action, note);
+     await fetchTechnicians();
+     message.success(`Technician ${action === 'APPROVED' ? 'approved' : 'rejected'} successfully!`);
+     if (technician) {
+       // Nếu được gọi từ table, không cần đóng modal
+     } else {
+       handleCloseEditStatus();
+     }
+   } catch (err) {
+     console.error('Update status error:', err);
+     dispatch(setError(err.message || 'Failed to update status.'));
+     message.error('Failed to update status: ' + (err.message || 'Unknown error'));
+   } finally {
+     dispatch(setLoading(false));
+   }
+ };
+
+
  const handleSortChange = (value) => {
   if (value === 'lasted') {
     setSortField('createdAt');
@@ -421,14 +452,6 @@ const getStatusBadgeClass = (status) => {
                    </span>
                  )}
                </th>
-               <th style={{ cursor: 'pointer' }} onClick={handleSortByPhone}>
-                 PHONE
-                 {sortField === 'phone' && (
-                   <span style={{ marginLeft: 4 }}>
-                     {sortOrder === 'asc' ? '▲' : '▼'}
-                   </span>
-                 )}
-               </th>
                <th>STATUS</th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByRating}>
                  RATING
@@ -460,7 +483,6 @@ const getStatusBadgeClass = (status) => {
                  <tr key={tech.id}>
                    <td>{tech.fullName}</td>
                    <td>{tech.email}</td>
-                   <td>{tech.phone}</td>
                    <td>
                      <span className={`badge ${getStatusBadgeClass(getTechnicianStatus(tech.status))} text-dark`}>
                        {getTechnicianStatus(tech.status)}
@@ -471,15 +493,26 @@ const getStatusBadgeClass = (status) => {
                    <td>{getTechnicianAvailability(tech.availability)}</td>
                    <td>
                      <div className="d-flex align-items-center gap-2">
-                       <button 
-                         className={`btn btn-sm ${tech.status === "APPROVED" ? "btn-success" : tech.status === "REJECTED" ? "btn-danger" : "btn-primary"}`} 
-                         onClick={() => tech.status === "PENDING" ? handleOpenEditStatus(tech) : null}
-                         disabled={tech.status !== "PENDING"}
-                         style={{ opacity: tech.status !== "PENDING" ? 0.6 : 1 }}
-                       >
-                         <i className="ti ti-edit me-1"></i>
-                         {tech.status === "APPROVED" ? "APPROVED" : tech.status === "REJECTED" ? "REJECTED" : "Edit"}
-                       </button>
+                       {tech.status === "PENDING" ? (
+                         <>
+                           <button 
+                             className="btn btn-sm btn-success" 
+                             onClick={() => handleUpdateStatusWithAction('APPROVED', tech)}
+                             disabled={loading}
+                           >
+                             <i className="ti ti-check me-1"></i>
+                             APPROVE
+                           </button>
+                           <button 
+                             className="btn btn-sm btn-danger" 
+                             onClick={() => handleOpenEditStatus(tech)}
+                             disabled={loading}
+                           >
+                             <i className="ti ti-x me-1"></i>
+                             REJECT
+                           </button>
+                         </>
+                       ) : null}
                        <Button className="management-action-btn" size="middle" onClick={() => handleOpenDetail(tech)}>
                           <EyeOutlined style={{marginRight: 4}} />View Detail
                         </Button>
@@ -739,26 +772,46 @@ const getStatusBadgeClass = (status) => {
          open={showEditStatusModal}
          onCancel={handleCloseEditStatus}
          footer={null}
-         title="Update Technician Status"
+         title="Reject Technician"
        >
-         <form onSubmit={handleUpdateStatus}>
-           <div className="mb-3">
-             <label className="form-label">Status</label>
-             <select name="status" className="form-select" value={statusData.status} onChange={handleStatusChange} required>
-               <option value="PENDING">PENDING</option>
-               <option value="APPROVED">APPROVED</option>
-               <option value="REJECTED">REJECTED</option>
-             </select>
+         <div style={{marginBottom: '20px'}}>
+           <div style={{fontSize: '16px', fontWeight: 600, marginBottom: '10px'}}>
+             Technician: {selectedTechnician.fullName || 'Unknown'}
            </div>
-           <div className="mb-3">
-             <label className="form-label">Note (Optional)</label>
-             <textarea name="note" className="form-control" value={statusData.note} onChange={handleStatusChange} rows="3"></textarea>
+           <div style={{fontSize: '14px', color: '#666'}}>
+             Current Status: {getTechnicianStatus(selectedTechnician.status)}
            </div>
-           <div className="d-flex justify-content-end">
-             <button type="button" className="btn btn-light me-2" onClick={handleCloseEditStatus}>Cancel</button>
-             <button type="submit" className="btn btn-primary">Save Changes</button>
+         </div>
+
+         <div style={{marginBottom: '20px'}}>
+           <div style={{fontSize: '14px', fontWeight: 500, marginBottom: '8px', color: '#d32f2f'}}>
+             Rejection Note (Required):
            </div>
-         </form>
+           <textarea 
+             name="note" 
+             className="form-control" 
+             value={statusData.note} 
+             onChange={handleStatusChange} 
+             rows="4"
+             placeholder="Please provide a reason for rejection..."
+             style={{borderColor: statusData.note ? '#d9d9d9' : '#ff4d4f'}}
+             required
+           />
+         </div>
+
+         <div style={{display: 'flex', justifyContent: 'flex-end', gap: '10px'}}>
+           <Button onClick={handleCloseEditStatus}>
+             Cancel
+           </Button>
+           <Button 
+             danger
+             onClick={() => handleUpdateStatusWithAction('REJECTED')}
+             loading={loading}
+             disabled={!statusData.note.trim()}
+           >
+             Reject Technician
+           </Button>
+         </div>
        </Modal>
      )}
 

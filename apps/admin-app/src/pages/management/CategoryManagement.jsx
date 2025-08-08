@@ -150,6 +150,14 @@ const processErrors = (apiErrors) => {
 const handleSubmit = (e) => {
   e.preventDefault();
   setValidationErrors({});
+  
+  // Validation for category name length
+  if (formData.categoryName && formData.categoryName.length > 100) {
+    setValidationErrors({ CategoryName: ['Category name cannot exceed 100 characters'] });
+    message.error('Category name cannot exceed 100 characters');
+    return;
+  }
+  
   if (!formData.categoryName || !formData.icon) {
     setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
     return;
@@ -217,6 +225,7 @@ const handleDeleteCategory = (category) => {
 
 const confirmDelete = () => {
   if (selectedCategory) {
+    // Use DELETE endpoint which now properly handles soft delete
     dispatch(deleteCategory(selectedCategory.id));
   }
 };
@@ -389,6 +398,10 @@ const isDataReady = categories.length > 0;
              onChange={handleChange}
              placeholder="Enter category name"
              required
+             style={{
+               borderColor: formData.categoryName && formData.categoryName.length > 100 ? '#ff4d4f' : undefined,
+               backgroundColor: formData.categoryName && formData.categoryName.length > 100 ? '#fff2f0' : undefined
+             }}
            />
          </Form.Item>
          <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
@@ -443,6 +456,10 @@ const isDataReady = categories.length > 0;
              onChange={handleChange}
              placeholder="Enter category name"
              required
+             style={{
+               borderColor: formData.categoryName && formData.categoryName.length > 100 ? '#ff4d4f' : undefined,
+               backgroundColor: formData.categoryName && formData.categoryName.length > 100 ? '#fff2f0' : undefined
+             }}
            />
          </Form.Item>
          <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>

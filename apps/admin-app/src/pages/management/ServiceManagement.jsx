@@ -134,6 +134,7 @@ const ServiceManagement = () => {
 
   const confirmDelete = () => {
     if (selectedService) {
+      // Use DELETE endpoint which now properly handles soft delete
       dispatch(deleteService(selectedService.id));
     }
   };
@@ -262,6 +263,14 @@ const ServiceManagement = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationErrors({});
+    
+    // Validation for service name length
+    if (formData.serviceName && formData.serviceName.length > 100) {
+      setValidationErrors({ ServiceName: ['Service name cannot exceed 100 characters'] });
+      message.error('Service name cannot exceed 100 characters');
+      return;
+    }
+    
     if (!formData.serviceName || !formData.categoryId || !formData.icon || !formData.description) {
       setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
       return;

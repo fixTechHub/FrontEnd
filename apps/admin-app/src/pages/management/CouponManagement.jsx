@@ -34,7 +34,11 @@ const initialFormState = {
  endDate: '',
  isActive: true,
  audience: 'ALL',
- userIds: []
+ userIds: [],
+ fontFamily: 'Arial',
+ fontSize: '14',
+ textAlign: 'left',
+ images: []
 };
 
 
@@ -265,7 +269,11 @@ const totalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
      endDate: coupon.endDate ? new Date(coupon.endDate).toISOString().split('T')[0] : '',
      isActive: coupon.isActive ?? true,
      audience: coupon.audience || 'ALL',
-     userIds: coupon.userIds || []
+     userIds: coupon.userIds || [],
+     fontFamily: coupon.fontFamily || 'Arial',
+     fontSize: coupon.fontSize || '14',
+     textAlign: coupon.textAlign || 'left',
+     images: coupon.images || []
    });
    setValidationErrors({});
    setShowEditModal(true);
@@ -280,6 +288,7 @@ const totalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
 
  const confirmDelete = () => {
    if (selectedCoupon) {
+     // Use DELETE endpoint which now properly handles soft delete
      dispatch(deleteCoupon(selectedCoupon.id));
    }
  };
@@ -319,6 +328,40 @@ const totalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
      return newForm;
    });
  };
+
+ const handleFontChange = (property, value) => {
+  setFormData(prev => ({
+    ...prev,
+    [property]: value
+  }));
+};
+
+const handleImageUpload = () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const imageUrl = event.target.result;
+        setFormData(prev => ({
+          ...prev,
+          images: [...prev.images, imageUrl]
+        }));
+        // Thêm image tag vào description
+        const imageTag = `\n[IMAGE:${imageUrl}]\n`;
+        setFormData(prev => ({
+          ...prev,
+          description: prev.description + imageTag
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  input.click();
+};
 
  // Khi audience là SPECIFIC_USERS, lấy toàn bộ user về 1 lần
  useEffect(() => {
@@ -455,6 +498,14 @@ const handleConfirmUserSelection = () => {
  const handleSubmit = (e) => {
    e.preventDefault();
    setValidationErrors({});
+   
+   // Validation cho code không quá 30 ký tự
+   if (formData.code && formData.code.length > 30) {
+     setValidationErrors({ Code: ['Code không được dài quá 30 ký tự'] });
+     message.error('Code không được dài quá 30 ký tự');
+     return;
+   }
+   
    let dataToSend = {
      ...formData,
      code: formData.code || '',
@@ -556,6 +607,17 @@ const handleConfirmUserSelection = () => {
      });
    }
  };
+
+ const renderFormattedDescription = (description) => {
+  if (!description) return '';
+  
+  // Xử lý image tags
+  let formattedText = description.replace(/\[IMAGE:(.*?)\]/g, (match, imageUrl) => {
+    return `<img src="${imageUrl}" style="max-width: 100px; max-height: 60px; margin: 5px;" alt="coupon image" />`;
+  });
+  
+  return formattedText;
+};
 
  return (
    <div className="modern-page- wrapper">
@@ -673,7 +735,16 @@ const handleConfirmUserSelection = () => {
                     }}
                       title={coupon.description}
                     >
-                      {coupon.description}
+                      <div 
+                        dangerouslySetInnerHTML={{ 
+                          __html: renderFormattedDescription(coupon.description) 
+                        }}
+                        style={{
+                          fontFamily: coupon.fontFamily || 'Arial',
+                          fontSize: `${coupon.fontSize || 14}px`,
+                          textAlign: coupon.textAlign || 'left'
+                        }}
+                      />
                     </td>
                    <td>{coupon.type}</td>
                    <td>{coupon.value}</td>
@@ -749,8 +820,12 @@ const handleConfirmUserSelection = () => {
                  name="code"
                  value={formData.code}
                  onChange={handleChange}
-                 placeholder="Enter coupon code"
+                 placeholder="Enter coupon code (max 30 characters)"
                  required
+                 style={{ 
+                   borderColor: formData.code.length > 30 ? '#ff4d4f' : '#d9d9d9',
+                   backgroundColor: formData.code.length > 30 ? '#fff2f0' : '#fff'
+                 }}
                />
              </Form.Item>
            </Col>
@@ -771,14 +846,76 @@ const handleConfirmUserSelection = () => {
          </Row>
 
          <Form.Item label="Description" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
-           <Input.TextArea
-             name="description"
-             value={formData.description}
-             onChange={handleChange}
-             rows={3}
-             placeholder="Enter description"
-             required
-           />
+           <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '8px' }}>
+             <div style={{ marginBottom: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+               <Select
+                 placeholder="Font Family"
+                 style={{ width: 120 }}
+                 onChange={(value) => handleFontChange('fontFamily', value)}
+                 defaultValue="Arial"
+               >
+                 <Select.Option value="Arial">Arial</Select.Option>
+                 <Select.Option value="Times New Roman">Times New Roman</Select.Option>
+                 <Select.Option value="Courier New">Courier New</Select.Option>
+                 <Select.Option value="Georgia">Georgia</Select.Option>
+                 <Select.Option value="Verdana">Verdana</Select.Option>
+               </Select>
+               <Select
+                 placeholder="Font Size"
+                 style={{ width: 80 }}
+                 onChange={(value) => handleFontChange('fontSize', value)}
+                 defaultValue="14"
+               >
+                 <Select.Option value="12">12px</Select.Option>
+                 <Select.Option value="14">14px</Select.Option>
+                 <Select.Option value="16">16px</Select.Option>
+                 <Select.Option value="18">18px</Select.Option>
+                 <Select.Option value="20">20px</Select.Option>
+               </Select>
+               <Button.Group size="small">
+                 <Button 
+                   type={formData.textAlign === 'left' ? 'primary' : 'default'}
+                   onClick={() => handleFontChange('textAlign', 'left')}
+                 >
+                   <i className="ti ti-align-left"></i>
+                 </Button>
+                 <Button 
+                   type={formData.textAlign === 'center' ? 'primary' : 'default'}
+                   onClick={() => handleFontChange('textAlign', 'center')}
+                 >
+                   <i className="ti ti-align-center"></i>
+                 </Button>
+                 <Button 
+                   type={formData.textAlign === 'right' ? 'primary' : 'default'}
+                   onClick={() => handleFontChange('textAlign', 'right')}
+                 >
+                   <i className="ti ti-align-right"></i>
+                 </Button>
+               </Button.Group>
+               <Button 
+                 size="small"
+                 onClick={() => handleImageUpload()}
+                 icon={<i className="ti ti-photo"></i>}
+               >
+                 Add Image
+               </Button>
+             </div>
+             <Input.TextArea
+               name="description"
+               value={formData.description}
+               onChange={handleChange}
+               rows={4}
+               placeholder="Enter description with rich formatting..."
+               required
+               style={{
+                 fontFamily: formData.fontFamily || 'Arial',
+                 fontSize: `${formData.fontSize || 14}px`,
+                 textAlign: formData.textAlign || 'left',
+                 border: 'none',
+                 resize: 'none'
+               }}
+             />
+           </div>
          </Form.Item>
 
          <Row gutter={16}>
@@ -976,13 +1113,76 @@ const handleConfirmUserSelection = () => {
          </Row>
 
          <Form.Item label="Description" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
-           <Input.TextArea
-             name="description"
-             value={formData.description}
-             onChange={handleChange}
-             rows={3}
-             placeholder="Enter description"
-           />
+           <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '8px' }}>
+             <div style={{ marginBottom: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+               <Select
+                 placeholder="Font Family"
+                 style={{ width: 120 }}
+                 onChange={(value) => handleFontChange('fontFamily', value)}
+                 defaultValue="Arial"
+               >
+                 <Select.Option value="Arial">Arial</Select.Option>
+                 <Select.Option value="Times New Roman">Times New Roman</Select.Option>
+                 <Select.Option value="Courier New">Courier New</Select.Option>
+                 <Select.Option value="Georgia">Georgia</Select.Option>
+                 <Select.Option value="Verdana">Verdana</Select.Option>
+               </Select>
+               <Select
+                 placeholder="Font Size"
+                 style={{ width: 80 }}
+                 onChange={(value) => handleFontChange('fontSize', value)}
+                 defaultValue="14"
+               >
+                 <Select.Option value="12">12px</Select.Option>
+                 <Select.Option value="14">14px</Select.Option>
+                 <Select.Option value="16">16px</Select.Option>
+                 <Select.Option value="18">18px</Select.Option>
+                 <Select.Option value="20">20px</Select.Option>
+               </Select>
+               <Button.Group size="small">
+                 <Button 
+                   type={formData.textAlign === 'left' ? 'primary' : 'default'}
+                   onClick={() => handleFontChange('textAlign', 'left')}
+                 >
+                   <i className="ti ti-align-left"></i>
+                 </Button>
+                 <Button 
+                   type={formData.textAlign === 'center' ? 'primary' : 'default'}
+                   onClick={() => handleFontChange('textAlign', 'center')}
+                 >
+                   <i className="ti ti-align-center"></i>
+                 </Button>
+                 <Button 
+                   type={formData.textAlign === 'right' ? 'primary' : 'default'}
+                   onClick={() => handleFontChange('textAlign', 'right')}
+                 >
+                   <i className="ti ti-align-right"></i>
+                 </Button>
+               </Button.Group>
+               <Button 
+                 size="small"
+                 onClick={() => handleImageUpload()}
+                 icon={<i className="ti ti-photo"></i>}
+               >
+                 Add Image
+               </Button>
+             </div>
+             <Input.TextArea
+               name="description"
+               value={formData.description}
+               onChange={handleChange}
+               rows={4}
+               placeholder="Enter description with rich formatting..."
+               required
+               style={{
+                 fontFamily: formData.fontFamily || 'Arial',
+                 fontSize: `${formData.fontSize || 14}px`,
+                 textAlign: formData.textAlign || 'left',
+                 border: 'none',
+                 resize: 'none'
+               }}
+             />
+           </div>
          </Form.Item>
 
          <Row gutter={16}>

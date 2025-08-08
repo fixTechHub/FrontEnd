@@ -15,6 +15,8 @@ import ServiceManagement from "../pages/management/ServiceManagement";
 import CommissionConfigManagement from '../pages/management/CommissionConfigManagement';
 import CommissionConfigManager from '../pages/admin/commissionConfigManager';
 import FinancialManagement from '../pages/management/FinancialManagement';
+import AdminPackagePage from "../pages/management/PackageManagement";
+import FeedbackAdmin from "../pages/management/FeedbackManagement";
 
 //Định nghĩa các route, xác định trang nào sẽ render vào <Outlet /> của AdminLayout, quyết định trang nào là management page.
 export default function AppRoutes() {
@@ -38,6 +40,8 @@ export default function AppRoutes() {
         <Route path="service-management" element={<ServiceManagement/>}/>
         <Route path="commission-config-management" element={<CommissionConfigManagement />} />
         <Route path="financial-management" element={<FinancialManagement />} />
+        <Route path="package" element={<AdminPackagePage />} />
+        <Route path="feedback" element={<FeedbackAdmin />} />
         <Route index element={<AdminDashboard />} /> {/* Trang mặc định */}
       </Route>
       <Route path="/admin/commission" element={
