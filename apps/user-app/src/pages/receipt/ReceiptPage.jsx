@@ -1,11 +1,27 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Modal, Button, Dropdown, Form, Pagination } from 'react-bootstrap';
 import { fetchUserReceipts } from '../../features/receipts/receiptSlice';
 import { formatCurrency, maskTransactionId } from '../../utils/formatDuration';
 import handlePrintPDF from '../../utils/pdf';
-import debounce from 'lodash/debounce';
 import './ReceiptPage.css';
+
+// Custom debounce hook
+const useDebounce = (callback, delay) => {
+  const timeoutRef = useRef(null);
+
+  return useCallback(
+    (...args) => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      timeoutRef.current = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    },
+    [callback, delay]
+  );
+};
 
 const styles = {
   pagination: {
@@ -42,14 +58,11 @@ const ReceiptPage = () => {
   const [customEndDate, setCustomEndDate] = useState('');
   const limit = 5;
 
-  // Debounced search handler
-  const debouncedSearch = useCallback(
-    debounce((value) => {
-      setSearchTerm(value);
-      setPage(0);
-    }, 500),
-    []
-  );
+  // Debounced search handler using custom debounce
+  const debouncedSearch = useDebounce((value) => {
+    setSearchTerm(value);
+    setPage(0);
+  }, 500);
 
   useEffect(() => {
     const filters = {
@@ -143,7 +156,7 @@ const ReceiptPage = () => {
                   <div className="filter-group d-flex gap-2 flex-wrap">
                     <Form.Control
                       type="text"
-                      placeholder="Tìm kiếm theo mã đơn, mã hóa đơn, phương thức..."
+                      placeholder="Tìm kiếm theo mã đơn, phương thức..."
                       onChange={handleSearchChange}
                       className="me-2"
                       style={{ maxWidth: '300px' }}
