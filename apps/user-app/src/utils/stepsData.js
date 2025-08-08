@@ -15,12 +15,11 @@ export const technicianSteps = [
 ];
 
 export const customerWarrantySteps = [
-    { id: 1, label: "Yêu cầu bảo hành", icon: "/img/icons/booking-head-icon-03.svg" },
- 
-    { id: 2, label: "Thu nhập và đánh giá", icon: "/img/icons/booking-head-icon-05.svg" },
+    { id: 3, label: "Yêu cầu bảo hành", icon: "/img/icons/booking-head-icon-03.svg" },
+
 ];
 
 export const technicianWarrantySteps = [
-    { id: 1, label: "Xử lý bảo hành", icon: "/img/icons/booking-head-icon-03.svg" },
-    { id: 2, label: "Xác nhận hoàn thành", icon: "/img/icons/booking-head-icon-05.svg" },
+    { id: 3, label: "Xử lý bảo hành", icon: "/img/icons/booking-head-icon-03.svg" },
+   
 ];

@@ -60,3 +60,29 @@ export const formatDate = (isoDateString) => {
         return 'Lỗi định dạng';
     }
 };
+export const formatBookingDate = (isoDateString) => {
+    if (!isoDateString) return { day: 'N/A', monthYear: 'N/A', time: 'N/A' };
+  
+    const date = new Date(isoDateString);
+    if (isNaN(date.getTime())) return { day: 'N/A', monthYear: 'N/A', time: 'N/A' };
+  
+    const day = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      day: '2-digit',
+    }).format(date);
+  
+    const monthYear = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      month: 'short',
+      year: 'numeric',
+    }).format(date).replace(' ', ', '); // e.g., 'Jul, 2025'
+  
+    const time = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Ho_Chi_Minh',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }).format(date); // e.g., '15:11' (adjusted for +07:00)
+  
+    return { day, monthYear, time };
+  };

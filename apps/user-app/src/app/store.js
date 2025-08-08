@@ -17,6 +17,7 @@ import roleReducer from '../features/roles/roleSlice';
 import warrantyReducer from '../features/booking-warranty/warrantySlice';
 import feedbackReducer from '../features/feedbacks/feedbackSlice';
 import favoritesReducer from '../features/favorites/favoriteSlice';
+import aiChatReducer from '../features/chatbox/chatboxSlice'
 import technicianSubscriptionReducer from '../features/package/packageSlice';
 import suggestionReducer from '../features/suggestions/suggestionSlice';
 
@@ -40,6 +41,7 @@ export const store = configureStore({
     warranty: warrantyReducer,
     feedback: feedbackReducer,
     favorites: favoritesReducer,
+    aiChat: aiChatReducer,
     technicianSubscription: technicianSubscriptionReducer,
     suggestions: suggestionReducer
   },
