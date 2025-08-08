@@ -1,21 +1,99 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Modal, Button } from "react-bootstrap";
-import { getWarrantyInformationThunk, acceptWarrantyThunk, rejectWarrantyThunk } from "../../features/booking-warranty/warrantySlice";
-import { formatDateOnly } from "../../utils/formatDate";
+import { Modal, Button, Form, Tabs, Tab, Alert, Spinner } from "react-bootstrap";
+import { getWarrantyInformationThunk, acceptWarrantyThunk, rejectWarrantyThunk, proposeWarrantyScheduleThunk, confirmWarrantyScheduleThunk } from "../../features/booking-warranty/warrantySlice";
+import { formatDateOnly, formatTimeOnly } from "../../utils/formatDate";
 import { BOOKING_WARRANTY_STATUS_CONFIG } from "../../constants/bookingConstants";
 import { toast } from 'react-toastify';
+import './Details.css';
+import {
+    FaCalendarAlt,
+    FaClock,
+    FaTools,
+    FaCheckCircle,
+    FaTimes,
+    FaExclamationTriangle,
+    FaImage,
+    FaWrench,
+    FaUser,
+    FaFileAlt,
+    FaEye,
+    FaCircle
+} from 'react-icons/fa';
 
 function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const dispatch = useDispatch();
-    const { warranty, loading, error } = useSelector((state) => state.warranty);
+    const { warranty, loading, error, loadingSchedule } = useSelector((state) => state.warranty);
     const { user } = useSelector((state) => state.auth);
     const [rejectedReason, setRejectedReason] = useState('');
-    const [expandedNotes2, setExpandedNotes2] = useState({});
+    const [showDescriptionModal, setShowDescriptionModal] = useState(false);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
-    const [showWarrantyModal, setShowWarrantyModal] = useState(false);
     const [showImageModal, setShowImageModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
+    const [showProposeModal, setShowProposeModal] = useState(false);
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [proposedDate, setProposedDate] = useState("");
+    const [proposedTime, setProposedTime] = useState("");
+    const [startDate, setStartDate] = useState("");
+    const [startTime, setStartTime] = useState("");
+    const [expectedEndDate, setExpectedEndDate] = useState("");
+    const [expectedEndTime, setExpectedEndTime] = useState("");
+    const [rejectError, setRejectError] = useState('');
+    const [zoomLevel, setZoomLevel] = useState(1);
+    const isCustomer = user?.role?.name === 'CUSTOMER';
+    const isTechnician = user?.role?.name === 'TECHNICIAN';
+    const displayName = isCustomer
+        ? warranty?.technicianId?.userId?.fullName || 'Không có dữ liệu'
+        : warranty?.customerId?.fullName || 'Không có dữ liệu';
+
+    const styles = {
+        modalHeader: {
+            backgroundColor: '#f8f9fa',
+            borderBottom: '1px solid #dee2e6',
+            padding: '15px 20px'
+        },
+        modalBody: {
+            padding: '20px',
+            maxHeight: '80vh',
+            overflowY: 'auto'
+        },
+        imageModalImage: {
+            maxWidth: '100%',
+            maxHeight: '70vh',
+            objectFit: 'contain',
+            borderRadius: '8px'
+        },
+        imageModalNavBtn: {
+            position: 'absolute',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 15px',
+            fontSize: '24px',
+            cursor: 'pointer',
+            borderRadius: '50%',
+            transition: 'background-color 0.3s'
+        },
+        imageModalNavBtnPrev: {
+            left: '20px'
+        },
+        imageModalNavBtnNext: {
+            right: '20px'
+        },
+        imageModalNavBtnHover: {
+            backgroundColor: 'rgba(0, 0, 0, 0.8)'
+        },
+        closeBtn: {
+            background: 'none',
+            border: 'none',
+            fontSize: '24px',
+            cursor: 'pointer',
+            color: '#6c757d'
+        }
+    };
+
     useEffect(() => {
         if (bookingWarrantyId) {
             dispatch(getWarrantyInformationThunk(bookingWarrantyId));
@@ -23,12 +101,19 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     }, [dispatch, bookingWarrantyId]);
 
     const statusConfig = BOOKING_WARRANTY_STATUS_CONFIG[warranty?.status] || BOOKING_WARRANTY_STATUS_CONFIG.default;
+    const isExpired = warranty?.expireAt && new Date(warranty.expireAt) < new Date() && warranty?.status === 'PENDING';
+    const warrantyStatusText = isExpired ? 'HẾT HẠN' : statusConfig.text;
 
-    const isCustomer = user?.role?.name === 'CUSTOMER';
-    const isTechnician = user?.role?.name === 'TECHNICIAN';
-    const displayName = isCustomer
-        ? warranty?.technicianId?.userId?.fullName || 'Không có dữ liệu'
-        : warranty?.customerId?.fullName || 'Không có dữ liệu';
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const minDate = tomorrow.toISOString().split("T")[0];
+
+    const validateDateTime = (date, time) => {
+        if (!date || !time) return false;
+        const selectedDateTime = new Date(`${date}T${time}:00+07:00`);
+        return selectedDateTime >= tomorrow;
+    };
 
     const handleAcceptWarranty = async () => {
         try {
@@ -36,554 +121,661 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             toast.success('Chấp nhận yêu cầu bảo hành thành công');
             if (onWarrantyUpdated) onWarrantyUpdated();
         } catch (error) {
-            toast.error(`Lỗi: ${error}`);
+            toast.error(`Lỗi: ${error?.message || error || 'Đã xảy ra lỗi'}`);
         }
     };
 
-    const handleRejectWarranty = () => {
+    const handleRejectWarranty = async () => {
         if (!rejectedReason.trim()) {
-            toast.error('Vui lòng nhập lý do từ chối');
+            setRejectError('Vui lòng nhập lý do từ chối');
             return;
         }
-        dispatch(rejectWarrantyThunk({ bookingWarrantyId, formData: { status: 'DENIED', rejectedReason } }))
-            .unwrap()
-            .then(() => {
-                toast.success('Từ chối yêu cầu bảo hành thành công');
-                setRejectedReason('');
-                if (onWarrantyUpdated) onWarrantyUpdated();
-                setShowRejectModal(false); // Close the rejection modal after success
-            })
-            .catch((error) => {
-                toast.error(`Lỗi: ${error}`);
-            });
+        try {
+            await dispatch(rejectWarrantyThunk({ bookingWarrantyId, formData: { status: 'DENIED', rejectedReason } })).unwrap();
+            toast.success('Từ chối yêu cầu bảo hành thành công');
+            setRejectedReason('');
+            setShowRejectModal(false);
+            if (onWarrantyUpdated) onWarrantyUpdated();
+        } catch (error) {
+            setRejectError(`Lỗi: ${error?.message || error || 'Đã xảy ra lỗi'}`);
+        }
     };
 
-    const isExpired = warranty?.expireAt && new Date(warranty.expireAt) < new Date() && warranty?.status === 'PENDING';
-    const warrantyStatusText = isExpired ? 'HẾT HẠN' : statusConfig.text;
+    const handleProposeSchedule = async (e) => {
+        e.preventDefault();
+        if (!proposedDate || !proposedTime) {
+            toast.error("Vui lòng chọn cả ngày và giờ đề xuất!");
+            return;
+        }
+        if (!validateDateTime(proposedDate, proposedTime)) {
+            toast.error("Ngày và giờ đề xuất phải từ ngày mai trở đi!");
+            return;
+        }
+        const proposedDateTime = `${proposedDate}T${proposedTime}:00+07:00`;
+        try {
+            await dispatch(proposeWarrantyScheduleThunk({ bookingWarrantyId, proposedSchedule: proposedDateTime })).unwrap();
+            toast.success("Đề xuất lịch bảo hành thành công!");
+            setShowProposeModal(false);
+            setProposedDate("");
+            setProposedTime("");
+            if (onWarrantyUpdated) onWarrantyUpdated();
+        } catch (error) {
+            toast.error(`Lỗi khi đề xuất lịch: ${error?.message || error || "Đã xảy ra lỗi"}`);
+        }
+    };
 
-    const handleImageClick = (index) => {
-        setSelectedImageIndex(index);
-        setShowImageModal(true);
+    const handleConfirmSchedule = async (e) => {
+        e.preventDefault();
+        if (!startDate || !startTime || !expectedEndDate || !expectedEndTime) {
+            toast.error("Vui lòng cung cấp đầy đủ ngày và giờ bắt đầu cũng như kết thúc!");
+            return;
+        }
+        if (!validateDateTime(startDate, startTime)) {
+            toast.error("Thời gian bắt đầu phải từ ngày mai trở đi!");
+            return;
+        }
+        const startDateTime = new Date(`${startDate}T${startTime}:00+07:00`);
+        const endDateTime = new Date(`${expectedEndDate}T${expectedEndTime}:00+07:00`);
+        if (endDateTime <= startDateTime) {
+            toast.error("Thời gian kết thúc phải sau thời gian bắt đầu!");
+            return;
+        }
+        try {
+            await dispatch(confirmWarrantyScheduleThunk({ bookingWarrantyId, data: { startTime: startDateTime.toISOString(), expectedEndTime: endDateTime.toISOString() } })).unwrap();
+            toast.success("Xác nhận lịch bảo hành thành công!");
+            setShowConfirmModal(false);
+            setStartDate("");
+            setStartTime("");
+            setExpectedEndDate("");
+            setExpectedEndTime("");
+            if (onWarrantyUpdated) onWarrantyUpdated();
+        } catch (error) {
+            toast.error(`Lỗi: ${error?.message || error || "Đã xảy ra lỗi"}`);
+        }
     };
 
     const handlePrevImage = () => {
-        setSelectedImageIndex((prev) => (prev === 0 ? (warranty?.images?.length || 0) - 1 : prev - 1));
+        setSelectedImageIndex((prevIndex) =>
+            prevIndex === 0 ? warranty.images.length - 1 : prevIndex - 1
+        );
     };
 
     const handleNextImage = () => {
-        setSelectedImageIndex((prev) => (prev === (warranty?.images?.length || 0) - 1 ? 0 : prev + 1));
+        setSelectedImageIndex((prevIndex) =>
+            prevIndex === warranty.images.length - 1 ? 0 : prevIndex + 1
+        );
     };
 
-    const styles = {
-        sidebar: {
-            width: '100%',
-        },
-        sidebarCard: {
-            borderRadius: '8px',
-            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-            backgroundColor: '#fff',
-            marginBottom: '20px',
-        },
-        warrantyTextarea: {
-            width: '100%',
-            padding: '12px',
-            border: '1px solid #ced4da',
-            borderRadius: '8px',
-            fontSize: '14px',
-            color: '#666',
-            resize: 'vertical',
-            background: '#f8f9fa',
-            minHeight: '80px',
-        },
-        sidebarHead: {
-            padding: '15px 20px',
-            borderBottom: '1px solid #eee',
-            backgroundColor: '#f8f9fa',
-        },
-        sidebarHeadH5: {
-            margin: 0,
-            fontSize: '1.25rem',
-            fontWeight: 600,
-            color: '#333',
-        },
-        sidebarBody: {
-            padding: '20px',
-        },
-        loadingText: {
-            color: '#007bff',
-            fontStyle: 'italic',
-            fontSize: '1rem',
-        },
-        errorText: {
-            color: '#dc3545',
-            fontSize: '1rem',
-        },
-        vehicleRates: {
-            margin: 0,
-            padding: 0,
-        },
-        vehicleRatesLi: {
-            listStyle: 'none',
-            marginBottom: '15px',
-        },
-        vehicleRatesH6: {
-            margin: 0,
-            fontSize: '1rem',
-            color: '#495057',
-        },
-        vehicleRatesSpan: {
-            fontWeight: 600,
-            color: '#343a40',
-        },
-        modalLink: {
-            color: '#007bff',
-            textDecoration: 'none',
-            fontWeight: 500,
-            cursor: 'pointer',
-        },
-        modalLinkHover: {
-            textDecoration: 'underline',
-        },
-        modalContent: {
-            borderRadius: '12px',
-            boxShadow: '0 6px 25px rgba(0, 0, 0, 0.15)',
-            border: 'none',
-            background: '#fff',
-        },
-        modalHeader: {
-            background: 'linear-gradient(135deg, #090909 0%, #181818 100%)',
-            color: '#fff',
-            padding: '16px 24px',
-
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-        },
-        modalTitle: {
-            fontSize: '1.6rem',
-            fontWeight: 600,
-            margin: 0,
-        },
-        closeBtn: {
-            background: 'transparent',
-            border: 'none',
-            color: '#fff',
-            fontSize: '1.6rem',
-            cursor: 'pointer',
-            transition: 'color 0.2s ease',
-        },
-        closeBtnHover: {
-            color: '#f8f9fa',
-        },
-        modalBody: {
-            padding: '24px 30px',
-            background: '#f8f9fa',
-        },
-        warrantyDetailsList: {
-            listStyle: 'none',
-            padding: 0,
-            margin: '0 0 20px 0',
-        },
-       
-        warrantyDetailsItem: {
-            display: 'flex',
-            justifyContent: 'space-between',
-            padding: '14px 0',
-            borderBottom: '1px solid #e9ecef',
-            fontSize: '1.05rem',
-        },
-        detailLabel: {
-            fontWeight: 600,
-            color: '#343a40',
-            flex: '0 0 40%',
-        },
-        detailValue: {
-            color: '#495057',
-            flex: '0 0 58%',
-            wordBreak: 'break-word',
-        },
-        imageGallery: {
-            display: 'flex',
-            gap: '10px',
-            flexWrap: 'wrap',
-        },
-        warrantyImage: {
-            maxWidth: '100%',
-            objectFit: 'cover',
-            borderRadius: '5px',
-            border: '1px solid #dee2e6',
-            cursor: 'pointer',
-            transition: 'transform 0.2s ease',
-        },
-        warrantyImageHover: {
-            transform: 'scale(1.1)',
-        },
-        statusBadge: {
-            padding: '6px 14px',
-            borderRadius: '14px',
-            fontSize: '0.95rem',
-            fontWeight: 500,
-        },
-        textareaGroup: {
-            marginTop: '24px',
-        },
-        textareaLabel: {
-            fontSize: '1.1rem',
-            fontWeight: 600,
-            color: '#343a40',
-            marginBottom: '8px',
-            display: 'block',
-        },
-        textarea: {
-            width: '100%',
-            padding: '12px',
-            border: '1px solid #ced4da',
-            borderRadius: '8px',
-            fontSize: '1rem',
-            resize: 'vertical',
-            transition: 'border-color 0.2s ease',
-        },
-        textareaFocus: {
-            outline: 'none',
-            borderColor: '#007bff',
-            boxShadow: '0 0 5px rgba(0, 123, 255, 0.3)',
-        },
-        btnGroup: {
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: '15px',
-            marginTop: '20px',
-        },
-      
-       
-      
-   
-        imageModalImage: {
-            maxWidth: '100%',
-            maxHeight: '60vh',
-            objectFit: 'contain',
-            borderRadius: '8px',
-        },
-        imageModalNavBtn: {
-            position: 'absolute',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            color: '#fff',
-            border: 'none',
-            padding: '10px',
-            fontSize: '1.5rem',
-            cursor: 'pointer',
-            borderRadius: '50%',
-            width: '40px',
-            height: '40px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-        },
-        imageModalNavBtnHover: {
-            backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        },
-        imageModalNavBtnPrev: {
-            left: '10px',
-        },
-        imageModalNavBtnNext: {
-            right: '10px',
-        },
+    const getStatusIcon = (status) => {
+        switch (status) {
+            case 'PENDING': return <FaClock />;
+            case 'CONFIRMED': return <FaCheckCircle />;
+            case 'DENIED': return <FaTimes />;
+            case 'COMPLETED': return <FaCheckCircle />;
+            default: return <FaExclamationTriangle />;
+        }
     };
 
-    return (
-        <>
-            <div style={styles.sidebar} className="booking-sidebar">
-                <div style={styles.sidebarCard} className="booking-sidebar-card">
-                    <div style={styles.sidebarHead} className="booking-sidebar-head">
-                        <h5 style={styles.sidebarHeadH5}>Chi tiết bảo hành</h5>
-                    </div>
-                    <div style={styles.sidebarBody} className="booking-sidebar-body">
-                        {loading && <p style={styles.loadingText} className="custom-loading-text">Đang tải...</p>}
-                        {!loading && !error && warranty && (
-                            <div style={styles.vehicleRates} className="booking-vehicle-rates">
-                                <ul>
-                                    <li style={styles.vehicleRatesLi}>
-                                        <h6 style={styles.vehicleRatesH6}>
-                                            <span style={styles.vehicleRatesSpan}>Mã đơn hàng:</span>
-                                            {' '}
-                                            <a
-                                                style={styles.modalLink}
-                                                onMouseOver={(e) => Object.assign(e.target.style, styles.modalLinkHover)}
-                                                onMouseOut={(e) => Object.assign(e.target.style, {})}
-                                                onClick={() => setShowWarrantyModal(true)}
-                                                className="custom-modal-link"
-                                            >
-                                                {warranty.bookingId?.bookingCode || 'Không có dữ liệu'}
-                                            </a>
-                                        </h6>
-                                    </li>
-                                    <li style={styles.vehicleRatesLi}>
-                                        <h6 style={styles.vehicleRatesH6}>
-                                            <span style={styles.vehicleRatesSpan}>Ngày yêu cầu:</span> {formatDateOnly(warranty.requestDate) || 'Không có dữ liệu'}
-                                        </h6>
-                                    </li>
-                                    <li style={styles.vehicleRatesLi}>
-                                        <h6 style={styles.vehicleRatesH6}>
-                                            <span style={styles.vehicleRatesSpan}>Trạng thái:</span>
-                                            <span style={styles.statusBadge} className={`status-badge ${statusConfig.className}`}>
-                                                {warrantyStatusText}
-                                            </span>
-                                        </h6>
-                                    </li>
-                                </ul>
-                            </div>
-                        )}
+    if (!warranty) {
+        return (
+            <div className="booking-details-skeleton">
+                <div className="booking-details-skeleton-card">
+                    <div className="booking-details-skeleton-header"></div>
+                    <div className="booking-details-skeleton-content">
+                        <div className="booking-details-skeleton-line"></div>
+                        <div className="booking-details-skeleton-line"></div>
+                        <div className="booking-details-skeleton-line"></div>
                     </div>
                 </div>
+            </div>
+        );
+    }
 
-                {/* Warranty Details Modal */}
-                <Modal
-                    show={showWarrantyModal}
-                    onHide={() => {
-                        setShowWarrantyModal(false);
-                        setRejectedReason('');
-                    }}
-                    centered
-                    size="lg"
-                    backdrop="static"
-                    keyboard={false}
-                >
-                    <Modal.Header style={styles.modalHeader}>
-                        <Modal.Title style={styles.modalTitle}>Chi tiết bảo hành</Modal.Title>
-                        <button
-                            style={styles.closeBtn}
-                            onClick={() => {
-                                setShowWarrantyModal(false);
-                                setRejectedReason('');
-                            }}
-                            onMouseOver={(e) => Object.assign(e.currentTarget.style, styles.closeBtnHover)}
-                            onMouseOut={(e) => Object.assign(e.currentTarget.style, styles.closeBtn)}
-                        >
-                            <span>×</span>
-                        </button>
-                    </Modal.Header>
-                    <Modal.Body style={styles.modalBody}>
-                        {warranty && (
-                            <div className="custom-custom-modal-form-group">
-                                <ul style={styles.warrantyDetailsList} className="custom-warranty-details-list">
-                                    <li style={styles.warrantyDetailsItem}>
-                                        <span style={styles.detailLabel} className="custom-detail-label">Mã đơn hàng:</span>
-                                        <span style={styles.detailValue} className="custom-detail-value">{warranty.bookingId?.bookingCode || 'Không có dữ liệu'}</span>
-                                    </li>
-                                    <li style={styles.warrantyDetailsItem}>
-                                        <span style={styles.detailLabel} className="custom-detail-label">Dịch vụ:</span>
-                                        <span style={styles.detailValue} className="custom-detail-value">{warranty.bookingId?.serviceId?.serviceName || 'Không có dữ liệu'}</span>
-                                    </li>
-                                    {warranty.images && warranty.images.length > 0 && (
-                                        <li style={styles.warrantyDetailsItem}>
-                                            <span style={styles.detailLabel} className="custom-detail-label">Hình ảnh:</span>
-                                            <div style={styles.imageGallery} className="custom-image-gallery">
+    return (
+        <div className="booking-details-container">
+            <div className="booking-details-header-banner">
+                <div className="booking-details-id">
+                    <FaFileAlt className="booking-details-id-icon" />
+                    <span>{warranty?.bookingId?.bookingCode || 'Không có mã đơn'}</span>
+                </div>
+                <div className="booking-details-status-indicator">
+                    <FaCircle className={`booking-details-status-dot ${statusConfig.className}`} />
+                    <span>{warrantyStatusText}</span>
+                </div>
+            </div>
+
+            <div className="booking-details-content">
+                <Tabs defaultActiveKey="warranty" className="booking-details-tabs">
+                    <Tab eventKey="warranty" title={
+                        <div className="booking-details-tab-title">
+                            <FaWrench className="booking-details-tab-icon" />
+                            <span>Thông tin bảo hành</span>
+                        </div>
+                    }>
+                        <div className="booking-details-tab-content">
+                            <div className="booking-details-info-section">
+                                <div className="booking-details-info-cards">
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaTools />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Dịch vụ</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.bookingId?.serviceId?.serviceName || 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaUser />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">{isCustomer ? 'Kỹ thuật viên' : 'Khách hàng'}</div>
+                                            <div className="booking-details-card-value">{displayName}</div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaCalendarAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Ngày yêu cầu</div>
+                                            <div className="booking-details-card-value">
+                                                {formatDateOnly(warranty?.requestDate) || 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card full-width warranty-description-container">
+                                        <div className="booking-details-card-icon">
+                                            <FaFileAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Mô tả vấn đề</div>
+                                            <div
+                                                className="booking-details-card-value description-text clickable"
+                                            >
+                                                <FaEye
+                                                    className="description-icon"
+                                                    onClick={() => setShowDescriptionModal(true)}
+                                                />
+                                            </div>
+                                        </div>
+                                        {Array.isArray(warranty?.images) && warranty.images.length > 0 && (
+                                            <div className="booking-details-image-stack">
                                                 {warranty.images.map((image, index) => (
-                                                    <img
+                                                    <div
                                                         key={index}
-                                                        src={image}
-                                                        alt={`Evidence ${index + 1}`}
-                                                        style={styles.warrantyImage}
-                                                        onMouseOver={(e) => Object.assign(e.target.style, styles.warrantyImageHover)}
-                                                        onMouseOut={(e) => Object.assign(e.target.style, styles.warrantyImage)}
-                                                        onClick={() => handleImageClick(index)}
-                                                        className="custom-warranty-image"
-                                                    />
+                                                        className="booking-details-image-item stacked"
+                                                        style={{ zIndex: warranty.images.length - index }}
+                                                        onClick={() => {
+                                                            setSelectedImageIndex(index);
+                                                            setShowImageModal(true);
+                                                        }}
+                                                    >
+                                                        <img src={image} alt={`Warranty ${index + 1}`} />
+                                                        <div className="booking-details-image-overlay">
+                                                            <FaEye />
+                                                        </div>
+                                                    </div>
                                                 ))}
                                             </div>
-                                        </li>
-                                    )}
-                                    <li style={styles.warrantyDetailsItem}>
-                                        <span style={styles.detailLabel} className="custom-detail-label">{isCustomer ? 'Kỹ thuật viên' : 'Khách hàng'}:</span>
-                                        <span style={styles.detailValue} className="custom-detail-value">{displayName}</span>
-                                    </li>
-                                    <li style={styles.warrantyDetailsItem}>
-                                        <span style={styles.detailLabel} className="custom-detail-label">Ngày đặt dịch vụ:</span>
-                                        <span style={styles.detailValue} className="custom-detail-value">{formatDateOnly(warranty.bookingId?.schedule?.startTime) || 'Không có dữ liệu'}</span>
-                                    </li>
-                                    <li style={styles.warrantyDetailsItem}>
-                                        <span style={styles.detailLabel} className="custom-detail-label">Ngày yêu cầu bảo hành:</span>
-                                        <span style={styles.detailValue} className="custom-detail-value">{formatDateOnly(warranty.requestDate) || 'Không có dữ liệu'}</span>
-                                    </li>
-                                    <li style={styles.warrantyDetailsItem}>
-                                        <span style={styles.detailLabel} className="custom-detail-label">Trạng thái:</span>
-                                        <span style={{ ...styles.statusBadge, marginRight: '45%' }} className={`status-badge ${statusConfig.className}`}>
-                                            {warrantyStatusText}
-                                        </span>
-                                    </li>
-                                    <li style={styles.warrantyDetailsItem}>
-                                        <span style={styles.detailLabel} className="custom-detail-label">Mô tả của khách:
-                                            <i
-                                                className="bx bx-info-circle"
-                                                style={{ marginLeft: '5px', cursor: 'pointer', color: '#ff6200' }}
-                                                onClick={() => {
-                                                    setExpandedNotes2(
-                                                        prev => ({
-                                                            ...prev,
-                                                            [warranty.reportedIssue]: !prev[warranty.reportedIssue]
-                                                        })
-                                                    );
-                                                }}
-                                            ></i></span>
-                                    </li>
-                                    <li>
-                                        {expandedNotes2 && expandedNotes2[warranty.reportedIssue] && (
-                                            <textarea
-                                                style={styles.warrantyTextarea}
-                                                value={warranty.reportedIssue || 'Không có dữ liệu'}
-                                                readOnly
-                                                rows="4"
-                                            />
                                         )}
-                                    </li>
-                                </ul>
-
-                                {warranty.status === 'DENIED' && warranty.rejectedReason && (
-                                    <li style={styles.warrantyDetailsItem}>
-                                        <span style={styles.detailLabel} className="custom-detail-label">Lý do từ chối:</span>
-                                        <span style={styles.detailValue} className="custom-detail-value">{warranty.rejectedReason}</span>
-                                    </li>
-                                )}
+                                    </div>
+                                    {warranty?.status === 'DENIED' && warranty?.rejectedReason && (
+                                        <div className="booking-details-info-card full-width">
+                                            <div className="booking-details-card-icon">
+                                                <FaExclamationTriangle />
+                                            </div>
+                                            <div className="booking-details-card-content">
+                                                <div className="booking-details-card-label">Lý do từ chối</div>
+                                                <div className="booking-details-card-value">{warranty.rejectedReason}</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </Modal.Body>
-                    <Modal.Footer style={styles.btnGroup}>
-                        {isTechnician && warranty?.status === 'PENDING' && (
-                            <>
-                                <Button
-                                    onClick={handleAcceptWarranty}
-                                    disabled={loading || isExpired}
-                                    title={isExpired ? 'Không thể chấp nhận vì đã hết hạn' : ''}
-                                >
-                                    {loading ? 'Xử lý...' : 'Chấp nhận bảo hành'}
-                                </Button>
-                                <Button
-                                    onClick={() => setShowRejectModal(true)}
-                                    disabled={loading}
-                                >
-                                    {loading ? 'Xử lý...' : 'Từ chối bảo hành'}
-                                </Button>
-                            </>
-                        )}
-                     
-                    </Modal.Footer>
-                </Modal>
-
-                {/* Image Viewer Modal */}
-                <Modal
-                    show={showImageModal}
-                    onHide={() => setShowImageModal(false)}
-                    centered
-                    size="lg"
-                    backdrop="static"
-                    keyboard={true}
-                >
-                    <Modal.Header style={styles.modalHeader}>
-                        <Modal.Title ></Modal.Title>
-                        <button
-                            style={styles.closeBtn}
-                            onClick={() => setShowImageModal(false)}
-                          
-                        >
-                            <span>×</span>
-                        </button>
-                    </Modal.Header>
-                    <Modal.Body style={{ ...styles.modalBody, position: 'relative' }}>
-                        {warranty?.images && warranty.images.length > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
-                                <img
-                                    src={warranty.images[selectedImageIndex]}
-                                    alt={`Evidence ${selectedImageIndex + 1}`}
-                                    style={styles.imageModalImage}
-                                />
-                                {warranty.images.length >= 1 && (
+                        </div>
+                    </Tab>
+                    <Tab eventKey="schedule" title={
+                        <div className="booking-details-tab-title">
+                            <FaCalendarAlt className="booking-details-tab-icon" />
+                            <span>Lịch bảo hành</span>
+                        </div>
+                    }>
+                        <div className="booking-details-tab-content">
+                            <div className="booking-details-info-section">
+                                {loadingSchedule.propose || loadingSchedule.confirm ? (
+                                    <div className="text-center">
+                                        <Spinner animation="border" />
+                                        <p>Đang tải...</p>
+                                    </div>
+                                ) : (
                                     <>
-                                        <button
-                                            style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnPrev }}
-                                            onClick={handlePrevImage}
-                                            onMouseOver={(e) => Object.assign(e.target.style, styles.imageModalNavBtnHover)}
-                                            onMouseOut={(e) => Object.assign(e.target.style, styles.imageModalNavBtn)}
-                                        >
-                                            &lt;
-                                        </button>
-                                        <button
-                                            style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnNext }}
-                                            onClick={handleNextImage}
-                                            onMouseOver={(e) => Object.assign(e.target.style, styles.imageModalNavBtnHover)}
-                                            onMouseOut={(e) => Object.assign(e.target.style, styles.imageModalNavBtn)}
-                                        >
-                                            &gt;
-                                        </button>
+                                        {warranty?.proposedSchedule && (
+                                            <div className="booking-details-info-card">
+                                                <div className="booking-details-card-icon">
+                                                    <FaCalendarAlt />
+                                                </div>
+                                                <div className="booking-details-card-content">
+                                                    <div className="booking-details-card-label">Lịch đề xuất</div>
+                                                    <div className="booking-details-card-value">
+                                                        {formatDateOnly(warranty.proposedSchedule)} {formatTimeOnly(warranty.proposedSchedule)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                        {warranty?.confirmedSchedule && (
+                                            <>
+                                                <div className="booking-details-info-card">
+                                                    <div className="booking-details-card-icon">
+                                                        <FaCalendarAlt />
+                                                    </div>
+                                                    <div className="booking-details-card-content">
+                                                        <div className="booking-details-card-label">Ngày bắt đầu</div>
+                                                        <div className="booking-details-card-value">
+                                                            {formatDateOnly(warranty.confirmedSchedule.startTime)} {formatTimeOnly(warranty.confirmedSchedule.startTime)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="booking-details-info-card">
+                                                    <div className="booking-details-card-icon">
+                                                        <FaCalendarAlt />
+                                                    </div>
+                                                    <div className="booking-details-card-content">
+                                                        <div className="booking-details-card-label">Ngày kết thúc dự kiến</div>
+                                                        <div className="booking-details-card-value">
+                                                            {formatDateOnly(warranty.confirmedSchedule.expectedEndTime)} {formatTimeOnly(warranty.confirmedSchedule.expectedEndTime)}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div className="booking-details-info-card">
+                                                    <div className="booking-details-card-icon">
+                                                        <FaClock />
+                                                    </div>
+                                                    <div className="booking-details-card-content">
+                                                        <div className="booking-details-card-label">Thời gian dự kiến</div>
+                                                        <div className="booking-details-card-value">
+                                                            {(() => {
+                                                                const start = new Date(warranty.confirmedSchedule.startTime);
+                                                                const end = new Date(warranty.confirmedSchedule.expectedEndTime);
+                                                                const diffMs = end - start;
+                                                                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                                                                const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                                                                return diffDays > 0 ? `${diffDays} ngày ${diffHours} giờ` : `${diffHours} giờ`;
+                                                            })()}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        )}
+                                        {!warranty?.proposedSchedule && !warranty?.confirmedSchedule && (
+                                            <div className="booking-details-no-pricing-info">
+                                                <div className="booking-details-no-data-icon">
+                                                    <FaCalendarAlt />
+                                                </div>
+                                                <h4>Chưa có lịch bảo hành</h4>
+                                                <p>Chưa có lịch bảo hành nào được đề xuất.</p>
+                                            </div>
+                                        )}
                                     </>
                                 )}
                             </div>
-                        )}
-                    </Modal.Body>
-                </Modal>
-                <Modal
-                    show={showRejectModal}
-                    onHide={() => {
-                        setShowRejectModal(false);
-                        setRejectedReason('');
-                    }}
-                    centered
-                    size="md"
-                    backdrop="static"
-                    keyboard={false}
-                >
-                    <Modal.Header style={styles.modalHeader}>
-                        <Modal.Title style={styles.modalTitle}>Từ chối bảo hành</Modal.Title>
-                        <button
-                            style={styles.closeBtn}
-                            onClick={() => {
-                                setShowRejectModal(false);
-                                setRejectedReason('');
-                            }}
-                      
-                        >
-                            <span>×</span>
-                        </button>
-                    </Modal.Header>
-                    <Modal.Body style={styles.modalBody}>
-                        <div style={styles.textareaGroup} className="custom-custom-textarea-group">
-                            <label style={styles.textareaLabel} className="custom-textarea-label">Lý do từ chối:</label>
-                            <textarea
-                                style={styles.textarea}
-                                className="custom-custom-textarea"
-                                placeholder="Nhập lý do từ chối (bắt buộc nếu từ chối)"
-                                value={rejectedReason}
-                                onChange={(e) => setRejectedReason(e.target.value)}
-                                onFocus={(e) => Object.assign(e.target.style, styles.textareaFocus)}
-                                onBlur={(e) => Object.assign(e.target.style, styles.textarea)}
-                                rows="4"
-                            />
                         </div>
-                    </Modal.Body>
-                    <Modal.Footer style={styles.btnGroup}>
-                        <Button
-                            className="custom-custom-btn custom-custom-btn-danger"
-                            onClick={handleRejectWarranty}
-                            disabled={loading}
-                      
-                        >
-                            {loading ? 'Xử lý...' : 'Xác nhận từ chối'}
-                        </Button>
-                        <Button
-                            className="custom-custom-btn custom-custom-btn-secondary"
-                            onClick={() => {
-                                setShowRejectModal(false);
-                                setRejectedReason('');
-                            }}
-                         
-                        >
-                            Hủy
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+                    </Tab>
+                </Tabs>
             </div>
-        </>
+
+            <div className="booking-details-action-section">
+                {isTechnician && warranty?.status === 'PENDING' && (
+                    <div className="booking-details-technician-actions">
+                        <Button
+                            variant="success"
+                            className="booking-details-action-btn confirm-btn"
+                            onClick={handleAcceptWarranty}
+                            disabled={loading || isExpired}
+                            title={isExpired ? 'Không thể chấp nhận vì đã hết hạn' : ''}
+                        >
+                            {loading ? (
+                                <>
+                                    <Spinner animation="border" size="sm" className="me-2" />
+                                    Đang xử lý...
+                                </>
+                            ) : (
+                                <>
+                                    <FaCheckCircle className="me-2" />
+                                    Chấp nhận bảo hành
+                                </>
+                            )}
+                        </Button>
+                        <Button
+                            variant="warning"
+                            className="booking-details-action-btn reject-btn"
+                            onClick={() => setShowRejectModal(true)}
+                            disabled={loading}
+                        >
+                            <FaTimes className="me-2" />
+                            Từ chối bảo hành
+                        </Button>
+                    </div>
+                )}
+                {isCustomer && warranty?.status === 'CONFIRMED' && !warranty?.proposedSchedule && (
+                    <Button
+                        variant="primary"
+                        className="booking-details-action-btn"
+                        onClick={() => setShowProposeModal(true)}
+                        disabled={loadingSchedule.propose}
+                    >
+                        <FaCalendarAlt className="me-2" />
+                        Đề xuất lịch bảo hành
+                    </Button>
+                )}
+                {isTechnician && warranty?.status === 'CONFIRMED' && warranty?.proposedSchedule && !warranty?.confirmedSchedule && (
+                    <Button
+                        variant="primary"
+                        className="booking-details-action-btn"
+                        onClick={() => setShowConfirmModal(true)}
+                        disabled={loadingSchedule.confirm}
+                    >
+                        <FaCheckCircle className="me-2" />
+                        Xác nhận lịch bảo hành
+                    </Button>
+                )}
+            </div>
+
+            <Modal
+                show={showRejectModal}
+                onHide={() => {
+                    setShowRejectModal(false);
+                    setRejectedReason('');
+                    setRejectError('');
+                }}
+                centered
+                size="md"
+                backdrop="static"
+                keyboard={false}
+            >
+                <Modal.Header className="booking-details-modal-header-danger">
+                    <Modal.Title>
+                        <FaExclamationTriangle className="me-2" />
+                        Từ chối bảo hành
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {rejectError && (
+                        <Alert variant="danger">
+                            <FaExclamationTriangle className="me-2" />
+                            <strong>Lỗi:</strong> {rejectError}
+                        </Alert>
+                    )}
+                    <Form.Group>
+                        <Form.Label>Lý do từ chối <span style={{ color: '#dc3545' }}>*</span></Form.Label>
+                        <Form.Control
+                            as="textarea"
+                            rows={4}
+                            value={rejectedReason}
+                            onChange={(e) => {
+                                setRejectedReason(e.target.value);
+                                if (rejectError) setRejectError('');
+                            }}
+                            placeholder="Nhập lý do từ chối (bắt buộc)"
+                            isInvalid={!!rejectError}
+                        />
+                    </Form.Group>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            setShowRejectModal(false);
+                            setRejectedReason('');
+                            setRejectError('');
+                        }}
+                    >
+                        <FaTimes className="me-2" />
+                        Hủy
+                    </Button>
+                    <Button
+                        variant="danger"
+                        onClick={handleRejectWarranty}
+                        disabled={loading}
+                    >
+                        <FaExclamationTriangle className="me-2" />
+                        Xác nhận từ chối
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal
+                show={showProposeModal}
+                onHide={() => {
+                    setShowProposeModal(false);
+                    setProposedDate("");
+                    setProposedTime("");
+                }}
+                centered
+                size="md"
+                backdrop="static"
+                keyboard={false}
+            >
+                <Modal.Header className="booking-details-modal-header">
+                    <Modal.Title>Đề xuất lịch bảo hành</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form onSubmit={handleProposeSchedule}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Ngày đề xuất <span style={{ color: "#dc3545" }}>*</span></Form.Label>
+                            <Form.Control
+                                type="date"
+                                value={proposedDate}
+                                min={minDate}
+                                onChange={(e) => setProposedDate(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Giờ đề xuất <span style={{ color: "#dc3545" }}>*</span></Form.Label>
+                            <Form.Control
+                                type="time"
+                                value={proposedTime}
+                                onChange={(e) => setProposedTime(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+                        <div className="d-flex justify-content-end gap-2">
+                            <Button
+                                variant="secondary"
+                                onClick={() => {
+                                    setShowProposeModal(false);
+                                    setProposedDate("");
+                                    setProposedTime("");
+                                }}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={loadingSchedule.propose}
+                            >
+                                {loadingSchedule.propose ? 'Đang xử lý...' : 'Xác nhận'}
+                            </Button>
+                        </div>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+
+            <Modal
+                show={showConfirmModal}
+                onHide={() => {
+                    setShowConfirmModal(false);
+                    setStartDate("");
+                    setStartTime("");
+                    setExpectedEndDate("");
+                    setExpectedEndTime("");
+                }}
+                centered
+                size="md"
+                backdrop="static"
+                keyboard={false}
+            >
+                <Modal.Header className="booking-details-modal-header">
+                    <Modal.Title>Xác nhận lịch bảo hành</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <Form onSubmit={handleConfirmSchedule}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Ngày bắt đầu <span style={{ color: "#dc3545" }}>*</span></Form.Label>
+                            <Form.Control
+                                type="date"
+                                value={startDate}
+                                min={minDate}
+                                onChange={(e) => setStartDate(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Giờ bắt đầu <span style={{ color: "#dc3545" }}>*</span></Form.Label>
+                            <Form.Control
+                                type="time"
+                                value={startTime}
+                                onChange={(e) => setStartTime(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Ngày kết thúc dự kiến <span style={{ color: "#dc3545" }}>*</span></Form.Label>
+                            <Form.Control
+                                type="date"
+                                value={expectedEndDate}
+                                min={minDate}
+                                onChange={(e) => setExpectedEndDate(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Giờ kết thúc dự kiến <span style={{ color: "#dc3545" }}>*</span></Form.Label>
+                            <Form.Control
+                                type="time"
+                                value={expectedEndTime}
+                                onChange={(e) => setExpectedEndTime(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+                        <div className="d-flex justify-content-end gap-2">
+                            <Button
+                                variant="secondary"
+                                onClick={() => {
+                                    setShowConfirmModal(false);
+                                    setStartDate("");
+                                    setStartTime("");
+                                    setExpectedEndDate("");
+                                    setExpectedEndTime("");
+                                }}
+                            >
+                                Hủy
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                disabled={loadingSchedule.confirm}
+                            >
+                                {loadingSchedule.confirm ? 'Đang xử lý...' : 'Xác nhận'}
+                            </Button>
+                        </div>
+                    </Form>
+                </Modal.Body>
+            </Modal>
+
+            <Modal
+                show={showDescriptionModal}
+                onHide={() => setShowDescriptionModal(false)}
+                centered
+                size="lg"
+                backdrop="static"
+                keyboard={false}
+            >
+                <Modal.Header className="booking-details-modal-header">
+                    <Modal.Title>Mô tả vấn đề</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <div className="description-modal-content">
+                        {warranty?.reportedIssue || 'Không có mô tả'}
+                    </div>
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDescriptionModal(false)}>
+                        <FaTimes className="me-2" />
+                        Đóng
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            <Modal
+                show={showImageModal}
+                onHide={() => {
+                    setShowImageModal(false);
+                    setZoomLevel(1); // Reset zoom on close
+                }}
+                centered
+                size="lg"
+                backdrop="static"
+                keyboard={false}
+            >
+                <Modal.Header style={styles.modalHeader}>
+                    <Modal.Title>Hình ảnh bảo hành</Modal.Title>
+                    <button
+                        style={styles.closeBtn}
+                        onClick={() => {
+                            setShowImageModal(false);
+                            setZoomLevel(1); // Reset zoom on close
+                        }}
+                    >
+                        <span>×</span>
+                    </button>
+                </Modal.Header>
+                <Modal.Body style={{ ...styles.modalBody, position: 'relative' }}>
+                    {warranty?.images && warranty.images.length > 0 && (
+                        <div
+                            style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}
+                            onWheel={(e) => {
+                                e.preventDefault();
+                                setZoomLevel((prev) => {
+                                    const newZoom = prev + (e.deltaY < 0 ? 0.1 : -0.1);
+                                    return Math.max(0.5, Math.min(newZoom, 3)); // Limit zoom between 0.5x and 3x
+                                });
+                            }}
+                        >
+                            <img
+                                src={warranty.images[selectedImageIndex]}
+                                alt={`Warranty ${selectedImageIndex + 1}`}
+                                style={{ ...styles.imageModalImage, transform: `scale(${zoomLevel})` }}
+                            />
+                            {warranty.images.length > 1 && (
+                                <>
+                                    <button
+                                        style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnPrev, position: 'absolute', left: '10px' }}
+                                        onClick={handlePrevImage}
+                                        onMouseOver={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtnHover })}
+                                        onMouseOut={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtn, position: 'absolute', left: '10px' })}
+                                    >
+                                        &lt;
+                                    </button>
+                                    <button
+                                        style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnNext, position: 'absolute', right: '10px' }}
+                                        onClick={handleNextImage}
+                                        onMouseOver={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtnHover })}
+                                        onMouseOut={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtn, position: 'absolute', right: '10px' })}
+                                    >
+                                        &gt;
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    )}
+                </Modal.Body>
+            </Modal>
+        </div>
     );
 }
 

@@ -260,6 +260,20 @@ const Sidebar = () => {
                   <span>Commission Config</span>
                 </Link>
               </li>
+              <li>
+                <Link to="/admin/feedback" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/feedback" ? customStyles.activeMenuItem : {}}>
+                  <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/feedback" ? customStyles.activeIcon : {})}} />
+                  <span>Feedback</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/package" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/package" ? customStyles.activeMenuItem : {}}>
+                  <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/package" ? customStyles.activeIcon : {})}} />
+                  <span>Package</span>
+                </Link>
+              </li>
             </ul>
           </li>
 

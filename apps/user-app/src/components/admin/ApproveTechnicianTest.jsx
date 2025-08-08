@@ -1,26 +1,32 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { approveTechnicianThunk } from '../../features/admin/adminSlice';
+import { toast } from 'react-toastify';
+// import 'react-toastify/dist/ReactToastify.css';
 
-
-const ApproveTechnicianTest = () => {
-    const [technicianId, setTechnicianId] = useState('');
+const ApproveTechnicianTest = ({ technicianId, onSuccess }) => {
     const dispatch = useDispatch();
     const { loading } = useSelector(state => state.admin);
     const { user } = useSelector(state => state.auth);
 
-    const handleApprove = () => {
-        if (!technicianId.trim()) {
+    // This component should only be visible to Admins
+    if (user?.role?.name !== 'ADMIN') {
+        return <p>Bạn không có quyền làm việc này.</p>;
+    }
+
+    const handleApprove = async () => {
+        if (!technicianId) {
+            toast.error('Không có thợ nào.');
             return;
         }
-        dispatch(approveTechnicianThunk(technicianId));
-        setTechnicianId('');
+        try {
+            await dispatch(approveTechnicianThunk(technicianId)).unwrap();
+            toast.success('Duyệt thợ thành công!');
+            if (onSuccess) onSuccess(); // Trigger callback to refresh technician list
+        } catch (error) {
+            toast.error('Không thể duyệt thợ: ' + (error.message || 'Lỗi không xác định'));
+        }
     };
-
-    // // This component should only be visible to Admins
-    // if (user?.role?.name !== 'ADMIN') {
-    //     return <p>You do not have permission to view this component.</p>;
-    // }
 
     return (
         <div className="card mt-4">
@@ -28,31 +34,23 @@ const ApproveTechnicianTest = () => {
                 <h3>Admin Test: Approve Technician</h3>
             </div>
             <div className="card-body">
-                <p>Enter the ID of the technician you want to approve.</p>
+                <p>Technician ID: {technicianId || 'Không có thợ nào được chọn'}</p>
                 <div className="input-group mb-3">
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Technician ID"
-                        value={technicianId}
-                        onChange={(e) => setTechnicianId(e.target.value)}
-                        disabled={loading}
-                    />
                     <button
                         className="btn btn-success"
                         type="button"
                         onClick={handleApprove}
-                        disabled={loading}
+                        disabled={loading || !technicianId}
                     >
-                        {loading ? 'Approving...' : 'Approve'}
+                        {loading ? 'Đang duyệt...' : 'Duyệt'}
                     </button>
                 </div>
-                 <small className="form-text text-muted">
-                    This will approve the technician, automatically generate their service contract, and send them a notification.
+                <small className="form-text text-muted">
+                    Thao tác này sẽ duyệt thợ, tự động tạo hợp đồng dịch vụ và gửi thông báo cho họ.
                 </small>
             </div>
         </div>
     );
 };
 
-export default ApproveTechnicianTest; 
+export default ApproveTechnicianTest;

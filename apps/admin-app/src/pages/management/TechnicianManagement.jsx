@@ -822,4 +822,3 @@ const getStatusBadgeClass = (status) => {
 
 
 export default TechnicianManagement;
-

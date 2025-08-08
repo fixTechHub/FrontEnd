@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Modal, Button, Dropdown, Form } from 'react-bootstrap';
+import { Modal, Button, Dropdown, Form,Pagination } from 'react-bootstrap';
 import { fetchUserReceipts } from '../../features/receipts/receiptSlice';
 import { formatCurrency, maskTransactionId } from '../../utils/formatDuration';
 import handlePrintPDF from '../../utils/pdf';
@@ -120,7 +120,7 @@ const ReceiptPage = () => {
                   <div className="filter-group">
                     <Form.Control
                       type="text"
-                      placeholder="Tìm kiếm theo mã đơn, phương thức thanh toán hoặc ngày..."
+                      placeholder="Tìm kiếm theo mã đơn, phương thức thanh toán..."
                       value={searchTerm}
                       onChange={handleSearchChange}
                       className="me-2"
@@ -192,7 +192,7 @@ const ReceiptPage = () => {
                     <thead className="thead-light">
                       <tr>
                         <th>Mã Đơn</th>
-                        <th>Service Name</th>
+                        <th>Dịch Vụ</th>
                         <th>Ngày</th>
                         <th>Tổng</th>
                         <th>Thanh Toán</th>
@@ -257,28 +257,16 @@ const ReceiptPage = () => {
                   </table>
                 </div>
 
-                <div style={styles.pagination}>
-                  <button
-                    style={{
-                      ...styles.paginationBtn,
-                      ...(page === 0 ? styles.disabledBtn : {}),
-                    }}
+                <Pagination className="justify-content-center mt-4">
+                  <Pagination.Prev
                     onClick={() => handlePageChange(page - 1)}
                     disabled={page === 0}
-                  >
-                    Trang Trước
-                  </button>
-                  <button
-                    style={{
-                      ...styles.paginationBtn,
-                      ...(receipts.length < limit ? styles.disabledBtn : {}),
-                    }}
+                  >    Trang Trước </Pagination.Prev>
+                  <Pagination.Next
                     onClick={() => handlePageChange(page + 1)}
                     disabled={receipts.length < limit}
-                  >
-                    Trang Sau
-                  </button>
-                </div>
+                  >    Trang Sau </Pagination.Next>
+                </Pagination>
               </div>
             </div>
           </div>
@@ -365,9 +353,9 @@ const ReceiptPage = () => {
                   <div className="col-lg-6 col-md-12">
                     <div className="invoice-total-box">
                       <div className="invoice-total-inner">
-                        <p>Phí Kiểm Tra <span> {formatCurrency(selectedReceipt?.bookingId.technicianId.rates.inspectionFee)}</span></p>
+                        <p>Phí Công <span> {formatCurrency(selectedReceipt?.bookingId?.quote?.laborPrice)}</span></p>
                         <p>Giảm <span> {formatCurrency(selectedReceipt?.discountAmount)}</span></p>
-                        {/* <p>Phí dịch vụ <span> {formatCurrency(selectedReceipt?.serviceAmount)}</span></p> */}
+                        <p>Phí dịch vụ <span> {formatCurrency(selectedReceipt?.serviceAmount)}</span></p>
                         {selectedReceipt?.bookingId?.quote?.items?.length > 0 && (
                           <>
                             <hr />

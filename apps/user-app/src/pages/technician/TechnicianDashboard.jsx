@@ -60,13 +60,13 @@ const WidgetItem = ({ icon, title, value, color, link }) => (
 const WidgetsRow = () => {
     const { bookings } = useSelector((state) => state.technician);
     const { technician } = useSelector((state) => state.auth);
-    console.log(technician);
+    // console.log(technician);
 
 
     return (
         <div className="row">
-            <WidgetItem icon="book" title="My Bookings" value={bookings.length} link="/technician/booking" />
-            <WidgetItem icon="balance" title="Wallet Balance" value={technician.balance.toLocaleString('vi-VN')} link="/technician/deposit" />
+            <WidgetItem icon="book" title="My Bookings" value={bookings?.length} link="/technician/booking" />
+            <WidgetItem icon="balance" title="Wallet Balance" value={technician?.balance.toLocaleString('vi-VN')} link="/technician/deposit" />
             <WidgetItem icon="transaction" title="Total Transactions" value="$15,210" color="success" link="/technician/earning" />
             <WidgetItem icon="cars" title="Wishlist Cars" value="24" color="danger" />
         </div>
@@ -76,15 +76,15 @@ const WidgetsRow = () => {
 function ViewEarningAndCommission() {
     const dispatch = useDispatch();
     const { technician } = useSelector((state) => state.auth);
-    const technicianId = technician._id;
+    // const technicianId = technician?._id;
 
     const { earnings, loading, error } = useSelector((state) => state.technician);
 
     useEffect(() => {
-        if (technicianId) {
-            dispatch(fetchEarningAndCommission(technicianId));
+        if (technician?._id) {
+            dispatch(fetchEarningAndCommission(technician?._id));
         }
-    }, [dispatch, technicianId]);
+    }, [dispatch, technician?._id]);
 
     if (loading) return <p>Đang tải...</p>;
     if (error) return <p>Lỗi: {error}</p>;
@@ -161,14 +161,14 @@ function ViewEarningAndCommission() {
 const TechnicianJobList = () => {
     const dispatch = useDispatch();
     const { technician } = useSelector((state) => state.auth);
-    const technicianId = technician._id;
+    // const technicianId = technician._id;
     const { bookings, loading, error } = useSelector((state) => state.technician);
 
     useEffect(() => {
-        if (technicianId) {
-            dispatch(fetchTechnicianJobs(technicianId));
+        if (technician?._id) {
+            dispatch(fetchTechnicianJobs(technician?._id));
         }
-    }, [technicianId, dispatch]);
+    }, [technician?._id, dispatch]);
 
     if (loading) return <p>Loading bookings...</p>;
     if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
@@ -337,8 +337,8 @@ const CardsRow = () => (
 
 function TechnicianDashboard() {
     const { technician } = useSelector((state) => state.auth);
-    const technicianId = technician._id;
-    console.log(technicianId);
+    const technicianId = technician?._id;
+    // console.log(technicianId);
 
     return (
         <>

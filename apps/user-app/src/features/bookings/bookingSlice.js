@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, selectTechnician, technicianConfirmBooking, technicianRejectBooking, technicianSendQuote, customerAcceptQuote, customerRejectQuote, fetchBookingRequests as fetchBookingRequestsAPI, fetchTechniciansFoundByBookingId, getAcceptedBooking } from './bookingAPI';
+import { cancelBookingById, createBooking, getBookingById, getTopBookedServices, selectTechnician, technicianConfirmBooking, technicianRejectBooking, technicianSendQuote, customerAcceptQuote, customerRejectQuote, fetchBookingRequests as fetchBookingRequestsAPI, fetchTechniciansFoundByBookingId, getAcceptedBooking,getUserBookingHistory } from './bookingAPI';
 
 export const fetchBookingById = createAsyncThunk(
     'booking/fetchBookingById',
@@ -102,7 +102,7 @@ export const technicianAcceptBookingThunk = createAsyncThunk(
             console.log('--- THUNK: Error response ---', error?.response);
             console.log('--- THUNK: Error response data ---', error?.response?.data);
             console.log('--- THUNK: Error message ---', error?.message);
-            
+
             const message = error?.response?.data?.message || error.message || 'Đã xảy ra lỗi';
             console.log('--- THUNK: Final error message ---', message);
             return rejectWithValue(message);
@@ -275,7 +275,7 @@ const bookingSlice = createSlice({
             .addCase(fetchUserBookingHistory.fulfilled, (state, action) => {
                 state.loading = false;
                 state.bookingHistories = action.payload.data.bookings // Adjust based on API response structure
-                state.total = action.payload.total || state.bookings.length; // Adjust if API provides total
+                state.total = action.payload.total || state.bookingHistories.length; // Adjust if API provides total
             })
             .addCase(fetchUserBookingHistory.rejected, (state, action) => {
                 state.loading = false;
