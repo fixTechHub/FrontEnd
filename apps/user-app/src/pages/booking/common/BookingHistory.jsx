@@ -249,15 +249,18 @@ const BookingHistory = () => {
                                 }}
                                 className="text-primary"
                               >
-                                {booking.status === 'PENDING' ? (
+                                {booking.status === 'PENDING' && (
                                   <>
                                     <FaUserCheck className="me-2" /> Chọn thợ
                                   </>
-                                ) : (
+                                ) }
+                                {booking.status !=='DONE' && (
                                   <>
                                     <FaSpinner className="me-2" /> Xem tiến trình
                                   </>
-                                )}
+                                )
+                                 
+                                }
                               </Dropdown.Item>
                             )}
                           </Dropdown.Menu>

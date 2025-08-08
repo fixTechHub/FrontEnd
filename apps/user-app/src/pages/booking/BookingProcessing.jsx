@@ -515,13 +515,15 @@ function BookingProcessing() {
                                         Thêm thiết bị phát sinh
                                     </button>
 
-                                    <button
-                                        style={{ marginLeft: 10 }}
-                                        className="btn btn-primary"
-                                        onClick={handleComfirmByTechnician}
-                                    >
-                                        Xác nhận hoàn thành
-                                    </button>
+                                
+                                       <button
+                                       style={{ marginLeft: 10 }}
+                                       className="btn btn-primary"
+                                       onClick={handleComfirmByTechnician}
+                                   >
+                                       Xác nhận hoàn thành
+                                   </button>
+                                
                                 </>
                             )}
                     </div>

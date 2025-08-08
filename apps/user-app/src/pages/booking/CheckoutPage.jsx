@@ -66,7 +66,7 @@ const CouponModal = ({ show, onHide, coupons, onSelectCoupon, subTotal }) => {
                 padding: '25px',
                 backgroundColor: '#fafafa'
             }}>
-                {coupons.length === 0 ? (
+                {coupons?.length === 0 ? (
                     <div style={{
                         textAlign: 'center',
                         padding: '40px',
@@ -79,7 +79,7 @@ const CouponModal = ({ show, onHide, coupons, onSelectCoupon, subTotal }) => {
                     </div>
                 ) : (
                     <div style={{ maxHeight: '450px', overflowY: 'auto', paddingRight: '10px' }}>
-                        {coupons.map((coupon) => (
+                        {coupons?.map((coupon) => (
                             <Card
                                 key={coupon._id}
                                 className={selectedCoupon?._id === coupon._id ? 'border-primary shadow-sm' : 'border-light'}
@@ -369,25 +369,26 @@ const CheckoutPage = () => {
         }
 
         setIsProcessing(true);
-
+        let discount1 = 0;
         if (appliedCoupon) {
             if (appliedCoupon.type === 'PERCENT') {
-                discount = subTotal * (appliedCoupon.value / 100);
-                if (appliedCoupon.maxDiscount && discount > appliedCoupon.maxDiscount) {
-                    discount = appliedCoupon.maxDiscount;
+                discount1 = subTotal * (appliedCoupon.value / 100);
+                if (appliedCoupon.maxDiscount && discount1 > appliedCoupon.maxDiscount) {
+                    discount1 = appliedCoupon.maxDiscount;
                 }
             } else if (appliedCoupon.type === 'FIXED') {
-                discount = appliedCoupon.value;
+                discount1 = appliedCoupon.value;
             }
         }
 
-        const newFinalPrice = subTotal - discount;
-
+        const newFinalPrice = subTotal - discount1;
+        console.log(newFinalPrice);
+        
         try {
             const resultAction = await dispatch(finalizeBookingThunk({
                 bookingId: bookingId,
                 couponCode: appliedCoupon ? appliedCoupon.code : null,
-                discountValue: discount,
+                discountValue: discount1,
                 finalPrice: newFinalPrice,
                 paymentMethod: paymentMethod
             })).unwrap();
