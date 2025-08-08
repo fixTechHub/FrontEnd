@@ -27,7 +27,9 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const { user } = useSelector((state) => state.auth);
     const [rejectedReason, setRejectedReason] = useState('');
     const [showDescriptionModal, setShowDescriptionModal] = useState(false);
+
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [imageType, setImageType] = useState('warranty'); // 'warranty' or 'booking'
     const [showImageModal, setShowImageModal] = useState(false);
     const [showRejectModal, setShowRejectModal] = useState(false);
     const [showProposeModal, setShowProposeModal] = useState(false);
@@ -91,6 +93,16 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             fontSize: '24px',
             cursor: 'pointer',
             color: '#6c757d'
+        },
+        imageSection: {
+            display: 'flex',
+            flexDirection: 'row',
+            gap: '20px',
+            flexWrap: 'wrap'
+        },
+        imageColumn: {
+            flex: '1',
+            minWidth: '200px'
         }
     };
 
@@ -195,14 +207,16 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     };
 
     const handlePrevImage = () => {
+        const images = imageType === 'warranty' ? warranty?.images : warranty?.bookingId?.images;
         setSelectedImageIndex((prevIndex) =>
-            prevIndex === 0 ? warranty.images.length - 1 : prevIndex - 1
+            prevIndex === 0 ? images.length - 1 : prevIndex - 1
         );
     };
 
     const handleNextImage = () => {
+        const images = imageType === 'warranty' ? warranty?.images : warranty?.bookingId?.images;
         setSelectedImageIndex((prevIndex) =>
-            prevIndex === warranty.images.length - 1 ? 0 : prevIndex + 1
+            prevIndex === images.length - 1 ? 0 : prevIndex + 1
         );
     };
 
@@ -286,6 +300,32 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                             </div>
                                         </div>
                                     </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaCalendarAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Ngày đặt lịch</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.bookingId?.schedule?.startTime
+                                                    ? `${formatDateOnly(warranty.bookingId.schedule.startTime)}`
+                                                    : 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaCalendarAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Thời gian kết thúc dự kiến</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.bookingId?.schedule?.expectedEndTime
+                                                    ? `${formatDateOnly(warranty.bookingId.schedule.expectedEndTime)} `
+                                                    : 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div> */}
                                     <div className="booking-details-info-card full-width warranty-description-container">
                                         <div className="booking-details-card-icon">
                                             <FaFileAlt />
@@ -301,26 +341,6 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                                 />
                                             </div>
                                         </div>
-                                        {Array.isArray(warranty?.images) && warranty.images.length > 0 && (
-                                            <div className="booking-details-image-stack">
-                                                {warranty.images.map((image, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className="booking-details-image-item stacked"
-                                                        style={{ zIndex: warranty.images.length - index }}
-                                                        onClick={() => {
-                                                            setSelectedImageIndex(index);
-                                                            setShowImageModal(true);
-                                                        }}
-                                                    >
-                                                        <img src={image} alt={`Warranty ${index + 1}`} />
-                                                        <div className="booking-details-image-overlay">
-                                                            <FaEye />
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
                                     </div>
                                     {warranty?.status === 'DENIED' && warranty?.rejectedReason && (
                                         <div className="booking-details-info-card full-width">
@@ -420,6 +440,69 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                         )}
                                     </>
                                 )}
+                            </div>
+                        </div>
+                    </Tab>
+                    <Tab eventKey="images" title={
+                        <div className="booking-details-tab-title">
+                            <FaImage className="booking-details-tab-icon" />
+                            <span>Hình ảnh</span>
+                        </div>
+                    }>
+                        <div className="booking-details-tab-content">
+                            <div className="booking-details-info-section" style={styles.imageSection}>
+                                <div style={styles.imageColumn}>
+                                    <h5>Hình ảnh đặt lịch</h5>
+                                    {Array.isArray(warranty?.bookingId?.images) && warranty.bookingId.images.length > 0 ? (
+                                        <div className="booking-details-image-stack">
+                                            {warranty.bookingId.images.map((image, index) => (
+                                                <div
+                                                    key={`booking-${index}`}
+                                                    className="booking-details-image-item stacked"
+                                                    style={{ zIndex: warranty.bookingId.images.length - index }}
+                                                    onClick={() => {
+                                                        setSelectedImageIndex(index);
+                                                        setImageType('booking');
+                                                        setShowImageModal(true);
+                                                    }}
+                                                >
+                                                    <img src={image} alt={`Booking ${index + 1}`} />
+                                                    <div className="booking-details-image-overlay">
+                                                        <FaEye />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p>Không có hình ảnh đặt lịch</p>
+                                    )}
+                                </div>
+                                <div style={styles.imageColumn}>
+                                    <h5>Hình ảnh bảo hành</h5>
+                                    {Array.isArray(warranty?.images) && warranty.images.length > 0 ? (
+                                        <div className="booking-details-image-stack">
+                                            {warranty.images.map((image, index) => (
+                                                <div
+                                                    key={`warranty-${index}`}
+                                                    className="booking-details-image-item stacked"
+                                                    style={{ zIndex: warranty.images.length - index }}
+                                                    onClick={() => {
+                                                        setSelectedImageIndex(index);
+                                                        setImageType('warranty');
+                                                        setShowImageModal(true);
+                                                    }}
+                                                >
+                                                    <img src={image} alt={`Warranty ${index + 1}`} />
+                                                    <div className="booking-details-image-overlay">
+                                                        <FaEye />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p>Không có hình ảnh bảo hành</p>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </Tab>
@@ -723,7 +806,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 keyboard={false}
             >
                 <Modal.Header style={styles.modalHeader}>
-                    <Modal.Title>Hình ảnh bảo hành</Modal.Title>
+                    <Modal.Title>{imageType === 'warranty' ? 'Hình ảnh bảo hành' : 'Hình ảnh đặt lịch'}</Modal.Title>
                     <button
                         style={styles.closeBtn}
                         onClick={() => {
@@ -735,7 +818,8 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                     </button>
                 </Modal.Header>
                 <Modal.Body style={{ ...styles.modalBody, position: 'relative' }}>
-                    {warranty?.images && warranty.images.length > 0 && (
+                    {((imageType === 'warranty' && warranty?.images && warranty.images.length > 0) ||
+                      (imageType === 'booking' && warranty?.bookingId?.images && warranty.bookingId.images.length > 0)) && (
                         <div
                             style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}
                             onWheel={(e) => {
@@ -747,11 +831,11 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                             }}
                         >
                             <img
-                                src={warranty.images[selectedImageIndex]}
-                                alt={`Warranty ${selectedImageIndex + 1}`}
+                                src={imageType === 'warranty' ? warranty.images[selectedImageIndex] : warranty.bookingId.images[selectedImageIndex]}
+                                alt={`${imageType === 'warranty' ? 'Warranty' : 'Booking'} ${selectedImageIndex + 1}`}
                                 style={{ ...styles.imageModalImage, transform: `scale(${zoomLevel})` }}
                             />
-                            {warranty.images.length > 1 && (
+                            {((imageType === 'warranty' ? warranty.images : warranty.bookingId.images).length > 1) && (
                                 <>
                                     <button
                                         style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnPrev, position: 'absolute', left: '10px' }}

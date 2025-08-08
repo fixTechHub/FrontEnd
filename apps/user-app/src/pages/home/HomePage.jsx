@@ -491,7 +491,7 @@ function HomePage() {
             </div>
           </div>
         </section>
-        {isAuthenticated && <AIChatbox />}
+        {isAuthenticated && user.role.name==='CUSTOMER' && <AIChatbox />}
         <Footer />
       </div>
     </>
