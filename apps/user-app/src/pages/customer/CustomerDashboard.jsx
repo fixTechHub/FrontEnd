@@ -10,6 +10,7 @@ import { fetchUserCouponsThunk } from '../../features/coupons/couponSlice';
 import apiClient from '../../services/apiClient';
 import { formatDate } from '../../utils/formatDate';
 
+import NotificationPage from '../notifications/NotificationPage'
 // ---------- Breadcrumb -----------
 const BreadcrumbSection = () => (
 	<div className="breadcrumb-bar">
@@ -44,6 +45,7 @@ const DashboardMenu = ({ activeTab, onSelect }) => (
 								{ icon: "wishlist", text: "KTV yêu thích", section: 'FAVORITES' },
 								{ icon: "payment", text: "Phiếu giảm giá", section: 'COUPONS' },
 								{ icon: "wallet", text: "Hoá đơn", section: 'PAYMENTS' },
+								{ icon: "wallet", text: "Thông báo", section: 'NOTIFICATIONS' },
 
 							].map((item) => (
 								<li key={item.text}>
@@ -577,6 +579,8 @@ function CustomerDashboard() {
 									{ icon: 'tool', title: 'Đơn đã bảo hành', value: warrantyCount, color: 'primary', iconPath: '/img/icons/service-07.svg', size: 32 },
 									{ icon: 'wishlist', title: 'KTV yêu thích', value: favoritesCount, color: 'danger' },
 									{ icon: 'payment', title: 'Phiếu giảm giá', value: couponsCount, color: 'info' },
+									{ icon: 'notification', title: 'Thông báo', value: couponsCount, color: 'info' },
+
 								];
 								return <WidgetsRow stats={widgetsData} />;
 							})()}
@@ -602,6 +606,9 @@ function CustomerDashboard() {
 					)}
 					{activeTab==='PAYMENTS' && (
 						<ReceiptPage />
+					)}
+					{activeTab==='NOTIFICATIONS' && (
+						<NotificationPage />
 					)}
 				</div>
 			</div>

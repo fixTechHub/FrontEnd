@@ -4,6 +4,7 @@ import { Modal, Button, Form } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { proposeWarrantyScheduleThunk, confirmWarrantyScheduleThunk } from "../../features/booking-warranty/warrantySlice"; // Adjust path
 import { formatDate } from "../../utils/formatDate";
+import './Details.css'
 
 function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
     const dispatch = useDispatch();
@@ -22,7 +23,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
     const isTechnician = user?.role?.name === "TECHNICIAN";
 
     // Get current date and calculate tomorrow as the minimum date
-    const today = new Date("2025-07-20T00:08:00+07:00"); // Current date and time
+    const today = new Date();
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
     const minDate = tomorrow.toISOString().split("T")[0]; // e.g., "2025-07-21"
@@ -33,7 +34,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
         return selectedDateTime >= tomorrow;
     };
 
-   
+
 
     const handleProposeSchedule = async (e) => {
         e.preventDefault();
@@ -74,7 +75,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
 
     const handleConfirmSchedule = async (e) => {
         e.preventDefault();
-     
+
 
         if (!startDate || !startTime || !expectedEndDate || !expectedEndTime) {
             toast.error("Vui lòng cung cấp đầy đủ ngày và giờ bắt đầu cũng như kết thúc!", {
@@ -92,7 +93,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
             return;
         }
         const startDateTime = new Date(`${startDate}T${startTime}:00+07:00`);
-      
+
         const endDateTime = new Date(`${expectedEndDate}T${expectedEndTime}:00+07:00`);
         if (endDateTime <= startDateTime) {
             toast.error("Thời gian kết thúc phải sau thời gian bắt đầu!", {
@@ -103,7 +104,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
         }
 
         try {
-            await dispatch(confirmWarrantyScheduleThunk({ bookingWarrantyId, data: { startTime: startDateTime.toISOString(),expectedEndTime: endDateTime.toISOString() } })).unwrap();
+            await dispatch(confirmWarrantyScheduleThunk({ bookingWarrantyId, data: { startTime: startDateTime.toISOString(), expectedEndTime: endDateTime.toISOString() } })).unwrap();
             toast.success("Xác nhận lịch bảo hành thành công!", {
                 position: "top-right",
                 autoClose: 5000,
@@ -115,7 +116,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
             setExpectedEndTime("");
             if (onWarrantyUpdated) onWarrantyUpdated();
         } catch (error) {
-            toast.error(error.message , {
+            toast.error(error.message, {
                 position: "top-right",
                 autoClose: 5000,
             });
@@ -247,8 +248,8 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
             borderRadius: "8px",
             transition: "background-color 0.2s ease, transform 0.1s ease",
         },
-      
-        
+
+
     };
 
     return (
@@ -262,32 +263,151 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
                         {loadingSchedule.propose && <p style={styles.loadingText}>Đang tải...</p>}
                         {loadingSchedule.confirm && <p style={styles.loadingText}>Đang tải...</p>}
                         {!loadingSchedule.propose && !loadingSchedule.confirm && !error && warranty && (
-                            <ul style={styles.scheduleList}>
+                            <div className="schedule-container">
                                 {warranty.proposedSchedule && (
-                                    <li style={styles.scheduleItem}>
-                                        <span style={styles.detailLabel}>Lịch đề xuất:</span>
-                                        <span style={styles.detailValue}>
-                                            {formatDate(warranty.proposedSchedule) || "Không có dữ liệu"}
-                                        </span>
-                                    </li>
+                                    <div className="schedule-card proposed-schedule">
+                                        <div className="schedule-card-header">
+                                            <div className="schedule-icon">
+                                                <i className="bx bx-calendar-event"></i>
+                                            </div>
+                                            <div className="schedule-info">
+                                                <h6 className="schedule-title">Lịch đề xuất</h6>
+                                            </div>
+                                        </div>
+                                        <div className="schedule-card-body">
+                                            <div className="schedule-datetime">
+                                                <div className="datetime-item">
+                                                    <i className="bx bx-calendar me-2"></i>
+                                                    <span className="datetime-label">Ngày:</span>
+                                                    <span className="datetime-value">
+                                                        {new Date(warranty.proposedSchedule).toLocaleDateString('vi-VN', {
+                                                            weekday: 'long',
+                                                            year: 'numeric',
+                                                            month: 'long',
+                                                            day: 'numeric'
+                                                        })}
+                                                    </span>
+                                                </div>
+                                                <div className="datetime-item">
+                                                    <i className="bx bx-time me-2"></i>
+                                                    <span className="datetime-label">Giờ:</span>
+                                                    <span className="datetime-value">
+                                                        {new Date(warranty.proposedSchedule).toLocaleTimeString('vi-VN', {
+                                                            hour: '2-digit',
+                                                            minute: '2-digit'
+                                                        })}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
+
                                 {warranty.confirmedSchedule && (
-                                    <>
-                                        <li style={styles.scheduleItem}>
-                                            <span style={styles.detailLabel}>Thời gian bắt đầu:</span>
-                                            <span style={styles.detailValue}>
-                                                {formatDate(warranty.confirmedSchedule.startTime) || "Không có dữ liệu"}
-                                            </span>
-                                        </li>
-                                        <li style={styles.scheduleItem}>
-                                            <span style={styles.detailLabel}>Thời gian kết thúc dự kiến:</span>
-                                            <span style={styles.detailValue}>
-                                                {formatDate(warranty.confirmedSchedule.expectedEndTime) || "Không có dữ liệu"}
-                                            </span>
-                                        </li>
-                                    </>
+                                    <div className="schedule-card confirmed-schedule">
+                                        <div className="schedule-card-header">
+                                            <div className="schedule-icon confirmed">
+                                                <i className="bx bx-check-circle"></i>
+                                            </div>
+                                            <div className="schedule-info">
+                                                <h6 className="schedule-title">Lịch đã xác nhận</h6>
+                                                <span className="schedule-status confirmed">Đã xác nhận</span>
+                                            </div>
+                                        </div>
+                                        <div className="schedule-card-body">
+                                            <div className="schedule-timeline">
+                                                <div className="timeline-item start-time">
+                                                    <div className="timeline-dot start"></div>
+                                                    <div className="timeline-content">
+                                                        <h6 className="timeline-title">Bắt đầu</h6>
+                                                        <div className="timeline-datetime">
+                                                            <div className="datetime-row">
+                                                                <i className="bx bx-calendar me-2"></i>
+                                                                <span>
+                                                                    {new Date(warranty.confirmedSchedule.startTime).toLocaleDateString('vi-VN', {
+                                                                        weekday: 'short',
+                                                                        day: '2-digit',
+                                                                        month: '2-digit',
+                                                                        year: 'numeric'
+                                                                    })}
+                                                                </span>
+                                                            </div>
+                                                            <div className="datetime-row">
+                                                                <i className="bx bx-time me-2"></i>
+                                                                <span>
+                                                                    {new Date(warranty.confirmedSchedule.startTime).toLocaleTimeString('vi-VN', {
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit'
+                                                                    })}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div className="timeline-item end-time">
+                                                    <div className="timeline-dot end"></div>
+                                                    <div className="timeline-content">
+                                                        <h6 className="timeline-title">Dự kiến kết thúc</h6>
+                                                        <div className="timeline-datetime">
+                                                            <div className="datetime-row">
+                                                                <i className="bx bx-calendar me-2"></i>
+                                                                <span>
+                                                                    {new Date(warranty.confirmedSchedule.expectedEndTime).toLocaleDateString('vi-VN', {
+                                                                        weekday: 'short',
+                                                                        day: '2-digit',
+                                                                        month: '2-digit',
+                                                                        year: 'numeric'
+                                                                    })}
+                                                                </span>
+                                                            </div>
+                                                            <div className="datetime-row">
+                                                                <i className="bx bx-time me-2"></i>
+                                                                <span>
+                                                                    {new Date(warranty.confirmedSchedule.expectedEndTime).toLocaleTimeString('vi-VN', {
+                                                                        hour: '2-digit',
+                                                                        minute: '2-digit'
+                                                                    })}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="schedule-duration">
+                                                <i className="bx bx-stopwatch me-2"></i>
+                                                <span className="duration-label">Thời gian dự kiến:</span>
+                                                <span className="duration-value">
+                                                    {(() => {
+                                                        const start = new Date(warranty.confirmedSchedule.startTime);
+                                                        const end = new Date(warranty.confirmedSchedule.expectedEndTime);
+                                                        const diffMs = end - start;
+                                                        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                                                        const diffHours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+                                                        if (diffDays > 0) {
+                                                            return `${diffDays} ngày ${diffHours} giờ`;
+                                                        } else {
+                                                            return `${diffHours} giờ`;
+                                                        }
+                                                    })()}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
                                 )}
-                            </ul>
+
+                                {!warranty.proposedSchedule && !warranty.confirmedSchedule && (
+                                    <div className="no-schedule-card">
+                                        <div className="no-schedule-icon">
+                                            <i className="bx bx-calendar-x"></i>
+                                        </div>
+                                        <h6 className="no-schedule-title">Chưa có lịch bảo hành</h6>
+                                        <p className="no-schedule-text">Chưa có lịch bảo hành nào được đề xuất</p>
+                                    </div>
+                                )}
+                            </div>
                         )}
                         {isCustomer && warranty?.status === "CONFIRMED" && !warranty.proposedSchedule && (
                             <Button
@@ -300,7 +420,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
                                 Đề xuất lịch bảo hành
                             </Button>
                         )}
-                        {isTechnician && warranty?.status === "CONFIRMED" && warranty.proposedSchedule  && !warranty.confirmedSchedule &&  (
+                        {isTechnician && warranty?.status === "CONFIRMED" && warranty.proposedSchedule && !warranty.confirmedSchedule && (
                             <Button
                                 style={{ ...styles.btn, ...styles.btnPrimary }}
                                 onClick={() => setShowConfirmModal(true)}
@@ -330,18 +450,8 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
             >
                 <Modal.Header style={styles.modalHeader}>
                     <Modal.Title style={styles.modalTitle}>Đề xuất lịch bảo hành</Modal.Title>
-                    <Button
-                        style={styles.closeBtn}
-                        onClick={() => {
-                            setShowProposeModal(false);
-                            setProposedDate("");
-                            setProposedTime("");
-                        }}
-                        onMouseOver={(e) => Object.assign(e.target.style, styles.closeBtnHover)}
-                        onMouseOut={(e) => Object.assign(e.target.style, styles.closeBtn)}
-                    >
-                        <span>×</span>
-                    </Button>
+                 
+                   
                 </Modal.Header>
                 <Modal.Body style={styles.modalBody}>
                     <Form onSubmit={handleProposeSchedule}>
@@ -377,14 +487,14 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
                                     setProposedDate("");
                                     setProposedTime("");
                                 }}
-                               
+
                             >
                                 Hủy
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={loadingSchedule.propose}
-                               
+
                             >
                                 {loadingSchedule.propose ? "Đang xử lý..." : "Xác nhận"}
                             </Button>
@@ -410,23 +520,11 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
             >
                 <Modal.Header style={styles.modalHeader}>
                     <Modal.Title style={styles.modalTitle}>Xác nhận lịch bảo hành</Modal.Title>
-                    <Button
-                        style={styles.closeBtn}
-                        onClick={() => {
-                            setShowConfirmModal(false);
-                       
-                            setExpectedEndDate("");
-                            setExpectedEndTime("");
-                        }}
-                        onMouseOver={(e) => Object.assign(e.target.style, styles.closeBtnHover)}
-                        onMouseOut={(e) => Object.assign(e.target.style, styles.closeBtn)}
-                    >
-                        <span>×</span>
-                    </Button>
+                    
                 </Modal.Header>
                 <Modal.Body >
                     <Form onSubmit={handleConfirmSchedule}>
-                    <div style={styles.formGroup}>
+                        <div style={styles.formGroup}>
                             <Form.Label style={styles.formLabel}>Ngày bắt đầu <span style={{ color: "#dc3545" }}>*</span></Form.Label>
                             <Form.Control
                                 type="date"
@@ -451,7 +549,7 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
                                 required
                             />
                         </div>
-                      
+
                         <div style={styles.formGroup}>
                             <Form.Label style={styles.formLabel}>Ngày kết thúc dự kiến <span style={{ color: "#dc3545" }}>*</span></Form.Label>
                             <Form.Control
@@ -486,14 +584,14 @@ function BookingWarrantySchedule({ bookingWarrantyId, onWarrantyUpdated }) {
                                     setExpectedEndDate("");
                                     setExpectedEndTime("");
                                 }}
-                            
+
                             >
                                 Hủy
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={loadingSchedule.confirm}
-                             
+
                             >
                                 {loadingSchedule.confirm ? "Đang xử lý..." : "Xác nhận"}
                             </Button>

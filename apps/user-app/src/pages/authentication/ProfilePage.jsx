@@ -24,7 +24,7 @@ import BreadcrumbBar from "../../components/common/BreadcrumbBar";
 import { ROLE_NAMES } from "../../constants/roles";
 import styled from "@emotion/styled";
 import authAPI from "../../features/auth/authAPI";
-// import ContractStatus from '../../components/contracts/ContractStatus';
+import ContractStatus from '../../components/contracts/ContractStatus';
 // import ApproveTechnicianTest from '../../components/admin/ApproveTechnicianTest'
 import apiClient from "../../services/apiClient";
 import TechnicianOnboardingModal from "../../components/common/TechnicianOnboardingModal";
@@ -964,10 +964,24 @@ function ProfilePage() {
             <i className="bi bi-shield-lock-fill"></i> Bảo mật
           </NavLink>
         </NavItem>
+        {user?.role?.name === 'TECHNICIAN' && (
+          <NavItem>
+            <NavLink href="#" active={activeTab === 'contract'} onClick={(e) => {e.preventDefault(); setActiveTab('contract');}}>
+              <i className="bi bi-file-earmark-text-fill"></i> Trạng thái hợp đồng
+            </NavLink>
+          </NavItem>
+        )}
       </NavMenu>
     </SettingsSidebar>
   );
-
+  const renderContractContent = () => (
+    <Section>
+      <SectionHeader>
+        <SectionTitle>Trạng thái hợp đồng</SectionTitle>
+      </SectionHeader>
+      <ContractStatus />
+    </Section>
+  );
   const renderProfileContent = () => (
     <Section>
         <SectionHeader>
@@ -1795,6 +1809,7 @@ function ProfilePage() {
             <SettingsContent>
               {activeTab === 'profile' && renderProfileContent()}
               {activeTab === 'security' && renderSecurityContent()}
+              {activeTab === 'contract' && user?.role?.name === 'TECHNICIAN' && renderContractContent()}
             </SettingsContent>
           </SettingsWrapper>
         </div>

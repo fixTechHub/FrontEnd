@@ -19,6 +19,7 @@ import feedbackReducer from '../features/feedbacks/feedbackSlice';
 import favoritesReducer from '../features/favorites/favoriteSlice';
 import reportReducer from '../features/reports/reportSlice';
 import couponsReducer from '../features/coupons/couponSlice';
+import aiChatReducer from '../features/chatbox/chatboxSlice'
 import technicianSubscriptionReducer from '../features/package/packageSlice';
 import suggestionReducer from '../features/suggestions/suggestionSlice';
 import systemReportReducer from '../features/systemReports/systemReportSlice';
@@ -45,6 +46,7 @@ export const store = configureStore({
     favorites: favoritesReducer,
     report: reportReducer,
     coupons: couponsReducer,
+    aiChat: aiChatReducer,
     technicianSubscription: technicianSubscriptionReducer,
     suggestions: suggestionReducer,
     systemReport: systemReportReducer,

@@ -100,7 +100,7 @@ const handlePrintPDF = (selectedReceipt) => {
             { text: `Dịch Vụ: ${selectedReceipt?.bookingId?.serviceId?.serviceName || 'N/A'}`, margin: [0, 0, 0, 5] },
             { text: `Phương Thức: ${selectedReceipt?.paymentMethod || 'N/A'}`, margin: [0, 0, 0, 5] },
             {
-              text: `Mã Giao Dịch: ${selectedReceipt?.paymentGatewayTransactionId ? maskTransactionId(selectedReceipt.paymentGatewayTransactionId) : 'N/A'}`,
+              text: `Mã Giao Dịch: ${selectedReceipt?.paymentGatewayTransactionId ? maskTransactionId(selectedReceipt.paymentGatewayTransactionId) : 'Tiền Mặt'}`,
               margin: [0, 0, 0, 5],
             },
             { text: `Trạng Thái: ${selectedReceipt?.paymentStatus || 'N/A'}`, margin: [0, 0, 0, 5] },
@@ -132,7 +132,7 @@ const handlePrintPDF = (selectedReceipt) => {
                         { text: formatCurrency(item.price), alignment: 'right' },
                       ])
                     : []),
-                  // ['Phí Dịch Vụ', '1', { text: formatCurrency(selectedReceipt?.serviceAmount || 0), alignment: 'right' }],
+                  ['Phí Dịch Vụ', '1', { text: formatCurrency(selectedReceipt?.serviceAmount || 0), alignment: 'right' }],
                   ['Giảm', '1', { text: `-${formatCurrency(selectedReceipt?.discountAmount || 0)}`, alignment: 'right' }],
                 ],
               },

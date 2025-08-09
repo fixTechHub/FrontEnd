@@ -42,10 +42,9 @@ export const checkBookingAccess = async (dispatch, bookingId, userId, role) => {
             // console.log('canAcceptBooking:', canAcceptBooking);
             // console.log('isAuthorized:', isAuthorized);
         }
-        // console.log(isAuthorized);
-        
+           
         return {
-            isAuthorized,
+            isAuthorized ,
             error: isAuthorized ? null : 'Bạn không có quyền vào trang này ',
         };
     } catch (error) {

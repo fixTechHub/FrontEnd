@@ -190,14 +190,7 @@ const NotificationsPage = ({ userId }) => {
                 >
                   <div className="media d-flex justify-content-between align-items-start">
                     <div className="d-flex flex-grow-1">
-                      <span className="avatar avatar-lg flex-shrink-0">
-                        <img
-                          className="avatar-img rounded-circle"
-                          alt="User Image"
-                          src={notification.userAvatar || '/img/profiles/avatar-01.jpg'}
-                          style={{ width: '40px', height: '40px' }}
-                        />
-                      </span>
+                     
                       <div className="media-body" style={{ marginLeft: '10px' }}>
                         <p className="noti-details">
                           <span className="noti-title">{notification.title}</span>
