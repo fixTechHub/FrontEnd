@@ -21,6 +21,7 @@ import reportReducer from '../features/reports/reportSlice';
 import couponsReducer from '../features/coupons/couponSlice';
 import technicianSubscriptionReducer from '../features/package/packageSlice';
 import suggestionReducer from '../features/suggestions/suggestionSlice';
+import systemReportReducer from '../features/systemReports/systemReportSlice';
 
 export const store = configureStore({
   reducer: {
@@ -45,7 +46,8 @@ export const store = configureStore({
     report: reportReducer,
     coupons: couponsReducer,
     technicianSubscription: technicianSubscriptionReducer,
-    suggestions: suggestionReducer
+    suggestions: suggestionReducer,
+    systemReport: systemReportReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

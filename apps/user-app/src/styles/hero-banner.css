@@ -1343,6 +1343,7 @@ section.banner-section {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
+  display: none;
 }
 
 .particle {
