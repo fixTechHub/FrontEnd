@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Tag, Space, Button, Spin, message, Tabs, Table, Avatar } from 'antd';
+import { Card, Descriptions, Tag, Space, Button, Spin, message, Tabs, Table, Avatar, Modal, Input } from 'antd';
+const { TextArea } = Input;
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { userAPI } from '../../features/users/userAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
@@ -114,7 +115,7 @@ export default function UserDetail() {
       setNotificationContent('');
     }catch(error) {
       console.log(error);
-      message.error('Gửi cảnh cáo thất bại!');
+       message.error('Gửi cảnh cáo thất bại!');
     }
   }
   if (loading) {
@@ -205,7 +206,7 @@ export default function UserDetail() {
     <Modal
     title="Gửi Cảnh Cáo"
     open={isModalOpen}
-    onOk={handleSendWarning}
+    onOk={handleSendWarningToUser}
     onCancel={() => {
       setIsModalOpen(false);
       setNotificationContent('');

@@ -6,7 +6,7 @@ import couponUsageReducer from '../features/couponusages/couponUsageSlice';
 import userReducer from '../features/users/userSlice';
 import reportReducer from '../features/reports/reportSlice';
 import technicianReducer from '../features/technicians/technicianSlice';
-import systemReportReducer from '../features/systemReports/systemReportSlice';
+import systemReportReducer from '../features/systemreports/systemReportSlice';
 import categoryReducer from '../features/categories/categorySlice';
 import warrantyReducer from '../features/warranty/warrantySlice';
 import serviceReducer from '../features/service/serviceSlice';
