@@ -3,7 +3,7 @@ import axios from 'axios';
 // Get API base URL from environment variables
 const getApiBaseUrl = () => {
   // LUÔN LUÔN sử dụng URL của Render để đảm bảo kết nối
-  return 'https://backend-dotnet.onrender.com/api';
+  return 'https://backend-dotnet.onrender.com/api/';
 };
 
 // Create API client
@@ -15,11 +15,15 @@ const ApiBE = axios.create({
   timeout: 15000, // 15 seconds timeout for slow backend
 });
 
+// Always send credentials (cookies) with requests
+ApiBE.defaults.withCredentials = true;
+
 // Add request interceptor for JWT token
 ApiBE.interceptors.request.use(
   (config) => {
-    // Lấy JWT token từ cookie (NodeJS lưu token trong cookie với tên 'token')
-    const token = getCookie('token') || getCookie('jwt_token');
+    // Với HttpOnly cookie, không đọc được token từ JS -> rely on cookies via withCredentials
+    // Nếu backend cũng hỗ trợ header Bearer ngoài cookie, có thể lấy từ cookie không HttpOnly
+    const token = getCookie('AuthToken') || getCookie('token') || getCookie('jwt_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -44,8 +48,17 @@ ApiBE.interceptors.response.use(
   (error) => {
     // Handle 401 errors - token expired or invalid
     if (error.response?.status === 401) {
-      console.log('Unauthorized access - token may be expired');
-      // Có thể redirect đến login page hoặc refresh token
+      try {
+        const isLoginPage = window.location.pathname === '/login';
+        const reqUrl = error?.config?.url || '';
+        // Đừng redirect nếu là bất kỳ endpoint dưới /auth/* để UI xử lý lỗi (hỗ trợ cả 'auth/...')
+        const isAuthEndpoint = (/\/auth\//i.test(reqUrl)) || reqUrl.startsWith('auth/');
+        if (!isLoginPage && !isAuthEndpoint) {
+          window.location.replace('/login');
+        }
+      } catch (_) {
+        // ignore
+      }
     }
     return Promise.reject(error);
   }

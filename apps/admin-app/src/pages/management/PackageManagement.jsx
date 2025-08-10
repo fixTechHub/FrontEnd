@@ -62,7 +62,7 @@ const PackageManagement = () => {
 
 
   const handleEditPackage = (service) => {
-  console.log("👉 CLICK EDIT PACKAGE: ", service); // ✅ log service khi click edit
+  
 
   setFormData({
     id: service._id,  // ✅ id phải có
@@ -73,14 +73,7 @@ const PackageManagement = () => {
     isActive: service.isActive,
   });
 
-  console.log("✅ FORM DATA SAU KHI SET:", {
-    id: service._id,
-    name: service.name,
-    price: service.price,
-    description: service.description,
-    benefit: service.benefit || [],
-    isActive: service.isActive,
-  });
+
 
   setShowEditModal(true);
 };
@@ -110,7 +103,7 @@ const PackageManagement = () => {
   };
 
   const handleSubmit = () => {
-  console.log("🚀 SUBMIT FORM DATA:", formData); // ✅ log trước khi dispatch
+
 
   if (showAddModal) {
     dispatch(createNewPackage(formData));

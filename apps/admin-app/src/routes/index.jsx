@@ -11,15 +11,21 @@ import CategoryManagement from "../pages/management/CategoryManagement";
 import BookingManagement from "../pages/management/BookingManagement";
 import WarrantyManagement from "../pages/management/WarrantyManagement";
 import AdminDashboard from "../pages/home/admin-dashboard";
+import Login from "../pages/auth/Login";
+import ChangePassword from "../pages/auth/ChangePassword";
+import ForgotPassword from "../pages/auth/ForgotPassword";
+import ResetPassword from "../pages/auth/ResetPassword";
 import ServiceManagement from "../pages/management/ServiceManagement";
 import CommissionConfigManagement from '../pages/management/CommissionConfigManagement';
 import CommissionConfigManager from '../pages/admin/commissionConfigManager';
 import FinancialManagement from '../pages/management/FinancialManagement';
 import AdminPackagePage from "../pages/management/PackageManagement";
 import FeedbackAdmin from "../pages/management/FeedbackManagement";
+import UserDetail from "../pages/management/UserDetail";
+import TechnicianDetail from "../pages/management/TechnicianDetail";
 
 //Định nghĩa các route, xác định trang nào sẽ render vào <Outlet /> của AdminLayout, quyết định trang nào là management page.
-export default function AppRoutes() {
+export function AppRoutes() {
   return (
     <Routes>
       <Route path="/admin" element={
@@ -33,6 +39,8 @@ export default function AppRoutes() {
         <Route path="report-management" element={<ReportManagement />} />
         <Route path="system-report-management" element={<SystemReportManagement />} />
         <Route path="user-management" element={<UserManagement />} />
+        <Route path="user-management/:id" element={<UserDetail />} />
+        <Route path="technician-management/:id" element={<TechnicianDetail />} />
         <Route path="technician-management" element={<TechnicianManagement />} />
         <Route path="category-management" element={<CategoryManagement/>} />
         <Route path="warranty-management" element={<WarrantyManagement />} />
@@ -50,6 +58,16 @@ export default function AppRoutes() {
         </AdminRoute>
       } />
       <Route path="*" element={<Navigate to="/admin/admin-dashboard" replace />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/change-password" element={
+        <AdminRoute>
+          <ChangePassword />
+        </AdminRoute>
+      } />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
     </Routes>
   );
 }
+
+export default AppRoutes;

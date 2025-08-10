@@ -22,9 +22,9 @@ const IconUploader = ({ value, onChange, placeholder = "Upload icon image" }) =>
             return false;
         }
 
-        const isLt2M = file.size / 1024 / 1024 < 2;
+        const isLt2M = file.size / 1024 / 1024 < 5;
         if (!isLt2M) {
-            message.error('Kích thước ảnh phải nhỏ hơn 2MB!');
+            message.error('Kích thước ảnh phải nhỏ hơn 5MB!');
             return false;
         }
 

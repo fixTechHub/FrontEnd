@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaBell, FaUserCircle, FaDownload, FaServer } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
 import { Modal, Dropdown, Switch, Input } from 'antd';
 import { ReactSortable } from 'react-sortablejs';
+import { useNavigate } from 'react-router-dom';
+import ApiBE from '../../services/ApiBE';
 
 const AdminHeader = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [useDotNetBackend, setUseDotNetBackend] = useState(true);
+  const navigate = useNavigate();
   
   // Dữ liệu mẫu cho export - sẽ được cập nhật từ trang hiện tại
   const [exportData, setExportData] = useState([]);
@@ -21,15 +24,29 @@ const AdminHeader = () => {
   const [sheetName, setSheetName] = useState(defaultSheetName);
 
   // Cập nhật columnsState khi exportColumns thay đổi
-  React.useEffect(() => {
+  useEffect(() => {
     setColumnsState(exportColumns.map(col => ({ ...col, checked: true })));
   }, [exportColumns]);
 
   // Cập nhật fileName và sheetName khi default values thay đổi
-  React.useEffect(() => {
+  useEffect(() => {
     setFileName(defaultFileName);
     setSheetName(defaultSheetName);
   }, [defaultFileName, defaultSheetName]);
+
+  // Fetch current user info from backend via cookie
+  const [userInfo, setUserInfo] = useState(null);
+  useEffect(() => {
+    const loadMe = async () => {
+      try {
+        const res = await ApiBE.get('auth/me', { withCredentials: true });
+        setUserInfo(res?.data || null);
+      } catch (e) {
+        setUserInfo(null);
+      }
+    };
+    loadMe();
+  }, []);
 
   const handleServerSwitch = (checked) => {
     setUseDotNetBackend(checked);
@@ -131,20 +148,41 @@ const AdminHeader = () => {
       key: 'profile',
       label: (
         <div style={{ padding: '8px 0' }}>
-          <div style={{ fontWeight: 'bold' }}>Admin User</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>admin@fixtech.com</div>
-          <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>
-            🟢 .NET Backend
-          </div>
+          <div style={{ fontWeight: 'bold' }}>{userInfo?.fullName || 'Admin'}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>{userInfo?.email || ''}</div>
+          {userInfo?.role && (
+            <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>Role: {userInfo.role}</div>
+          )}
         </div>
       ),
       disabled: true
     },
+    { type: 'divider' },
     {
-      type: 'divider'
+      key: 'change-password',
+      label: 'Change Password'
     },
-    
+    {
+      key: 'logout',
+      label: 'Logout'
+    }
   ];
+
+  const onUserMenuClick = async ({ key }) => {
+    if (key === 'change-password') {
+      navigate('/change-password');
+      return;
+    }
+    if (key === 'logout') {
+      try {
+        await ApiBE.post('auth/logout', {}, { withCredentials: true });
+      } catch (e) {
+        // ignore
+      } finally {
+        navigate('/login', { replace: true });
+      }
+    }
+  };
 
   return (
     <header className="admin-header" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: 16, background: '#fff', borderBottom: '1px solid #eee' }}>
@@ -153,9 +191,9 @@ const AdminHeader = () => {
           <FaDownload /> Export
         </button>
         <FaBell className="icon" style={{ fontSize: 22, color: '#FFA726', marginLeft: 8, cursor: 'pointer' }} />
-        
-        
-        <FaUserCircle className="icon" style={{ fontSize: 28, color: '#888', marginLeft: 8, cursor: 'pointer' }} />
+        <Dropdown menu={{ items: userMenuItems, onClick: onUserMenuClick }} trigger={["click"]} placement="bottomRight">
+          <FaUserCircle className="icon" style={{ fontSize: 28, color: '#888', marginLeft: 8, cursor: 'pointer' }} />
+        </Dropdown>
       </div>
 
       {/* Export Modal */}

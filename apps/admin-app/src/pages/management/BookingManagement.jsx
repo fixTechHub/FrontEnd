@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import ApiBE from '../../services/ApiBE';
-import { Modal, Button, Select, Descriptions, Spin } from 'antd';
+import { Modal, Button, Select, Descriptions, Spin, Row, Col, Tag, Divider, Image } from 'antd';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined } from '@ant-design/icons';
 import "../../../public/css/ManagementTableStyle.css";
@@ -32,6 +32,25 @@ const [filterStatus,  setFilterStatus] = useState('');
 const [allServices, setAllServices] = useState([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
+  const getStatusColor = (status) => {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING':
+        return 'default';
+      case 'CONFIRMED':
+        return 'processing';
+      case 'IN_PROGRESS':
+        return 'blue';
+      case 'AWAITING_DONE':
+      case 'WAITING_CONFIRM':
+        return 'gold';
+      case 'DONE':
+        return 'green';
+      case 'CANCELLED':
+        return 'red';
+      default:
+        return 'default';
+    }
+  };
 
 
  useEffect(() => {
@@ -391,159 +410,131 @@ const isDataReady = isUserMapReady && isServiceMapReady;
          </nav>
        </div>
      </div>
-     {showDetailModal && selectedBooking && (
-       <Modal
-         open={showDetailModal}
-         onCancel={() => setShowDetailModal(false)}
-         footer={null}
-         title={null}
-         width={700}
-       >
-         <div style={{background: '#ffffff', borderRadius: 12, overflow: 'hidden'}}>
-           {/* Header Section */}
-           <div style={{background: 'linear-gradient(135deg, #000 0%, #FFAF47 100%)', padding: '24px', color: 'white'}}>
-             <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-               <div>
-                 <div style={{fontSize: '24px', fontWeight: 700, marginBottom: '4px'}}>Booking Details</div>
-                 <div style={{fontSize: '14px', opacity: 0.9}}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
-               </div>
-               <div style={{textAlign: 'right'}}>
-                 <div style={{fontSize: '12px', opacity: 0.8, marginBottom: '4px'}}>Status</div>
-                 <div style={{
-                   background: 'rgba(255,255,255,0.2)', 
-                   padding: '6px 12px', 
-                   borderRadius: '20px',
-                   fontSize: '12px',
-                   fontWeight: 600
-                 }}>
-                   {selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}
-                 </div>
-               </div>
-             </div>
-           </div>
+      {showDetailModal && selectedBooking && (
+        <Modal
+          open={showDetailModal}
+          onCancel={() => setShowDetailModal(false)}
+          footer={null}
+          title={null}
+          width={960}
+          styles={{ body: { padding: 0 } }}
+        >
+          <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)', padding: 24, color: '#fff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 22, fontWeight: 700 }}>Booking Details</div>
+                  <div style={{ fontSize: 13, opacity: 0.9 }}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <Tag color={getStatusColor(selectedBooking.status)} style={{ fontSize: 12, fontWeight: 600 }}>
+                    {selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}
+                  </Tag>
+                </div>
+              </div>
+            </div>
 
-           {/* Main Content */}
-           <div style={{padding: '24px'}}>
-             {/* Basic Information Grid */}
-             <div style={{marginBottom: '24px'}}>
-               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Basic Information</div>
-               <div style={{
-                 display: 'grid',
-                 gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                 gap: '16px'
-               }}>
-                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Customer</div>
-                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                     {userMap[selectedBooking.customerId] || selectedBooking.customerId || "UNKNOWN"}
-                   </div>
-                 </div>
-                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Technician</div>
-                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                     {selectedBooking?.technicianId
-                       ? (technicianMap[selectedBooking.technicianId] ? technicianMap[selectedBooking.technicianId] : "-")
-                       : "UNKNOWN"}
-                   </div>
-                 </div>
-                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Service</div>
-                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                     {serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}
-                   </div>
-                 </div>
-                 <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Location</div>
-                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                     {selectedBooking.location?.address || 'N/A'}
-                   </div>
-                 </div>
-               </div>
-             </div>
+            {/* Body */}
+            <div style={{ padding: 24 }}>
+              <Row gutter={16}>
+                {/* Overview */}
+                <Col span={12}>
+                  <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 12 }}>Overview</div>
+                    <Descriptions size="small" column={1} bordered={false}
+                      items={[
+                        { key: 'service', label: 'Service', children: serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId },
+                        { key: 'location', label: 'Location', children: selectedBooking.location?.address || 'N/A' },
+                        { key: 'scheduledAt', label: 'Schedule', children: (
+                          selectedBooking.schedule?.startTime
+                            ? `${dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}${selectedBooking.schedule?.endTime
+                                ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                                : (selectedBooking.schedule?.expectedEndTime
+                                    ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                                    : '')}`
+                            : 'Not scheduled'
+                        ) },
+                      ]}
+                    />
+                  </div>
+                </Col>
+                {/* People */}
+                <Col span={12}>
+                  <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 12 }}>People</div>
+                    <Descriptions size="small" column={1} bordered={false}
+                      items={[
+                        { key: 'customer', label: 'Customer', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || 'UNKNOWN' },
+                        { key: 'technician', label: 'Technician', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : 'UNKNOWN') },
+                      ]}
+                    />
+                  </div>
+                </Col>
+              </Row>
 
-             {/* Status & Payment Section */}
-             <div style={{marginBottom: '24px'}}>
-               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Status & Payment</div>
-               <div style={{
-                 display: 'grid',
-                 gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                 gap: '12px'
-               }}>
-                 <div style={{textAlign: 'center', background: '#e6f7ff', padding: '12px', borderRadius: '8px'}}>
-                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Payment Status</div>
-                   <div style={{fontSize: '13px', fontWeight: 600, color: '#1890ff'}}>{selectedBooking.paymentStatus}</div>
-                 </div>
-                 <div style={{textAlign: 'center', background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
-                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Urgent</div>
-                   <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888'}}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</div>
-                 </div>
-                 <div style={{textAlign: 'center', background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
-                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Customer Confirmed</div>
-                   <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888'}}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</div>
-                 </div>
-                 <div style={{textAlign: 'center', background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
-                   <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Technician Confirmed</div>
-                   <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888'}}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</div>
-                 </div>
-               </div>
-             </div>
+              <Divider style={{ margin: '16px 0' }} />
 
-             {/* Schedule & Description Section */}
-             <div style={{marginBottom: '24px'}}>
-               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Schedule & Description</div>
-               <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                 <div style={{marginBottom: '12px'}}>
-                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Schedule</div>
-                   <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                     {selectedBooking.schedule?.startTime
-                       ? dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')
-                       : ''}
-                     {selectedBooking.schedule?.endTime
-                       ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
-                       : (selectedBooking.schedule?.expectedEndTime
-                           ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
-                           : '')}
-                   </div>
-                 </div>
-                 <div>
-                   <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Description</div>
-                   <div style={{fontSize: '14px', color: '#333', lineHeight: '1.5'}}>
-                     {selectedBooking.description || 'No description provided'}
-                   </div>
-                 </div>
-               </div>
-             </div>
+              {/* Status & Flags */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Status & Payment</div>
+                <Row gutter={12}>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center', background: '#e6f7ff', padding: 12, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Payment Status</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || 'N/A'}</div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center', background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Urgent</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888' }}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center', background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Customer Confirmed</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center', background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Technician Confirmed</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</div>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
 
-             {/* Images Section */}
-             <div>
-               <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Images</div>
-               <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                 {selectedBooking.images && selectedBooking.images.length > 0 ? (
-                   <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
-                     {selectedBooking.images.map((img, idx) => (
-                       <img 
-                         key={idx} 
-                         src={img} 
-                         alt="booking" 
-                         style={{
-                           width: '80px', 
-                           height: '80px', 
-                           borderRadius: '6px', 
-                           objectFit: 'cover',
-                           border: '1px solid #e9ecef'
-                         }} 
-                       />
-                     ))}
-                   </div>
-                 ) : (
-                   <div style={{color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px'}}>No images available</div>
-                 )}
-               </div>
-             </div>
-           </div>
-         </div>
-       </Modal>
-     )}
+              <Divider style={{ margin: '16px 0' }} />
+
+              {/* Description */}
+              <div style={{ background: '#fafafa', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Description</div>
+                <div style={{ color: '#333' }}>{selectedBooking.description || 'No description provided'}</div>
+              </div>
+
+              {/* Images */}
+              <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Images</div>
+                {selectedBooking.images && selectedBooking.images.length > 0 ? (
+                  <Image.PreviewGroup>
+                    <Row gutter={[8, 8]}>
+                      {selectedBooking.images.map((img, idx) => (
+                        <Col key={idx} span={4}>
+                          <Image src={img} alt="booking" width={80} height={80} style={{ objectFit: 'cover', borderRadius: 6 }} />
+                        </Col>
+                      ))}
+                    </Row>
+                  </Image.PreviewGroup>
+                ) : (
+                  <div style={{ color: '#999', fontSize: 14, textAlign: 'center', padding: 20 }}>No images available</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
    </div>
  );
 };

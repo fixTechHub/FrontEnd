@@ -127,12 +127,12 @@ const FinancialManagement = () => {
 
   const handleFilterChange = (filterType, value) => {
     // TODO: Implement filter logic
-    console.log('Filter changed:', filterType, value);
+    
   };
 
   const handleClearFilters = () => {
     // TODO: Implement clear filter logic
-    console.log('Clear filters');
+    
   };
 
   const handleViewBookingDetails = (booking) => {
@@ -142,7 +142,6 @@ const FinancialManagement = () => {
 
   const handleViewTechnicianDetails = (technicianId) => {
     try {
-      console.log('Viewing technician details for ID:', technicianId);
       
       // Tìm technician từ data có sẵn
       const technician = techniciansFinancialSummary.find(t => t.technicianId === technicianId);
@@ -167,8 +166,6 @@ const FinancialManagement = () => {
       // Tìm bookings của technician này từ data có sẵn
       const technicianBookings = bookingsFinancial.filter(b => b.technicianId === technicianId);
       
-      console.log('Technician details from existing data:', technicianDetails);
-      console.log('Technician bookings from existing data:', technicianBookings);
       
       setSelectedTechnician({ ...technicianDetails, bookings: technicianBookings });
       setIsTechnicianModalVisible(true);

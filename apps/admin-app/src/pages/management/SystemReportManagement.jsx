@@ -93,14 +93,14 @@ const SystemReportManagement = () => {
    const fetchAdminUsers = async () => {
      try {
        const allUsers = await userAPI.getAll();
-       console.log('All users for admin filter:', allUsers.map(u => ({ id: u.id, role: u.role, roleName: u.roleName })));
+       
        const adminUsersList = allUsers.filter(user => 
          user.roleName === 'ADMIN' || 
          user.role === 'ADMIN' || 
          user.role === 'admin' ||
          user.roleName === 'admin'
        );
-       console.log('Admin users found:', adminUsersList.map(u => ({ id: u.id, fullName: u.fullName, roleName: u.roleName })));
+       
        setAdminUsers(adminUsersList);
      } catch (error) {
        console.error('Failed to load admin users:', error);
@@ -303,11 +303,11 @@ const SystemReportManagement = () => {
      title: 'STATUS',
      dataIndex: 'status',
      key: 'status',
-     render: (status) => (
-       <Tag color={getStatusColor(status)}>
-         {status?.toUpperCase()}
-       </Tag>
-     ),
+      render: (status) => (
+        <Tag color={getStatusColor(status)}>
+          {String(status || '').replace(/_/g, ' ').toUpperCase()}
+        </Tag>
+      ),
    },
    {
      title: 'SUBMITTED BY',
@@ -325,12 +325,13 @@ const SystemReportManagement = () => {
      key: 'actions',
      render: (_, record) => (
        <Space>
+        <Button className="management-action-btn" type="default" icon={<EditIcon />} onClick={() => openEditStatusModal(record)}>
+           Edit
+         </Button>
          <Button className="management-action-btn" size="middle" onClick={() => handleViewSystemReportDetails(record)}>
      <EyeOutlined style={{marginRight: 4}} />View Detail
    </Button>
-         <Button className="management-action-btn" type="default" icon={<EditIcon />} onClick={() => openEditStatusModal(record)}>
-           Edit
-         </Button>
+         
        </Space>
      ),
    },
@@ -493,47 +494,123 @@ const SystemReportManagement = () => {
        </Card>
 
 
-       {/* System Report Details Modal */}
-       {isModalVisible && selectedSystemReport && (
-         <Modal
-           open={isModalVisible}
-           onCancel={() => setIsModalVisible(false)}
-           footer={null}
-           title={null}
-           width={600}
-         >
-           <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
-             <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
-               <div style={{flex: 1}}>
-                 <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>
-                   <span style={{marginRight: 12}}>{selectedSystemReport.title}</span>
-                   <Tag color={getTagColor(selectedSystemReport.tag)} style={{fontSize: 14, padding: '2px 12px', marginRight: 8}}>{selectedSystemReport.tag?.toUpperCase()}</Tag>
-                   <Tag color={getStatusColor(selectedSystemReport.status)} style={{fontSize: 14, padding: '2px 12px'}}>{selectedSystemReport.status?.toUpperCase()}</Tag>
-                 </div>
-               </div>
-             </div>
-             <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
-             <div style={{marginBottom: 16}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
-               <div>{selectedSystemReport.description}</div>
-             </div>
-             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Submitted By</div>
-                 <div>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || "UNKNOWN"}</div>
-               </div>
-                               <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolved By</div>
-                  <div>{userMap[selectedSystemReport.resolvedBy] || selectedSystemReport.resolvedBy || 'Chưa có'}</div>
+        {/* System Report Details Modal */}
+        {isModalVisible && selectedSystemReport && (
+          <Modal
+            open={isModalVisible}
+            onCancel={() => setIsModalVisible(false)}
+            footer={null}
+            title={null}
+            width={960}
+            styles={{ body: { padding: 0, borderRadius: 16, overflow: 'hidden' } }}
+          >
+            <div style={{ background: '#fff', borderRadius: 16 }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+                padding: '20px 24px',
+                color: '#fff'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>
+                    {selectedSystemReport.title || 'SYSTEM REPORT'}
+                  </div>
+                  <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                    {selectedSystemReport.tag?.toUpperCase()}
+                  </Tag>
                 </div>
-               <div style={{gridColumn: '1 / span 2'}}>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolution Note</div>
-                 <div>{selectedSystemReport.resolutionNote || 'Chưa có'}</div>
-               </div>
-             </div>
-           </div>
-         </Modal>
-       )}
+                {selectedSystemReport.id && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: 14 }}>Report ID: {selectedSystemReport.id}</span>
+                  </div>
+                )}
+              </div>
+              <div style={{ padding: 24 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {/* Overview */}
+                  <div>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                      <div style={{ display: 'grid', rowGap: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Status</span>
+                          <span style={{ fontWeight: 600 }}>{(selectedSystemReport.status ? String(selectedSystemReport.status).replace(/_/g, ' ').toUpperCase() : 'N/A')}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Created At</span>
+                          <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport.createdAt)}</span>
+                        </div>
+                        {selectedSystemReport.updatedAt && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#8c8c8c' }}>Updated At</span>
+                            <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport.updatedAt)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {/* People */}
+                  <div>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                      <div style={{ display: 'grid', rowGap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Submitted By</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || 'UNKNOWN'}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Resolved By</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.resolvedBy] || selectedSystemReport.resolvedBy || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Description full width */}
+                  <div style={{ gridColumn: '1 / span 2' }}>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Description</div>
+                      <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                        {selectedSystemReport.description || 'No description'}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Resolution Note full width if any */}
+                  {selectedSystemReport.resolutionNote && (
+                    <div style={{ gridColumn: '1 / span 2' }}>
+                      <div style={{
+                        background: '#ffffff',
+                        border: '1px solid #f0f0f0',
+                        borderRadius: 12,
+                        padding: 16,
+                      }}>
+                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Resolution Note</div>
+                        <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                          {selectedSystemReport.resolutionNote}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Modal>
+        )}
 
 
        {/* Modal Edit Status */}

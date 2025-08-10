@@ -1,9 +1,25 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button } from 'react-bootstrap';
-import { Line, Bar } from 'react-chartjs-2';
-import { Modal } from 'antd';
+import { Card, Button, Row, Col, Statistic, Progress, Avatar, Tag, Space, Tooltip, Badge } from 'antd';
+import '../../styles/dashboard.css';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { Modal, Descriptions, Divider, Image } from 'antd';
 import { useNavigate } from 'react-router-dom';
-import { EyeOutlined } from '@ant-design/icons';
+import dayjs from 'dayjs';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
+import { 
+  EyeOutlined, 
+  UserOutlined, 
+  DollarOutlined, 
+  ToolOutlined, 
+  CalendarOutlined,
+  StarOutlined,
+  ClockCircleOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  ArrowUpOutlined,
+  ArrowDownOutlined
+} from '@ant-design/icons';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -11,9 +27,10 @@ import {
   PointElement,
   LineElement,
   Title,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
   BarElement,
+  ArcElement,
 } from 'chart.js';
 
 // API imports
@@ -23,13 +40,17 @@ import { userAPI } from '../../features/users/userAPI';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
 
-// Redux actions - import from correct slice files
+// Redux actions
 import { getBookingCountByMonth } from '../../features/bookings/bookingSlice';
 import { getMonthlyRevenue } from '../../features/statistics/statisticSlice';
 import { getTechnicianCountByMonth } from '../../features/technicians/technicianSlice';
 
 // API functions
 import { fetchMonthlyRevenue } from '../../features/statistics/statisticAPI';
+
+// Initialize dayjs plugins
+dayjs.extend(utc);
+dayjs.extend(timezone);
 
 // Register Chart.js components
 ChartJS.register(
@@ -38,51 +59,15 @@ ChartJS.register(
   PointElement,
   LineElement,
   Title,
-  Tooltip,
+  ChartTooltip,
   Legend,
-  BarElement
+  BarElement,
+  ArcElement
 );
 
 const AdminDashboard = () => {
-  // Chart options
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: { 
-        enabled: true,
-        callbacks: {
-          label: function(context) {
-            return Math.round(context.parsed.y).toLocaleString();
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        display: true,
-        ticks: {
-          display: true,
-          font: { size: 12 },
-          maxRotation: 0
-        }
-      },
-      y: { 
-        display: false,
-        ticks: {
-          callback: function(value) {
-            return Math.round(value).toLocaleString();
-          }
-        }
-      },
-    },
-    elements: {
-      point: { radius: 0 },
-    },
-  };
-
   const navigate = useNavigate();
+  
   // State variables
   const [percentChange, setPercentChange] = useState(0);
   const [percentTechnicianChange, setPercentTechnicianChange] = useState(0);
@@ -100,25 +85,136 @@ const AdminDashboard = () => {
   const [revenueThisYear, setRevenueThisYear] = useState(Array(12).fill(0));
   const [revenueLastYear, setRevenueLastYear] = useState(Array(12).fill(0));
   const [revenueChartLoading, setRevenueChartLoading] = useState(false);
-  const [technicianName, setTechnicianName] = useState('');
   const [technicianMap, setTechnicianMap] = useState({});
   const [userMap, setUserMap] = useState({});
   const [serviceMap, setServiceMap] = useState({});
-  
-  // Tính tổng booking của tháng hiện tại
+  const [dashboardStats, setDashboardStats] = useState({
+    totalUsers: 0,
+    totalBookings: 0,
+    totalRevenue: 0,
+    totalTechnicians: 0,
+    pendingBookings: 0,
+    completedBookings: 0,
+    activeTechnicians: 0,
+    averageRating: 0
+  });
+
+  // Chart options for modern design
+  const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { 
+        enabled: true,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        borderColor: '#4CAF50',
+        borderWidth: 1,
+        callbacks: {
+          label: function(context) {
+            return Math.round(context.parsed.y).toLocaleString();
+          }
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        grid: { display: false },
+        ticks: {
+          display: true,
+          font: { size: 10, weight: '500' },
+          color: '#666',
+          maxRotation: 0
+        }
+      },
+      y: { 
+        display: false,
+        grid: { display: false }
+      },
+    },
+    elements: {
+      point: { 
+        radius: 0,
+        hoverRadius: 4,
+        hoverBackgroundColor: '#4CAF50'
+      },
+      line: {
+        tension: 0.4,
+        borderWidth: 2,
+      }
+    },
+  };
+
+  const barChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top',
+        align: 'end',
+        labels: {
+          boxWidth: 12,
+          padding: 15,
+          font: { size: 11, weight: '500' },
+          usePointStyle: true
+        }
+      },
+      tooltip: {
+        enabled: true,
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        titleColor: '#fff',
+        bodyColor: '#fff',
+        borderColor: '#4CAF50',
+        borderWidth: 1,
+        bodyFont: { size: 11 },
+        titleFont: { size: 12 }
+      }
+    },
+    scales: {
+      x: {
+        grid: { display: false },
+        ticks: {
+          display: true,
+          font: { size: 10, weight: '500' },
+          color: '#666',
+          maxRotation: 0
+        }
+      },
+      y: {
+        beginAtZero: true,
+        grid: {
+          borderDash: [3, 3],
+          color: 'rgba(0,0,0,0.05)',
+        },
+        ticks: {
+          display: true,
+          font: { size: 10, weight: '500' },
+          color: '#666',
+          callback: function(value) {
+            return value >= 1000 ? (value/1000).toFixed(1) + 'k' : value;
+          }
+        }
+      },
+    },
+  };
+
+  // Calculate totals
   const nowForBooking = new Date();
-  const currentMonthIndex = nowForBooking.getMonth(); // 0-based
+  const currentMonthIndex = nowForBooking.getMonth();
   const totalBookings = bookingCounts[currentMonthIndex] || 0;
   const lastMonthForBooking = currentMonthIndex === 0 ? 12 : currentMonthIndex;
-  const lastYearForBooking = currentMonthIndex === 0 ? nowForBooking.getFullYear() - 1 : nowForBooking.getFullYear();
   const lastMonthIndex = lastMonthForBooking - 1;
   const totalLastMonthBookings = bookingCounts[lastMonthIndex] || 0;
-  // Tính tổng technician của tháng hiện tại
+  
   const nowForTechnician = new Date();
-  const currentMonthIndexTechnician = nowForTechnician.getMonth(); // 0-based
+  const currentMonthIndexTechnician = nowForTechnician.getMonth();
   const totalTechnicians = technicianCounts[currentMonthIndexTechnician] || 0;
-  const lastMonthIndexTechnician = lastMonthIndex;
-  const totalLastMonthTechnicians = technicianCounts[lastMonthIndexTechnician] || 0;
+  const totalLastMonthTechnicians = technicianCounts[lastMonthIndex] || 0;
+  
   const now = new Date();
   const currentYear = now.getFullYear();
   const lastYear = currentYear - 1;
@@ -126,21 +222,21 @@ const AdminDashboard = () => {
   const lastMonthForRevenue = currentMonth === 1 ? 12 : currentMonth - 1;
   const lastYearForRevenue = currentMonth === 1 ? lastYear : currentYear;
 
+  // Fetch dashboard data
   useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch recent bookings
     setRecentBookingsLoading(true);
-    bookingAPI.getAll()
-      .then(async (data) => {
-        // Sắp xếp theo createdAt giảm dần, lấy 5 booking gần nhất
-        const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+        const bookingsData = await bookingAPI.getAll();
+        const sorted = [...bookingsData].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
         
-        // Lấy thông tin user và service cho từng booking với deduplication
         const users = await Promise.all(sorted.map(async b => {
           if (b.customerId && b.customerId.length === 24 && /^[0-9a-fA-F]{24}$/.test(b.customerId)) {
             try {
               const user = await userAPI.getById(b.customerId);
               return user || { fullName: 'Unknown User', email: '', avatarUrl: '' };
             } catch (error) {
-              console.error(`❌ Error fetching user for booking ${b.id}:`, error);
               return { fullName: 'Unknown User', email: '', avatarUrl: '' };
             }
           } else {
@@ -148,14 +244,12 @@ const AdminDashboard = () => {
           }
         }));
         
-        // Lấy thông tin service cho từng booking
         const services = await Promise.all(sorted.map(async b => {
           if (b.serviceId && b.serviceId.length === 24 && /^[0-9a-fA-F]{24}$/.test(b.serviceId)) {
             try {
               const service = await serviceAPI.getById(b.serviceId);
               return service || { serviceName: 'Unknown Service', description: '' };
             } catch (error) {
-              console.error(`❌ Error fetching service for booking ${b.id}:`, error);
               return { serviceName: 'Unknown Service', description: '' };
             }
           } else {
@@ -169,17 +263,14 @@ const AdminDashboard = () => {
           service: services[i]
         }));
         setRecentBookings(withUserAndService);
-      })
-      .catch(() => setRecentBookings([]))
-      .finally(() => setRecentBookingsLoading(false));
 
+        // Fetch top technicians
     setTopTechniciansLoading(true);   
-    technicianAPI.getAll()
-      .then(async (data) => {
-        // Sắp xếp theo ratingAverage giảm dần, lấy top 5
-        const sorted = [...data].sort((a, b) => b.ratingAverage - a.ratingAverage).slice(0, 5);
-        // Sử dụng thông tin user đã có sẵn trong TechnicianDto từ BE
-        const withUser = sorted.map(t => ({ 
+        const techniciansData = await technicianAPI.getAll();
+        const sortedTechnicians = [...techniciansData]
+          .sort((a, b) => b.ratingAverage - a.ratingAverage)
+          .slice(0, 6)
+          .map(t => ({ 
           ...t, 
           user: {
             fullName: t.fullName || 'Unknown User',
@@ -187,31 +278,75 @@ const AdminDashboard = () => {
             avatarUrl: ''
           }
         }));
-        setTopTechnicians(withUser);
-      })
-      .catch(() => setTopTechnicians([]))
-      .finally(() => setTopTechniciansLoading(false));
+        setTopTechnicians(sortedTechnicians);
 
-    // Lấy doanh thu từng tháng cho 2 năm
-    async function fetchYearlyRevenue(year) {
-      const results = await Promise.all(
+        // Calculate dashboard stats
+        const totalUsers = bookingsData.length;
+        const totalRevenue = revenueCounts.reduce((sum, rev) => sum + rev, 0);
+        const pendingBookings = bookingsData.filter(b => b.status === 'PENDING').length;
+        // Count bookings with status = 'DONE' (completed jobs)
+        const completedBookings = bookingsData.filter(b => b.status === 'DONE').length;
+        // Count technicians with AVAILABILITY = 'FREE' (available for new bookings)
+        const activeTechnicians = techniciansData.filter(t => t.availability === 'FREE').length;
+        const averageRating = techniciansData.length > 0 
+          ? techniciansData.reduce((sum, t) => sum + (t.ratingAverage || 0), 0) / techniciansData.length 
+          : 0;
+
+        setDashboardStats({
+          totalUsers,
+          totalBookings: totalBookings,
+          totalRevenue,
+          totalTechnicians,
+          pendingBookings,
+          completedBookings,
+          activeTechnicians,
+          averageRating
+        });
+
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      } finally {
+        setRecentBookingsLoading(false);
+        setTopTechniciansLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [revenueCounts, totalBookings, totalTechnicians]);
+
+  // Fetch revenue data
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        const revenueCounts = await Promise.all(
         Array.from({ length: 12 }, (_, i) =>
-          fetchMonthlyRevenue(year, i + 1).then(res => Math.round(res.revenue || 0)).catch(() => 0)
-        )
-      );
-      return results;
-    }
-    setRevenueChartLoading(true);
-    Promise.all([
-      fetchYearlyRevenue(currentYear),
-      fetchYearlyRevenue(lastYear)
-    ]).then(([dataThisYear, dataLastYear]) => {
-      setRevenueThisYear(dataThisYear);
-      setRevenueLastYear(dataLastYear);
-    }).finally(() => setRevenueChartLoading(false));
-  }, [currentYear, lastYear]);
+            ApiBE.get(`/Dashboard/revenue?year=${currentYear}&month=${i + 1}`)
+          )
+        );
+        
+        const revenueData = revenueCounts.map(response => {
+          const value = response.data.revenue || 0;
+          return typeof value === 'number' ? Math.round(value) : 0;
+        });
+        setRevenueCounts(revenueData);
+        
+        const currentMonth = new Date().getMonth();
+        const currentRevenue = revenueData[currentMonth] || 0;
+        setCurrentRevenue(currentRevenue);
+        
+        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+        const lastRevenueValue = revenueData[lastMonth] || 0;
+        const change = lastRevenueValue === 0 ? 0 : ((currentRevenue - lastRevenueValue) / lastRevenueValue) * 100;
+        setPercentRevenueChange(change);
+      } catch (error) {
+        console.error('Error fetching revenue data:', error);
+      }
+    };
+    
+    fetchRevenueData();
+  }, [currentYear]);
 
-  // Fetch booking counts by month
+  // Fetch booking counts
   useEffect(() => {
     const fetchBookingCounts = async () => {
       try {
@@ -227,7 +362,6 @@ const AdminDashboard = () => {
         });
         setBookingCounts(bookingData);
         
-        // Calculate percent change
         const currentMonth = new Date().getMonth();
         const currentCount = bookingData[currentMonth] || 0;
         const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
@@ -242,7 +376,7 @@ const AdminDashboard = () => {
     fetchBookingCounts();
   }, [currentYear]);
 
-  // Fetch technician counts by month
+  // Fetch technician counts
   useEffect(() => {
     const fetchTechnicianCounts = async () => {
       try {
@@ -252,18 +386,31 @@ const AdminDashboard = () => {
           )
         );
         
+
+        
         const technicianData = counts.map(count => {
           const value = count?.count || count || 0;
           return typeof value === 'number' ? value : 0;
         });
+        
+
+
+        
         setTechnicianCounts(technicianData);
         
-        // Calculate percent change
         const currentMonth = new Date().getMonth();
         const currentCount = technicianData[currentMonth] || 0;
         const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
         const lastCount = technicianData[lastMonth] || 0;
+        
+
+
+
+
+        
         const change = lastCount === 0 ? 0 : ((currentCount - lastCount) / lastCount) * 100;
+
+        
         setPercentTechnicianChange(change);
       } catch (error) {
         console.error('Error fetching technician counts:', error);
@@ -273,129 +420,109 @@ const AdminDashboard = () => {
     fetchTechnicianCounts();
   }, [currentYear]);
 
-  // Fetch revenue data
+  // Fetch yearly revenue comparison
   useEffect(() => {
-    const fetchRevenueData = async () => {
-      try {
-        // Fetch revenue counts for all months
-        const revenueCounts = await Promise.all(
+    async function fetchYearlyRevenue(year) {
+      const results = await Promise.all(
           Array.from({ length: 12 }, (_, i) => 
-            ApiBE.get(`/Dashboard/revenue?year=${currentYear}&month=${i + 1}`)
-          )
-        );
-        
-        const revenueData = revenueCounts.map(response => {
-          const value = response.data.revenue || 0;
-          return typeof value === 'number' ? Math.round(value) : 0;
-        });
-        setRevenueCounts(revenueData);
-        
-        // Set current revenue
-        const currentMonth = new Date().getMonth();
-        const currentRevenue = revenueData[currentMonth] || 0;
-        setCurrentRevenue(currentRevenue);
-        
-        // Calculate percent change
-        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-        const lastRevenueValue = revenueData[lastMonth] || 0;
-        const change = lastRevenueValue === 0 ? 0 : ((currentRevenue - lastRevenueValue) / lastRevenueValue) * 100;
-        setPercentRevenueChange(change);
-      } catch (error) {
-        console.error('Error fetching revenue data:', error);
-      }
-    };
+          fetchMonthlyRevenue(year, i + 1).then(res => Math.round(res.revenue || 0)).catch(() => 0)
+        )
+      );
+      return results;
+    }
     
-    fetchRevenueData();
-  }, [currentYear]);
+    setRevenueChartLoading(true);
+    Promise.all([
+      fetchYearlyRevenue(currentYear),
+      fetchYearlyRevenue(lastYear)
+    ]).then(([dataThisYear, dataLastYear]) => {
+      setRevenueThisYear(dataThisYear);
+      setRevenueLastYear(dataLastYear);
+    }).finally(() => setRevenueChartLoading(false));
+  }, [currentYear, lastYear]);
 
+  // Fetch maps
   useEffect(() => {
-    const fetchTechnicianUser = async () => {
-      if (showDetailModal && selectedBooking) {
-        
-        const technicianId = selectedBooking.technicianId;
-        
-        // Kiểm tra xem có technicianId không
-        if (!technicianId) {
-          setTechnicianName('Chưa có thợ được phân công');
-          return;
-        }
+    const fetchMaps = async () => {
+      try {
+        const [technicians, users, services] = await Promise.all([
+          technicianAPI.getAll(),
+          userAPI.getAll(),
+          serviceAPI.getAll()
+        ]);
 
-        // Sử dụng technicianMap nếu có
-        if (technicianMap[technicianId]) {
-          setTechnicianName(technicianMap[technicianId]);
-          return;
-        }
-
-        try {
-            const technician = await technicianAPI.getById(technicianId);
-            if (technician) {
-              setTechnicianName(technician.FullName || technician.Email || 'Thợ không xác định');
-            } else {
-              setTechnicianName('Thợ không xác định');
-            }
-          } catch (error) {
-            console.error('❌ Error fetching technician user:', error);
-            setTechnicianName('Lỗi khi tải thông tin thợ');
-          }
-      } else {
-        setTechnicianName('');
-      }
-    };
-    
-    fetchTechnicianUser();
-  }, [showDetailModal, selectedBooking, technicianMap]);
-
-  // Fetch technician map
-  useEffect(() => {
-    technicianAPI.getAll()
-      .then(technicians => {
-        const map = {};
+        const techMap = {};
         technicians.forEach(t => {
-          map[t.id] = t.fullName || t.FullName || t.email || t.Email || 'Unknown Technician';
+          techMap[t.id] = t.fullName || t.FullName || t.email || t.Email || 'Unknown Technician';
         });
-        setTechnicianMap(map);
-      })
-      .catch(error => {
-        console.error('❌ Error fetching technicians:', error);
-      });
-  }, []);
+        setTechnicianMap(techMap);
 
-  // Fetch user map
-  useEffect(() => {
-    userAPI.getAll()
-      .then(users => {
-        const map = {};
+        const userMap = {};
         users.forEach(u => {
-          map[u.id] = u.fullName || u.FullName || u.email || u.Email || 'Unknown User';
+          userMap[u.id] = u.fullName || u.FullName || u.email || u.Email || 'Unknown User';
         });
-        setUserMap(map);
-      })
-      .catch(error => {
-        console.error('❌ Error fetching users:', error);
-      });
+        setUserMap(userMap);
+
+        const serviceMap = {};
+        services.forEach(s => {
+          serviceMap[s.id] = s.serviceName || s.ServiceName || s.description || 'Unknown Service';
+        });
+        setServiceMap(serviceMap);
+      } catch (error) {
+        console.error('Error fetching maps:', error);
+      }
+    };
+
+    fetchMaps();
   }, []);
 
-  // Fetch service map
-  useEffect(() => {
-    serviceAPI.getAll()
-      .then(services => {
-        const map = {};
-        services.forEach(s => {
-          map[s.id] = s.serviceName || s.ServiceName || s.description || 'Unknown Service';
-        });
-        setServiceMap(map);
-      })
-      .catch(error => {
-        console.error('❌ Error fetching services:', error);
-      });
-  }, []);
+  // Get status color
+  const getStatusColor = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'COMPLETED':
+      case 'DONE':
+        return 'success';
+      case 'PENDING':
+      case 'WAITING':
+        return 'warning';
+      case 'CANCELLED':
+      case 'REJECTED':
+        return 'error';
+      case 'IN_PROGRESS':
+      case 'ACTIVE':
+        return 'processing';
+      default:
+        return 'default';
+    }
+  };
+
+  // Get status icon
+  const getStatusIcon = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'COMPLETED':
+      case 'DONE':
+        return <CheckCircleOutlined />;
+      case 'PENDING':
+      case 'WAITING':
+        return <ClockCircleOutlined />;
+      case 'CANCELLED':
+      case 'REJECTED':
+        return <ExclamationCircleOutlined />;
+      case 'IN_PROGRESS':
+      case 'ACTIVE':
+        return <ArrowUpOutlined />;
+      default:
+        return <ClockCircleOutlined />;
+    }
+  };
 
   return (
     <div className="modern-page- wrapper">
       <div className="modern-content-card">
-        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
+        {/* Header */}
+        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-4">
           <div className="my-auto mb-2">
-            <h4 className="mb-1">Dashboard</h4>
+            <h3 className="mb-1 fw-bold" style={{color: '#1a1a1a'}}>Dashboard Overview</h3>
             <nav>
               <ol className="breadcrumb mb-0">
                 <li className="breadcrumb-item"><a href="/admin">Home</a></li>
@@ -403,484 +530,683 @@ const AdminDashboard = () => {
               </ol>
             </nav>
           </div>
+          <div className="d-flex align-items-center gap-2">
+            <span className="text-muted small">Last updated: {new Date().toLocaleString()}</span>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="d-flex mb-3 flex-wrap gap-3">
-          <Card style={{flex: 1, border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-            <Card.Body className="p-2">
-              <div className="text-muted small mb-0">Total Bookings</div>
-              <div className="d-flex justify-content-between align-items-center">
-                <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {totalBookings}
-                </div>
-                <div className={
-                  `px-1 rounded ${percentChange > 0 ? 'bg-success text-white' : percentChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
-                } style={{fontSize: '0.55rem'}}>
-                  {percentChange > 0 ? `+${percentChange.toFixed(0)}%` :
-                   percentChange < 0 ? `${percentChange.toFixed(0)}%` : '0%'}
-                </div>
-              </div>
-              <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
-              <div style={{height: '60px', marginTop: '2px'}}>
-                <Line data={{
-                  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                  datasets: [
-                    {
-                      label: 'Bookings',
-                      data: bookingCounts,
-                      borderColor: '#4CAF50',
-                      tension: 0.4,
-                      borderWidth: 1.5,
-                    },
-                  ],
-                }} options={chartOptions} />
-              </div>
-            </Card.Body>
-          </Card>
-          
-          <Card style={{flex: 1, border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-            <Card.Body className="p-2">
-              <div className="text-muted small mb-0">Total Revenue</div>
-              <div className="d-flex justify-content-between align-items-center">
-                <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {Math.round(currentRevenue).toLocaleString()}
-                </div>
-                <div className={
-                  `px-1 rounded ${percentRevenueChange > 0 ? 'bg-success text-white' : percentRevenueChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
-                } style={{fontSize: '0.55rem'}}>
-                  {percentRevenueChange > 0 ? `+${percentRevenueChange.toFixed(0)}%` :
-                   percentRevenueChange < 0 ? `${percentRevenueChange.toFixed(0)}%` : '0%'}
-                </div>
-              </div>
-              <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
-              <div style={{height: '60px', marginTop: '2px'}}>
-                <Line data={{
-                  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                  datasets: [
-                    {
-                      label: 'Revenue',
-                      data: revenueCounts,
-                      borderColor: '#FF9800',
-                      tension: 0.4,
-                      borderWidth: 1.5,
-                    },
-                  ],
-                }} options={chartOptions} />
-              </div>
-            </Card.Body>
-          </Card>
-          
-          <Card style={{flex: 1, border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-            <Card.Body className="p-2">
-              <div className="text-muted small mb-0">Total Technicians</div>
-              <div className="d-flex justify-content-between align-items-center">
-                <div className="fw-bold" style={{fontSize: '0.9rem'}}>
-                  {totalTechnicians}
-                </div>
-                <div className={
-                  `px-1 rounded ${percentTechnicianChange > 0 ? 'bg-success text-white' : percentTechnicianChange < 0 ? 'bg-danger text-white' : 'bg-secondary text-white'}`
-                } style={{fontSize: '0.55rem'}}>
-                  {percentTechnicianChange > 0 ? `+${percentTechnicianChange.toFixed(0)}%` :
-                   percentTechnicianChange < 0 ? `${percentTechnicianChange.toFixed(0)}%` : '0%'}
-                </div>
-              </div>
-              <div style={{fontSize: '0.55rem', color: '#666'}}>Compare last month</div>
-              <div style={{height: '60px', marginTop: '2px'}}>
-                <Line data={{
-                  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                  datasets: [
-                    {
-                      label: 'Technicians',
-                      data: technicianCounts,
-                      borderColor: '#2196F3',
-                      tension: 0.4,
-                      borderWidth: 1.5,
-                    },
-                  ],
-                }} options={chartOptions} />
-              </div>
-            </Card.Body>
-          </Card>
-        </div>
-
-        {/* Recent Bookings Table */}
-        <div className="mb-3" style={{minWidth: '680px'}}>
-          <Card style={{border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-            <div className="py-2 px-2 border-bottom d-flex justify-content-between align-items-center position-sticky top-0 bg-white" style={{zIndex: 10}}>
-              <span className="fw-medium small">Recent Bookings</span>
-              <Button variant="outline-primary" size="sm" className="py-0 px-1" style={{fontSize: '0.6rem'}} onClick={() => navigate('/admin/booking-management')}>
-                <EyeOutlined style={{marginRight: 4}} />View
-              </Button>
-            </div>
-            <div className="table-responsive">
-              <table className="table table-hover small mb-0">
-                <thead className="position-sticky top-0 bg-white" style={{zIndex: 5}}>
-                  <tr>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>CODE</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>CUSTOMER</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>SERVICE</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>SCHEDULE</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>STATUS</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', fontWeight: 'normal', color: '#666'}}>PAYMENT</th>
-                    <th style={{fontSize: '0.65rem', padding: '0.5rem', textAlign: 'right', fontWeight: 'normal', color: '#666'}}>ACTION</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {recentBookingsLoading ? (
-                    <tr><td colSpan={7} className="text-center">Loading...</td></tr>
-                  ) : recentBookings.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center">No bookings found</td></tr>
-                  ) : recentBookings.map((booking) => {
-                    return (
-                      <tr key={booking.id}>
-                        <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.bookingCode}</td>
-                        <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>
-                          {typeof booking.user?.fullName === 'string' ? booking.user.fullName : ''}
-                        </td>
-                        <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>
-                          {typeof booking.service?.serviceName === 'string' ? booking.service.serviceName : 'Unknown Service'}
-                        </td>
-                        
-                        <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>
-                          {booking.schedule?.startTime ? new Date(booking.schedule.startTime).toLocaleString() : ''}
-                          {booking.schedule?.endTime
-                            ? ` - ${new Date(booking.schedule.endTime).toLocaleString()}`
-                            : (booking.schedule?.expectedEndTime ? ` - ${new Date(booking.schedule.expectedEndTime).toLocaleString()}` : '')}
-                        </td>
-                        <td style={{padding: '0.5rem'}}>
-                          <span className={`badge rounded-pill ${
-                            booking.status === 'Active' ? 'bg-success' : 
-                            booking.status === 'Pending' ? 'bg-warning' : 
-                            'bg-info'}`} 
-                            style={{fontSize: '0.55rem', padding: '3px 6px'}}>
-                            {booking.status.replace(/_/g, ' ')}
-                          </span>
-                        </td>
-                        <td style={{padding: '0.5rem', fontSize: '0.65rem'}}>{booking.paymentStatus}</td>
-                        <td style={{padding: '0.5rem', textAlign: 'right'}}>
-                          <button className="btn btn-light btn-sm p-0 me-1" 
-                                 style={{width: "20px", height: "20px"}}
-                                 onClick={async () => { 
-                                   try {
-                                     // Tìm booking trong recentBookings trước
-                                     const existingBooking = recentBookings.find(b => b.id === booking.id);
-                                     if (existingBooking && existingBooking.technician) {
-                                       setSelectedBooking(existingBooking);
-                                       setShowDetailModal(true);
-                                     } else {
-                                       // Nếu không tìm thấy, fetch từ API
-                                       const detailedBooking = await bookingAPI.getById(booking.id);
-                                       setSelectedBooking(detailedBooking);
-                                       setShowDetailModal(true);
-                                     }
-                                   } catch (error) {
-                                     console.error('❌ Error fetching detailed booking:', error);
-                                     // Fallback to booking from recentBookings
-                                     setSelectedBooking(booking);
-                                     setShowDetailModal(true);
-                                   }
-                                 }}>
-                            <EyeOutlined style={{fontSize: '0.6rem'}} />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-        </Card>
-        </div>
-
-        {/* Modal chi tiết booking */}
-        {showDetailModal && selectedBooking && (
-          <Modal
-            open={showDetailModal}
-            onCancel={() => setShowDetailModal(false)}
-            footer={null}
-            title={null}
-            width={700}
-          >
-            <div style={{background: '#ffffff', borderRadius: 12, overflow: 'hidden'}}>
-              {/* Header Section */}
-              <div style={{background: 'linear-gradient(135deg, #000 0%, #FFAF47 100%)', padding: '24px', color: 'white'}}>
-                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-                  <div>
-                    <div style={{fontSize: '24px', fontWeight: 700, marginBottom: '4px'}}>Booking Details</div>
-                    <div style={{fontSize: '14px', opacity: 0.9}}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
-                  </div>
-                  <div style={{textAlign: 'right'}}>
-                    <div style={{fontSize: '12px', opacity: 0.8, marginBottom: '4px'}}>Status</div>
-                    <div style={{
-                      background: 'rgba(255,255,255,0.2)', 
-                      padding: '6px 12px', 
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: 600
-                    }}>
-                      {selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Main Content */}
-              <div style={{padding: '24px'}}>
-                {/* Basic Information Grid */}
-                <div style={{marginBottom: '24px'}}>
-                  <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Basic Information</div>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-                    gap: '16px'
-                  }}>
-                    <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                      <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Customer</div>
-                      <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                        {selectedBooking.user?.fullName || 
-                         selectedBooking.customerName || 
-                         (selectedBooking.customerId && userMap[selectedBooking.customerId]) ||
-                         selectedBooking.customerId || 
-                         'N/A'}
-                      </div>
-                    </div>
-                    <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                      <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Technician</div>
-                      <div style={{
-                        fontSize: '14px', 
-                        fontWeight: 500, 
-                        color: (selectedBooking.technicianId && technicianMap[selectedBooking.technicianId]) ? '#333' : 
-                               selectedBooking.technicianId ? '#666' : '#ff4d4f',
-                        fontStyle: (!selectedBooking.technicianId || !technicianMap[selectedBooking.technicianId]) ? 'italic' : 'normal'
-                      }}>
-                        {selectedBooking.technicianId && technicianMap[selectedBooking.technicianId] ? 
-                         technicianMap[selectedBooking.technicianId] : 
-                         selectedBooking.technicianId ? 'Thợ không xác định' : 'Chưa có thợ được phân công'}
-                      </div>
-                    </div>
-                    <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                      <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Service</div>
-                      <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                        {selectedBooking.service?.serviceName || 
-                         selectedBooking.serviceName || 
-                         (selectedBooking.serviceId && serviceMap[selectedBooking.serviceId]) ||
-                         selectedBooking.serviceId || 
-                         'N/A'}
-                      </div>
-                    </div>
-                    <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                      <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Location</div>
-                      <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                        {selectedBooking.location?.address || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Status & Payment Section */}
-                <div style={{marginBottom: '24px'}}>
-                  <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Status & Payment</div>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                    gap: '12px'
-                  }}>
-                    <div style={{textAlign: 'center', background: '#e6f7ff', padding: '12px', borderRadius: '8px'}}>
-                      <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Payment Status</div>
-                      <div style={{fontSize: '13px', fontWeight: 600, color: '#1890ff'}}>{selectedBooking.paymentStatus}</div>
-                    </div>
-                    <div style={{textAlign: 'center', background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
-                      <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Urgent</div>
-                      <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888'}}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</div>
-                    </div>
-                    <div style={{textAlign: 'center', background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
-                      <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Customer Confirmed</div>
-                      <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888'}}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</div>
-                    </div>
-                    <div style={{textAlign: 'center', background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: '12px', borderRadius: '8px'}}>
-                      <div style={{fontSize: '11px', color: '#666', marginBottom: '4px'}}>Technician Confirmed</div>
-                      <div style={{fontSize: '13px', fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888'}}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Schedule & Description Section */}
-                <div style={{marginBottom: '24px'}}>
-                  <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Schedule & Description</div>
-                  <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                    <div style={{marginBottom: '12px'}}>
-                      <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Schedule</div>
-                      <div style={{fontSize: '14px', fontWeight: 500, color: '#333'}}>
-                        {selectedBooking.schedule?.startTime ? new Date(selectedBooking.schedule.startTime).toLocaleString() : ''}
-                        {selectedBooking.schedule?.endTime
-                          ? ` - ${new Date(selectedBooking.schedule.endTime).toLocaleString()}`
-                          : (selectedBooking.schedule?.expectedEndTime ? ` - ${new Date(selectedBooking.schedule.expectedEndTime).toLocaleString()}` : '')}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{fontSize: '12px', color: '#666', marginBottom: '4px'}}>Description</div>
-                      <div style={{fontSize: '14px', color: '#333', lineHeight: '1.5'}}>
-                        {selectedBooking.description || 'No description provided'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Images Section */}
+        <Row gutter={[16, 16]} className="mb-4">
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="stats-card"
+              style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #ffc107 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(102, 126, 234, 0.15)';
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div style={{fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px'}}>Images</div>
-                  <div style={{background: '#f8f9fa', padding: '16px', borderRadius: '8px'}}>
-                    {selectedBooking.images && selectedBooking.images.length > 0 ? (
-                      <div style={{display: 'flex', gap: '12px', flexWrap: 'wrap'}}>
-                        {selectedBooking.images.map((img, idx) => (
-                          <img 
-                            key={idx} 
-                            src={img} 
-                            alt="booking" 
-                            style={{
-                              width: '80px', 
-                              height: '80px', 
-                              borderRadius: '6px', 
-                              objectFit: 'cover',
-                              border: '1px solid #e9ecef'
-                            }} 
-                          />
-                        ))}
-                      </div>
+                  <div className="text-white-50 small mb-1">Total Bookings of month</div>
+                  <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
+                    {totalBookings.toLocaleString()}
+                </div>
+                  <div className="text-white-50 small mb-2">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
+                  <div className="d-flex align-items-center mt-2">
+                    {percentChange > 0 ? (
+                      <ArrowUpOutlined className="text-success me-1" />
+                    ) : percentChange < 0 ? (
+                      <ArrowDownOutlined className="text-danger me-1" />
                     ) : (
-                      <div style={{color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px'}}>No images available</div>
+                      <span className="text-white-50 me-1">-</span>
                     )}
-                  </div>
+                    <span className={`small ${percentChange > 0 ? 'text-success' : percentChange < 0 ? 'text-danger' : 'text-white-50'}`}>
+                      {percentChange === 0 ? 'No change' : `${Math.abs(percentChange).toFixed(1)}% from last month`}
+                    </span>
+              </div>
+              </div>
+                <div className="stats-icon">
+                  <CalendarOutlined style={{fontSize: '2rem', color: 'rgba(255,255,255,0.8)'}} />
                 </div>
               </div>
-            </div>
-          </Modal>
-        )}
+          </Card>
+          </Col>
 
-        {/* Revenue and technician rating*/}
-        <div className="d-flex" style={{gap: '8px', minWidth: '680px'}}>
-          <Card style={{flex: '2', minWidth: '440px', border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-            <div className="py-2 px-2 border-bottom position-sticky top-0 bg-white" style={{zIndex: 10}}>
-              <span className="fw-medium small">Monthly Revenue</span>
-            </div>
-            <Card.Body className="p-2">
-              <div style={{ height: '120px', position: 'relative', width: '100%' }}>
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="stats-card"
+              style={{
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(240, 147, 251, 0.15)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(240, 147, 251, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(240, 147, 251, 0.15)';
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-between">
+                <div>
+                  <div className="text-white-50 small mb-1">Total Revenue of month</div>
+                  <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
+                    ${currentRevenue.toLocaleString()}
+                </div>
+                  <div className="text-white-50 small mb-2">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
+                  <div className="d-flex align-items-center mt-2">
+                    {percentRevenueChange > 0 ? (
+                      <ArrowUpOutlined className="text-success me-1" />
+                    ) : percentRevenueChange < 0 ? (
+                      <ArrowDownOutlined className="text-danger me-1" />
+                    ) : (
+                      <span className="text-white-50 me-1">-</span>
+                    )}
+                    <span className={`small ${percentRevenueChange > 0 ? 'text-success' : percentRevenueChange < 0 ? 'text-danger' : 'text-white-50'}`}>
+                      {percentRevenueChange === 0 ? 'No change' : `${Math.abs(percentRevenueChange).toFixed(1)}% from last month`}
+                    </span>
+              </div>
+              </div>
+                <div className="stats-icon">
+                  <DollarOutlined style={{fontSize: '2rem', color: 'rgba(255,255,255,0.8)'}} />
+                </div>
+              </div>
+          </Card>
+          </Col>
+
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="stats-card"
+              style={{
+                background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(79, 172, 254, 0.15)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(79, 172, 254, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(79, 172, 254, 0.15)';
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-between">
+                <div>
+                  <div className="text-white-50 small mb-1">Technician's Registion of month</div>
+                  <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
+                    {totalTechnicians.toLocaleString()}
+                </div>
+                  <div className="text-white-50 small mb-2">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </div>
+                  <div className="d-flex align-items-center mt-2">
+                    {percentTechnicianChange > 0 ? (
+                      <ArrowUpOutlined className="text-success me-1" />
+                    ) : percentTechnicianChange < 0 ? (
+                      <ArrowDownOutlined className="text-danger me-1" />
+                    ) : (
+                      <span className="text-white-50 me-1">-</span>
+                    )}
+                    <span className={`small ${percentTechnicianChange > 0 ? 'text-success' : percentTechnicianChange < 0 ? 'text-danger' : 'text-white-50'}`}>
+                      {percentTechnicianChange === 0 ? 'No change' : `${Math.abs(percentTechnicianChange).toFixed(1)}% from last month`}
+                    </span>
+              </div>
+                </div>
+                <div className="stats-icon">
+                  <ToolOutlined style={{fontSize: '2rem', color: 'rgba(255,255,255,0.8)'}} />
+                </div>
+              </div>
+            </Card>
+          </Col>
+
+          <Col xs={24} sm={12} lg={6}>
+            <Card 
+              className="stats-card"
+              style={{
+                background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)',
+                border: 'none',
+                borderRadius: '12px',
+                boxShadow: '0 4px 20px rgba(67, 233, 123, 0.15)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(67, 233, 123, 0.25)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(67, 233, 123, 0.15)';
+              }}
+            >
+              <div className="d-flex align-items-center justify-content-between">
+                <div>
+                  <div className="text-white-50 small mb-1">Total Users</div>
+                  <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
+                    {dashboardStats.totalUsers.toLocaleString()}
+                  </div>
+                  <div className="text-white-50 small mb-2">
+                    {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                  </div>
+                  <div className="d-flex align-items-center mt-2">
+                    <span className="small text-white-50">
+                      {dashboardStats.pendingBookings} pending bookings
+                    </span>
+                  </div>
+                </div>
+                <div className="stats-icon">
+                  <UserOutlined style={{fontSize: '2rem', color: 'rgba(255,255,255,0.8)'}} />
+                </div>
+              </div>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Charts Row */}
+        <Row gutter={[16, 16]} className="mb-4">
+          <Col xs={24} lg={16}>
+            <Card 
+              title={
+                <div className="d-flex align-items-center justify-content-between">
+                  <span className="fw-bold">Revenue Analytics</span>
+                  <div className="d-flex align-items-center gap-2">
+                    <div className="d-flex align-items-center">
+                      <div style={{width: '12px', height: '12px', backgroundColor: '#4CAF50', borderRadius: '50%', marginRight: '6px'}}></div>
+                      <span className="small">This Year</span>
+                    </div>
+                    <div className="d-flex align-items-center">
+                      <div style={{width: '12px', height: '12px', backgroundColor: '#9E9E9E', borderRadius: '50%', marginRight: '6px'}}></div>
+                      <span className="small">Last Year</span>
+                    </div>
+                  </div>
+                </div>
+              }
+              style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}
+            >
+              <div style={{height: '300px', position: 'relative'}}>
                 <Bar
                   data={{
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-                    datasets: [
-                      {
+                  labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                  datasets: [
+                    {
                         label: `${currentYear}`,
                         data: revenueThisYear,
                         backgroundColor: '#4CAF50',
                         borderColor: '#4CAF50',
-                        borderWidth: 1.5,
-                        borderRadius: 4,
-                        barPercentage: 0.6,
-                        categoryPercentage: 0.5,
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8,
                       },
                       {
                         label: `${lastYear}`,
                         data: revenueLastYear,
                         backgroundColor: '#9E9E9E',
                         borderColor: '#9E9E9E',
-                        borderWidth: 1.5,
-                        borderRadius: 4,
-                        barPercentage: 0.6,
-                        categoryPercentage: 0.5,
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8,
                       },
                     ],
                   }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                      legend: {
-                        display: true,
-                        position: 'top',
-                        align: 'end',
-                        labels: {
-                          boxWidth: 8,
-                          padding: 2,
-                          font: { size: 8 }
-                        }
-                      },
-                      tooltip: {
-                        enabled: true,
-                        bodyFont: { size: 8 },
-                        titleFont: { size: 8 }
-                      }
-                    },
-                    scales: {
-                      x: {
-                        grid: { display: false },
-                        ticks: {
-                          display: true,
-                          font: { size: 8 },
-                          maxRotation: 0
-                        }
-                      },
-                      y: {
-                        beginAtZero: true,
-                        grid: {
-                          borderDash: [2],
-                          color: 'rgba(0,0,0,0.05)',
-                        },
-                        ticks: {
-                          display: true,
-                          font: { size: 8 },
-                          callback: function(value) {
-                            return value >= 1000 ? value/1000 + 'k' : value;
-                          }
-                        }
-                      },
-                    },
-                  }}
+                  options={barChartOptions}
                 />
-                {revenueChartLoading && <div style={{position:'absolute',top:0,left:0,right:0,bottom:0,background:'rgba(255,255,255,0.5)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:2}}><span>Loading...</span></div>}
+                {revenueChartLoading && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(255,255,255,0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: '8px'
+                  }}>
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
               </div>
-            </Card.Body>
+        </div>
+                )}
+              </div>
           </Card>
-          
-          <Card style={{flex: '1', minWidth: '220px', border: 'none', borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.05)'}}>
-            <div className="py-2 px-2 border-bottom position-sticky top-0 bg-white d-flex justify-content-between align-items-center" style={{zIndex: 10}}>
-              <span className="fw-medium small">Top Technicians Rating</span>
-              <Button variant="outline-primary" size="sm" className="py-0 px-1" style={{fontSize: '0.6rem'}} onClick={() => navigate('/admin/technician-management')}>
-                <EyeOutlined style={{marginRight: 4}} />View
+          </Col>
+
+          <Col xs={24} lg={8}>
+            <Card 
+              title={
+                <div className="d-flex align-items-center justify-content-between">
+                  <span className="fw-bold">Current figures Statistics</span>
+                  <Button 
+                    type="link" 
+                    size="small" 
+                    onClick={() => navigate('/admin/technician-management')}
+                    className="p-0"
+                  >
+                    View All
               </Button>
             </div>
-            <Card.Body className="p-2">
-              {topTechniciansLoading ? (
-                <div>Loading...</div>
-              ) : topTechnicians.length === 0 ? (
-                <div>No data</div>
-              ) : topTechnicians.map((tech, idx) => (
-                <div className="d-flex justify-content-between align-items-center mb-2" key={tech.id}>
-                  <div className="d-flex align-items-center">
-                    <div className="d-flex align-items-center justify-content-center rounded-circle me-2 bg-primary-subtle" 
-                          style={{width: "28px", height: "28px", overflow: 'hidden'}}>
-                      {tech.user?.avatarUrl ? (
-                        <img src={tech.user.avatarUrl} alt="avatar" style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                      ) : (
-                        <i className="bi bi-person" style={{fontSize: '1.2rem', color: '#888'}}></i>
-                      )}
+              }
+              style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}
+            >
+              <div className="space-y-3">
+                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
+                  <div>
+                    <div className="text-muted small">Pending Bookings</div>
+                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.pendingBookings}</div>
+            </div>
+                  <ClockCircleOutlined style={{fontSize: '1.5rem', color: '#ff9800'}} />
+        </div>
+
+                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
+                  <div>
+                    <div className="text-muted small">Done Bookings</div>
+                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.completedBookings}</div>
+                  </div>
+                  <CheckCircleOutlined style={{fontSize: '1.5rem', color: '#4caf50'}} />
                     </div>
-                    <div>
-                        <div style={{fontSize: '0.85rem', fontWeight: 500}}>{tech.user?.fullName || tech.user?.email || ''}</div>
-                        <div className="text-muted" style={{fontSize: '0.7rem'}}>Jobs: {tech.jobCompleted}</div>
+
+                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
+                  <div>
+                    <div className="text-muted small">Available Technicians</div>
+                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.activeTechnicians}</div>
+                  </div>
+                  <ToolOutlined style={{fontSize: '1.5rem', color: '#2196f3'}} />
+                </div>
+
+                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
+                  <div>
+                    <div className="text-muted small">Avg. Rating</div>
+                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.averageRating.toFixed(1)}</div>
+              </div>
+                  <StarOutlined style={{fontSize: '1.5rem', color: '#ffc107'}} />
+                </div>
+              </div>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Recent Bookings & Top Technicians */}
+        <Row gutter={[16, 16]} style={{alignItems: 'stretch'}}>
+          <Col xs={24} lg={16}>
+            <Card 
+              title={
+                <div className="d-flex align-items-center justify-content-between">
+                  <span className="fw-bold">Recent Bookings</span>
+                  <Button 
+                    type="link" 
+                    size="small" 
+                    onClick={() => navigate('/admin/booking-management')}
+                    className="p-0"
+                  >
+                    View All
+              </Button>
+                      </div>
+              }
+              style={{
+                borderRadius: '12px', 
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              bodyStyle={{flex: 1, display: 'flex', flexDirection: 'column'}}
+            >
+                  {recentBookingsLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                  ) : recentBookings.length === 0 ? (
+                <div className="text-center py-4 text-muted">
+                  <CalendarOutlined style={{fontSize: '2rem', marginBottom: '1rem'}} />
+                  <div>No recent bookings</div>
+                </div>
+              ) : (
+                <div className="space-y-3" style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
+                  {recentBookings.map((booking, index) => (
+                    <div 
+                      key={booking.id} 
+                      className="d-flex align-items-center justify-content-between p-3"
+                      style={{
+                        background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa', 
+                        borderRadius: '8px',
+                        border: index === 0 ? '2px solid #667eea' : '1px solid #e9ecef',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        transform: 'translateY(0)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                        if (index !== 0) {
+                          e.currentTarget.style.background = '#e9ecef';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                        if (index !== 0) {
+                          e.currentTarget.style.background = '#f8f9fa';
+                        }
+                      }}
+                      onClick={() => {
+                                     setSelectedBooking(booking);
+                                     setShowDetailModal(true);
+                      }}
+                    >
+                      <div className="d-flex align-items-center">
+                        <div className="d-flex align-items-center justify-content-center me-3" 
+                             style={{
+                               width: '40px', 
+                               height: '40px', 
+                               borderRadius: '50%',
+                               background: index === 0 ? '#fff' : '#e9ecef',
+                               fontWeight: 'bold',
+                               fontSize: '1.2rem',
+                               color: index === 0 ? '#667eea' : '#666'
+                             }}>
+                          {index + 1}
+                      </div>
+                        <div>
+                          <div className={`fw-bold ${index === 0 ? 'text-white' : ''}`}>
+                            {booking.user?.fullName || 'Unknown User'}
+                    </div>
+                          <div className={`small ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
+                            {booking.service?.serviceName || 'Unknown Service'}
+                      </div>
+                          <div className={`small ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
+                            {booking.schedule?.startTime ? new Date(booking.schedule.startTime).toLocaleDateString() : 'No date'}
+                    </div>
+                      </div>
+                    </div>
+                      <div className="text-end">
+                        <Tag 
+                          color={getStatusColor(booking.status)} 
+                          icon={getStatusIcon(booking.status)}
+                          style={{
+                            background: index === 0 ? 'rgba(255,255,255,0.2)' : undefined,
+                            border: index === 0 ? '1px solid rgba(255,255,255,0.3)' : undefined,
+                            color: index === 0 ? '#fff' : undefined
+                          }}
+                        >
+                          {booking.status?.replace(/_/g, ' ') || 'Unknown'}
+                        </Tag>
+                        <div className={`small mt-1 ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
+                          {booking.bookingCode || booking.id}
+                  </div>
                 </div>
                     </div>
-                    <div style={{fontSize: '0.85rem', fontWeight: 500}}>
-                      <i className="bi bi-star-fill text-warning" style={{marginRight: 2}}></i>
-                      {tech.ratingAverage?.toFixed(2) ?? '0.00'}
+                  ))}
+                </div>
+              )}
+          </Card>
+          </Col>
+
+          <Col xs={24} lg={8}>
+            <Card 
+              title={
+                <div className="d-flex align-items-center justify-content-between">
+                  <span className="fw-bold">Top Technicians</span>
+                  <Button 
+                    type="link" 
+                    size="small" 
+                    onClick={() => navigate('/admin/technician-management')}
+                    className="p-0"
+                  >
+                    View All
+                  </Button>
+                    </div>
+              }
+              style={{
+                borderRadius: '12px', 
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column'
+              }}
+              bodyStyle={{flex: 1, display: 'flex', flexDirection: 'column'}}
+            >
+              {topTechniciansLoading ? (
+                <div className="text-center py-4">
+                  <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                    </div>
+                    </div>
+              ) : topTechnicians.length === 0 ? (
+                <div className="text-center py-4 text-muted">
+                  <ToolOutlined style={{fontSize: '2rem', marginBottom: '1rem'}} />
+                  <div>No technicians found</div>
+                    </div>
+              ) : (
+                <div className="space-y-3" style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
+                  {topTechnicians.map((tech, index) => (
+                    <div 
+                      key={tech.id} 
+                      className="d-flex align-items-center p-3"
+                      style={{
+                        background: index === 0 ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)' : '#f8f9fa',
+                        borderRadius: '8px',
+                        border: index === 0 ? '2px solid #ffc107' : '1px solid #e9ecef',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        transform: 'translateY(0)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                        if (index !== 0) {
+                          e.currentTarget.style.background = '#e9ecef';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                        if (index !== 0) {
+                          e.currentTarget.style.background = '#f8f9fa';
+                        }
+                      }}
+                    >
+                      <div className="d-flex align-items-center justify-content-center me-3" 
+                           style={{
+                             width: '40px', 
+                             height: '40px', 
+                             borderRadius: '50%',
+                             background: index === 0 ? '#fff' : '#e9ecef',
+                             fontWeight: 'bold',
+                             fontSize: '1.2rem',
+                             color: index === 0 ? '#ffc107' : '#666'
+                           }}>
+                        {index + 1}
+                  </div>
+                      <div className="flex-grow-1">
+                        <div className={`fw-bold ${index === 0 ? 'text-white' : ''}`}>
+                          {tech.user?.fullName || 'Unknown Technician'}
+                </div>
+                        <div className={`small ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
+                          Jobs: {tech.jobCompleted || 0}
+                      </div>
+                    </div>
+                      <div className="text-end">
+                        <div className="d-flex align-items-center">
+                          <StarOutlined style={{
+                            color: index === 0 ? '#fff' : '#ffc107', 
+                            marginRight: '4px'
+                          }} />
+                          <span className={`fw-bold ${index === 0 ? 'text-white' : ''}`}>
+                            {tech.ratingAverage?.toFixed(1) || '0.0'}
+                          </span>
+                      </div>
                     </div>
                   </div>
-                ))}
-            </Card.Body>
-          </Card>
+                  ))}
+                </div>
+              )}
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Booking Detail Modal */}
+        {showDetailModal && selectedBooking && (
+          <Modal
+            open={showDetailModal}
+            onCancel={() => setShowDetailModal(false)}
+            footer={null}
+            title={null}
+            width={960}
+            styles={{ body: { padding: 0 } }}
+          >
+            <div style={{background: '#fff', borderRadius: 12, overflow: 'hidden'}}>
+              {/* Header */}
+              <div style={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                padding: 24,
+                color: '#fff'
+              }}>
+                <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                <div>
+                    <div style={{fontSize: 22, fontWeight: 700}}>Booking Details</div>
+                    <div style={{fontSize: 13, opacity: 0.9}}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
+                      </div>
+                  <div style={{textAlign: 'right'}}>
+                    <Tag color={getStatusColor(selectedBooking.status)} style={{fontSize: 12, fontWeight: 600}}>
+                      {selectedBooking.status?.replace(/_/g, ' ') || 'Unknown'}
+                    </Tag>
+                  </div>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: 24 }}>
+                <Row gutter={16}>
+                  {/* Overview */}
+                  <Col span={12}>
+                    <div style={{background: '#fafafa', padding: 16, borderRadius: 8}}>
+                      <div style={{fontWeight: 600, marginBottom: 12}}>Overview</div>
+                      <Descriptions size="small" column={1} bordered={false}
+                        items={[
+                          { key: 'service', label: 'Service', children: selectedBooking.service?.serviceName || 'N/A' },
+                          { key: 'location', label: 'Location', children: selectedBooking.location?.address || 'N/A' },
+                          { key: 'scheduledAt', label: 'Schedule', children: (
+                            selectedBooking.schedule?.startTime
+                              ? `${dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}${selectedBooking.schedule?.endTime
+                                  ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                                  : (selectedBooking.schedule?.expectedEndTime
+                                      ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                                      : '')}`
+                              : 'Not scheduled'
+                          ) },
+                        ]}
+                      />
+            </div>
+                  </Col>
+                  {/* People */}
+                  <Col span={12}>
+                    <div style={{background: '#fafafa', padding: 16, borderRadius: 8}}>
+                      <div style={{fontWeight: 600, marginBottom: 12}}>People</div>
+                      <Descriptions size="small" column={1} bordered={false}
+                        items={[
+                          { key: 'customer', label: 'Customer', children: selectedBooking.user?.fullName || 'N/A' },
+                          { key: 'technician', label: 'Technician', children: (selectedBooking.technicianId && technicianMap[selectedBooking.technicianId]) || 'Not assigned' },
+                        ]}
+                      />
+              </div>
+                  </Col>
+                </Row>
+                <Divider style={{ margin: '16px 0' }} />
+
+                {/* Status & Flags */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>Status & Payment</div>
+                  <Row gutter={12}>
+                    <Col span={6}>
+                      <div style={{ textAlign: 'center', background: '#e6f7ff', padding: 12, borderRadius: 8 }}>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Payment Status</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || 'N/A'}</div>
+            </div>
+                    </Col>
+                    <Col span={6}>
+                      <div style={{ textAlign: 'center', background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Urgent</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888' }}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</div>
+                    </div>
+                    </Col>
+                    <Col span={6}>
+                      <div style={{ textAlign: 'center', background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Customer Confirmed</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</div>
+                </div>
+                    </Col>
+                    <Col span={6}>
+                      <div style={{ textAlign: 'center', background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Technician Confirmed</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</div>
+                    </div>
+                    </Col>
+                  </Row>
+                    </div>
+
+                <Divider style={{ margin: '16px 0' }} />
+
+                {/* Description */}
+                <div style={{background: '#fafafa', padding: 16, borderRadius: 8, marginBottom: 16}}>
+                  <div style={{fontWeight: 600, marginBottom: 8}}>Description</div>
+                  <div style={{ color: '#333' }}>{selectedBooking.description || 'No description provided'}</div>
+                  </div>
+
+                {/* Images */}
+                {selectedBooking.images && selectedBooking.images.length > 0 && (
+                  <div style={{background: '#fafafa', padding: 16, borderRadius: 8}}>
+                    <div style={{fontWeight: 600, marginBottom: 8}}>Images</div>
+                    <Image.PreviewGroup>
+                      <Row gutter={[8,8]}>
+                        {selectedBooking.images.map((img, i) => (
+                          <Col key={i} span={4}>
+                            <Image 
+                              src={img.startsWith('http') ? img : `${process.env.REACT_APP_API_URL}${img}`} 
+                              alt="booking" 
+                              width={80} 
+                              height={80} 
+                              style={{ objectFit: 'cover', borderRadius: 6 }} 
+                            />
+                          </Col>
+                        ))}
+                      </Row>
+                    </Image.PreviewGroup>
         </div>
-        
+                )}
+              </div>
+            </div>
+          </Modal>
+        )}
       </div>
     </div>
   );

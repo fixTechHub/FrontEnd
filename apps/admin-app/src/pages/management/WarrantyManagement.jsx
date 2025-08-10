@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllWarranties, updateWarrantyStatus, updateWarrantyDetails } from '../../features/warranty/warrantySlice';
-import { Modal, Button, Select, Switch, message, Descriptions, Spin, Form, Input, Row, Col } from 'antd';
+import { Modal, Button, Select, Switch, message, Descriptions, Spin, Form, Input, Row, Col, Tag } from 'antd';
 import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
@@ -455,66 +455,159 @@ const handleSortByTechnician = () => {
          onCancel={() => setShowDetailModal(false)}
          footer={null}
          title={null}
-         width={600}
+         width={960}
+         styles={{ body: { padding: 0, borderRadius: 16, overflow: 'hidden' } }}
        >
-         <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
-           <div style={{fontSize: 22, fontWeight: 600, marginBottom: 16}}>Warranty Detail</div>
-           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Booking Code</div>
-               <div>{bookingMap[selectedWarranty.bookingId] || "-"}</div>
+         <div style={{ background: '#fff', borderRadius: 16 }}>
+           <div style={{
+             background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+             padding: '20px 24px',
+             color: '#fff'
+           }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <div style={{ fontSize: 20, fontWeight: 700 }}>
+                 WARRANTY DETAIL
+               </div>
+               <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                 {selectedWarranty.status}
+               </Tag>
              </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Customer</div>
-               <div>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId || 'UNKNOWN'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Technician</div>
-               <div>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId || 'UNKNOWN'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Status</div>
-               <div>{selectedWarranty.status}</div>
-             </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reported Issue</div>
-               <div>{selectedWarranty.reportedIssue}</div>
-             </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolution Note</div>
-               <div>{selectedWarranty.resolutionNote || 'Chưa có'}</div>
-             </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Rejection Reason</div>
-               <div>{selectedWarranty.rejectionReason || 'Chưa có'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Expire At</div>
-               <div>{selectedWarranty.expireAt ? new Date(selectedWarranty.expireAt).toLocaleDateString() : 'Chưa có'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Request Date</div>
-               <div>{new Date(selectedWarranty.requestDate).toLocaleString()}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Is Under Warranty</div>
-               <div>{selectedWarranty.isUnderWarranty ? 'Yes' : 'No'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Is Reviewed By Admin</div>
-               <div>{selectedWarranty.isReviewedByAdmin ? 'Yes' : 'No'}</div>
-             </div>
-             {/* Nếu có trường images hoặc ảnh liên quan trong Warranty Detail, hiển thị như gallery đẹp: */}
-             {selectedWarranty.images && selectedWarranty.images.length > 0 && (
-               <div style={{gridColumn: '1 / span 2'}}>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Images</div>
-                 <div style={{display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', minHeight: 60}}>
-                   {selectedWarranty.images.map((img, idx) => (
-                     <img key={idx} src={img} alt="img" style={{maxWidth: 120, maxHeight: 120, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', objectFit: 'cover'}} />
-                   ))}
-                 </div>
+             {selectedWarranty.id && (
+               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>Warranty ID: {selectedWarranty.id}</span>
                </div>
              )}
+           </div>
+           <div style={{ padding: 24 }}>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+               {/* Overview */}
+               <div>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                   marginBottom: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                   <div style={{ display: 'grid', rowGap: 10 }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Status</span>
+                       <span style={{ fontWeight: 600, color: '#52c41a' }}>{selectedWarranty.status}</span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Under Warranty</span>
+                       <span style={{ fontWeight: 600, color: selectedWarranty.isUnderWarranty ? '#52c41a' : '#ff4d4f' }}>
+                         {selectedWarranty.isUnderWarranty ? 'Yes' : 'No'}
+                       </span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Reviewed By Admin</span>
+                       <span style={{ fontWeight: 600, color: selectedWarranty.isReviewedByAdmin ? '#52c41a' : '#faad14' }}>
+                         {selectedWarranty.isReviewedByAdmin ? 'Yes' : 'No'}
+                       </span>
+                     </div>
+                     
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Expire At</span>
+                       <span style={{ fontWeight: 600 }}>{selectedWarranty.expireAt ? new Date(selectedWarranty.expireAt).toLocaleDateString() : 'N/A'}</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               {/* People */}
+               <div>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                   <div style={{ display: 'grid', rowGap: 12 }}>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Customer</span>
+                       <span style={{ fontWeight: 600 }}>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId || 'UNKNOWN'}</span>
+                     </div>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Technician</span>
+                       <span style={{ fontWeight: 600 }}>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId || 'UNKNOWN'}</span>
+                     </div>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Booking Code</span>
+                       <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bookingMap[selectedWarranty.bookingId] || 'N/A'}</span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Request Date</span>
+                       <span style={{ fontWeight: 600 }}>{new Date(selectedWarranty.requestDate).toLocaleString()}</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Issue Details full width */}
+               <div style={{ gridColumn: '1 / span 2' }}>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                   marginBottom: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Issue Details</div>
+                   <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                     <div style={{ marginBottom: 12 }}>
+                       <div style={{ fontWeight: 600, marginBottom: 4 }}>Reported Issue:</div>
+                       <div style={{ color: '#262626' }}>{selectedWarranty.reportedIssue}</div>
+                     </div>
+                     {selectedWarranty.resolutionNote && (
+                       <div style={{ marginBottom: 12 }}>
+                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Resolution Note:</div>
+                         <div style={{ color: '#262626' }}>{selectedWarranty.resolutionNote}</div>
+                       </div>
+                     )}
+                     {selectedWarranty.rejectionReason && (
+                       <div>
+                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Rejection Reason:</div>
+                         <div style={{ color: '#ff4d4f' }}>{selectedWarranty.rejectionReason}</div>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               </div>
+
+               {/* Images if available */}
+               {selectedWarranty.images && selectedWarranty.images.length > 0 && (
+                 <div style={{ gridColumn: '1 / span 2' }}>
+                   <div style={{
+                     background: '#ffffff',
+                     border: '1px solid #f0f0f0',
+                     borderRadius: 16,
+                     padding: 16,
+                   }}>
+                     <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Related Images</div>
+                     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                       {selectedWarranty.images.map((img, idx) => (
+                         <img 
+                           key={idx} 
+                           src={img} 
+                           alt={`Warranty image ${idx + 1}`} 
+                           style={{
+                             maxWidth: 120, 
+                             maxHeight: 120, 
+                             borderRadius: 8, 
+                             boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+                             objectFit: 'cover',
+                             cursor: 'pointer'
+                           }} 
+                         />
+                       ))}
+                     </div>
+                   </div>
+                 </div>
+               )}
+             </div>
            </div>
          </div>
        </Modal>

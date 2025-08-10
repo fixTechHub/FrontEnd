@@ -1375,7 +1375,6 @@ const handleConfirmUserSelection = () => {
            <thead className="thead-light">
              <tr>
                <th>CODE</th>
-               <th>DESCRIPTION</th>
                <th>TYPE</th>
                <th>VALUE</th>
                <th>ACTION</th>
@@ -1385,7 +1384,6 @@ const handleConfirmUserSelection = () => {
              {deletedCoupons.map((coupon) => (
                <tr key={coupon.id}>
                  <td>{coupon.code}</td>
-                 <td>{coupon.description}</td>
                  <td>{coupon.type}</td>
                  <td>{coupon.value}</td>
                  <td>

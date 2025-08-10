@@ -381,7 +381,7 @@ const isDataReady = categories.length > 0;
        title="Add Category"
        width={600}
      >
-       <Form layout="vertical" onSubmit={handleSubmit}>
+        <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
            <div style={{ color: 'red', marginBottom: 8 }}>
              {validationErrors.general.includes('The dto field is required') ||
@@ -391,35 +391,43 @@ const isDataReady = categories.length > 0;
                : validationErrors.general}
            </div>
          )}
-         <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
-           <Input
-             name="categoryName"
-             value={formData.categoryName}
-             onChange={handleChange}
-             placeholder="Enter category name"
-             required
-             style={{
-               borderColor: formData.categoryName && formData.categoryName.length > 100 ? '#ff4d4f' : undefined,
-               backgroundColor: formData.categoryName && formData.categoryName.length > 100 ? '#fff2f0' : undefined
-             }}
-           />
-         </Form.Item>
-         <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-           <IconUploader
-             value={formData.icon}
-             onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-             placeholder="Upload icon image"
-           />
-         </Form.Item>
-         <Form.Item label="Status">
-           <Switch
-             name="isActive"
-             checked={formData.isActive}
-             onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-             checkedChildren="Active"
-             unCheckedChildren="Inactive"
-           />
-         </Form.Item>
+          <Row gutter={16}>
+            <Col span={16}>
+              <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+                <Input
+                  name="categoryName"
+                  value={formData.categoryName}
+                  onChange={handleChange}
+                  placeholder="Enter category name"
+                  required
+                  maxLength={100}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Status">
+                <Switch
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                  checkedChildren="Active"
+                  unCheckedChildren="Inactive"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+                <IconUploader
+                  value={formData.icon}
+                  onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                  placeholder="Upload icon image"
+                />
+                <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>PNG/SVG, kích thước đề xuất 64x64</div>
+              </Form.Item>
+            </Col>
+          </Row>
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
              Cancel
@@ -439,7 +447,7 @@ const isDataReady = categories.length > 0;
        title="Update Category"
        width={600}
      >
-       <Form layout="vertical" onSubmit={handleSubmit}>
+        <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
            <div style={{ color: 'red', marginBottom: 8 }}>
              {validationErrors.general.includes('The dto field is required') ||
@@ -449,35 +457,44 @@ const isDataReady = categories.length > 0;
                : validationErrors.general}
            </div>
          )}
-         <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
-           <Input
-             name="categoryName"
-             value={formData.categoryName}
-             onChange={handleChange}
-             placeholder="Enter category name"
-             required
-             style={{
-               borderColor: formData.categoryName && formData.categoryName.length > 100 ? '#ff4d4f' : undefined,
-               backgroundColor: formData.categoryName && formData.categoryName.length > 100 ? '#fff2f0' : undefined
-             }}
-           />
-         </Form.Item>
-         <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-           <IconUploader
-             value={formData.icon}
-             onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-             placeholder="Upload icon image"
-           />
-         </Form.Item>
-         <Form.Item label="Status">
-           <Switch
-             name="isActive"
-             checked={formData.isActive}
-             onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-             checkedChildren="Active"
-             unCheckedChildren="Inactive"
-           />
-         </Form.Item>
+          <Row gutter={16}>
+            <Col span={16}>
+              <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+                <Input
+                  name="categoryName"
+                  value={formData.categoryName}
+                  onChange={handleChange}
+                  placeholder="Enter category name"
+                  required
+                  maxLength={100}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Status">
+                <Switch
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                  checkedChildren="Active"
+                  unCheckedChildren="Inactive"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+                <IconUploader
+                  value={formData.icon}
+                  onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                  placeholder="Upload icon image"
+                />
+                <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>PNG/SVG, kích thước đề xuất 64x64</div>
+              </Form.Item>
+            </Col>
+            
+          </Row>
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
              Cancel

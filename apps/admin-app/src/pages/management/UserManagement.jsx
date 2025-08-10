@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { message, Select, Descriptions, Modal, Spin, Button } from 'antd';
 import { userAPI } from '../../features/users/userAPI';
@@ -9,7 +10,8 @@ import { EyeOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import { createExportData, formatDateTime, formatStatus } from '../../utils/exportUtils';
 
 
-const UserManagement = () => {
+ const UserManagement = () => {
+   const navigate = useNavigate();
    const dispatch = useDispatch();
    const filteredUsers = useSelector(selectFilteredUsers);
    const { search } = useSelector(selectUserFilters);
@@ -444,9 +446,9 @@ const UserManagement = () => {
                                                     <LockOutlined style={{ color: 'red', marginRight: 4 }} />Lock
                                                 </Button>
                                                )}
-                                               <Button className="management-action-btn" size="middle" onClick={() => { setSelectedUser(user); setShowDetailModal(true); }}>
-                                                    <EyeOutlined style={{marginRight: 4}} />View Detail
-                                                </Button>
+                                                <Button className="management-action-btn" size="middle" onClick={() => navigate(`/admin/user-management/${user.id}`)}>
+                                                     <EyeOutlined style={{marginRight: 4}} />View Detail
+                                                 </Button>
                                            </div>
                                        </td>
                                    </tr>
