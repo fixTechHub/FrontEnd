@@ -41,8 +41,9 @@ const WarrantyList=()=>{
     const fetch=async()=>{
       try{
         setLoading(true);
-        const res= await apiClient.get('/warranties');
-        setList(res.data||[]);
+        const res = await apiClient.get('/warranties');
+        const arr = Array.isArray(res.data) ? res.data : res.data.warranties || [];
+        setList(arr);
       }catch(err){
         setError(err?.response?.data?.error||'Lỗi');
       }finally{

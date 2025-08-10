@@ -31,10 +31,9 @@ const TechnicianOnboardingModal = () => {
       const hasFrontIdImage = technician.frontIdImage && technician.frontIdImage.trim() !== '';
       const hasBackIdImage = technician.backIdImage && technician.backIdImage.trim() !== '';
       const hasBankAccount = technician.bankAccount && technician.bankAccount.bankName && technician.bankAccount.accountNumber;
-      const hasInspectionFee = technician.inspectionFee && Number(technician.inspectionFee) > 0;
       // Certificates are optional, so not required for profile completion
       
-      return hasSpecialties && hasIdentification && hasFrontIdImage && hasBackIdImage && hasBankAccount && hasInspectionFee;
+      return hasSpecialties && hasIdentification && hasFrontIdImage && hasBackIdImage && hasBankAccount;
     })();
     
     const needComplete = verificationStatus?.step === 'COMPLETE_PROFILE' && !profileCompleted && location.pathname !== '/technician/complete-profile';

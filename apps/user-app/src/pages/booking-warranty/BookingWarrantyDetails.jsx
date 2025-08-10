@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Modal, Button, Form, Tabs, Tab, Alert, Spinner } from "react-bootstrap";
+import BookingReportButton from '../../components/common/BookingReportButton';
 import { getWarrantyInformationThunk, acceptWarrantyThunk, rejectWarrantyThunk, proposeWarrantyScheduleThunk, confirmWarrantyScheduleThunk } from "../../features/booking-warranty/warrantySlice";
 import { formatDateOnly, formatTimeOnly } from "../../utils/formatDate";
 import { BOOKING_WARRANTY_STATUS_CONFIG } from "../../constants/bookingConstants";
@@ -247,12 +248,14 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
 
     return (
         <div className="booking-details-container">
-            <div className="booking-details-header-banner">
-                <div className="booking-details-id">
+            <div className="booking-details-header-banner d-flex justify-content-between align-items-center gap-3">
+                <div className="booking-details-id d-flex align-items-center gap-2">
                     <FaFileAlt className="booking-details-id-icon" />
                     <span>{warranty?.bookingId?.bookingCode || 'Không có mã đơn'}</span>
+                    {/* Report icon next to code */}
+                    <BookingReportButton bookingId={warranty.bookingId?._id} warrantyId={warranty._id} reportedUserId={warranty.technicianId?._id} />
                 </div>
-                <div className="booking-details-status-indicator">
+                <div className="booking-details-status-indicator d-flex align-items-center gap-2">
                     <FaCircle className={`booking-details-status-dot ${statusConfig.className}`} />
                     <span>{warrantyStatusText}</span>
                 </div>

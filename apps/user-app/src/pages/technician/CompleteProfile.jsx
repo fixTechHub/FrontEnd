@@ -141,9 +141,9 @@ const CompleteProfile = () => {
         if (result && result.cccdNumber) {
             const detectedNumber = result.cccdNumber;
             handleCCCDChange(detectedNumber);
-            toast.success(`🎯 Đã nhận diện số CCCD: ${detectedNumber.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4')}`);
+            toast.success(`Đã nhận diện số CCCD: ${detectedNumber.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4')}`);
         } else {
-            toast.error('❌ Không thể nhận diện số CCCD từ ảnh. Vui lòng nhập thủ công.');
+            toast.error('Không thể nhận diện số CCCD từ ảnh. Vui lòng nhập thủ công.');
         }
     };
 
@@ -248,13 +248,13 @@ const CompleteProfile = () => {
                 formDataAll.append('certificates', cert);
             });
 
-            console.log('🚀 Submitting real data to API...');
+            console.log('Submitting real data to API...');
             
             // Call the Redux thunk to submit to backend
             const result = await dispatch(completeTechnicianProfileThunk(formDataAll));
             
             if (completeTechnicianProfileThunk.fulfilled.match(result)) {
-                toast.success('✅ Hồ sơ đã được hoàn thành thành công!');
+                toast.success('Hồ sơ đã được hoàn thành thành công!');
                 // Refresh user data and technician profile
                 await dispatch(checkAuthThunk());
                 // Wait a bit for the user data to be updated, then navigate
@@ -265,7 +265,7 @@ const CompleteProfile = () => {
                 throw new Error(result.payload?.message || 'Có lỗi xảy ra');
             }
         } catch (error) {
-            console.error('❌ Submit error:', error);
+            console.error('Submit error:', error);
             toast.error(error.message || 'Có lỗi xảy ra khi hoàn thành hồ sơ');
         }
     };
@@ -565,6 +565,7 @@ const CompleteProfile = () => {
                                                                     onOCRResult={handleOCRResult}
                                                                     accept="image/*"
                                                                     maxSize={10 * 1024 * 1024} // 10MB
+                                                                    showSelectButton={false}
                                                                 />
                                                             </div>
                                                             <div className="col-md-6">
@@ -575,6 +576,7 @@ const CompleteProfile = () => {
                                                                     onRemove={() => setBackImage(null)}
                                                                     accept="image/*"
                                                                     maxSize={10 * 1024 * 1024} // 10MB
+                                                                    showSelectButton={false}
                                                                 />
                                                             </div>
                                                         </div>

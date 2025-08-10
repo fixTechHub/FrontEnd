@@ -7,7 +7,8 @@ const ImageDropZone = ({
     label = "Upload ảnh",
     accept = "image/*",
     maxSize = 5 * 1024 * 1024, // 5MB
-    onOCRResult = null // Callback for OCR result
+    onOCRResult = null, // Callback for OCR result
+    showSelectButton = true // Whether to render the "Chọn file" button
 }) => {
     const [isDragActive, setIsDragActive] = useState(false);
     const [previewUrl, setPreviewUrl] = useState(null);
@@ -200,14 +201,16 @@ const ImageDropZone = ({
                         <p className="mb-0 small text-muted">
                             Hỗ trợ: JPG, PNG, WEBP (tối đa {Math.round(maxSize / 1024 / 1024)}MB)
                         </p>
-                        <button 
-                            type="button" 
-                            className="btn btn-outline-primary btn-sm mt-3"
-                            onClick={handleClick}
-                        >
-                            <i className="bi bi-folder2-open me-2"></i>
-                            Chọn file
-                        </button>
+                        {showSelectButton && (
+                            <button 
+                                type="button" 
+                                className="btn btn-outline-primary btn-sm mt-3"
+                                onClick={handleClick}
+                            >
+                                <i className="bi bi-folder2-open me-2"></i>
+                                Chọn file
+                            </button>
+                        )}
                     </div>
                 )}
             </div>

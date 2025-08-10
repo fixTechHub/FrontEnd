@@ -3,11 +3,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import { createReportThunk, clearError, clearSuccess } from '../../features/reports/reportSlice';
 import { toast } from 'react-toastify';
 
-const TAGS = [
+const ALL_TAGS = [
   { value: 'NO_SHOW', label: 'Không đến' },
   { value: 'LATE', label: 'Đến muộn' },
   { value: 'RUDE', label: 'Thái độ không tốt' },
-  { value: 'ISSUE', label: 'Có vấn đề' },
+  { value: 'ISSUE', label: 'Có vấn đề phát sinh' },
+  { value: 'WARRANTY_DENIED', label: 'Từ chối bảo hành' },
+  { value: 'WARRANTY_DELAY', label: 'Trì hoãn bảo hành' },
+  { value: 'POOR_FIX', label: 'Sửa không đạt' },
   { value: 'OTHER', label: 'Khác' },
 ];
 
@@ -40,7 +43,11 @@ const BookingReportButton = ({ bookingId, reportedUserId, warrantyId }) => {
   const { loading, success, error } = useSelector((s) => s.report);
 
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', tag: 'NO_SHOW', description: '' });
+
+  const isWarranty = Boolean(warrantyId);
+  const TAGS = ALL_TAGS.filter(t => isWarranty || !['WARRANTY_DENIED','WARRANTY_DELAY','POOR_FIX'].includes(t.value));
+
+  const [form, setForm] = useState({ title: '', tag: TAGS[0].value, description: '' });
 
   useEffect(() => {
     if (success) {
@@ -51,7 +58,7 @@ const BookingReportButton = ({ bookingId, reportedUserId, warrantyId }) => {
 
   const close = () => {
     setOpen(false);
-    setForm({ title: '', tag: 'NO_SHOW', description: '' });
+    setForm({ title: '', tag: TAGS[0].value, description: '' });
     dispatch(clearError());
     dispatch(clearSuccess());
   };
