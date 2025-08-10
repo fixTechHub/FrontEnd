@@ -55,7 +55,7 @@ const CompleteProfile = () => {
     const isStep1Valid = identification.length > 0 && !cccdErrors && Number(experienceYears) > 0 && frontImage && backImage;
     const isStep2Valid = selectedCategories.length > 0 && isServiceDetailsValid;
     const isStep3Valid = formData.bankAccount.bankName && formData.bankAccount.accountNumber && 
-                        formData.bankAccount.accountHolder && Number(inspectionFee) > 0;
+                        formData.bankAccount.accountHolder;
     const isAllStepsValid = isStep1Valid && isStep2Valid && isStep3Valid;
 
     useEffect(() => {
@@ -222,10 +222,7 @@ const CompleteProfile = () => {
             toast.error('Vui lòng nhập giá > 0 và bảo hành ≥ 0 cho tất cả dịch vụ');
             return;
         }
-        if (!inspectionFee || Number(inspectionFee) <= 0) {
-            toast.error('Phí kiểm tra phải lớn hơn 0');
-            return;
-        }
+        // Removed inspection fee validation
 
         try {
             const formDataAll = new FormData();
@@ -236,7 +233,7 @@ const CompleteProfile = () => {
             formDataAll.append('specialtiesCategories', JSON.stringify(selectedCategories));
             formDataAll.append('bankAccount', JSON.stringify(formData.bankAccount));
             formDataAll.append('serviceDetails', JSON.stringify(serviceDetails));
-            formDataAll.append('inspectionFee', inspectionFee);
+            // Removed inspectionFee
 
             // Append image files
             if (frontImage) {
@@ -949,7 +946,8 @@ const CompleteProfile = () => {
                                                         </div>
                                                     </div>
 
-                                                    {/* Inspection Fee */}
+                                                    {/* Inspection Fee - removed */}
+                                                    {false && (
                                                     <div className="mb-5">
                                                         <div className="d-flex justify-content-between align-items-center mb-3">
                                                             <h6 className="fw-semibold mb-0">Phí kiểm tra</h6>
@@ -984,6 +982,7 @@ const CompleteProfile = () => {
                                         </div>
                                     </div>
                                 </div>
+                                )}
 
                                                     {/* Navigation Buttons */}
                                                     <div className="d-flex justify-content-between">
@@ -1100,7 +1099,8 @@ const CompleteProfile = () => {
                                                             </div>
                                 </div>
 
-                                                        {/* Fee Summary */}
+                                                        {/* Fee Summary - removed */}
+                                                        {false && (
                                                         <div className="col-md-6">
                                                             <div className="card border-0 bg-light h-100">
                                                                 <div className="card-body">
@@ -1122,6 +1122,7 @@ const CompleteProfile = () => {
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        )}
                                                     </div>
 
                                                     {/* Certificate Upload (Optional) */}
