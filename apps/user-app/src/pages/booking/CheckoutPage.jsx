@@ -66,7 +66,7 @@ const CouponModal = ({ show, onHide, coupons, onSelectCoupon, subTotal }) => {
                 padding: '25px',
                 backgroundColor: '#fafafa'
             }}>
-                {coupons.length === 0 ? (
+                {coupons?.length === 0 ? (
                     <div style={{
                         textAlign: 'center',
                         padding: '40px',
@@ -79,7 +79,7 @@ const CouponModal = ({ show, onHide, coupons, onSelectCoupon, subTotal }) => {
                     </div>
                 ) : (
                     <div style={{ maxHeight: '450px', overflowY: 'auto', paddingRight: '10px' }}>
-                        {coupons.map((coupon) => (
+                        {coupons?.map((coupon) => (
                             <Card
                                 key={coupon._id}
                                 className={selectedCoupon?._id === coupon._id ? 'border-primary shadow-sm' : 'border-light'}
@@ -277,21 +277,6 @@ const CheckoutPage = () => {
     const { user } = useSelector((state) => state.auth);
     const [isChecking, setIsChecking] = useState(true);
     let discount = 0;
-
-    useEffect(() => {
-        const fetchBookingData = async () => {
-            if (!bookingId) return;
-
-            try {
-                await dispatch(getAcceptedBookingThunk(bookingId)).unwrap();
-            } catch (error) {
-                toast.error(error.message || 'Có lỗi xảy ra khi tải thông tin đặt lịch');
-            }
-        };
-
-        fetchBookingData();
-    }, [dispatch, bookingId]);
-
     useEffect(() => {
         const verifyAccess = async () => {
             if (!bookingId || !user?._id) {
@@ -304,7 +289,7 @@ const CheckoutPage = () => {
             const { acceptedBooking, isAuthorized, error } = await checkOutCustomerAccess(dispatch, bookingId, user._id);
             setIsAuthorize(isAuthorized);
             setAuthError(error);
-            setIsChecking(true);
+            setIsChecking(false);
         };
 
         verifyAccess();
@@ -318,6 +303,24 @@ const CheckoutPage = () => {
             navigate(redirectPath, { replace: true });
         }
     }, [isAuthorize, isChecking, navigate]);
+    useEffect(() => {
+        const fetchBookingData = async () => {
+            if (!bookingId) return;
+
+            try {
+                await dispatch(getAcceptedBookingThunk(bookingId)).unwrap();
+            } catch (error) {
+                toast.error(error.message || 'Có lỗi xảy ra khi tải thông tin đặt lịch');
+            }
+        };
+        if (!isChecking) {
+            fetchBookingData();
+        }
+    }, [dispatch, bookingId]);
+
+    
+
+  
 
     const itemsTotal = acceptedBooking?.quote?.items?.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) || 0;
     const laborPrice = acceptedBooking?.quote?.laborPrice || 0;
@@ -369,25 +372,26 @@ const CheckoutPage = () => {
         }
 
         setIsProcessing(true);
-
+        let discount1 = 0;
         if (appliedCoupon) {
             if (appliedCoupon.type === 'PERCENT') {
-                discount = subTotal * (appliedCoupon.value / 100);
-                if (appliedCoupon.maxDiscount && discount > appliedCoupon.maxDiscount) {
-                    discount = appliedCoupon.maxDiscount;
+                discount1 = subTotal * (appliedCoupon.value / 100);
+                if (appliedCoupon.maxDiscount && discount1 > appliedCoupon.maxDiscount) {
+                    discount1 = appliedCoupon.maxDiscount;
                 }
             } else if (appliedCoupon.type === 'FIXED') {
-                discount = appliedCoupon.value;
+                discount1 = appliedCoupon.value;
             }
         }
 
-        const newFinalPrice = subTotal - discount;
-
+        const newFinalPrice = subTotal - discount1;
+        console.log(newFinalPrice);
+        
         try {
             const resultAction = await dispatch(finalizeBookingThunk({
                 bookingId: bookingId,
                 couponCode: appliedCoupon ? appliedCoupon.code : null,
-                discountValue: discount,
+                discountValue: discount1,
                 finalPrice: newFinalPrice,
                 paymentMethod: paymentMethod
             })).unwrap();
