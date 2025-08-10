@@ -19,6 +19,7 @@ import feedbackReducer from '../features/feedbacks/feedbackSlice';
 import favoritesReducer from '../features/favorites/favoriteSlice';
 import technicianSubscriptionReducer from '../features/package/packageSlice';
 import suggestionReducer from '../features/suggestions/suggestionSlice';
+import { loadTechnicianFromStorage } from '../utils/loadTechnicianFromStorage';
 
 export const store = configureStore({
   reducer: {
@@ -46,7 +47,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }),
+    }).concat(loadTechnicianFromStorage),
 });
 
 export default store;

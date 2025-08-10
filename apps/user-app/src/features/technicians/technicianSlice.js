@@ -12,7 +12,9 @@ import {
   sendQuotationAPI, 
   getTechnicianDepositLogs, 
   getListFeedback, 
-  uploadCertificateAPI
+  uploadCertificateAPI,
+  getScheduleByTechnicianId,
+  deleteCertificateAPI
 } from '../technicians/technicianAPI';
 
 export const fetchTechnicianProfile = createAsyncThunk(
@@ -197,6 +199,45 @@ export const uploadCertificate = createAsyncThunk(
   }
 );
 
+// export const deleteCertificate = createAsyncThunk(
+//   'technician/deleteCertificate',
+//   async (certificateId, thunkAPI) => {
+//     try {
+//       const data = await deleteCertificateAPI(certificateId);
+//       return { certificateId, message: data?.message };
+//     } catch (err) {
+//       return thunkAPI.rejectWithValue(
+//         err?.response?.data?.message || 'Delete certificate failed'
+//       );
+//     }
+//   }
+// );
+
+export const deleteCertificate = createAsyncThunk(
+  'technician/deleteCertificate',
+  async ({ certificateId }, thunkAPI) => {              // <-- destructure ở đây
+    try {
+      // CÁCH 1: dùng API wrapper
+      const res = await deleteCertificateAPI(certificateId);
+      return { certificateId, ...res };
+
+      // CÁCH 2: gọi thẳng axios nếu muốn
+      // const res = await apiClient.delete(`/certificates/${encodeURIComponent(String(certificateId))}`);
+      // return { certificateId, ...res.data };
+    } catch (e) {
+      return thunkAPI.rejectWithValue(e?.response?.data?.message || 'Delete failed');
+    }
+  }
+);
+
+export const fetchScheduleByTechnicianId = createAsyncThunk(
+  'technicianSchedule/fetchByTechnicianId',
+  async (technicianId) => {
+    const res = await getScheduleByTechnicianId(technicianId);
+    return res.data; // Vì API trả về: { success: true, data: schedules }
+  }
+);
+
 const technicianSlice = createSlice({
   name: 'technician',
   initialState: {
@@ -211,15 +252,19 @@ const technicianSlice = createSlice({
     certificates: [],
     logs: [],
     feedbacks: [],
+    schedule: [],
     certificateUpload: {
       success: false,
       message: '',
       fileUrl: '',
       loading: false,
       error: null,
+     
     },
   },
-  reducers: {},
+  reducers: {
+  
+  },
   extraReducers: (builder) => {
     builder
       //Profile
@@ -388,6 +433,32 @@ const technicianSlice = createSlice({
         state.certificateUpload.loading = false;
         state.certificateUpload.error = action.payload || 'Lỗi không xác định';
       })
+      .addCase(fetchScheduleByTechnicianId.pending, (state) => {
+        state.status = 'loading';
+        state.error = null;
+      })
+      .addCase(fetchScheduleByTechnicianId.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        state.schedule = action.payload;
+      })
+      .addCase(fetchScheduleByTechnicianId.rejected, (state, action) => {
+        state.status = 'failed';
+        state.error = action.error.message;
+      })
+      
+      .addCase(deleteCertificate.pending, (state, action) => {
+      state.certificateDeletingId = action.meta.arg; // id đang xóa
+    })
+    .addCase(deleteCertificate.fulfilled, (state, action) => {
+      state.certificateDeletingId = null;
+      state.certificates = state.certificates.filter(
+        (c) => c._id !== action.payload.certificateId
+      );
+    })
+    .addCase(deleteCertificate.rejected, (state, action) => {
+      state.certificateDeletingId = null;
+      state.error = action.payload;
+    });
 
 
   }

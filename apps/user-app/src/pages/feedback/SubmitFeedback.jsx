@@ -289,7 +289,7 @@ const SubmitFeedback = () => {
                               </div>
                               <div className="submit-btn text-end">
                                 <button className="btn btn-primary submit-review" type="submit" disabled={loading}>
-                                  {loading ? 'Submitting...' : 'Submit Review'}
+                                  {loading ? 'Submitting...' : 'Gửi đánh giá'}
                                 </button>
                               </div>
 

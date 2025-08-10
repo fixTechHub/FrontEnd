@@ -16,6 +16,7 @@ import commissionConfigReducer from '../features/commissionConfig/commissionSlic
 import commissionReducer from '../features/commission/commissionSlice';
 import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
+import adminCertificateReducer from '../features/certificates/certificateSlice';
 
  const store = configureStore({
   reducer: {
@@ -36,6 +37,7 @@ import feedbackReducer from '../features/feedback/feedbackSlice';
     commission: commissionReducer,
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
+    adminCertificate: adminCertificateReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
