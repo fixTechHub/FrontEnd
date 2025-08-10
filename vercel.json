@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build:admin",
+  "buildCommand": "npm run build:admin --workspace=admin-app",
   "outputDirectory": "apps/admin-app/dist",
   "installCommand": "npm install",
   "functions": {
