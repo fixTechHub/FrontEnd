@@ -1,0 +1,1843 @@
+import { useState, useEffect, useRef } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import {
+  fetchUserProfileThunk,
+  updateProfileThunk,
+  updateAvatarThunk,
+  changePasswordThunk,
+  deactivateAccountThunk,
+  deleteAccountThunk,
+  requestPhoneChangeThunk,
+  verifyPhoneChangeThunk,
+  requestDeactivateVerificationThunk,
+  verifyDeactivateAccountThunk,
+  requestDeleteVerificationThunk,
+  verifyDeleteOTPThunk,
+  checkAuthThunk,
+  logoutThunk,
+} from "../../features/auth/authSlice";
+import { toast } from "react-toastify";
+import Header from "../../components/common/Header";
+import Footer from "../../components/common/Footer";
+import BreadcrumbBar from "../../components/common/BreadcrumbBar";
+import { ROLE_NAMES } from "../../constants/roles";
+import styled from "@emotion/styled";
+import authAPI from "../../features/auth/authAPI";
+import ContractStatus from '../../components/contracts/ContractStatus';
+// import ApproveTechnicianTest from '../../components/admin/ApproveTechnicianTest'
+import apiClient from "../../services/apiClient";
+import TechnicianOnboardingModal from "../../components/common/TechnicianOnboardingModal";
+import { FaCheckCircle, FaTimesCircle, FaUserCircle } from 'react-icons/fa';
+
+// ------- GLOBAL FLAG --------
+// Đánh dấu đã lấy thông tin technician thành công để tránh dispatch lặp
+let hasFetchedTechnician = false;
+
+// --- STYLED COMPONENTS ---
+
+// Main color from the image
+const PRIMARY_COLOR = '#f5a623'; // Orange-gold color from the button
+const PRIMARY_TEXT_COLOR = '#1c1c1c'; // Black for high contrast on primary color
+const TEXT_COLOR = '#1c1c1c';
+const MUTED_TEXT_COLOR = '#555555';
+const BORDER_COLOR = '#e0e0e0';
+
+const ProfilePageContainer = styled.div`
+  background-color: #f9f9f9;
+`;
+
+const ContentContainer = styled.div`
+  padding: 3rem 0;
+`;
+
+const SettingsWrapper = styled.div`
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+  display: flex;
+  border: 1px solid ${BORDER_COLOR};
+`;
+
+const SettingsSidebar = styled.div`
+  width: 280px;
+  border-right: 1px solid ${BORDER_COLOR};
+  padding: 1.5rem;
+  background-color: #fff;
+  border-radius: 0.5rem 0 0 0.5rem;
+`;
+
+const UserProfile = styled.div`
+  text-align: center;
+  margin-bottom: 2rem;
+`;
+
+const AvatarWrapper = styled.div`
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1rem;
+  cursor: pointer;
+`;
+
+const Avatar = styled.img`
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+`;
+
+const UploadButton = styled.div`
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  background: ${PRIMARY_COLOR};
+  color: ${PRIMARY_TEXT_COLOR};
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  transition: all 0.2s;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+`;
+
+const UserName = styled.h5`
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  color: ${TEXT_COLOR};
+`;
+
+const UserRole = styled.p`
+  color: ${MUTED_TEXT_COLOR};
+  font-size: 0.9rem;
+  text-transform: capitalize;
+`;
+
+const NavMenu = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+`;
+
+const NavItem = styled.li`
+  margin-bottom: 0.5rem;
+`;
+
+const NavLink = styled.a`
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  color: ${(props) => (props.active ? PRIMARY_TEXT_COLOR : TEXT_COLOR)};
+  background-color: ${(props) => (props.active ? PRIMARY_COLOR : 'transparent')};
+  border-radius: 0.375rem;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+
+  i {
+    margin-right: 0.75rem;
+    width: 20px;
+    text-align: center;
+  }
+
+  &:hover {
+    background-color: ${(props) => (props.active ? PRIMARY_COLOR : '#fef5e7')};
+    color: ${(props) => (props.active ? PRIMARY_TEXT_COLOR : '#000')};
+  }
+`;
+
+const SettingsContent = styled.div`
+  flex: 1;
+  padding: 2.5rem;
+`;
+
+const Section = styled.div`
+  &:not(:last-child) {
+    border-bottom: 1px solid ${BORDER_COLOR};
+    padding-bottom: 2rem;
+    margin-bottom: 2rem;
+  }
+`;
+
+const SectionHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+`
+
+const SectionTitle = styled.h4`
+  font-weight: 600;
+  color: ${TEXT_COLOR};
+  margin: 0;
+`;
+
+// Profile Info Cards Styling
+const ProfileInfoContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 800px;
+`;
+
+const InfoCard = styled.div`
+  background: #fff;
+  border: 1px solid ${BORDER_COLOR};
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+`;
+
+const CardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+
+  i {
+    font-size: 1.25rem;
+    margin-right: 0.75rem;
+    color: ${PRIMARY_COLOR};
+  }
+
+  h6 {
+    margin: 0;
+    font-weight: 600;
+    color: ${TEXT_COLOR};
+  }
+`;
+
+const CardContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+`;
+
+const InfoLabel = styled.span`
+  font-weight: 500;
+  color: ${MUTED_TEXT_COLOR};
+  min-width: 120px;
+`;
+
+const InfoValue = styled.span`
+  color: ${TEXT_COLOR};
+  font-weight: 500;
+  flex: 1;
+  text-align: right;
+`;
+
+const FormControl = styled.div`
+  label {
+    display: block;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: ${TEXT_COLOR};
+  }
+
+  input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid ${BORDER_COLOR};
+    border-radius: 0.375rem;
+    background-color: #fff;
+    color: ${TEXT_COLOR};
+    transition: border-color 0.2s, box-shadow 0.2s;
+    
+    &:focus {
+      outline: none;
+      border-color: ${PRIMARY_COLOR};
+      box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.2);
+    }
+    
+    &:disabled {
+      cursor: not-allowed;
+      background-color: #f9f9f9;
+      color: ${MUTED_TEXT_COLOR};
+    }
+  }
+`;
+
+const ButtonGroup = styled.div`
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+`;
+
+const Button = styled.button`
+  padding: 0.6rem 1.2rem;
+  border-radius: 0.375rem;
+  border: 1px solid transparent;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &.btn-primary {
+    background-color: ${PRIMARY_COLOR};
+    color: ${PRIMARY_TEXT_COLOR};
+    &:hover {
+      filter: brightness(1.1);
+    }
+  }
+
+  &.btn-secondary {
+    background-color: ${MUTED_TEXT_COLOR};
+    color: white;
+    &:hover {
+      background-color: #f0f0f0;
+      color: ${TEXT_COLOR};
+    }
+  }
+
+  &.btn-light {
+    background-color: #f0f0f0;
+    color: ${TEXT_COLOR};
+    border-color: ${BORDER_COLOR};
+    &:hover {
+      background-color: #e0e0e0;
+    }
+  }
+
+  &.btn-danger {
+    background-color: #dc3545;
+    color: white;
+    &:hover {
+      background-color: #c82333;
+    }
+  }
+`;
+
+// Security Cards Styling
+const SecurityGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+`;
+
+const SecurityCard = styled.div`
+  background: #fff;
+  border: 1px solid ${BORDER_COLOR};
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s;
+
+  &:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: ${PRIMARY_COLOR};
+  }
+`;
+
+const SecurityCardHeader = styled.div`
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+
+  i {
+    font-size: 1.5rem;
+    margin-right: 0.75rem;
+    color: ${PRIMARY_COLOR};
+  }
+
+  h6 {
+    margin: 0;
+    font-weight: 600;
+    color: ${TEXT_COLOR};
+  }
+`;
+
+const SecurityCardContent = styled.div`
+  flex-grow: 1;
+  p {
+    margin: 0 0 1rem 0;
+    color: ${MUTED_TEXT_COLOR};
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+`;
+
+const SecurityCardAction = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const ModalBackdrop = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1050;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  padding: 2rem;
+  border-radius: 0.5rem;
+  width: 500px;
+  max-width: 90%;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+`;
+
+const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid ${BORDER_COLOR};
+  padding-bottom: 1rem;
+  margin-bottom: 1.5rem;
+
+  h5 {
+    margin: 0;
+    font-weight: 600;
+    color: ${TEXT_COLOR};
+  }
+  button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: ${MUTED_TEXT_COLOR};
+    
+    &:hover {
+      color: ${TEXT_COLOR};
+    }
+  }
+`;
+
+const ModalBody = styled.div``;
+
+const ModalFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid ${BORDER_COLOR};
+  padding-top: 1rem;
+  margin-top: 1.5rem;
+`;
+
+// --- MAIN COMPONENT ---
+function ProfilePage() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user, profileLoading } = useSelector((state) => state.auth);
+  const authTechnician = useSelector(state=> state.auth.technician);
+  const categoriesList = useSelector(state => state.categories.categories);
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    address: "",
+    district: "",
+    city: "",
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [activeTab, setActiveTab] = useState("profile");
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPwd, setShowPwd] = useState({ current:false, new:false, confirm:false });
+  const [pwdRules, setPwdRules] = useState({ length:false, upper:false, lower:false, digit:false, special:false });
+  const [newPhone, setNewPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
+  const [showOtpModal, setShowOtpModal] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [deactivatePassword, setDeactivatePassword] = useState("");
+  const [showDeactivateVerificationModal, setShowDeactivateVerificationModal] = useState(false);
+  const [showDeactivateOtpModal, setShowDeactivateOtpModal] = useState(false);
+  const [deactivateOtp, setDeactivateOtp] = useState("");
+  const [verificationMethod, setVerificationMethod] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarError, setAvatarError] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // Delete account states
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showDeleteVerificationModal, setShowDeleteVerificationModal] = useState(false);
+  const [showDeleteOtpModal, setShowDeleteOtpModal] = useState(false);
+  const [deleteOtp, setDeleteOtp] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deleteVerificationMethod, setDeleteVerificationMethod] = useState("");
+  const [showDeletePasswordModal, setShowDeletePasswordModal] = useState(false);
+  const [accountDeleted, setAccountDeleted] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
+  // Preview certificate modal state
+  const [certPreviewUrl, setCertPreviewUrl] = useState(null);
+  const certDialogRef = useRef(null);
+
+  // 0. ensure apiClient imported (already in file at top)
+  // 1. Add state after pwdRules
+  const [currentPwdValid, setCurrentPwdValid] = useState(null);
+  const [passwordErrors, setPasswordErrors] = useState({ current:'', new:'', confirm:'' });
+
+  // 1. thêm state sau deletePassword
+  const [deletePwdError, setDeletePwdError] = useState("");
+  const [showDeletePwd, setShowDeletePwd] = useState(false);
+
+  // Reset form khi đóng modal đổi mật khẩu
+  useEffect(() => {
+    if (!showChangePasswordModal) {
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPwdRules({ length:false, upper:false, lower:false, digit:false, special:false });
+      setCurrentPwdValid(null);
+      setPasswordErrors({ current:'', new:'', confirm:'' });
+      setShowPwd({ current:false, new:false, confirm:false });
+    }
+  }, [showChangePasswordModal]);
+
+  // Lấy thông tin technician (chỉ fetch đúng 1 lần thành công)
+  useEffect(() => {
+    if (!hasFetchedTechnician && !authTechnician && user?.role?.name === 'TECHNICIAN') {
+      dispatch(checkAuthThunk())
+        .unwrap()
+        .then(() => {
+          hasFetchedTechnician = true; // đặt cờ sau khi fetch thành công
+        })
+        .catch(() => {
+          // Giữ cờ = false để thử lại ở lần render sau (nếu cần)
+        });
+    }
+  }, [authTechnician, user, dispatch]);
+
+  useEffect(() => {
+    // Chỉ gọi API nếu user đã tồn tại
+    if (user) {
+      dispatch(fetchUserProfileThunk());
+    }
+  }, [dispatch]); // Bỏ user khỏi dependency để tránh gọi nhiều lần
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        fullName: user.fullName || "",
+        phone: user.phone || "",
+        email: user.email || "",
+        address: user.address?.street || "",
+        district: user.address?.district || "",
+        city: user.address?.city || "",
+      });
+      setNewPhone(user.phone || "");
+    }
+  }, [user]);
+
+  // 2. thêm hook reset khi modal đóng sau hook tương tự (sau reset change password)
+  useEffect(()=>{
+    if(!showDeletePasswordModal){
+      setDeletePassword("");
+      setDeletePwdError("");
+      setShowDeletePwd(false);
+    }
+  },[showDeletePasswordModal]);
+
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData({ ...passwordData, [name]: value });
+    setPasswordErrors(prev=>({ ...prev, [name.replace('Password','')]: '' }));
+
+    if(name === 'newPassword') {
+      setPwdRules({
+        length:  value.length >= 8,
+        upper:   /[A-Z]/.test(value),
+        lower:   /[a-z]/.test(value),
+        digit:   /[0-9]/.test(value),
+        special: /[!@#$%^&*]/.test(value),
+      });
+    }
+  };
+
+  const verifyCurrentPassword = async (pwd) => {
+    // Nếu ô trống thì reset trạng thái, không hiển thị lỗi
+    if(!pwd.trim()){
+      setCurrentPwdValid(null);
+      setPasswordErrors(prev => ({ ...prev, current: '' }));
+      return;
+    }
+    try {
+      const { data } = await apiClient.post('/auth/verify-password', { currentPassword: pwd });
+      setCurrentPwdValid(data.valid);
+      setPasswordErrors(prev => ({ ...prev, current: data.valid ? '' : 'Mật khẩu hiện tại không đúng' }));
+    } catch(err) {
+      setCurrentPwdValid(false);
+      setPasswordErrors(prev => ({ ...prev, current: 'Không thể xác thực mật khẩu' }));
+    }
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setAvatarPreview(null);
+    if (user) {
+      setFormData({
+        fullName: user.fullName || "",
+        phone: user.phone || "",
+        email: user.email || "",
+        address: user.address?.street || "",
+        district: user.address?.district || "",
+        city: user.address?.city || "",
+      });
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const updateData = {
+      fullName: formData.fullName,
+      address: {
+        street: formData.address,
+        district: formData.district,
+        city: formData.city,
+      },
+    };
+    try {
+      await dispatch(updateProfileThunk(updateData)).unwrap();
+      await dispatch(fetchUserProfileThunk());
+      setIsEditing(false);
+      toast.success("Cập nhật thành công!");
+      setAvatarPreview(null);
+    } catch (error) {
+      toast.error(error.message || "Có lỗi xảy ra khi cập nhật thông tin");
+    }
+  };
+
+  const handleAvatarClick = () => fileInputRef.current?.click();
+
+  const handleAvatarChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 15 * 1024 * 1024) {
+        toast.error("Kích thước file không được vượt quá 15MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => setAvatarPreview(reader.result);
+      reader.readAsDataURL(file);
+
+      const avatarFormData = new FormData();
+      avatarFormData.append("avatar", file);
+      try {
+        await dispatch(updateAvatarThunk(avatarFormData)).unwrap();
+        toast.success("Cập nhật ảnh đại diện thành công!");
+      } catch (error) {
+        toast.error(error.message || "Lỗi cập nhật ảnh đại diện");
+        setAvatarPreview(null);
+      }
+    }
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    // Kiểm tra nếu user đăng nhập bằng Google
+    if (user?.googleId) {
+      toast.error("Không thể đổi mật khẩu cho tài khoản đăng nhập bằng Google");
+      return;
+    }
+    const errors={ current:'', new:'', confirm:'' };
+    if(!passwordData.currentPassword.trim()) errors.current='Vui lòng nhập mật khẩu hiện tại';
+    else if(currentPwdValid===false) errors.current='Mật khẩu hiện tại không đúng';
+
+    const strongRegex=/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/;
+    if(!passwordData.newPassword.trim()) errors.new='Vui lòng nhập mật khẩu mới';
+    else if(!strongRegex.test(passwordData.newPassword)) errors.new='Mật khẩu chưa đáp ứng yêu cầu';
+    else if(passwordData.newPassword === passwordData.currentPassword) errors.new='Mật khẩu mới phải khác mật khẩu hiện tại';
+
+    if(!passwordData.confirmPassword.trim()) errors.confirm='Vui lòng nhập mật khẩu xác nhận';
+    else if(passwordData.newPassword!==passwordData.confirmPassword) errors.confirm='Mật khẩu xác nhận không khớp';
+
+    if(errors.current||errors.new||errors.confirm){
+      setPasswordErrors(errors);
+      return; // không toast ở đây
+    }
+    try {
+      await dispatch(
+        changePasswordThunk({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+        })
+      ).unwrap();
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setShowChangePasswordModal(false);
+      toast.success("Đổi mật khẩu thành công!");
+    } catch (error) {
+      toast.error(error.message || "Có lỗi khi đổi mật khẩu");
+    }
+  };
+
+  const handleRequestPhoneChange = async (e) => {
+    e.preventDefault();
+    try {
+      await dispatch(requestPhoneChangeThunk({ newPhone })).unwrap();
+      setShowPhoneModal(false);
+      setShowOtpModal(true);
+      toast.success("Đã gửi mã OTP đến số điện thoại mới!");
+    } catch (error) {
+      toast.error(error.message || "Không thể gửi OTP");
+    }
+  };
+
+  const handleVerifyPhoneChange = async (e) => {
+    e.preventDefault();
+    try {
+      await dispatch(
+        verifyPhoneChangeThunk({ otp, newPhone })
+      ).unwrap();
+      setShowOtpModal(false);
+      toast.success("Xác thực số điện thoại thành công!");
+      dispatch(fetchUserProfileThunk());
+    } catch (error) {
+      toast.error(error.message || "Mã OTP không đúng hoặc đã hết hạn");
+    }
+  };
+
+  const handleDeactivate = async () => {
+    // Nếu user đăng nhập bằng Google (có googleId), không cần xác thực
+    if (user?.googleId) {
+      try {
+        await dispatch(deactivateAccountThunk("")).unwrap();
+        setShowDeactivateModal(false);
+        toast.success("Tài khoản đã được vô hiệu hóa thành công. Bạn sẽ được đăng xuất.");
+        // Đăng xuất và chuyển hướng về trang đăng nhập
+        setTimeout(async () => {
+          try {
+            await dispatch(logoutThunk());
+            sessionStorage.clear();
+            navigate('/login');
+          } catch (error) {
+            console.error('Logout error:', error);
+            sessionStorage.clear();
+            navigate('/login');
+          }
+        }, 2000);
+      } catch (e) {
+        toast.error(e || "Không thể vô hiệu hóa tài khoản.");
+      }
+      return;
+    }
+    // Kiểm tra xem user có thông tin liên hệ không
+    if (!user?.email && !user?.phone) {
+      toast.error("Không có thông tin email hoặc số điện thoại để xác thực");
+      return;
+    }
+    // Nếu chỉ có một phương thức, sử dụng phương thức đó
+    if (!user?.email) {
+      setVerificationMethod('phone');
+      setShowDeactivateModal(false);
+      setShowDeactivateVerificationModal(true);
+    } else if (!user?.phone) {
+      setVerificationMethod('email');
+      setShowDeactivateModal(false);
+      setShowDeactivateVerificationModal(true);
+    } else {
+      // Có cả email và phone, hiển thị modal chọn phương thức
+      setShowDeactivateModal(false);
+      setShowDeactivateVerificationModal(true);
+    }
+  };
+
+  const handleRequestDeactivateVerification = async (method) => {
+    try {
+      await dispatch(requestDeactivateVerificationThunk(method)).unwrap();
+      setVerificationMethod(method);
+      setShowDeactivateVerificationModal(false);
+      setShowDeactivateOtpModal(true);
+    } catch (error) {
+      toast.error(error || "Không thể gửi mã xác thực");
+    }
+  };
+
+  const handleVerifyDeactivateAccount = async (e) => {
+    e.preventDefault();
+    if (!deactivateOtp.trim()) {
+      toast.error("Vui lòng nhập mã xác thực");
+      return;
+    }
+    try {
+      await dispatch(verifyDeactivateAccountThunk(deactivateOtp)).unwrap();
+      setShowDeactivateOtpModal(false);
+      setDeactivateOtp("");
+      // Đăng xuất và chuyển hướng về trang đăng nhập
+      setTimeout(() => {
+        dispatch({ type: 'auth/logout' });
+        navigate('/login');
+      }, 2000);
+    } catch (error) {
+      toast.error(error || "Không thể vô hiệu hóa tài khoản");
+    }
+  };
+
+  const handleDelete = async () => {
+    // Nếu là user Google, bỏ qua bước nhập mật khẩu
+    if (user?.googleId) {
+      setShowDeleteModal(false);
+      setShowDeleteVerificationModal(true);
+    } else {
+      // Nếu là user thường, hiển thị modal nhập mật khẩu trước
+      setShowDeleteModal(false);
+      setShowDeletePasswordModal(true);
+    }
+  };
+
+  // 3. thêm hàm verifyDeletePassword (đặt sau verifyCurrentPassword)
+  const verifyDeletePassword = async (pwd) => {
+    if(!pwd.trim()){
+      setDeletePwdError('');
+      return false;
+    }
+    try {
+      const { data } = await apiClient.post('/auth/verify-password', { currentPassword: pwd });
+      setDeletePwdError(data.valid ? '' : 'Mật khẩu không đúng');
+      return data.valid;
+    } catch(err) {
+      setDeletePwdError('Không thể xác thực mật khẩu');
+      return false;
+    }
+  };
+
+  // 4. sửa handleDeletePasswordSubmit
+  const handleDeletePasswordSubmit = async (e) => {
+    e.preventDefault();
+    if (!deletePassword.trim()) {
+      setDeletePwdError('Vui lòng nhập mật khẩu');
+      return;
+    }
+    let valid = await verifyDeletePassword(deletePassword);
+    if(!valid){
+      return; // lỗi đã được hiển thị
+    }
+    // Xác thực thành công
+    setShowDeletePasswordModal(false);
+    setShowDeleteVerificationModal(true);
+  };
+
+  // Delete account handlers
+  const handleRequestDeleteVerification = async (method) => {
+    try {
+      await dispatch(requestDeleteVerificationThunk(method)).unwrap();
+      setDeleteVerificationMethod(method);
+      setShowDeleteVerificationModal(false);
+      setShowDeleteOtpModal(true);
+    } catch (error) {
+      toast.error(error || "Không thể gửi mã xác thực");
+    }
+  };
+
+  const handleVerifyDeleteAccount = async (e) => {
+    e.preventDefault();
+    if (!deleteOtp.trim()) {
+      toast.error("Vui lòng nhập mã xác thực");
+      return;
+    }
+
+    try {
+      await dispatch(verifyDeleteOTPThunk(deleteOtp)).unwrap();
+      setShowDeleteOtpModal(false);
+      setDeleteOtp("");
+      // Hiển thị modal xác nhận cuối cùng
+      setShowDeleteConfirmModal(true);
+    } catch (error) {
+      toast.error(error || "Không thể xác thực");
+    }
+  };
+
+  const handleConfirmDelete = async (e) => {
+    e.preventDefault();
+    if (deleteConfirmText !== 'DELETE') {
+      toast.error('Vui lòng nhập chính xác "DELETE" để xác nhận');
+      return;
+    }
+
+    try {
+      await dispatch(deleteAccountThunk({ 
+        password: deletePassword, 
+        confirmText: deleteConfirmText 
+      })).unwrap();
+      
+      // Reset tất cả state liên quan đến xóa tài khoản
+      setShowDeleteModal(false);
+      setShowDeletePasswordModal(false);
+      setShowDeleteVerificationModal(false);
+      setShowDeleteOtpModal(false);
+      setShowDeleteConfirmModal(false);
+      setDeletePassword("");
+      setDeleteConfirmText("");
+      setDeleteOtp("");
+      setDeleteVerificationMethod("");
+      setAccountDeleted(true);
+      
+      // Reset state vô hiệu hóa tài khoản nếu có
+      setShowDeactivateModal(false);
+      setShowDeactivateVerificationModal(false);
+      setShowDeactivateOtpModal(false);
+      setDeactivatePassword("");
+      setDeactivateOtp("");
+      setVerificationMethod("");
+      
+      toast.success("Tài khoản đã được đánh dấu để xóa. Bạn có 30 ngày để đăng nhập lại nếu muốn hủy bỏ việc xóa tài khoản.");
+      
+      // Đăng xuất và chuyển hướng về trang đăng nhập
+      setTimeout(async () => {
+        try {
+          await dispatch(logoutThunk());
+          // Clear localStorage để đảm bảo không còn token
+          // localStorage.removeItem('token');
+          sessionStorage.clear();
+          navigate('/login');
+        } catch (error) {
+          console.error('Logout error:', error);
+          // Nếu logout thất bại, vẫn chuyển hướng
+          // localStorage.removeItem('token');
+          sessionStorage.clear();
+          navigate('/login');
+        }
+      }, 3000);
+    } catch (error) {
+      toast.error(error || "Không thể xóa tài khoản");
+    }
+  };
+
+  // Hàm tạo địa chỉ đầy đủ
+  const getFullAddress = () => {
+    const parts = [];
+    if (formData.address) parts.push(formData.address);
+    if (formData.district) parts.push(formData.district);
+    if (formData.city) parts.push(formData.city);
+    return parts.length > 0 ? parts.join(", ") : "Chưa cập nhật";
+  };
+
+  const renderSidebar = () => (
+    <SettingsSidebar>
+      <UserProfile>
+        <AvatarWrapper onClick={handleAvatarClick}>
+          {avatarPreview || (user?.avatar && !avatarError) ? (
+            <Avatar src={avatarPreview || user?.avatar} alt="Ảnh đại diện" onError={() => setAvatarError(true)} />
+          ) : (
+            <FaUserCircle size={120} color="#000" />
+          )}
+          <UploadButton>
+            <i className="bi bi-camera-fill"></i>
+          </UploadButton>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleAvatarChange}
+            style={{ display: "none" }}
+            accept="image/*"
+          />
+        </AvatarWrapper>
+        <UserName>{user?.fullName}</UserName>
+        <UserRole>{user?.role?.name ? ROLE_NAMES[user.role.name] || user.role.name : 'Người dùng'}</UserRole>
+      </UserProfile>
+      <NavMenu>
+        <NavItem>
+          <NavLink href="#" active={activeTab === 'profile'} onClick={(e) => {e.preventDefault(); setActiveTab('profile');}}>
+            <i className="bi bi-person-circle"></i> Hồ sơ
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink href="#" active={activeTab === 'security'} onClick={(e) => {e.preventDefault(); setActiveTab('security');}}>
+            <i className="bi bi-shield-lock-fill"></i> Bảo mật
+          </NavLink>
+        </NavItem>
+        {user?.role?.name === 'TECHNICIAN' && (
+          <NavItem>
+            <NavLink href="#" active={activeTab === 'contract'} onClick={(e) => {e.preventDefault(); setActiveTab('contract');}}>
+              <i className="bi bi-file-earmark-text-fill"></i> Trạng thái hợp đồng
+            </NavLink>
+          </NavItem>
+        )}
+      </NavMenu>
+    </SettingsSidebar>
+  );
+  const renderContractContent = () => (
+    <Section>
+      <SectionHeader>
+        <SectionTitle>Trạng thái hợp đồng</SectionTitle>
+      </SectionHeader>
+      <ContractStatus />
+    </Section>
+  );
+  const renderProfileContent = () => (
+    <Section>
+        <SectionHeader>
+            <SectionTitle>Thông tin hồ sơ</SectionTitle>
+            {!isEditing && (
+                <Button className="btn-primary" onClick={() => setIsEditing(true)}>
+                    <i className="bi bi-pencil-fill"></i>
+                    Chỉnh sửa
+                </Button>
+            )}
+        </SectionHeader>
+
+      {isEditing ? (
+        <form onSubmit={handleSubmit}>
+          <ProfileInfoContainer>
+            <InfoCard>
+              <CardHeader>
+                <i className="bi bi-person-fill"></i>
+                <h6>Thông tin cá nhân</h6>
+              </CardHeader>
+              <div style={{ padding: '0.5rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <FormControl>
+                  <label htmlFor="fullName">Họ và tên</label>
+                  <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleInputChange} />
+                </FormControl>
+              </div>
+            </InfoCard>
+            <InfoCard>
+              <CardHeader>
+                <i className="bi bi-geo-alt-fill"></i>
+                <h6>Địa chỉ</h6>
+              </CardHeader>
+              <div style={{ padding: '0.5rem 0', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
+                <FormControl style={{ flex: '1 1 100%' }}>
+                  <label htmlFor="address">Địa chỉ</label>
+                  <input type="text" id="address" name="address" value={formData.address} onChange={handleInputChange} />
+                </FormControl>
+                <FormControl style={{ flex: '1 1 45%' }}>
+                  <label htmlFor="district">Quận/Huyện</label>
+                  <input type="text" id="district" name="district" value={formData.district} onChange={handleInputChange} />
+                </FormControl>
+                <FormControl style={{ flex: '1 1 45%' }}>
+                  <label htmlFor="city">Tỉnh/Thành phố</label>
+                  <input type="text" id="city" name="city" value={formData.city} onChange={handleInputChange} />
+                </FormControl>
+              </div>
+            </InfoCard>
+          </ProfileInfoContainer>
+          <ButtonGroup>
+            <Button type="button" className="btn-light" onClick={handleCancel}>Hủy</Button>
+            <Button type="submit" className="btn-primary">Lưu thay đổi</Button>
+          </ButtonGroup>
+        </form>
+      ) : (
+        <ProfileInfoContainer>
+          <InfoCard>
+            <CardHeader>
+              <i className="bi bi-person-fill"></i>
+              <h6>Thông tin cá nhân</h6>
+            </CardHeader>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem 0' }}>
+              <CardContent>
+                <InfoLabel>Họ và tên:</InfoLabel>
+                <InfoValue>{formData.fullName || "Chưa cập nhật"}</InfoValue>
+              </CardContent>
+              {user?.role?.name === 'TECHNICIAN' && authTechnician && (
+                <>
+                  <CardContent>
+                    <InfoLabel>Số CCCD:</InfoLabel>
+                    <InfoValue>{authTechnician.identification}</InfoValue>
+                  </CardContent>
+                  <CardContent>
+                    <InfoLabel>Kinh nghiệm:</InfoLabel>
+                    <InfoValue>{authTechnician.experienceYears} năm</InfoValue>
+                  </CardContent>
+                  <CardContent>
+                    <InfoLabel>Ngân hàng:</InfoLabel>
+                    <InfoValue>{authTechnician.bankAccount?.bankName} - {authTechnician.bankAccount?.accountNumber} ({authTechnician.bankAccount?.accountHolder})</InfoValue>
+                  </CardContent>
+                </>
+              )}
+            </div>
+          </InfoCard>
+          <InfoCard>
+            <CardHeader>
+              <i className="bi bi-envelope-fill"></i>
+              <h6>Thông tin liên hệ</h6>
+            </CardHeader>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem 0' }}>
+              <CardContent>
+                <InfoLabel>Email:</InfoLabel>
+                <InfoValue>
+                  {formData.email || "Chưa cập nhật"}
+                  {user.email && (
+                    user.emailVerified ? (
+                      <FaCheckCircle className="text-success ms-2" />
+                    ) : (
+                      <FaTimesCircle className="text-danger ms-2" />
+                    )
+                  )}
+                </InfoValue>
+              </CardContent>
+              <CardContent>
+                <InfoLabel>Số điện thoại:</InfoLabel>
+                <InfoValue>
+                  {formData.phone || "Chưa cập nhật"}
+                  {user.phone && (
+                    user.phoneVerified ? (
+                      <FaCheckCircle className="text-success ms-2" />
+                    ) : (
+                      <FaTimesCircle className="text-danger ms-2" />
+                    )
+                  )}
+                </InfoValue>
+              </CardContent>
+            </div>
+          </InfoCard>
+          <InfoCard>
+            <CardHeader>
+              <i className="bi bi-geo-alt-fill"></i>
+              <h6>Địa chỉ</h6>
+            </CardHeader>
+             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem 0' }}>
+                 <CardContent>
+                    <InfoLabel>Địa chỉ:</InfoLabel>
+                    <InfoValue>{getFullAddress()}</InfoValue>
+                </CardContent>
+            </div>
+          </InfoCard>
+          {/* Chuyên môn (danh mục) của kỹ thuật viên */}
+          {user?.role?.name === 'TECHNICIAN' && Array.isArray(authTechnician?.specialtiesCategories) && authTechnician.specialtiesCategories.length > 0 && (
+            <InfoCard>
+              <CardHeader>
+                <i className="bi bi-tags-fill"></i>
+                <h6>Chuyên môn</h6>
+              </CardHeader>
+              <div style={{ padding: '0.5rem 0', display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                {authTechnician.specialtiesCategories.map((catId) => {
+                  const catObj = Array.isArray(categoriesList) ? categoriesList.find(c => c._id === catId) : null;
+                  const catName = catObj ? catObj.categoryName : 'Đang cập nhật';
+                  return (
+                    <span key={catId} style={{ background:'#f5f5f5', border:'1px solid #e0e0e0', borderRadius:16, padding:'0.25rem 0.75rem', fontSize:14 }}>
+                      {catName}
+                    </span>
+                  );
+                })}
+              </div>
+            </InfoCard>
+          )}
+          {/* Chứng chỉ kỹ thuật viên */}
+          {user?.role?.name === 'TECHNICIAN' && Array.isArray(authTechnician?.certificate) && authTechnician.certificate.length > 0 && (
+            <InfoCard>
+              <CardHeader>
+                <i className="bi bi-award-fill"></i>
+                <h6>Chứng chỉ</h6>
+              </CardHeader>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', padding: '0.5rem 0' }}>
+                {authTechnician.certificate.map((item, idx) => {
+                  const src = typeof item === 'string' ? item : item.fileUrl;
+                  const isPDF = src.toLowerCase().endsWith('.pdf');
+                  return isPDF ? (
+                    <div
+                      key={idx}
+                      onClick={() => {
+                        setCertPreviewUrl(src);
+                        certDialogRef.current?.showModal();
+                      }}
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 120, cursor:'pointer' }}
+                    >
+                      <i className="bi bi-file-earmark-pdf-fill" style={{ fontSize: '3rem', color: '#dc3545' }}></i>
+                      <small>PDF {idx + 1}</small>
+                    </div>
+                  ) : (
+                    <img
+                      key={idx}
+                      src={src}
+                      alt={`certificate-${idx + 1}`}
+                      onClick={() => {
+                        setCertPreviewUrl(src);
+                        certDialogRef.current?.showModal();
+                      }}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = '/img/placeholder.png';
+                      }}
+                      style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid #dee2e6', cursor: 'pointer' }}
+                    />
+                  );
+                })}
+              </div>
+            </InfoCard>
+          )}
+        </ProfileInfoContainer>
+      )}
+    </Section>
+  );
+
+  const renderSecurityContent = () => (
+    <Section>
+      <SectionHeader>
+        <SectionTitle>Cài đặt bảo mật</SectionTitle>
+      </SectionHeader>
+      <SecurityGrid>
+        {/* Chỉ hiển thị "Đổi mật khẩu" nếu user không đăng nhập bằng Google */}
+        {!user?.googleId && (
+          <SecurityCard>
+            <SecurityCardHeader>
+              <i className="bi bi-key-fill"></i>
+              <h6>Đổi mật khẩu</h6>
+            </SecurityCardHeader>
+            <SecurityCardContent>
+              <p>Đặt mật khẩu mới để bảo vệ tài khoản của bạn.</p>
+            </SecurityCardContent>
+            <SecurityCardAction>
+              <Button className="btn-primary" onClick={() => setShowChangePasswordModal(true)}>Thay đổi</Button>
+            </SecurityCardAction>
+          </SecurityCard>
+        )}
+
+        <SecurityCard>
+          <SecurityCardHeader>
+            <i className="bi bi-telephone-fill"></i>
+            <h6>Số điện thoại</h6>
+          </SecurityCardHeader>
+          <SecurityCardContent>
+            <p>Cập nhật số điện thoại để khôi phục tài khoản khi cần thiết.</p>
+          </SecurityCardContent>
+          <SecurityCardAction>
+            <Button className="btn-primary" onClick={() => setShowPhoneModal(true)}>Thay đổi</Button>
+          </SecurityCardAction>
+        </SecurityCard>
+
+        <SecurityCard>
+          <SecurityCardHeader>
+            <i className="bi bi-pause-circle-fill"></i>
+            <h6>Vô hiệu hóa tài khoản</h6>
+          </SecurityCardHeader>
+          <SecurityCardContent>
+            <p>Tạm thời vô hiệu hóa tài khoản của bạn.</p>
+          </SecurityCardContent>
+          <SecurityCardAction>
+            <Button className="btn-secondary" onClick={() => setShowDeactivateModal(true)}>Vô hiệu hóa</Button>
+          </SecurityCardAction>
+        </SecurityCard>
+
+        <SecurityCard>
+          <SecurityCardHeader>
+            <i className="bi bi-trash-fill"></i>
+            <h6>Xóa tài khoản</h6>
+          </SecurityCardHeader>
+          <SecurityCardContent>
+            <p>Xóa vĩnh viễn tài khoản và tất cả dữ liệu liên quan.</p>
+          </SecurityCardContent>
+          <SecurityCardAction>
+            {user?.role?.name === 'ADMIN' ? (
+              <Button className="btn-danger" disabled style={{ opacity: 0.6 }}>
+                Quản trị viên không thể xóa tài khoản
+              </Button>
+            ) : (
+              <Button className="btn-danger" onClick={handleDelete}>
+                Xóa tài khoản
+              </Button>
+            )}
+          </SecurityCardAction>
+        </SecurityCard>
+      </SecurityGrid>
+    </Section>
+  );
+
+  const renderChangePasswordModal = () => (
+    <ModalBackdrop>
+      <ModalContent>
+        <form onSubmit={handleChangePassword}>
+          <ModalHeader>
+            <h5>Đổi mật khẩu</h5>
+            <button type="button" onClick={() => setShowChangePasswordModal(false)}>&times;</button>
+          </ModalHeader>
+          <ModalBody>
+            <FormControl>
+              <label>Mật khẩu hiện tại</label>
+              <div style={{ position:'relative' }}>
+                <input type={showPwd.current? 'text':'password'} name="currentPassword" value={passwordData.currentPassword} onChange={handlePasswordChange} onBlur={(e)=>verifyCurrentPassword(e.target.value)} />
+                <i className={`bi ${showPwd.current? 'bi-eye-slash':'bi-eye'}`} onClick={()=>setShowPwd(p=>({...p,current:!p.current}))} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', cursor:'pointer' }}></i>
+              </div>
+              {passwordErrors.current && <small className="text-danger d-block mt-1">{passwordErrors.current}</small>}
+            </FormControl>
+            <FormControl style={{marginTop: '1rem'}}>
+              <label>Mật khẩu mới</label>
+              <div style={{ position:'relative' }}>
+                <input type={showPwd.new? 'text':'password'} name="newPassword" value={passwordData.newPassword} onChange={handlePasswordChange} />
+                <i className={`bi ${showPwd.new? 'bi-eye-slash':'bi-eye'}`} onClick={()=>setShowPwd(p=>({...p,new:!p.new}))} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', cursor:'pointer' }}></i>
+              </div>
+              {passwordErrors.new && <small className="text-danger d-block mt-1">{passwordErrors.new}</small>}
+            </FormControl>
+             <FormControl style={{marginTop: '1rem'}}>
+              <label>Xác nhận mật khẩu mới</label>
+              <div style={{ position:'relative' }}>
+                <input type={showPwd.confirm? 'text':'password'} name="confirmPassword" value={passwordData.confirmPassword} onChange={handlePasswordChange} />
+                <i className={`bi ${showPwd.confirm? 'bi-eye-slash':'bi-eye'}`} onClick={()=>setShowPwd(p=>({...p,confirm:!p.confirm}))} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', cursor:'pointer' }}></i>
+              </div>
+              {passwordErrors.confirm && <small className="text-danger d-block mt-1">{passwordErrors.confirm}</small>}
+            </FormControl>
+            {/* Danh sách yêu cầu mật khẩu */}
+            <ul style={{ listStyle:'none', paddingLeft:0, fontSize:'0.85rem', marginTop:'0.5rem' }}>
+              <li><i className={`bi ${pwdRules.length ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Ít nhất 8 ký tự</li>
+              <li><i className={`bi ${pwdRules.upper ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Chữ HOA</li>
+              <li><i className={`bi ${pwdRules.lower ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Chữ thường</li>
+              <li><i className={`bi ${pwdRules.digit ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Số</li>
+              <li><i className={`bi ${pwdRules.special ? 'bi-check-circle-fill text-success' : 'bi-circle'} me-1`}></i> Ký tự đặc biệt (!@#$%^&*)</li>
+            </ul>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" className="btn-light" onClick={() => setShowChangePasswordModal(false)}>Hủy</Button>
+            <Button type="submit" className="btn-primary">Lưu thay đổi</Button>
+          </ModalFooter>
+        </form>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  const renderPhoneModal = () => (
+    <ModalBackdrop>
+      <ModalContent>
+        <form onSubmit={handleRequestPhoneChange}>
+          <ModalHeader>
+            <h5>Thay đổi số điện thoại</h5>
+            <button type="button" onClick={() => setShowPhoneModal(false)}>&times;</button>
+          </ModalHeader>
+          <ModalBody>
+            <FormControl>
+              <label>Số điện thoại mới</label>
+              <input type="tel" value={newPhone} onChange={(e) => setNewPhone(e.target.value)} required />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" className="btn-light" onClick={() => setShowPhoneModal(false)}>Hủy</Button>
+            <Button type="submit" className="btn-primary">Gửi mã OTP</Button>
+          </ModalFooter>
+        </form>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  const renderOtpModal = () => (
+    <ModalBackdrop>
+        <ModalContent>
+            <form onSubmit={handleVerifyPhoneChange}>
+                <ModalHeader>
+                    <h5>Xác thực số điện thoại</h5>
+                    <button type="button" onClick={() => setShowOtpModal(false)}>&times;</button>
+                </ModalHeader>
+                <ModalBody>
+                    <p>Nhập mã 6 số đã được gửi đến {newPhone}.</p>
+                    <FormControl>
+                        <label>Mã OTP</label>
+                        <input type="text" value={otp} onChange={(e) => setOtp(e.target.value)} maxLength="6" required />
+                    </FormControl>
+                </ModalBody>
+                <ModalFooter>
+                    <Button type="button" className="btn-light" onClick={() => setShowOtpModal(false)}>Hủy</Button>
+                    <Button type="submit" className="btn-primary">Xác thực</Button>
+                </ModalFooter>
+            </form>
+        </ModalContent>
+    </ModalBackdrop>
+  );
+
+  const renderDeactivateModal = () => (
+    <ModalBackdrop>
+      <ModalContent>
+        <ModalHeader>
+          <h5>Vô hiệu hóa tài khoản</h5>
+           <button type="button" onClick={() => {
+             setShowDeactivateModal(false);
+             setDeactivatePassword("");
+           }}>&times;</button>
+        </ModalHeader>
+        <ModalBody>
+          <p>Bạn có chắc chắn muốn vô hiệu hóa tài khoản? Bạn có thể kích hoạt lại bất cứ lúc nào bằng cách đăng nhập.</p>
+          
+          {user?.googleId && user.googleId !== null && user.googleId !== undefined ? (
+            <div style={{ 
+              background: '#f8f9fa', 
+              padding: '1rem', 
+              borderRadius: '0.375rem', 
+              marginTop: '1rem',
+              border: '1px solid #dee2e6'
+            }}>
+              <p style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem' }}>
+                <i className="bi bi-info-circle-fill" style={{ marginRight: '0.5rem', color: '#0d6efd' }}></i>
+                Tài khoản của bạn được đăng nhập bằng Google, không cần xác thực.
+              </p>
+            </div>
+          ) : (
+            <div style={{ 
+              background: '#f8f9fa', 
+              padding: '1rem', 
+              borderRadius: '0.375rem', 
+              marginTop: '1rem',
+              border: '1px solid #dee2e6'
+            }}>
+              <p style={{ margin: 0, color: '#6c757d', fontSize: '0.9rem' }}>
+                <i className="bi bi-shield-check-fill" style={{ marginRight: '0.5rem', color: '#28a745' }}></i>
+                Để đảm bảo an toàn, chúng tôi sẽ gửi mã xác thực đến {user?.email && user?.phone ? 'email hoặc số điện thoại' : user?.email ? 'email' : 'số điện thoại'} của bạn.
+              </p>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button type="button" className="btn-light" onClick={() => {
+            setShowDeactivateModal(false);
+            setDeactivatePassword("");
+          }}>Hủy</Button>
+          <Button type="button" className="btn-secondary" onClick={handleDeactivate}>
+            Vô hiệu hóa
+          </Button>
+        </ModalFooter>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  const renderDeleteModal = () => (
+     <ModalBackdrop>
+      <ModalContent>
+        <ModalHeader>
+          <h5>Xóa tài khoản</h5>
+          <button type="button" onClick={() => setShowDeleteModal(false)}>&times;</button>
+        </ModalHeader>
+        <ModalBody>
+          <p><strong>Cảnh báo:</strong> Hành động này là vĩnh viễn và không thể hoàn tác. Tất cả dữ liệu của bạn sẽ bị xóa.</p>
+          <p>Bạn có thực sự chắc chắn muốn xóa tài khoản?</p>
+        </ModalBody>
+        <ModalFooter>
+          <Button type="button" className="btn-light" onClick={() => setShowDeleteModal(false)}>Hủy</Button>
+          <Button type="button" className="btn-danger" onClick={() => {
+            setShowDeleteModal(false);
+            // Không gọi handleDelete nữa, chỉ chuyển đến modal xác nhận cuối cùng
+          }}>Tiếp tục</Button>
+        </ModalFooter>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  const renderDeactivateVerificationModal = () => (
+    <ModalBackdrop>
+      <ModalContent>
+        <ModalHeader>
+          <h5>Chọn phương thức xác thực</h5>
+          <button type="button" onClick={() => setShowDeactivateVerificationModal(false)}>&times;</button>
+        </ModalHeader>
+        <ModalBody>
+          <p>Vui lòng chọn phương thức để nhận mã xác thực:</p>
+          
+          {user?.email && user?.phone ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Button 
+                type="button" 
+                className="btn-outline-primary" 
+                onClick={() => handleRequestDeactivateVerification('email')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  padding: '1rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <i className="bi bi-envelope-fill" style={{ marginRight: '0.75rem', fontSize: '1.2rem' }}></i>
+                  <div>
+                    <div style={{ fontWeight: '600' }}>Gửi qua Email</div>
+                    <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>{user.email}</div>
+                  </div>
+                </div>
+                <i className="bi bi-chevron-right"></i>
+              </Button>
+              
+              <Button 
+                type="button" 
+                className="btn-outline-primary" 
+                onClick={() => handleRequestDeactivateVerification('phone')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  padding: '1rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <i className="bi bi-telephone-fill" style={{ marginRight: '0.75rem', fontSize: '1.2rem' }}></i>
+                  <div>
+                    <div style={{ fontWeight: '600' }}>Gửi qua SMS</div>
+                    <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>{user.phone}</div>
+                  </div>
+                </div>
+                <i className="bi bi-chevron-right"></i>
+              </Button>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+              <i className="bi bi-shield-check-fill" style={{ fontSize: '3rem', color: '#28a745', marginBottom: '1rem' }}></i>
+              <p>Mã xác thực sẽ được gửi đến {user?.email ? 'email' : 'số điện thoại'} của bạn.</p>
+              <Button 
+                type="button" 
+                className="btn-primary" 
+                onClick={() => handleRequestDeactivateVerification(verificationMethod)}
+              >
+                Gửi mã xác thực
+              </Button>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button type="button" className="btn-light" onClick={() => setShowDeactivateVerificationModal(false)}>Hủy</Button>
+        </ModalFooter>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  const renderDeactivateOtpModal = () => (
+    <ModalBackdrop>
+      <ModalContent>
+        <form onSubmit={handleVerifyDeactivateAccount}>
+          <ModalHeader>
+            <h5>Xác thực vô hiệu hóa tài khoản</h5>
+            <button type="button" onClick={() => {
+              setShowDeactivateOtpModal(false);
+              setDeactivateOtp("");
+            }}>&times;</button>
+          </ModalHeader>
+          <ModalBody>
+            <p>Nhập mã 6 số đã được gửi đến {verificationMethod === 'email' ? 'email' : 'số điện thoại'} của bạn.</p>
+            <FormControl>
+              <label>Mã xác thực</label>
+              <input 
+                type="text" 
+                value={deactivateOtp} 
+                onChange={(e) => setDeactivateOtp(e.target.value)} 
+                maxLength="6" 
+                placeholder="Nhập mã 6 số"
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" className="btn-light" onClick={() => {
+              setShowDeactivateOtpModal(false);
+              setDeactivateOtp("");
+            }}>Hủy</Button>
+            <Button type="submit" className="btn-secondary">Vô hiệu hóa</Button>
+          </ModalFooter>
+        </form>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  // Delete account modals
+  const renderDeleteVerificationModal = () => (
+    <ModalBackdrop>
+      <ModalContent>
+        <ModalHeader>
+          <h5>Chọn phương thức xác thực</h5>
+          <button type="button" onClick={() => setShowDeleteVerificationModal(false)}>&times;</button>
+        </ModalHeader>
+        <ModalBody>
+          <p>Vui lòng chọn phương thức để nhận mã xác thực:</p>
+          
+          {user?.email && user?.phone ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Button 
+                type="button" 
+                className="btn-outline-primary" 
+                onClick={() => handleRequestDeleteVerification('email')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  padding: '1rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <i className="bi bi-envelope-fill" style={{ marginRight: '0.75rem', fontSize: '1.2rem' }}></i>
+                  <div>
+                    <div style={{ fontWeight: '600' }}>Gửi qua Email</div>
+                    <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>{user.email}</div>
+                  </div>
+                </div>
+                <i className="bi bi-chevron-right"></i>
+              </Button>
+              
+              <Button 
+                type="button" 
+                className="btn-outline-primary" 
+                onClick={() => handleRequestDeleteVerification('phone')}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  padding: '1rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
+                  <i className="bi bi-telephone-fill" style={{ marginRight: '0.75rem', fontSize: '1.2rem' }}></i>
+                  <div>
+                    <div style={{ fontWeight: '600' }}>Gửi qua SMS</div>
+                    <div style={{ fontSize: '0.9rem', color: '#6c757d' }}>{user.phone}</div>
+                  </div>
+                </div>
+                <i className="bi bi-chevron-right"></i>
+              </Button>
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+              <i className="bi bi-shield-check-fill" style={{ fontSize: '3rem', color: '#28a745', marginBottom: '1rem' }}></i>
+              <p>Mã xác thực sẽ được gửi đến {user?.email ? 'email' : 'số điện thoại'} của bạn.</p>
+              <Button 
+                type="button" 
+                className="btn-primary" 
+                onClick={() => handleRequestDeleteVerification(user?.email ? 'email' : 'phone')}
+              >
+                Gửi mã xác thực
+              </Button>
+            </div>
+          )}
+        </ModalBody>
+        <ModalFooter>
+          <Button type="button" className="btn-light" onClick={() => setShowDeleteVerificationModal(false)}>Hủy</Button>
+        </ModalFooter>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  const renderDeleteOtpModal = () => (
+    <ModalBackdrop>
+      <ModalContent>
+        <form onSubmit={handleVerifyDeleteAccount}>
+          <ModalHeader>
+            <h5>Xác thực xóa tài khoản</h5>
+            <button type="button" onClick={() => {
+              setShowDeleteOtpModal(false);
+              setDeleteOtp("");
+            }}>&times;</button>
+          </ModalHeader>
+          <ModalBody>
+            <p>Nhập mã 6 số đã được gửi đến {deleteVerificationMethod === 'email' ? 'email' : 'số điện thoại'} của bạn.</p>
+            <FormControl>
+              <label>Mã xác thực</label>
+              <input 
+                type="text" 
+                value={deleteOtp} 
+                onChange={(e) => setDeleteOtp(e.target.value)} 
+                maxLength="6" 
+                placeholder="Nhập mã 6 số"
+              />
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" className="btn-light" onClick={() => {
+              setShowDeleteOtpModal(false);
+              setDeleteOtp("");
+            }}>Hủy</Button>
+            <Button type="submit" className="btn-danger">Xác thực</Button>
+          </ModalFooter>
+        </form>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  const renderDeletePasswordModal = () => {
+    return (
+      <ModalBackdrop>
+        <ModalContent>
+          <form onSubmit={handleDeletePasswordSubmit}>
+            <ModalHeader>
+              <h5>Xác thực xóa tài khoản</h5>
+              <button type="button" onClick={() => {
+                setShowDeletePasswordModal(false);
+                setDeletePassword("");
+              }}>&times;</button>
+            </ModalHeader>
+            <ModalBody>
+              <p>Vui lòng nhập mật khẩu của bạn để xác thực việc xóa tài khoản.</p>
+              <FormControl style={{ marginTop:'1rem' }}>
+                <label>Mật khẩu hiện tại</label>
+                <div style={{ position:'relative' }}>
+                  <input 
+                     type={showDeletePwd? 'text':'password'}
+                     value={deletePassword}
+                     onChange={(e) => { setDeletePassword(e.target.value); setDeletePwdError(''); }}
+                     onBlur={(e)=>verifyDeletePassword(e.target.value)}
+                     placeholder="Nhập mật khẩu của bạn"
+                  />
+                   <i className={`bi ${showDeletePwd? 'bi-eye-slash':'bi-eye'}`} onClick={()=>setShowDeletePwd(p=>!p)} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', cursor:'pointer' }}></i>
+                 </div>
+                 {deletePwdError && <small className="text-danger d-block mt-1">{deletePwdError}</small>}
+              </FormControl>
+            </ModalBody>
+            <ModalFooter>
+              <Button type="button" className="btn-light" onClick={() => {
+                setShowDeletePasswordModal(false);
+                setDeletePassword("");
+              }}>Hủy</Button>
+              <Button type="submit" className="btn-danger">Xác thực</Button>
+            </ModalFooter>
+          </form>
+        </ModalContent>
+      </ModalBackdrop>
+    );
+  };
+
+  const renderDeleteConfirmModal = () => (
+    <ModalBackdrop>
+      <ModalContent>
+        <form onSubmit={handleConfirmDelete}>
+          <ModalHeader>
+            <h5>Xác nhận xóa tài khoản</h5>
+            <button type="button" onClick={() => {
+              setShowDeleteConfirmModal(false);
+              setDeletePassword("");
+              setDeleteConfirmText("");
+            }}>&times;</button>
+          </ModalHeader>
+          <ModalBody>
+            <div style={{ 
+              background: '#fff3cd', 
+              border: '1px solid #ffeaa7', 
+              padding: '1rem', 
+              borderRadius: '0.375rem', 
+              marginBottom: '1rem'
+            }}>
+              <p style={{ margin: 0, color: '#856404', fontWeight: 'bold' }}>
+                ⚠️ Cảnh báo: Tài khoản sẽ được đánh dấu để xóa!
+              </p>
+              <p style={{ margin: '0.5rem 0 0 0', color: '#856404', fontSize: '0.9rem' }}>
+                Bạn có 30 ngày để đăng nhập lại nếu muốn hủy bỏ việc xóa tài khoản.
+              </p>
+            </div>
+            
+            <p><strong>Thông tin sẽ bị xóa:</strong></p>
+            <ul>
+              <li>Thông tin cá nhân (họ tên, email, số điện thoại, địa chỉ)</li>
+              <li>Ảnh đại diện</li>
+              <li>Lịch sử đăng nhập</li>
+            </ul>
+            
+            <p><strong>Dữ liệu sẽ được giữ lại (ẩn thông tin cá nhân):</strong></p>
+            <ul>
+              <li>Lịch sử booking (cho báo cáo)</li>
+              <li>Feedback và đánh giá</li>
+              <li>Giao dịch thanh toán</li>
+            </ul>
+
+            <FormControl style={{ marginTop: '1rem' }}>
+              <label>Xác nhận xóa tài khoản</label>
+              <input 
+                type="text" 
+                value={deleteConfirmText} 
+                onChange={(e) => setDeleteConfirmText(e.target.value)} 
+                placeholder="Nhập 'DELETE' để xác nhận"
+              />
+              <small style={{ color: '#6c757d' }}>
+                Vui lòng nhập chính xác "DELETE" để xác nhận việc xóa tài khoản
+              </small>
+            </FormControl>
+          </ModalBody>
+          <ModalFooter>
+            <Button type="button" className="btn-light" onClick={() => {
+              setShowDeleteConfirmModal(false);
+              setDeletePassword("");
+              setDeleteConfirmText("");
+            }}>Hủy</Button>
+            <Button type="submit" className="btn-danger">Xóa tài khoản</Button>
+          </ModalFooter>
+        </form>
+      </ModalContent>
+    </ModalBackdrop>
+  );
+
+  if (profileLoading && !user) {
+    return <div>Đang tải...</div>;
+  }
+
+  if (accountDeleted) {
+    return (
+      <ProfilePageContainer>
+        <Header />
+        <BreadcrumbBar title="Thông tin cá nhân" />
+        <ContentContainer>
+          <div className="container">
+            <div style={{textAlign: 'center', padding: '3rem 0'}}>
+              <h3>Tài khoản của bạn đang được xử lý xóa...</h3>
+              <p>Bạn sẽ được chuyển hướng về trang đăng nhập trong giây lát.</p>
+            </div>
+          </div>
+        </ContentContainer>
+        <Footer />
+      </ProfilePageContainer>
+    );
+  }
+
+  return (
+    <ProfilePageContainer>
+      <Header />
+      <BreadcrumbBar title="Thông tin cá nhân" />
+      <ContentContainer>
+        <div className="container">
+            {/* Banner nhắc xác thực email/phone */}
+            {user && ((!user.emailVerified && user.email) || (!user.email && !user.phoneVerified)) && (
+               <div className="alert alert-warning d-flex justify-content-between align-items-center" role="alert">
+                 <span>
+                   {(user.email && !user.emailVerified) ? 'Email của bạn chưa được xác thực.' : 'Số điện thoại của bạn chưa được xác thực.'}
+                   &nbsp;Vui lòng xác thực để sử dụng đầy đủ tính năng.
+                 </span>
+                 <button
+                   className="btn btn-sm btn-primary"
+                   onClick={() => navigate((user.email && !user.emailVerified) ? '/verify-email' : '/verify-otp')}
+                 >
+                   Xác thực ngay
+                 </button>
+               </div>
+             )}
+
+            {/* <ApproveTechnicianTest />
+            <ContractStatus /> */}
+          <SettingsWrapper>
+            {renderSidebar()}
+            <SettingsContent>
+              {activeTab === 'profile' && renderProfileContent()}
+              {activeTab === 'security' && renderSecurityContent()}
+              {activeTab === 'contract' && user?.role?.name === 'TECHNICIAN' && renderContractContent()}
+            </SettingsContent>
+          </SettingsWrapper>
+        </div>
+      </ContentContainer>
+      <Footer />
+      {showChangePasswordModal && !user?.googleId && renderChangePasswordModal()}
+      {showPhoneModal && renderPhoneModal()}
+      {showOtpModal && renderOtpModal()}
+      {showDeactivateModal && renderDeactivateModal()}
+      {showDeleteModal && renderDeleteModal()}
+      {showDeactivateVerificationModal && renderDeactivateVerificationModal()}
+      {showDeactivateOtpModal && renderDeactivateOtpModal()}
+      {showDeleteVerificationModal && renderDeleteVerificationModal()}
+      {showDeleteOtpModal && renderDeleteOtpModal()}
+      {showDeletePasswordModal && !accountDeleted && renderDeletePasswordModal()}
+      {showDeleteConfirmModal && !accountDeleted && renderDeleteConfirmModal()}
+      <TechnicianOnboardingModal />
+      <dialog ref={certDialogRef} style={{ border:'none', background:'rgba(0,0,0,.6)', padding:0 }} onClick={(e)=>{
+        if(e.target === certDialogRef.current) { certDialogRef.current.close(); }
+      }}>
+        {certPreviewUrl && (certPreviewUrl.toLowerCase().endsWith('.pdf') ? (
+          <iframe src={certPreviewUrl} title="pdf-view" style={{ width:'90vw', height:'90vh', border:'none' }} />
+        ) : (
+          <img src={certPreviewUrl} alt="certificate-large" style={{ maxWidth:'90vw', maxHeight:'90vh', borderRadius:8 }} />
+        ))}
+      </dialog>
+    </ProfilePageContainer>
+  );
+}
+
+export default ProfilePage;

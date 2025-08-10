@@ -1,0 +1,162 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { transactionAPI } from './transactionAPI';
+import { toast } from 'react-toastify';
+
+// Initial state
+const initialState = {
+  loading: false,
+  error: null,
+  depositURL: null,
+  successMessage: null,
+};
+
+
+export const finalizeBookingThunk = createAsyncThunk(
+  'transaction/finalizeBooking',
+  async (bookingData, { rejectWithValue }) => {
+    try {
+      const response = await transactionAPI.finalizeBooking(bookingData);
+      return response.data; // This will contain the paymentUrl if applicable
+    } catch (error) {
+      const errorMessage = error.response?.data?.error || 'Finalizing booking failed';
+      return rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const depositBalance = createAsyncThunk(
+  'transaction/depositBalance',
+  async (amount, { rejectWithValue }) => {
+    try {
+      const response = await transactionAPI.depositBalance(amount);
+      return response.data.data.depositURL;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to deposit balance');
+    }
+  }
+);
+
+export const subscriptionBalance = createAsyncThunk(
+  'transaction/subscriptionBalance',
+  async (amount, { rejectWithValue }) => {
+    try {
+      const response = await transactionAPI.subscriptionBalance(amount);
+      return response.data.data.depositURL;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to subscription balance');
+    }
+  }
+);
+
+export const withdrawBalance = createAsyncThunk(
+  'transaction/withdrawBalance',
+  async (amount, { rejectWithValue }) => {
+    try {
+      
+      const response = await transactionAPI.withdrawBalance(amount);
+      return response.data.message || 'Rút tiền thành công';
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Rút tiền thất bại'
+      );
+    }
+  }
+);
+
+export const extendSubscription = createAsyncThunk(
+  'transaction/extendSubscription',
+  async ({ technicianId, packageId, days }, { rejectWithValue }) => {
+    try {
+      const result = await transactionAPI.extendSubscription({ technicianId, packageId, days });
+      return result.checkoutUrl; // Giả sử API trả về URL thanh toán
+    } catch (error) {
+      return rejectWithValue(
+        error.response?.data?.message || 'Gia hạn thất bại'
+      );
+    }
+  }
+);
+
+
+
+// Slice
+const transactionSlice = createSlice({
+  name: 'transaction',
+  initialState: {
+    extendStatus: 'idle',
+    extendError: null,
+  },
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    },
+    clearTransactionState: (state) => {
+      state.depositURL = null;
+      state.loading = false;
+      state.error = null;
+      state.successMessage = null;
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+
+      // Finalize Booking
+      .addCase(finalizeBookingThunk.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(finalizeBookingThunk.fulfilled, (state, action) => {
+        state.loading = false;
+        // The backend response now contains the final state.
+        // We can update the local state if needed, but for now, the primary
+        // goal is to get the payment URL or confirm cash payment.
+      })
+      .addCase(finalizeBookingThunk.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(depositBalance.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(depositBalance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.depositURL = action.payload;
+        state.successMessage = 'Nạp tiền thành công. Đang chuyển hướng đến cổng thanh toán.';
+      })
+      .addCase(depositBalance.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+      // withdraw
+      .addCase(withdrawBalance.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.successMessage = null;
+      })
+      .addCase(withdrawBalance.fulfilled, (state, action) => {
+        state.loading = false;
+        state.successMessage = action.payload;
+      })
+      .addCase(withdrawBalance.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+
+       .addCase(extendSubscription.pending, (state) => {
+        state.extendStatus = 'loading';
+        state.extendError = null;
+      })
+      .addCase(extendSubscription.fulfilled, (state) => {
+        state.extendStatus = 'succeeded';
+      })
+      .addCase(extendSubscription.rejected, (state, action) => {
+        state.extendStatus = 'failed';
+        state.extendError = action.payload;
+      });
+  }
+});
+
+export const { clearError, clearTransactionState } = transactionSlice.actions;
+export default transactionSlice.reducer;
