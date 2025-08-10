@@ -12,7 +12,8 @@
         "dev": "concurrently \"npm:dev:*\"",
         "build:user": "npm run build -w user-app",
         "build:admin": "npm run build -w admin-app",
-        "build": "npm run build:admin"
+        "build": "npm run build:admin",
+        "vercel-build": "npm run build:admin"
     },
     "devDependencies": {
         "concurrently": "^8.0.0"
