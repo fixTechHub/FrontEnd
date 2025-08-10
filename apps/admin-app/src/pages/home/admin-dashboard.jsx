@@ -312,7 +312,7 @@ const AdminDashboard = () => {
     };
 
     fetchDashboardData();
-  }, [revenueCounts, totalBookings, totalTechnicians]);
+  }, []); // Empty dependency array to run only once
 
   // Fetch revenue data
   useEffect(() => {
@@ -366,7 +366,9 @@ const AdminDashboard = () => {
         const currentCount = bookingData[currentMonth] || 0;
         const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
         const lastCount = bookingData[lastMonth] || 0;
-        const change = lastCount === 0 ? 0 : ((currentCount - lastCount) / lastCount) * 100;
+        const change = lastCount === 0 
+          ? (currentCount > 0 ? 100 : 0)  // Nếu tháng trước = 0, tháng này > 0 thì tăng 100%
+          : ((currentCount - lastCount) / lastCount) * 100;
         setPercentChange(change);
       } catch (error) {
         console.error('Error fetching booking counts:', error);
@@ -408,8 +410,19 @@ const AdminDashboard = () => {
 
 
         
-        const change = lastCount === 0 ? 0 : ((currentCount - lastCount) / lastCount) * 100;
+        const change = lastCount === 0 
+          ? (currentCount > 0 ? 100 : 0)  // Nếu tháng trước = 0, tháng này > 0 thì tăng 100%
+          : ((currentCount - lastCount) / lastCount) * 100;
 
+        // Debug log
+        console.log('Technician Count Debug:', {
+          currentMonth,
+          currentCount,
+          lastMonth,
+          lastCount,
+          change,
+          technicianData
+        });
         
         setPercentTechnicianChange(change);
       } catch (error) {

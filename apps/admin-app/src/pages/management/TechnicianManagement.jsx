@@ -504,6 +504,10 @@ const TechnicianManagement = () => {
                     <td>{getTechnicianAvailability(tech.availability)}</td>
                     <td>
                       <div className="d-flex align-items-center gap-2">
+                        
+                        <Button className="management-action-btn" size="middle" onClick={() => handleOpenDetail(tech)}>
+                          <EyeOutlined style={{ marginRight: 4 }} />View Detail
+                        </Button>
                         {tech.status === "PENDING" ? (
                           <>
                             <button
@@ -524,9 +528,6 @@ const TechnicianManagement = () => {
                             </button>
                           </>
                         ) : null}
-                        <Button className="management-action-btn" size="middle" onClick={() => handleOpenDetail(tech)}>
-                          <EyeOutlined style={{ marginRight: 4 }} />View Detail
-                        </Button>
                       </div>
                     </td>
                   </tr>
