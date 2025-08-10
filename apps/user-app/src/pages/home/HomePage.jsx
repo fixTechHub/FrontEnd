@@ -1,4 +1,4 @@
-import HeroBanner from "../../components/common/HeroBanner";
+import Banner from "../../components/common/Banner";
 import Footer from "../../components/common/Footer";
 import Header from "../../components/common/Header";
 import Categories from "./Categories";
@@ -159,7 +159,7 @@ function HomePage() {
       <div className="main-wrapper">
         <Header />
 
-        <HeroBanner />
+        <Banner />
 
         <section className="section services">
           <div className="service-right">

@@ -98,7 +98,10 @@ const SubmitFeedback = () => {
               <div className="col-lg-8">
                 <div className="review-sec">
                   <div className="review-header">
-                    <h4>Thông tin đơn hàng</h4>
+                    <div className="d-flex align-items-center gap-2">
+                      <h4 className="mb-0">Thông tin đơn hàng</h4>
+                      <BookingReportButton bookingId={bookingId} reportedUserId={booking.technicianId?._id} />
+                    </div>
                   </div>
 
 
@@ -130,10 +133,6 @@ const SubmitFeedback = () => {
                       <span style={{ color: '#888' }}>Tổng tiền</span>
                       <span>{booking.finalPrice.toLocaleString()} VND</span>
                     </div>
-                  </div>
-                  {/* Báo cáo đơn hàng */}
-                  <div className="mt-3">
-                    <BookingReportButton bookingId={bookingId} reportedUserId={booking.technicianId?.userId?._id} />
                   </div>
                   </div>
 

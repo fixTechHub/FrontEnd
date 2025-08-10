@@ -1,14 +1,18 @@
 import Header from "../../components/common/Header";
+// No Link needed now
 import Footer from "../../components/common/Footer";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import { getFavoritesThunk, removeFavoriteThunk } from '../../features/favorites/favoriteSlice';
 import { fetchNotificationsThunk } from '../../features/notifications/notificationSlice';
 import BookingHistory from "../booking/common/BookingHistory";
 import ReceiptPage from "../receipt/ReceiptPage";
+import WarrantyList from "../warranty/WarrantyList";
+import UserCoupons from "../coupon/UserCoupons";
 import { fetchUserCouponsThunk } from '../../features/coupons/couponSlice';
 import apiClient from '../../services/apiClient';
 import { formatDate } from '../../utils/formatDate';
+import Form from 'react-bootstrap/Form';
 
 import NotificationPage from '../notifications/NotificationPage'
 // ---------- Breadcrumb -----------
@@ -33,11 +37,14 @@ const BreadcrumbSection = () => (
 // ---------- Dashboard Menu -----------
 const DashboardMenu = ({ activeTab, onSelect }) => (
 	<div className="dashboard-section">
+		<style jsx>{`
+			.dashboard-menu ul::-webkit-scrollbar { display: none; }
+		`}</style>
 		<div className="container">
 			<div className="row">
 				<div className="col-lg-12">
 					<div className="dashboard-menu">
-						<ul>
+						<ul className="d-flex justify-content-center flex-nowrap gap-2" style={{overflowX:'auto', scrollbarWidth:'none', msOverflowStyle:'none'}}>
 							{[
 								{ icon: "dashboard", text: "Bảng điều khiển", section: 'DASHBOARD' },
 								{ icon: "booking", text: "Đặt lịch của tôi", section: 'BOOKINGS' },
@@ -45,26 +52,28 @@ const DashboardMenu = ({ activeTab, onSelect }) => (
 								{ icon: "wishlist", text: "KTV yêu thích", section: 'FAVORITES' },
 								{ icon: "payment", text: "Phiếu giảm giá", section: 'COUPONS' },
 								{ icon: "wallet", text: "Hoá đơn", section: 'PAYMENTS' },
-								{ icon: "wallet", text: "Thông báo", section: 'NOTIFICATIONS' },
+								{ icon: "bell", text: "Thông báo", section: 'NOTIFICATIONS' },
 
 							].map((item) => (
 								<li key={item.text}>
 									<a
 										href="#" onClick={(e)=>{e.preventDefault();onSelect(item.section);}}
-										className={activeTab===item.section? "active" : ""}
+										className={activeTab===item.section? "active d-block" : "d-block"}
+										style={{padding:'22px', width:130, textAlign:'center'}}
 									>
 										<img
 											src={item.iconPath || `/img/icons/${item.icon}-icon.svg`}
 											alt="icon"
 											style={{
-												width: 24,
-												height: 24,
+												width:24,
+												height:24,
+												margin:'0 auto 8px',
 												filter: item.active
 													? 'brightness(0) invert(1)'
 													: 'brightness(0) saturate(0) invert(40%)',
 											}}
 										/>
-										<span>{item.text}</span>
+										<span style={{whiteSpace:'nowrap'}}>{item.text}</span>
 									</a>
 								</li>
 							))}
@@ -79,7 +88,7 @@ const DashboardMenu = ({ activeTab, onSelect }) => (
 
 
 // ---------- Widget Item component -----------
-const WidgetItem = ({ icon, title, value, color, iconPath, size = 32 }) => (
+const WidgetItem = ({ icon, title, value, color, iconPath, size = 32, section, onSelect }) => (
 	<div className="col-lg-3 col-md-6 d-flex">
 		<div className="widget-box flex-fill">
 			<div className="widget-header">
@@ -93,7 +102,7 @@ const WidgetItem = ({ icon, title, value, color, iconPath, size = 32 }) => (
 					</span>
 				</div>
 			</div>
-			<a href="#" className="view-link">
+			<a href="#" className="view-link" onClick={(e)=>{e.preventDefault(); onSelect && onSelect(section);}}>
 				Xem chi tiết <i className="feather-arrow-right" />
 			</a>
 		</div>
@@ -101,10 +110,10 @@ const WidgetItem = ({ icon, title, value, color, iconPath, size = 32 }) => (
 );
 
 // ---------- Widgets Row -----------
-const WidgetsRow = ({ stats }) => (
+const WidgetsRow = ({ stats, onSelect }) => (
 	<div className="row">
 		{stats.map((item) => (
-			<WidgetItem key={item.title} {...item} />
+			<WidgetItem key={item.title} {...item} onSelect={onSelect} />
 		))}
 	</div>
 );
@@ -168,32 +177,29 @@ const bookingStatusUIMap = {
     CANCELLED: { label: 'Đã hủy', className: 'badge-light-danger' },
 };
 
-const LastBookingsCard = ({ bookings }) => {
-    const data = (bookings && bookings.length) ? bookings : bookingsSample;
+const LastBookingsCard = ({ bookings, onViewAll }) => {
+    const data = bookings && bookings.length ? bookings : [];
     return (
         <div className="col-lg-8 d-flex">
             <div className="card user-card flex-fill">
                 <div className="card-header">
                     <div className="row align-items-center">
-                        <div className="col-sm-5">
+                        <div className="col-6 col-sm-6">
                             <h5>Đơn đặt lịch gần đây</h5>
                         </div>
-                        <div className="col-sm-7 text-sm-end">
-                            <div className="booking-select">
-                                <select className="form-control select">
-                                    <option>Last 30 Days</option>
-                                    <option>Last 7 Days</option>
-                                </select>
-                                <a href="#" className="view-link">
+                        <div className="col-6 col-sm-6 text-end">
+                            <a href="#" className="view-link" onClick={(e)=>{e.preventDefault(); onViewAll && onViewAll('BOOKINGS');}}>
                                     Xem tất cả
                                 </a>
-                            </div>
                         </div>
                     </div>
                 </div>
                 <div className="card-body p-0">
+                    {data.length === 0 ? (
+                        <div className="p-4 text-center text-secondary">Chưa có đơn đặt lịch nào</div>
+                    ) : (
                     <div className="table-responsive dashboard-table dashboard-table-info" style={{ overflowX: 'hidden' }}>
-                        <table className="table w-100">
+                        <table className="table w-100" style={{ minWidth: '750px' }}>
                             <colgroup>
                                 <col style={{ width: 220 }} />
                                 <col style={{ width: 150 }} />
@@ -275,6 +281,7 @@ const LastBookingsCard = ({ bookings }) => {
                             </tbody>
                         </table>
                     </div>
+                    )}
                 </div>
             </div>
         </div>
@@ -388,15 +395,15 @@ const CouponsCard = ({ coupons }) => {
 
     return (
         <div className="col-lg-4 d-flex">
-            <div className="card user-card flex-fill">
+            <div className="card user-card flex-fill d-flex flex-column">
                 <div className="card-header">
                     <h5 className="mb-0">Mã giảm giá hiện có</h5>
                 </div>
-                <div className="card-body">
+                <div className="card-body flex-grow-1 overflow-auto" style={{maxHeight:'500px'}}>
                     {coupons.length === 0 ? (
                         <div className="text-center text-secondary fw-semibold">Chưa có mã giảm giá khả dụng</div>
                     ) : (
-                        <div style={{ maxHeight: '350px', overflowY: 'auto' }}>
+                        <div>
                             {coupons.map(coupon => {
                                 const borderColor = coupon.type === 'PERCENT' ? 'border-success' : 'border-warning';
                                 const badgeColor  = coupon.type === 'PERCENT' ? 'bg-success' : 'bg-warning';
@@ -404,7 +411,7 @@ const CouponsCard = ({ coupons }) => {
                                 return (
                                     <div className="mb-3" key={coupon._id}>
                                         <div role="button" onClick={() => handleOpen(coupon)} className={`p-3 rounded border ${borderColor} position-relative coupon-card-hover`}>
-                                            <span className={`badge position-absolute top-0 end-0 mt-2 me-2 ${badgeColor}`}>{valueLabel}</span>
+                                            <span style={{color:"white"}} className={`badge position-absolute top-0 end-0 mt-2 me-2 ${badgeColor}`}>{valueLabel}</span>
                                             <h6 className="fw-bold text-primary mb-1">{coupon.code}</h6>
                                             <p className="mb-1 small text-truncate-2">{coupon.description || 'Không có mô tả'}</p>
                                             <p className="mb-0 small text-secondary fw-semibold"><i className="fa-regular fa-clock me-1"></i>HSD: {formatDate(coupon.endDate)}</p>
@@ -472,9 +479,9 @@ const CouponsCard = ({ coupons }) => {
 };
 
 // ---------- Dashboard Cards Row -----------
-const CardsRow = ({ bookings, coupons }) => (
+const CardsRow = ({ bookings, coupons, onSelectTab }) => (
     <div className="row">
-        <LastBookingsCard bookings={bookings} />
+        <LastBookingsCard bookings={bookings} coupons={coupons} onViewAll={onSelectTab} />
         <CouponsCard coupons={coupons} />
     </div>
 );
@@ -498,20 +505,22 @@ const FavoriteTechniciansSection = ({ favorites, loading, onRemove }) => (
 						if (!tech) return null;
 						const user = tech.userId || {};
 						return (
-							<div className="col-md-4 mb-3" key={fav._id}>
-								<div className="border rounded p-3 h-100 d-flex flex-column">
-									<div className="d-flex align-items-center mb-2">
-										<img src={user.avatar} alt="avatar" style={{ width: 60, height: 60, borderRadius: '50%', objectFit: 'cover', marginRight: 12 }} />
-										<div className="flex-grow-1">
-											<h6 className="mb-0">{user.fullName}</h6>
-											<small>Kinh nghiệm: {tech.experienceYears} năm</small>
-										</div>
-									</div>
-									<button className="btn btn-outline-danger btn-sm mt-auto align-self-end" onClick={() => onRemove(tech._id)}>
-										Bỏ yêu thích
-									</button>
-								</div>
-							</div>
+							<div className="col-md-4 mb-4" key={fav._id}>
+                              <div className="card border-0 shadow-sm hover-lift h-100 text-center p-3" style={{background:'#ffffff'}}> 
+                                <img src={user.avatar} alt="avatar" style={{width:80,height:80,borderRadius:'50%',objectFit:'cover',margin:'0 auto',boxShadow:'0 2px 6px rgba(0,0,0,.1)'}} />
+                                <h6 className="fw-semibold mt-3 mb-1" style={{color:'#0f172a'}}>{user.fullName}</h6>
+                                <small style={{color:'#475569'}}>Kinh nghiệm {tech.experienceYears} năm</small>
+                                <small className="d-block" style={{color:'#475569'}}>Đơn hoàn thành: {tech.completedBookings||0}</small>
+                                {tech.rating && (
+                                  <div className="mb-2" style={{color:'#f59e0b'}}>
+                                    {Array.from({length:5}).map((_,i)=>(<i key={i} className={i<tech.rating?"fa fa-star":"fa fa-star-o"}></i>))}
+                                  </div>
+                                )}
+                                <button className="btn btn-sm btn-outline-danger mt-auto w-100" onClick={()=>onRemove(tech._id)}>
+                                  <i className="fa fa-heart-broken me-1"></i>Bỏ yêu thích
+                                </button>
+                              </div>
+                            </div>
 						);
 					})}
 				</div>
@@ -567,7 +576,7 @@ function CustomerDashboard() {
 			<DashboardMenu activeTab={activeTab} onSelect={setActiveTab} />
 
 			<div className="content dashboard-content">
-				<div className="container">
+				<div className="container-xl">
 				
 
 
@@ -575,17 +584,15 @@ function CustomerDashboard() {
 						<>
 							{(() => {
 								const widgetsData = [
-									{ icon: 'book', title: 'Đơn đã đặt', value: bookingsCount },
-									{ icon: 'tool', title: 'Đơn đã bảo hành', value: warrantyCount, color: 'primary', iconPath: '/img/icons/service-07.svg', size: 32 },
-									{ icon: 'wishlist', title: 'KTV yêu thích', value: favoritesCount, color: 'danger' },
-									{ icon: 'payment', title: 'Phiếu giảm giá', value: couponsCount, color: 'info' },
-									{ icon: 'notification', title: 'Thông báo', value: couponsCount, color: 'info' },
-
+									{ icon: 'book', title: 'Đơn đã đặt', value: bookingsCount, section: 'BOOKINGS' },
+									{ icon: 'tool', title: 'Đơn đã bảo hành', value: warrantyCount, color: 'primary', iconPath: '/img/icons/service-07.svg', size: 32, section: 'WARRANTY' },
+									{ icon: 'wishlist', title: 'KTV yêu thích', value: favoritesCount, color: 'danger', section: 'FAVORITES' },
+									{ icon: 'payment', title: 'Phiếu giảm giá', value: couponsCount, color: 'info', section: 'COUPONS' },
 								];
-								return <WidgetsRow stats={widgetsData} />;
+								return <WidgetsRow stats={widgetsData} onSelect={setActiveTab} />;
 							})()}
 
-							<CardsRow bookings={recentBookings} coupons={userCoupons} />
+							<CardsRow bookings={recentBookings} coupons={userCoupons} onSelectTab={setActiveTab} />
 						</>
 					)}
 
@@ -594,7 +601,7 @@ function CustomerDashboard() {
 					)}
 
 					{activeTab==='WARRANTY' && (
-						<div className="mt-4"><h5>Danh sách bảo hành (đang phát triển)</h5></div>
+						<WarrantyList />
 					)}
 
 					{activeTab==='FAVORITES' && (
@@ -602,7 +609,7 @@ function CustomerDashboard() {
 					)}
 
 					{activeTab==='COUPONS' && (
-						<div className="mt-4"><h5>Phiếu giảm giá (đang phát triển)</h5></div>
+						<UserCoupons />
 					)}
 					{activeTab==='PAYMENTS' && (
 						<ReceiptPage />

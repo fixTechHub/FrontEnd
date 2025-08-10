@@ -74,8 +74,14 @@ const BookingReportButton = ({ bookingId, reportedUserId, warrantyId }) => {
 
   return (
     <>
-      <button className="btn btn-outline-danger" onClick={() => setOpen(true)}>
-        Báo cáo đơn hàng
+      <button
+        type="button"
+        className="btn p-0 bg-transparent border-0"
+        style={{ lineHeight: 0 }}
+        title="Báo cáo đơn hàng"
+        onClick={() => setOpen(true)}
+      >
+        <i className="bi bi-exclamation-triangle-fill text-danger" style={{ fontSize: '1.6rem' }}></i>
       </button>
 
       {open && (
