@@ -7,14 +7,8 @@ export default defineConfig({
   build: {
     sourcemap: false, // Tắt sourcemap để tránh lỗi Node.js 22
     outDir: 'dist',
-    rollupOptions: {
-      external: [], // Không external modules
-      output: {
-        manualChunks: undefined, // Tắt code splitting
-        format: 'es' // Sử dụng ES modules
-      }
-    },
-    target: 'es2022' // Target ES2022 cho Node.js 22
+    target: 'es2022', // Target ES2022 cho Node.js 22
+    minify: 'esbuild' // Sử dụng esbuild thay vì rollup
   },
   server: {
     port: 5173
@@ -26,5 +20,8 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ['axios'] // Force include axios
+  },
+  define: {
+    global: 'globalThis' // Fix global object cho Node.js 22
   }
 });
