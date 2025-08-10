@@ -360,9 +360,9 @@ const TechnicianDeposit = () => {
                     </Link>
                   </li>
                   <li>
-                    <Link to="/user-wishlist">
-                      <img src="/public/img/icons/wishlist-icon.svg" alt="Icon" />
-                      <span>Yêu thích</span>
+                    <Link to={`/technician/${technicianId}/certificate`}>
+                      <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
+                      <span>Chứng chỉ</span>
                     </Link>
                   </li>
                   <li>
@@ -399,7 +399,7 @@ const TechnicianDeposit = () => {
       <div className="content">
         <div className="container">
           <div className="content-header"> {/* SỬA: className thay vì class */}
-            <h4>Wallet</h4>
+            <h4>Ví của tôi</h4>
           </div>
 
           <div className="row">

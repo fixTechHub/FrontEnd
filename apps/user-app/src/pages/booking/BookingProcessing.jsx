@@ -14,6 +14,8 @@ import { confirmJobDoneByTechnician } from '../../features/bookings/bookingAPI';
 import { fetchBookingById, customerAcceptQuoteThunk, customerRejectQuoteThunk, technicianSendQuoteThunk } from "../../features/bookings/bookingSlice";
 import { BOOKING_STATUS } from "../../constants/bookingConstants";
 import { Modal, Button } from "react-bootstrap";
+import { FaSpinner } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 function BookingProcessing() {
     const navigate = useNavigate();
@@ -21,7 +23,7 @@ function BookingProcessing() {
     const { bookingId, stepsForCurrentUser } = useBookingParams();
     const { user } = useSelector((state) => state.auth);
     const { booking, status: bookingStatusState } = useSelector((state) => state.booking);
-    const [isChecking, setIsChecking] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(null);
     const [authError, setAuthError] = useState(null);
 
@@ -86,7 +88,7 @@ function BookingProcessing() {
 
             setIsAuthorized(isAuthorized);
             setAuthError(error);
-            setIsChecking(true);
+            setIsChecking(false);
         };
 
         verifyAccess();
@@ -95,7 +97,7 @@ function BookingProcessing() {
     useEffect(() => {
         if (isChecking) return;
 
-        if (isChecking && isAuthorized === false) {
+        if (isAuthorized === false) {
             toast.error("Bạn không có quyền truy cập trang này.");
             // Redirect to the original page or default to '/'
             const redirectPath = location.state?.from?.pathname || '/';
@@ -325,7 +327,9 @@ function BookingProcessing() {
     }
 
     if (!isAuthorized) {
-        return <div>Error: {authError}</div>;
+        return <div className="d-flex align-items-center justify-content-center">
+            <FaSpinner className="me-2 fa-spin" /> Đang tải...
+        </div>
     }
 
     return (
@@ -442,7 +446,7 @@ function BookingProcessing() {
                                     </div>
                                 ) : (
                                     <div className="alert alert-warning">
-                                        You can't chat or call video.
+                                        Bạn không thể nhắn tin hoặc gọi nữa
                                     </div>
                                 )}
                             </div>
@@ -474,14 +478,17 @@ function BookingProcessing() {
                                     </>
                                 )}
 
-                                <button
-                                    style={{ marginLeft: 10 }}
-                                    className="btn btn-primary"
-                                    onClick={handleComfirm}
-                                >
-                                    Xác nhận và Thanh toán
-                                </button>
-
+                                {booking.status === 'AWAITING_DONE'
+                                    // && booking.status === 'WAITING_CONFIRM'
+                                    && (
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={handleComfirm}
+                                        >
+                                            Xác nhận và Thanh toán
+                                        </button>
+                                    )
+                                }
 
                             </>
                         )}
@@ -509,13 +516,15 @@ function BookingProcessing() {
                                         Thêm thiết bị phát sinh
                                     </button>
 
-                                    <button
-                                        style={{ marginLeft: 10 }}
-                                        className="btn btn-primary"
-                                        onClick={handleComfirmByTechnician}
-                                    >
-                                        Xác nhận hoàn thành
-                                    </button>
+                                
+                                       <button
+                                       style={{ marginLeft: 10 }}
+                                       className="btn btn-primary"
+                                       onClick={handleComfirmByTechnician}
+                                   >
+                                       Xác nhận hoàn thành
+                                   </button>
+                                
                                 </>
                             )}
                     </div>
@@ -702,21 +711,21 @@ function BookingProcessing() {
                             {/* Tính tổng và breakdown */}
                             {(() => {
                                 const pendingItems = booking.quote.items.filter(item => item.status === 'PENDING');
-                                
+
                                 if (pendingItems.length > 0) {
                                     const acceptedItemsTotal = booking.quote.items
                                         .filter(item => item.status === 'ACCEPTED')
                                         .reduce((total, item) => total + (item.price * item.quantity), 0);
-                                    
+
                                     const pendingItemsTotal = pendingItems
                                         .reduce((total, item) => total + (item.price * item.quantity), 0);
-                                    
+
                                     // Lấy giá công từ TechnicianService (đã có sẵn từ trước)
                                     // Lưu ý: booking.quote.warrantiesDuration có thể khác với booking.technicianService.warrantyDuration
                                     // do quote được tạo trước đó với logic cũ. Luôn sử dụng TechnicianService để đảm bảo tính nhất quán.
                                     const laborPrice = booking.technicianService?.price || 0;
                                     const totalAmount = laborPrice + acceptedItemsTotal + pendingItemsTotal;
-                                    
+
                                     return (
                                         <div className="booking-processing-summary-section">
                                             <div className="booking-processing-summary-header">
@@ -727,7 +736,7 @@ function BookingProcessing() {
                                                     {totalAmount.toLocaleString()} VNĐ
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="booking-processing-summary-breakdown">
                                                 <div className="booking-processing-breakdown-item">
                                                     <span className="booking-processing-breakdown-label">Giá công (từ cấu hình dịch vụ)</span>
@@ -753,7 +762,7 @@ function BookingProcessing() {
                                         </div>
                                     );
                                 }
-                                
+
                                 return null;
                             })()}
 

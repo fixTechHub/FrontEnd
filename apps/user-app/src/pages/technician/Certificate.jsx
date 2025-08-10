@@ -60,40 +60,76 @@ const CertificateList = () => {
       <Header />
       <BreadcrumbBar />
 
+      <div className="dashboard-section">
+                    <div className="container">
+                        <div className="row">
+                            <div className="col-lg-12">
+                                <div className="dashboard-menu">
+                                    <ul>
+                                        <li>
+                                            <Link to={`/technician`} >
+                                                <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
+                                                <span>Bảng điểu khiển</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to={`/technician/booking`} >
+                                                <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                                                <span>Đơn hàng</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/technician/feedback">
+                                                <img src="/public/img/icons/review-icon.svg" alt="Icon" />
+                                                <span>Đánh giá</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to={`/technician/${technicianId}/certificate`}>
+                                                <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
+                                                <span>Chứng chỉ</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/technician/schedule">
+                                                <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                                                <span>Lịch trình</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to="/technician/deposit" >
+                                                <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
+                                                <span>Ví của tôi</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to={`/technician/earning`} className="active">
+                                                <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
+                                                <span>Thu nhập</span>
+                                            </Link>
+                                        </li>
+                                        <li>
+                                            <Link to={`/profile`}>
+                                                <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
+                                                <span>Cái đặt</span>
+                                            </Link>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
       <div className="content">
         <div className="container">
-          <div className="content-header content-settings-header">
-            <h4>Cài đặt</h4>
-          </div>
 
-          <div className="row">
-            <div className="col-lg-3 theiaStickySidebar">
-              <div className="settings-widget">
-                <div className="settings-menu">
-                  <ul>
-                    <li>
-                      <Link to={`/technician/profile/${technicianId}`}>
-                        <i className="feather-user"></i>
-                        <span>Hồ sơ</span>
-                      </Link>
-                    </li>
-                    <li>
-                      <Link className="active" to={`/technician/${technicianId}/certificate`}>
-                        <i className="feather-shield"></i>
-                        <span>Chứng chỉ</span>
-                      </Link>
-                    </li>
-                    <li><a href="/user-preferences.html"><i className="feather-star"></i> Tùy chọn</a></li>
-                    <li><a href="/user-notifications.html"><i className="feather-bell"></i> Thông báo</a></li>
-                    <li><a href="/user-integration.html"><i className="feather-git-merge"></i> Tích hợp</a></li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+          <div >
+            
 
             <div className="col-lg-9">
               <div className="settings-info">
-                <div className="settings-sub-heading d-flex justify-content-between align-items-center mb-3">
+                <div className="settings-sub-heading d-flex justify-content-between align-items-center mb-6">
                   <h4>Danh sách chứng chỉ:</h4>
                   <button className="btn btn-primary" onClick={() => setOpenUpload(true)}>+ Thêm chứng chỉ</button>
                 </div>

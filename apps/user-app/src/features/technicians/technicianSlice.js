@@ -37,7 +37,9 @@ export const fetchEarningAndCommission = createAsyncThunk(
   async (technicianId, thunkAPI) => {
     try {
       const data = await getEarningAndCommission(technicianId);
-      return data;
+      console.log(data);
+      
+      return data
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.response?.data?.message || error.message

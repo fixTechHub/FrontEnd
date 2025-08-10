@@ -14,11 +14,12 @@ import serviceReducer from '../features/service/serviceSlice';
 import statisticReducer from '../features/statistics/statisticSlice';
 import commissionConfigReducer from '../features/commissionConfig/commissionSlice';
 import commissionReducer from '../features/commission/commissionSlice';
+import adminReducer from '../features/admin/adminSlice';
 import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
 import adminCertificateReducer from '../features/certificates/certificateSlice';
 
- const store = configureStore({
+const store = configureStore({
   reducer: {
     bookings: bookingReducer,
     coupon: couponReducer,
@@ -35,6 +36,8 @@ import adminCertificateReducer from '../features/certificates/certificateSlice';
     statistics: statisticReducer,
     commissionConfig: commissionConfigReducer,
     commission: commissionReducer,
+    admin: adminReducer,
+
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
     adminCertificate: adminCertificateReducer,

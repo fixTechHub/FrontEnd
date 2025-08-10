@@ -7,7 +7,7 @@ import React from "react";
 import { fetchEarningAndCommission, fetchTechnicianJobs, fetchTechnicianJobDetails, fetchTechnicianAvailability, changeTechnicianAvailability } from '../../features/technicians/technicianSlice';
 import { Link } from 'react-router-dom';
 
-
+import { formatDateOnly } from '../../utils/formatDate'
 
 const BreadcrumbSection = () => (
     <div className="breadcrumb-bar">
@@ -63,8 +63,8 @@ const WidgetsRow = () => {
     const dispatch = useDispatch();
     const bookings = useSelector((state) => state.technician.bookings);
     const { technician } = useSelector((state) => state.auth);
-    console.log("tech", technician);
-    console.log(bookings);
+    // console.log("tech", technician);
+    // console.log(bookings);
 
 
     // useEffect(() => {
@@ -87,23 +87,24 @@ const WidgetsRow = () => {
         <div className="row">
             <WidgetItem icon="book" title="Đơn hàng của tôi" value={bookingCount} link="/technician/booking" />
             <WidgetItem icon="balance" title="Tài khoản" value={`${walletBalance} VND`} link="/technician/deposit" />
-            <WidgetItem icon="transaction" title="Đánh giá" value="20" color="success" link="/technician/earning" />
-            <WidgetItem icon="cars" title="Thu nhập hôm nay" value="240.000 VNĐ" color="danger" />
+            <WidgetItem icon="transaction" title="Đánh giá" value="20" color="success" link="/technician/feedback" />
+            <WidgetItem icon="cars" title="Thu nhập hôm nay" value="240.000 VNĐ" link="/technician/earning" />
         </div>
     );
 };
 
 function ViewEarningAndCommission() {
     const dispatch = useDispatch();
-    const technician = useSelector((state) => state.auth.user);
-    console.log("techn", technician);
+    const technician = useSelector((state) => state.auth.technician);
+    console.log("technician", technician);
 
     // const technicianId = technician._id;
 
     const { earnings, loading, error } = useSelector((state) => state.technician);
-
+    console.log(earnings);
+    
     useEffect(() => {
-        if (technician && technician?._id) {
+        if (technician) {
             dispatch(fetchEarningAndCommission(technician?._id));
         }
     }, [dispatch, technician?._id]);
@@ -138,8 +139,7 @@ function ViewEarningAndCommission() {
                                                         <th>
                                                             Khách hàng
                                                         </th>
-                                                        <th>Dịch vụ</th>
-                                                        <th>Tiền hoa hồng</th>
+                                                        <th>Dịch vụ</th>                                                      
                                                         <th>Tiền giữ lại</th>
                                                         <th>Thu nhập</th>
                                                         <th>Tổng tiền</th>
@@ -153,10 +153,9 @@ function ViewEarningAndCommission() {
                                                                 <tr key={item?.bookingId ?? item._id ?? index}>
                                                                     <td>{item?.bookingInfo?.customerName ?? 'Không có'}</td>
                                                                     <td>{item?.bookingInfo?.service ?? 'Không có'}</td>
-                                                                    <td>{item?.commissionAmount?.toLocaleString() ?? '0'} VNĐ</td>
-                                                                    <td>{item?.holdingAmount?.toLocaleString() ?? '0'} VNĐ</td>
-                                                                    <td>{item?.technicianEarning?.toLocaleString() ?? '0'} VNĐ</td>
-                                                                    <td>{item?.finalPrice?.toLocaleString() ?? '0'} VNĐ</td>
+                                                                    <td>{Number(item?.holdingAmount)?.toLocaleString('vi-VN') ?? '0'} VNĐ</td>
+                                                                    <td>{Number(item?.technicianEarning)?.toLocaleString('vi-VN') ?? '0'} VNĐ</td>
+                                                                    <td>{Number(item?.finalPrice)?.toLocaleString('vi-VN') ?? '0'} VNĐ</td>
                                                                 </tr>
                                                             ))
                                                     ) : (
@@ -307,7 +306,26 @@ const TechnicianJobList = () => {
     // const technicianId = technician._id;
     const { bookings, loading, error } = useSelector((state) => state.technician);
     console.log(technician?._id);
-
+    const STATUS_SHORT = {
+        WAITING_CUSTOMER_CONFIRM_ADDITIONAL: "Đợi xác nhận",
+        CONFIRM_ADDITIONAL: "Đã xác nhận",
+        AWAITING_DONE: "Đợi hoàn thành",
+        IN_PROGRESS: "Đang thực hiện",
+        DONE: "Đã hoàn thành",
+        CANCELLED: "Đã hủy",
+        PENDING: "Đang xử lí"
+        // …bổ sung nếu cần
+    };
+    const prettyStatus = (raw = "") => {
+        const key = String(raw).toUpperCase().trim();
+        if (STATUS_SHORT[key]) return STATUS_SHORT[key];
+        // fallback: SNAKE_CASE -> Title Case gọn
+        return key
+            .toLowerCase()
+            .replace(/_/g, " ")
+            .replace(/\s+/g, " ")
+            .replace(/\b\w/g, c => c.toUpperCase());
+    };
     useEffect(() => {
         if (technician?._id) {
             dispatch(fetchTechnicianJobs(technician?._id));
@@ -430,8 +448,10 @@ const TechnicianJobList = () => {
                                                     <td>{b?.bookingCode}</td>
                                                     <td>{b?.customerName}</td>
                                                     <td>{b?.serviceName}</td>
-                                                    <td>{b?.address}</td>
-                                                    <td>{new Date(b?.schedule).toLocaleString()}</td>
+                                                    <td>{b?.address?.split(",")[0]}</td>
+                                                    <td>
+                                                        {formatDateOnly(b?.schedule.startTime)}
+                                                    </td>
                                                     <td >
                                                         <span
                                                             className={
@@ -440,7 +460,7 @@ const TechnicianJobList = () => {
                                                                     : b.status === 'CANCELLED'
                                                                         ? 'badge badge-light-danger'
                                                                         : 'badge badge-light-warning'
-                                                            }>{b.status}</span></td>
+                                                            }>{prettyStatus(b.status)}</span></td>
                                                     <td className="text-end">
                                                         <div className="dropdown dropdown-action">
                                                             <a
@@ -532,8 +552,8 @@ function TechnicianDashboard() {
                                         </li>
                                         <li>
                                             <Link to={`/technician/${technicianId}/certificate`}>
-                                                <img src="/public/img/icons/wishlist-icon.svg" alt="Icon" />
-                                                <span>Yêu thích</span>
+                                                <img style={{height: '28px'}} src="/public/img/cer.png" alt="Icon" />
+                                                <span>Chứng chỉ</span>
                                             </Link>
                                         </li>
                                         <li>

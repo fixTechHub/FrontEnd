@@ -14,7 +14,8 @@ export const requestWarrantyThunk = createAsyncThunk(
 
             return response.data;
         } catch (error) {
-            return rejectWithValue(error.response?.data?.error || error.message);
+            console.error('Error in requestWarrantyThunk:', error.response?.data);
+            return rejectWithValue(error.response?.data);
         }
     }
 );

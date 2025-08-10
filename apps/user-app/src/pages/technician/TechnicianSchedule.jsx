@@ -277,6 +277,12 @@ const TechnicianScheduleComponent = () => {
                                 <li><Link to={`/technician`}><img src="/public/img/icons/dashboard-icon.svg" alt="Icon" /><span>Bảng điều khiển</span></Link></li>
                                 <li><Link to={`/technician/booking`}><img src="/public/img/icons/booking-icon.svg" alt="Icon" /><span>Đơn hàng</span></Link></li>
                                 <li><Link to="/technician/feedback"><img src="/public/img/icons/review-icon.svg" alt="Icon" /><span>Đánh giá</span></Link></li>
+                                <li>
+                                    <Link to={`/technician/${technicianId}/certificate`}>
+                                        <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
+                                        <span>Chứng chỉ</span>
+                                    </Link>
+                                </li>
                                 <li><Link to="/technician/schedule" className="active"><img src="/public/img/icons/booking-icon.svg" alt="Icon" /><span>Lịch trình</span></Link></li>
                                 <li><Link to="/technician/deposit"><img src="/public/img/icons/wallet-icon.svg" alt="Icon" /><span>Ví của tôi</span></Link></li>
                                 <li><Link to={`/technician/earning`}><img src="/public/img/icons/payment-icon.svg" alt="Icon" /><span>Thu nhập</span></Link></li>
@@ -296,7 +302,7 @@ const TechnicianScheduleComponent = () => {
                             <button className="tsc-btn" onClick={goPrev}>‹ Tháng trước</button>
                             <button className="tsc-btn" onClick={goToday}>Hôm nay</button>
                             <button className="tsc-btn" onClick={goNext}>Tháng sau ›</button>
-                            
+
                         </div>
                     </div>
 

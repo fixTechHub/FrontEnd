@@ -470,11 +470,11 @@ const VideoCallPage = () => {
               autoPlay
             />
           ) : (
-            <div className="custom-waiting-message">Waiting for user to accept...</div>
+            <div className="custom-waiting-message">Đang đợi chấp nhận...</div>
           )}
         </div>
         <div className="custom-video-wrapper local">
-          <span className="custom-video-label">You</span>
+          <span className="custom-video-label">Bạn</span>
           {stream ? (
             <video
               className="custom-video"
@@ -484,7 +484,7 @@ const VideoCallPage = () => {
               autoPlay
             />
           ) : (
-            <div className="custom-waiting-message">Initializing your video...</div>
+            <div className="custom-waiting-message">...</div>
           )}
         </div>
       </div>
