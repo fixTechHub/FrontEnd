@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -14,6 +17,7 @@
     "antd": "^5.26.2",
     "aos": "^2.3.4",
     "apexcharts": "^5.2.0",
+    "axios": "^1.6.0",
     "bootstrap": "^5.3.7",
     "dayjs": "^1.11.13",
     "file-saver": "^2.0.5",

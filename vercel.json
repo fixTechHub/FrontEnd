@@ -1,0 +1,18 @@
+{
+  "functions": {
+    "apps/admin-app/**": {
+      "runtime": "nodejs22.x"
+    }
+  },
+  "build": {
+    "env": {
+      "NODE_VERSION": "22"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/admin-app/(.*)",
+      "destination": "/apps/admin-app/$1"
+    }
+  ]
+} 
