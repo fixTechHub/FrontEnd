@@ -15,6 +15,7 @@ import { fetchBookingById, customerAcceptQuoteThunk, customerRejectQuoteThunk, t
 import { BOOKING_STATUS } from "../../constants/bookingConstants";
 import { Modal, Button } from "react-bootstrap";
 import { FaSpinner } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 function BookingProcessing() {
     const navigate = useNavigate();
@@ -22,7 +23,7 @@ function BookingProcessing() {
     const { bookingId, stepsForCurrentUser } = useBookingParams();
     const { user } = useSelector((state) => state.auth);
     const { booking, status: bookingStatusState } = useSelector((state) => state.booking);
-    const [isChecking, setIsChecking] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(null);
     const [authError, setAuthError] = useState(null);
 
@@ -87,7 +88,7 @@ function BookingProcessing() {
 
             setIsAuthorized(isAuthorized);
             setAuthError(error);
-            setIsChecking(true);
+            setIsChecking(false);
         };
 
         verifyAccess();
@@ -96,7 +97,7 @@ function BookingProcessing() {
     useEffect(() => {
         if (isChecking) return;
 
-        if (isChecking && isAuthorized === false) {
+        if (isAuthorized === false) {
             toast.error("Bạn không có quyền truy cập trang này.");
             // Redirect to the original page or default to '/'
             const redirectPath = location.state?.from?.pathname || '/';

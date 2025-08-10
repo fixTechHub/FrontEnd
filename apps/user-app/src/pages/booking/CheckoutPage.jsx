@@ -277,21 +277,6 @@ const CheckoutPage = () => {
     const { user } = useSelector((state) => state.auth);
     const [isChecking, setIsChecking] = useState(true);
     let discount = 0;
-
-    useEffect(() => {
-        const fetchBookingData = async () => {
-            if (!bookingId) return;
-
-            try {
-                await dispatch(getAcceptedBookingThunk(bookingId)).unwrap();
-            } catch (error) {
-                toast.error(error.message || 'Có lỗi xảy ra khi tải thông tin đặt lịch');
-            }
-        };
-
-        fetchBookingData();
-    }, [dispatch, bookingId]);
-
     useEffect(() => {
         const verifyAccess = async () => {
             if (!bookingId || !user?._id) {
@@ -304,7 +289,7 @@ const CheckoutPage = () => {
             const { acceptedBooking, isAuthorized, error } = await checkOutCustomerAccess(dispatch, bookingId, user._id);
             setIsAuthorize(isAuthorized);
             setAuthError(error);
-            setIsChecking(true);
+            setIsChecking(false);
         };
 
         verifyAccess();
@@ -318,6 +303,24 @@ const CheckoutPage = () => {
             navigate(redirectPath, { replace: true });
         }
     }, [isAuthorize, isChecking, navigate]);
+    useEffect(() => {
+        const fetchBookingData = async () => {
+            if (!bookingId) return;
+
+            try {
+                await dispatch(getAcceptedBookingThunk(bookingId)).unwrap();
+            } catch (error) {
+                toast.error(error.message || 'Có lỗi xảy ra khi tải thông tin đặt lịch');
+            }
+        };
+        if (!isChecking) {
+            fetchBookingData();
+        }
+    }, [dispatch, bookingId]);
+
+    
+
+  
 
     const itemsTotal = acceptedBooking?.quote?.items?.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) || 0;
     const laborPrice = acceptedBooking?.quote?.laborPrice || 0;

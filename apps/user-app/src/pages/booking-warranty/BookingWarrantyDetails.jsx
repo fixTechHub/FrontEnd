@@ -18,7 +18,8 @@ import {
     FaUser,
     FaFileAlt,
     FaEye,
-    FaCircle
+    FaCircle,
+    FaInfoCircle
 } from 'react-icons/fa';
 
 function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
@@ -27,7 +28,6 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const { user } = useSelector((state) => state.auth);
     const [rejectedReason, setRejectedReason] = useState('');
     const [showDescriptionModal, setShowDescriptionModal] = useState(false);
-
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [imageType, setImageType] = useState('warranty'); // 'warranty' or 'booking'
     const [showImageModal, setShowImageModal] = useState(false);
@@ -47,7 +47,8 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const displayName = isCustomer
         ? warranty?.technicianId?.userId?.fullName || 'Không có dữ liệu'
         : warranty?.customerId?.fullName || 'Không có dữ liệu';
-
+    // console.log(warranty.bookingId.warrantyExpiresAt);
+    
     const styles = {
         modalHeader: {
             backgroundColor: '#f8f9fa',
@@ -115,6 +116,16 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const statusConfig = BOOKING_WARRANTY_STATUS_CONFIG[warranty?.status] || BOOKING_WARRANTY_STATUS_CONFIG.default;
     const isExpired = warranty?.expireAt && new Date(warranty.expireAt) < new Date() && warranty?.status === 'PENDING';
     const warrantyStatusText = isExpired ? 'HẾT HẠN' : statusConfig.text;
+
+    // Calculate days left until warranty expires
+    const calculateDaysLeft = () => {
+        if (!warranty?.bookingId?.warrantyExpiresAt) return 'Không có dữ liệu';
+        const expireDate = new Date(warranty.bookingId.warrantyExpiresAt);
+        const today = new Date();
+        const diffMs = expireDate - today;
+        const daysLeft = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+        return daysLeft >= 0 ? `${daysLeft} ngày` : 'Hết hạn';
+    };
 
     const today = new Date();
     const tomorrow = new Date(today);
@@ -313,19 +324,6 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                             </div>
                                         </div>
                                     </div>
-                                    {/* <div className="booking-details-info-card">
-                                        <div className="booking-details-card-icon">
-                                            <FaCalendarAlt />
-                                        </div>
-                                        <div className="booking-details-card-content">
-                                            <div className="booking-details-card-label">Thời gian kết thúc dự kiến</div>
-                                            <div className="booking-details-card-value">
-                                                {warranty?.bookingId?.schedule?.expectedEndTime
-                                                    ? `${formatDateOnly(warranty.bookingId.schedule.expectedEndTime)} `
-                                                    : 'Không có dữ liệu'}
-                                            </div>
-                                        </div>
-                                    </div> */}
                                     <div className="booking-details-info-card full-width warranty-description-container">
                                         <div className="booking-details-card-icon">
                                             <FaFileAlt />
@@ -350,6 +348,124 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                             <div className="booking-details-card-content">
                                                 <div className="booking-details-card-label">Lý do từ chối</div>
                                                 <div className="booking-details-card-value">{warranty.rejectedReason}</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </Tab>
+                    <Tab eventKey="booking" title={
+                        <div className="booking-details-tab-title">
+                            <FaInfoCircle className="booking-details-tab-icon" />
+                            <span>Thông tin đặt lịch</span>
+                        </div>
+                    }>
+                        <div className="booking-details-tab-content">
+                            <div className="booking-details-info-section">
+                                <div className="booking-details-info-cards">
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaFileAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Mã đặt lịch</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.bookingId?.bookingCode || 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaTools />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Dịch vụ</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.bookingId?.serviceId?.serviceName || 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaUser />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Khách hàng</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.customerId?.fullName || 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaUser />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Kỹ thuật viên</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.technicianId?.userId?.fullName || 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaCalendarAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Ngày bắt đầu</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.bookingId?.schedule?.startTime
+                                                    ? `${formatDateOnly(warranty.bookingId.schedule.startTime)} ${formatTimeOnly(warranty.bookingId.schedule.startTime)}`
+                                                    : 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaCalendarAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Ngày kết thúc dự kiến</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.bookingId?.schedule?.expectedEndTime
+                                                    ? `${formatDateOnly(warranty.bookingId.schedule.expectedEndTime)} ${formatTimeOnly(warranty.bookingId.schedule.expectedEndTime)}`
+                                                    : 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card">
+                                        <div className="booking-details-card-icon">
+                                            <FaCalendarAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Thời gian bảo hành còn lại</div>
+                                            <div className="booking-details-card-value">
+                                                {calculateDaysLeft()}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="booking-details-info-card full-width">
+                                        <div className="booking-details-card-icon">
+                                            <FaFileAlt />
+                                        </div>
+                                        <div className="booking-details-card-content">
+                                            <div className="booking-details-card-label">Mô tả</div>
+                                            <div className="booking-details-card-value">
+                                                {warranty?.bookingId?.description || 'Không có dữ liệu'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {warranty?.bookingId?.cancellationReason && (
+                                        <div className="booking-details-info-card full-width">
+                                            <div className="booking-details-card-icon">
+                                                <FaExclamationTriangle />
+                                            </div>
+                                            <div className="booking-details-card-content">
+                                                <div className="booking-details-card-label">Lý do hủy</div>
+                                                <div className="booking-details-card-value">
+                                                    {warranty?.bookingId?.cancellationReason}
+                                                </div>
                                             </div>
                                         </div>
                                     )}
