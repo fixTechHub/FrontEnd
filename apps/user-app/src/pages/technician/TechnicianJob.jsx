@@ -134,7 +134,7 @@
 //                                                 <div className="sort-week sort">
 //                                                     <div className="dropdown dropdown-action">
 //                                                         <a
-//                                                             href="javascript:void(0);"
+//                                                             href=""
 //                                                             className="dropdown-toggle"
 //                                                             data-bs-toggle="dropdown"
 //                                                             aria-expanded="false"
@@ -142,18 +142,18 @@
 //                                                             This Week <i className="fas fa-chevron-down"></i>
 //                                                         </a>
 //                                                         <div className="dropdown-menu dropdown-menu-end">
-//                                                             <a className="dropdown-item" href="javascript:void(0);">
+//                                                             <a className="dropdown-item" href="">
 //                                                                 This Week
 //                                                             </a>
-//                                                             <a className="dropdown-item" href="javascript:void(0);">
+//                                                             <a className="dropdown-item" href="">
 //                                                                 This Month
 //                                                             </a>
-//                                                             <a className="dropdown-item" href="javascript:void(0);">
+//                                                             <a className="dropdown-item" href="">
 //                                                                 Last 30 Days
 //                                                             </a>
 //                                                             <a
 //                                                                 className="dropdown-item"
-//                                                                 href="javascript:void(0);"
+//                                                                 href=""
 //                                                                 data-bs-toggle="modal"
 //                                                                 data-bs-target="#custom_date"
 //                                                             >
@@ -165,7 +165,7 @@
 //                                                 <div className="sort-relevance sort">
 //                                                     <div className="dropdown dropdown-action">
 //                                                         <a
-//                                                             href="javascript:void(0);"
+//                                                             href=""
 //                                                             className="dropdown-toggle"
 //                                                             data-bs-toggle="dropdown"
 //                                                             aria-expanded="false"
@@ -173,16 +173,16 @@
 //                                                             Sort By Relevance <i className="fas fa-chevron-down"></i>
 //                                                         </a>
 //                                                         <div className="dropdown-menu dropdown-menu-end">
-//                                                             <a className="dropdown-item" href="javascript:void(0);">
+//                                                             <a className="dropdown-item" href="">
 //                                                                 Sort By Relevance
 //                                                             </a>
-//                                                             <a className="dropdown-item" href="javascript:void(0);">
+//                                                             <a className="dropdown-item" href="">
 //                                                                 Sort By Ascending
 //                                                             </a>
-//                                                             <a className="dropdown-item" href="javascript:void(0);">
+//                                                             <a className="dropdown-item" href="">
 //                                                                 Sort By Descending
 //                                                             </a>
-//                                                             <a className="dropdown-item" href="javascript:void(0);">
+//                                                             <a className="dropdown-item" href="">
 //                                                                 Sort By Alphabet
 //                                                             </a>
 //                                                         </div>
@@ -499,7 +499,7 @@ const TechnicianJobList = () => {
                                                 <div className="sort-week sort">
                                                     <div className="dropdown dropdown-action">
                                                         <a
-                                                            href="javascript:void(0);"
+                                                            href=""
                                                             className="dropdown-toggle"
                                                             data-bs-toggle="dropdown"
                                                             aria-expanded="false"
@@ -507,18 +507,18 @@ const TechnicianJobList = () => {
                                                             This Week <i className="fas fa-chevron-down"></i>
                                                         </a>
                                                         <div className="dropdown-menu dropdown-menu-end">
-                                                            <a className="dropdown-item" href="javascript:void(0);">
+                                                            <a className="dropdown-item" href="">
                                                                 This Week
                                                             </a>
-                                                            <a className="dropdown-item" href="javascript:void(0);">
+                                                            <a className="dropdown-item" href="">
                                                                 This Month
                                                             </a>
-                                                            <a className="dropdown-item" href="javascript:void(0);">
+                                                            <a className="dropdown-item" href="">
                                                                 Last 30 Days
                                                             </a>
                                                             <a
                                                                 className="dropdown-item"
-                                                                href="javascript:void(0);"
+                                                                href=""
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#custom_date"
                                                             >
@@ -530,7 +530,7 @@ const TechnicianJobList = () => {
                                                 <div className="sort-relevance sort">
                                                     <div className="dropdown dropdown-action">
                                                         <a
-                                                            href="javascript:void(0);"
+                                                            href=""
                                                             className="dropdown-toggle"
                                                             data-bs-toggle="dropdown"
                                                             aria-expanded="false"
@@ -538,16 +538,16 @@ const TechnicianJobList = () => {
                                                             Sort By Relevance <i className="fas fa-chevron-down"></i>
                                                         </a>
                                                         <div className="dropdown-menu dropdown-menu-end">
-                                                            <a className="dropdown-item" href="javascript:void(0);">
+                                                            <a className="dropdown-item" href="">
                                                                 Sort By Relevance
                                                             </a>
-                                                            <a className="dropdown-item" href="javascript:void(0);">
+                                                            <a className="dropdown-item" href="">
                                                                 Sort By Ascending
                                                             </a>
-                                                            <a className="dropdown-item" href="javascript:void(0);">
+                                                            <a className="dropdown-item" href="">
                                                                 Sort By Descending
                                                             </a>
-                                                            <a className="dropdown-item" href="javascript:void(0);">
+                                                            <a className="dropdown-item" href="">
                                                                 Sort By Alphabet
                                                             </a>
                                                         </div>

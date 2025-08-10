@@ -442,7 +442,7 @@ function BookingProcessing() {
                             <div className="col-lg-4">
                                 {booking?.isChatAllowed && booking?.isVideoCallAllowed ? (
                                     <div style={{ paddingBottom: 10 }}>
-                                        <MessageBox bookingId={bookingId} />
+                                        <MessageBox bookingId={booking?._id} />
                                     </div>
                                 ) : (
                                     <div className="alert alert-warning">

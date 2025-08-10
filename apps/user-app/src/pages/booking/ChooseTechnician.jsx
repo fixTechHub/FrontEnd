@@ -439,9 +439,9 @@ function ChooseTechnician() {
                                                                 />
                                                             </a>
                                                             <div className="fav-item justify-content-end">
-                                                                <a href="#" className="fav-icon">
+                                                                {/* <a href="#" className="fav-icon">
                                                                     <i className="feather-heart" />
-                                                                </a>
+                                                                </a> */}
                                                             </div>
                                                         </div>
                                                         <div className="bloglist-content w-100">

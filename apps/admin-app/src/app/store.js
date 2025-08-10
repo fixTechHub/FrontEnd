@@ -17,7 +17,7 @@ import commissionReducer from '../features/commission/commissionSlice';
 import adminReducer from '../features/admin/adminSlice';
 import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
-
+import notificationReducer from '../features/notifications/notificationsSlice'
 const store = configureStore({
   reducer: {
     bookings: bookingReducer,
@@ -36,7 +36,7 @@ const store = configureStore({
     commissionConfig: commissionConfigReducer,
     commission: commissionReducer,
     admin: adminReducer,
-
+    notifications: notificationReducer,
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
   },
