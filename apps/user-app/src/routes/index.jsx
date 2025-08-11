@@ -54,11 +54,11 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* ================= PUBLIC ROUTES ================= */}
-      <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
       <Route path="/services" element={<ServiceList />} />
 
@@ -119,7 +119,6 @@ export default function AppRoutes() {
         } /> */}
 
       
-      {/* <Route
       <Route
         path="/technician/complete-profile"
         element={

@@ -6,6 +6,8 @@ import { submitFeedbackThunk, clearMessages } from '../../features/feedbacks/fee
 import { fetchBookingById } from '../../features/bookings/bookingSlice';
 import Header from '../../components/common/Header';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
+import BookingReportButton from '../../components/common/BookingReportButton';
+import FavoriteTechnicianButton from '../../components/common/FavoriteTechnicianButton';
 import ImageUploader from "../booking/common/ImageUploader";
 import { toast } from 'react-toastify';
 
@@ -96,7 +98,10 @@ const SubmitFeedback = () => {
               <div className="col-lg-8">
                 <div className="review-sec">
                   <div className="review-header">
-                    <h4>Thông tin đơn hàng</h4>
+                    <div className="d-flex align-items-center gap-2">
+                      <h4 className="mb-0">Thông tin đơn hàng</h4>
+                      <BookingReportButton bookingId={bookingId} reportedUserId={booking.technicianId?._id} />
+                    </div>
                   </div>
 
 
@@ -129,8 +134,7 @@ const SubmitFeedback = () => {
                       <span>{booking.finalPrice.toLocaleString()} VND</span>
                     </div>
                   </div>
-
-                </div>
+                  </div>
 
                 {/* <div className="review-sec listing-review">
                   <div className="review-header">
@@ -306,7 +310,7 @@ const SubmitFeedback = () => {
               <div className="col-lg-4 theiaStickySidebar">
                 <div className="review-sec extra-service mt-0">
                   <div className="review-header">
-                    <h4>Kỹ thuật viên</h4>
+                    <h4 className="mb-0">Kỹ thuật viên</h4>
                   </div>
                   <div className="owner-detail">
                     <div className="owner-img">
@@ -319,10 +323,13 @@ const SubmitFeedback = () => {
 
                     </div>
                     <div className="reviewbox-list-rating">
-                      <h5>
-                        <a href="#">
+                      <h5 className="d-flex align-items-center gap-2">
+                        <a href="#" className="text-decoration-none text-dark">
                           {booking.technicianId?.userId?.fullName || "Unknown Technician"}
                         </a>
+                        {booking.technicianId?.userId?._id && (
+                          <FavoriteTechnicianButton technicianId={booking.technicianId._id} />
+                        )}
                       </h5>
                       <p>
                         {Array(5)

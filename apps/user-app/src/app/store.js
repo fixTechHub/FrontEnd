@@ -17,10 +17,16 @@ import roleReducer from '../features/roles/roleSlice';
 import warrantyReducer from '../features/booking-warranty/warrantySlice';
 import feedbackReducer from '../features/feedbacks/feedbackSlice';
 import favoritesReducer from '../features/favorites/favoriteSlice';
+import reportReducer from '../features/reports/reportSlice';
+import couponsReducer from '../features/coupons/couponSlice';
 import aiChatReducer from '../features/chatbox/chatboxSlice'
 import technicianSubscriptionReducer from '../features/package/packageSlice';
 import suggestionReducer from '../features/suggestions/suggestionSlice';
+<<<<<<< HEAD
 import { loadTechnicianFromStorage } from '../utils/loadTechnicianFromStorage';
+=======
+import systemReportReducer from '../features/systemReports/systemReportSlice';
+>>>>>>> ebfcb05055807e88395a7f620d533a93e03114e4
 
 export const store = configureStore({
   reducer: {
@@ -42,9 +48,12 @@ export const store = configureStore({
     warranty: warrantyReducer,
     feedback: feedbackReducer,
     favorites: favoritesReducer,
+    report: reportReducer,
+    coupons: couponsReducer,
     aiChat: aiChatReducer,
     technicianSubscription: technicianSubscriptionReducer,
-    suggestions: suggestionReducer
+    suggestions: suggestionReducer,
+    systemReport: systemReportReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

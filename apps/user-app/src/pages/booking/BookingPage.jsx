@@ -11,7 +11,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { createNewBooking } from "../../features/bookings/bookingSlice";
 import { unwrapResult } from "@reduxjs/toolkit";
 import { useBookingParams } from "../../hooks/useBookingParams";
-// import { validateBookingData } from "../../validations/bookingValidation";
+//import { validateBookingData } from "../../validations/bookingValidation";
 
 function BookingPage() {
     const { categories, status: categoryStatus } = useSelector((state) => state.categories);

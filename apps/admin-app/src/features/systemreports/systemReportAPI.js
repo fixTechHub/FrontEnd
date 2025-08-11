@@ -4,7 +4,7 @@ export const systemReportAPI = {
     // Get all system reports
     getAll: async () => {
         try {
-            const response = await ApiBE.get('/Dashboard/systemreports');
+            const response = await ApiBE.get('/system-reports');
             return response.data;
         } catch (error) {
             console.error('Get all system reports error:', error);
@@ -20,7 +20,7 @@ export const systemReportAPI = {
             }
             const payload = { status: statusValue.toUpperCase() };
             console.log('Payload gửi lên:', payload);
-            const response = await ApiBE.patch(`/Dashboard/systemreports/${id}/status`, payload);
+            const response = await ApiBE.patch(`/system-reports/${id}/status`, payload);
             return response.data;
         } catch (error) {
             console.error('Update system report status error:', error);
