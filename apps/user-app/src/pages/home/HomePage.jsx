@@ -3,6 +3,7 @@ import Footer from "../../components/common/Footer";
 import Header from "../../components/common/Header";
 import Categories from "./Categories";
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import AOS from "aos";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
@@ -12,10 +13,17 @@ function HomePage() {
   const { user, isAuthenticated, verificationStatus } = useSelector(
     (state) => state.auth
   );
+  const navigate = useNavigate();
   const hasWelcomed = useRef(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Nếu là kỹ thuật viên đã đăng nhập, chuyển hướng thẳng tới dashboard kỹ thuật viên
+    if (isAuthenticated && user?.role?.name === 'TECHNICIAN') {
+      navigate('/technician', { replace: true });
+      return;
+    }
+
     // Loading tối thiểu 1000ms
     const timer = setTimeout(() => {
       setLoading(false);
