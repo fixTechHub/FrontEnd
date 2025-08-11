@@ -15,6 +15,8 @@ export const systemReportAPI = {
         }
     },
 
+    //Sửa ở đây
+
     // Update system report status
     updateStatus: async (id, statusValue, resolutionNote, resolvedBy) => {
         try {
