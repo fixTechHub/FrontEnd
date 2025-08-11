@@ -13,14 +13,15 @@ import {
 import { fetchCategories } from '../../features/categories/categorySlice';
 import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
+import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
+import IconUploader from '../../components/common/IconUploader';
+import IconDisplay from '../../components/common/IconDisplay';
 
 const initialFormState = {
   serviceName: '',
   categoryId: '',
   icon: '',
   isActive: true,
-  serviceType: 'FIXED',
-  estimatedMarketPrice: { min: '', max: '' },
   description: '',
 };
 
@@ -119,9 +120,8 @@ const ServiceManagement = () => {
       categoryId: service.categoryId || '',
       icon: service.icon || '',
       isActive: service.isActive ?? true,
-      serviceType: service.serviceType || 'FIXED',
-      estimatedMarketPrice: service.estimatedMarketPrice || { min: '', max: '' },
       description: service.description || '',
+      embedding: service.embedding || [],
     });
     setValidationErrors({});
     setShowEditModal(true);
@@ -134,6 +134,7 @@ const ServiceManagement = () => {
 
   const confirmDelete = () => {
     if (selectedService) {
+      // Use DELETE endpoint which now properly handles soft delete
       dispatch(deleteService(selectedService.id));
     }
   };
@@ -181,6 +182,34 @@ const ServiceManagement = () => {
   });
   const currentServices = sortedServices.slice(indexOfFirstService, indexOfLastService);
 
+  // Set export data và columns
+  useEffect(() => {
+    const exportColumns = [
+      { title: 'Service Name', dataIndex: 'serviceName' },
+      { title: 'Category', dataIndex: 'categoryName' },
+      { title: 'Status', dataIndex: 'status' },
+      { title: 'Description', dataIndex: 'description' },
+      { title: 'Embedding Dimensions', dataIndex: 'embeddingDimensions' },
+      { title: 'Created At', dataIndex: 'createdAt' },
+      { title: 'Updated At', dataIndex: 'updatedAt' },
+    ];
+
+    const exportData = sortedServices.map(service => {
+      const category = categories.find(cat => cat.id === service.categoryId);
+      return {
+        serviceName: service.serviceName,
+        categoryName: category?.categoryName || service.categoryId,
+        status: service.isActive ? 'ACTIVE' : 'INACTIVE',
+        description: service.description,
+        embeddingDimensions: service.embedding?.length || 0,
+        createdAt: formatDateTime(service.createdAt),
+        updatedAt: formatDateTime(service.updatedAt),
+      };
+    });
+
+    createExportData(exportData, exportColumns, 'services_export', 'Services');
+  }, [sortedServices, categories]);
+
   const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -210,13 +239,16 @@ const ServiceManagement = () => {
     const newErrors = {};
     const generalErrors = [];
     Object.entries(apiErrors).forEach(([key, msgs]) => {
-      const mappedKey = key === 'ServiceName' ? 'ServiceName' : key === 'Icon' ? 'Icon' : key;
+      const mappedKey = key === 'ServiceName' ? 'ServiceName' : 
+                       key === 'CategoryId' ? 'CategoryId' :
+                       key === 'Icon' ? 'Icon' : 
+                       key === 'Description' ? 'Description' : key;
       const isTechError = msgs.some(msg =>
         msg.includes('could not be converted') || msg.includes('System.')
       );
       if (isTechError) {
         generalErrors.push('Nhập vào các trường * bắt buộc');
-      } else if ([ 'ServiceName', 'Icon' ].includes(mappedKey)) {
+      } else if ([ 'ServiceName', 'CategoryId', 'Icon', 'Description' ].includes(mappedKey)) {
         newErrors[mappedKey] = msgs;
       } else {
         generalErrors.push(...msgs);
@@ -228,44 +260,44 @@ const ServiceManagement = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setValidationErrors({});
-    if (!formData.serviceName || !formData.categoryId) {
+    
+    // Validation for service name length
+    if (formData.serviceName && formData.serviceName.length > 100) {
+      setValidationErrors({ ServiceName: ['Service name cannot exceed 100 characters'] });
+      message.error('Service name cannot exceed 100 characters');
+      return;
+    }
+    
+    if (!formData.serviceName || !formData.categoryId || !formData.icon || !formData.description) {
       setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
       return;
     }
-    // Chuẩn bị data gửi lên BE
-    const dataToSend = { ...formData };
-    if (formData.serviceType === 'COMPLEX') {
-      dataToSend.estimatedMarketPrice = {
-        min: Number(formData.estimatedMarketPrice.min),
-        max: Number(formData.estimatedMarketPrice.max)
-      };
-    } else {
-      delete dataToSend.estimatedMarketPrice;
-    }
-    if (showAddModal) {
-      dispatch(createService(dataToSend)).then((action) => {
-        if (action.payload && action.payload.errors) {
-          const apiErrors = action.payload.errors;
-          const processed = processErrors(apiErrors);
-          setValidationErrors(processed);
-        }
-      });
-    } else if (showEditModal && selectedService) {
-      dispatch(updateService({ id: selectedService.id, serviceData: dataToSend })).then((action) => {
-        if (action.payload && action.payload.errors) {
-          const apiErrors = action.payload.errors;
-          const processed = processErrors(apiErrors);
-          setValidationErrors(processed);
-        }
-      });
+    // Chuẩn bị data gửi lên BE - chuyển đổi từ camelCase sang PascalCase
+    const dataToSend = {
+      ServiceName: formData.serviceName,
+      CategoryId: formData.categoryId,
+      Icon: formData.icon || '',
+      Description: formData.description || '',
+      IsActive: formData.isActive,
+      Embedding: formData.embedding || []
+    };
+    try {
+      if (showAddModal) {
+        await dispatch(createService(dataToSend));
+      } else if (showEditModal && selectedService) {
+        await dispatch(updateService({ id: selectedService.id, serviceData: dataToSend }));
+      }
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      message.error('Có lỗi xảy ra');
     }
   };
 
   return (
-    <div className="modern-page-wrapper">
+    <div className="modern-page- wrapper">
       <div className="modern-content-card">
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
@@ -346,17 +378,16 @@ const ServiceManagement = () => {
                       </span>
                     )}
                   </th>
-                  <th style={{ cursor: 'pointer' }} onClick={handleSortByCategory}>
-                    CATEGORY
-                    {sortField === 'category' && (
-                      <span style={{ marginLeft: 4 }}>
-                        {sortOrder === 'asc' ? '▲' : '▼'}
-                      </span>
-                    )}
-                  </th>
-                  <th>SERVICE TYPE</th>
-                  <th>STATUS</th>
-                  <th>ACTION</th>
+                                     <th style={{ cursor: 'pointer' }} onClick={handleSortByCategory}>
+                     CATEGORY
+                     {sortField === 'category' && (
+                       <span style={{ marginLeft: 4 }}>
+                         {sortOrder === 'asc' ? '▲' : '▼'}
+                       </span>
+                     )}
+                   </th>
+                   <th>STATUS</th>
+                   <th>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -366,7 +397,6 @@ const ServiceManagement = () => {
                     <tr key={svc.id}>
                       <td>{svc.serviceName}</td>
                       <td>{category ? category.categoryName : '-'}</td>
-                      <td>{svc.serviceType}</td>
                       <td>
                         <span className={`badge ${svc.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
                           {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -412,7 +442,8 @@ const ServiceManagement = () => {
         }}
         footer={null}
         width={800}
-        destroyOnClose
+        style={{ top: 20 }}
+        destroyOnHidden
       >
         <Form layout="vertical" onSubmit={handleSubmit}>
           {validationErrors.general && (
@@ -425,58 +456,56 @@ const ServiceManagement = () => {
             </div>
           )}
           <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="Service Name" required validateStatus={validationErrors.ServiceName ? 'error' : ''} help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}>
-                <Input
-                  name="serviceName"
-                  value={formData.serviceName}
-                  onChange={handleChange}
-                  placeholder="Enter service name"
-                  required
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="Category" required validateStatus={validationErrors.CategoryId ? 'error' : ''} help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}>
-                <Select
-                  placeholder="Choose category"
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={(value) => handleChange({ target: { name: 'categoryId', value } })}
-                  required
-                >
-                  {categories.map(cat => (
-                    <Select.Option key={cat.id} value={cat.id}>{cat.categoryName}</Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
+                         <Col span={12}>
+               <Form.Item label="Service Name *" required validateStatus={validationErrors.ServiceName ? 'error' : ''} help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}>
+                 <Input
+                   name="serviceName"
+                   value={formData.serviceName}
+                   onChange={handleChange}
+                   placeholder="Enter service name"
+                   required
+                 />
+               </Form.Item>
+             </Col>
+             <Col span={12}>
+               <Form.Item label="Category *" required validateStatus={validationErrors.CategoryId ? 'error' : ''} help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}>
+                 <Select
+                   placeholder="Choose category"
+                   name="categoryId"
+                   value={formData.categoryId}
+                   onChange={(value) => handleChange({ target: { name: 'categoryId', value } })}
+                   required
+                 >
+                   {categories.map(cat => (
+                     <Select.Option key={cat.id} value={cat.id}>{cat.categoryName}</Select.Option>
+                   ))}
+                 </Select>
+               </Form.Item>
+             </Col>
           </Row>
 
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="Icon" validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-                <Input
-                  name="icon"
-                  value={formData.icon}
-                  onChange={handleChange}
-                  placeholder="Enter icon (e.g., ti ti-tools)"
-                />
-              </Form.Item>
-            </Col>
-            <Col span={12}>
-              <Form.Item label="Service Type">
-                <Select
-                  name="serviceType"
-                  value={formData.serviceType}
-                  onChange={(value) => handleChange({ target: { name: 'serviceType', value } })}
-                >
-                  <Select.Option value="FIXED">FIXED</Select.Option>
-                  <Select.Option value="COMPLEX">COMPLEX</Select.Option>
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
+                     <Row gutter={16}>
+             <Col span={12}>
+               <Form.Item label="Icon *" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+                 <IconUploader
+                   value={formData.icon}
+                   onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                   placeholder="Upload icon image"
+                 />
+               </Form.Item>
+             </Col>
+             <Col span={12}>
+               <Form.Item label="Status">
+                 <Switch
+                   name="isActive"
+                   checked={formData.isActive}
+                   onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                   checkedChildren="Active"
+                   unCheckedChildren="Inactive"
+                 />
+               </Form.Item>
+             </Col>
+           </Row>
 
           {formData.serviceType === 'COMPLEX' && (
             <Row gutter={16}>
@@ -509,25 +538,15 @@ const ServiceManagement = () => {
             </Row>
           )}
 
-          <Form.Item label="Description">
-            <Input.TextArea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={3}
-              placeholder="Enter service description"
-            />
-          </Form.Item>
-
-          <Form.Item label="Status">
-            <Switch
-              name="isActive"
-              checked={formData.isActive}
-              onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-              checkedChildren="Active"
-              unCheckedChildren="Inactive"
-            />
-          </Form.Item>
+                     <Form.Item label="Description *" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
+             <Input.TextArea
+               name="description"
+               value={formData.description}
+               onChange={handleChange}
+               rows={3}
+               placeholder="Enter service description"
+             />
+           </Form.Item>
 
           <div className="d-flex justify-content-end">
             <Button onClick={() => {
@@ -542,18 +561,22 @@ const ServiceManagement = () => {
           </div>
         </Form>
       </Modal>
-      {/* Modal Xóa */}
+      {/* Delete Modal */}
       <Modal
-        title="Delete service"
         open={showDeleteModal}
         onCancel={() => setShowDeleteModal(false)}
-        onOk={confirmDelete}
-        okText="Delete"
-        cancelText="Cancel"
-        okButtonProps={{ danger: true }}
-        destroyOnClose
+        footer={null}
+        title="Delete service"
       >
-        <p>Bạn có chắc chắn muốn xóa dịch vụ này?</p>
+        <div className="modal-body text-center">
+          <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
+          <h4 className="mb-1">Delete service</h4>
+          <p className="mb-3">Bạn có chắc muốn xóa dịch vụ này?</p>
+          <div className="d-flex justify-content-center">
+            <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
+            <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+          </div>
+        </div>
       </Modal>
       {/* Restore Modal */}
       <Modal
@@ -569,8 +592,6 @@ const ServiceManagement = () => {
               <tr>
                 <th>NAME</th>
                 <th>CATEGORY</th>
-                <th>SERVICE TYPE</th>
-                <th>ICON</th>
                 <th>STATUS</th>
                 <th>ACTION</th>
               </tr>
@@ -580,8 +601,6 @@ const ServiceManagement = () => {
                 <tr key={svc.id}>
                   <td>{svc.serviceName}</td>
                   <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || '-'}</td>
-                  <td>{svc.serviceType}</td>
-                  <td>{svc.icon}</td>
                   <td>
                     <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
                       {svc.isActive ? 'Active' : 'Inactive'}
@@ -607,15 +626,17 @@ const ServiceManagement = () => {
         onCancel={() => setShowDetailModal(false)}
         title="Service Detail"
         width={600}
-        destroyOnClose
+        destroyOnHidden
       >
         {selectedService && (
           <div className="p-3">
             <p><strong>Service Name:</strong> {selectedService.serviceName}</p>
             <p><strong>Category:</strong> {categories.find(cat => cat.id === selectedService.categoryId)?.categoryName || '-'}</p>
-            <p><strong>Icon:</strong> {selectedService.icon || 'N/A'}</p>
+            <p><strong>Icon:</strong></p>
+            <div style={{ marginBottom: 16 }}>
+              <IconDisplay icon={selectedService.icon} size={60} />
+            </div>
             <p><strong>Status:</strong> {selectedService.isActive ? 'Active' : 'Inactive'}</p>
-            <p><strong>Service Type:</strong> {selectedService.serviceType}</p>
             <p><strong>Estimated Market Price:</strong> {selectedService.estimatedMarketPrice ? `${selectedService.estimatedMarketPrice.min} - ${selectedService.estimatedMarketPrice.max}` : 'N/A'}</p>
             <p><strong>Description:</strong> {selectedService.description || 'N/A'}</p>
             <p><strong>Created At:</strong> {new Date(selectedService.createdAt).toLocaleDateString()}</p>

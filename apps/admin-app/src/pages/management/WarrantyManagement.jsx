@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchAllWarranties, updateWarrantyStatus } from '../../features/warranty/warrantySlice';
-import { Modal, Button, Select, Switch, message, Descriptions, Spin } from 'antd';
+import { fetchAllWarranties, updateWarrantyStatus, updateWarrantyDetails } from '../../features/warranty/warrantySlice';
+import { Modal, Button, Select, Switch, message, Descriptions, Spin, Form, Input, Row, Col, Tag } from 'antd';
 import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
+import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 import "../../../public/css/ManagementTableStyle.css";
+import { createExportData, formatDateTime } from '../../utils/exportUtils';
 
 
 const statusOptions = [
@@ -17,28 +19,29 @@ const statusOptions = [
  { value: 'DENIED', label: 'DENIED' },
  { value: 'EXPIRED', label: 'EXPIRED' },
 ];
-
-
 const WarrantyManagement = () => {
- const dispatch = useDispatch();
- const { list: warranties, loading, error } = useSelector(state => state.warranty);
- const [searchText, setSearchText] = useState('');
- const [showModal, setShowModal] = useState(false);
- const [selected, setSelected] = useState(null);
- const [editStatus, setEditStatus] = useState('');
- const [editReviewed, setEditReviewed] = useState(false);
- const [userNames, setUserNames] = useState({});
- const [technicianNames, setTechnicianNames] = useState({});
- const [currentPage, setCurrentPage] = useState(1);
- const warrantiesPerPage = 10;
- const [bookingMap, setBookingMap] = useState({});
- const [sortField, setSortField] = useState('createdAt');
-const [sortOrder, setSortOrder] = useState('desc');
-const [filterStatus, setFilterStatus] = useState();
-const [filterUnderWarranty, setFilterUnderWarranty] = useState();
-const [filterReviewed, setFilterReviewed] = useState();
-const [showDetailModal, setShowDetailModal] = useState(false);
-const [selectedWarranty, setSelectedWarranty] = useState(null);
+  const dispatch = useDispatch();
+  const { list: warranties, loading, error } = useSelector(state => state.warranty);
+  const [searchText, setSearchText] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [selected, setSelected] = useState(null);
+  const [editStatus, setEditStatus] = useState('');
+  const [editReviewed, setEditReviewed] = useState(false);
+  const [editResolutionNote, setEditResolutionNote] = useState('');
+  const [editRejectionReason, setEditRejectionReason] = useState('');
+  const [userNames, setUserNames] = useState({});
+  const [technicianNames, setTechnicianNames] = useState({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const warrantiesPerPage = 10;
+  const [bookingMap, setBookingMap] = useState({});
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [filterStatus, setFilterStatus] = useState();
+  const [filterUnderWarranty, setFilterUnderWarranty] = useState();
+  const [filterReviewed, setFilterReviewed] = useState();
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedWarranty, setSelectedWarranty] = useState(null);
+  const [serviceNames, setServiceNames] = useState({});
 
 
  useEffect(() => {
@@ -53,6 +56,12 @@ const [selectedWarranty, setSelectedWarranty] = useState(null);
      const map = {};
      techs.forEach(t => { map[t.id] = t.fullName || t.email || t.id; });
      setTechnicianNames(map);
+   });
+   // Lấy toàn bộ services để map serviceId -> serviceName
+   serviceAPI.getAll().then(services => {
+     const map = {};
+     services.forEach(s => { map[s.id] = s.serviceName || s.name || s.id; });
+     setServiceNames(map);
    });
    // Lấy toàn bộ bookings để map bookingId -> bookingCode
    const fetchBookings = async () => {
@@ -122,7 +131,40 @@ const [selectedWarranty, setSelectedWarranty] = useState(null);
   return 0;
 });
 const currentWarranties = sorted.slice(indexOfFirst, indexOfLast);
- const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
+
+// Set export data và columns
+useEffect(() => {
+  const exportColumns = [
+    { title: 'Booking', dataIndex: 'bookingCode' },
+    { title: 'Customer', dataIndex: 'customerName' },
+    { title: 'Technician', dataIndex: 'technicianName' },
+    { title: 'Service', dataIndex: 'serviceName' },
+    { title: 'Status', dataIndex: 'status' },
+    { title: 'Under Warranty', dataIndex: 'underWarranty' },
+    { title: 'Reviewed', dataIndex: 'reviewed' },
+    { title: 'Created At', dataIndex: 'createdAt' }
+  ];
+
+  const exportData = sorted.map(warranty => ({
+    warrantyCode: warranty.warrantyCode,
+    bookingCode: warranty.bookingId,
+    customerName: userNames[warranty.customerId] || warranty.customerId,
+    technicianName: technicianNames[warranty.technicianId] || warranty.technicianId,
+    serviceName: serviceNames[warranty.serviceId] || warranty.serviceId,
+    warrantyPeriod: warranty.warrantyPeriod,
+    startDate: formatDateTime(warranty.startDate),
+    endDate: formatDateTime(warranty.endDate),
+    status: warranty.status?.toUpperCase(),
+    underWarranty: warranty.isUnderWarranty ? 'Yes' : 'No',
+    reviewed: warranty.isReviewedByAdmin ? 'Yes' : 'No',
+    createdAt: formatDateTime(warranty.createdAt),
+    updatedAt: formatDateTime(warranty.updatedAt),
+  }));
+
+  createExportData(exportData, exportColumns, 'warranties_export', 'Warranties');
+}, [sorted, userNames, technicianNames, serviceNames]);
+
+const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
 
 
  const handlePageChange = (page) => {
@@ -134,13 +176,22 @@ const currentWarranties = sorted.slice(indexOfFirst, indexOfLast);
    setSelected(w);
    setEditStatus(w.status);
    setEditReviewed(w.isReviewedByAdmin);
+   setEditResolutionNote(w.resolutionNote || '');
+   setEditRejectionReason(w.rejectionReason || '');
    setShowModal(true);
  };
 
 
  const handleUpdate = async () => {
    try {
-     await dispatch(updateWarrantyStatus({ id: selected.id, data: { status: editStatus, isReviewedByAdmin: editReviewed } })).unwrap();
+     const updateData = {
+       status: editStatus,
+       isReviewedByAdmin: editReviewed,
+       resolutionNote: editResolutionNote.trim() || null,
+       rejectionReason: editRejectionReason.trim() || null
+     };
+     
+     await dispatch(updateWarrantyDetails({ id: selected.id, data: updateData })).unwrap();
      message.success('Cập nhật thành công!');
      setShowModal(false);
    } catch (e) {
@@ -188,7 +239,7 @@ const handleSortByTechnician = () => {
 
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
@@ -310,6 +361,7 @@ const handleSortByTechnician = () => {
                    <td>{userNames[w.customerId]|| 'UNKNOWN'}</td>
                    <td>{technicianNames[w.technicianId]|| 'UNKNOWN'}</td>
                    <td>{w.status}</td>
+                  
                    <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
                    <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
                    <td>
@@ -347,25 +399,54 @@ const handleSortByTechnician = () => {
      </div>
      <Modal
        open={showModal}
-       onCancel={() => setShowModal(false)}
+       onCancel={() => {
+         setShowModal(false);
+         setEditResolutionNote('');
+         setEditRejectionReason('');
+       }}
        onOk={handleUpdate}
-       title="Update warranty"
+       title="Update Warranty Details"
        okText="Update"
        confirmLoading={loading}
+       width={600}
      >
-       <div style={{ marginBottom: 16 }}>
-         <b>Status:</b>
-         <Select
-           value={editStatus}
-           onChange={setEditStatus}
-           options={statusOptions}
-           style={{ width: '100%' }}
-         />
-       </div>
-       <div>
-         <b>Admin reviewed: </b>
-         <Switch checked={editReviewed} onChange={setEditReviewed} />
-       </div>
+       <Form layout="vertical">
+         <Row gutter={16}>
+           <Col span={12}>
+             <Form.Item label="Status" required>
+               <Select
+                 value={editStatus}
+                 onChange={setEditStatus}
+                 options={statusOptions}
+                 style={{ width: '100%' }}
+               />
+             </Form.Item>
+           </Col>
+           <Col span={12}>
+             <Form.Item label="Admin Reviewed">
+               <Switch checked={editReviewed} onChange={setEditReviewed} />
+             </Form.Item>
+           </Col>
+         </Row>
+         
+         <Form.Item label="Resolution Note">
+           <Input.TextArea
+             value={editResolutionNote}
+             onChange={(e) => setEditResolutionNote(e.target.value)}
+             placeholder="Nhập ghi chú giải quyết (nếu có)"
+             rows={3}
+           />
+         </Form.Item>
+         
+         <Form.Item label="Rejection Reason">
+           <Input.TextArea
+             value={editRejectionReason}
+             onChange={(e) => setEditRejectionReason(e.target.value)}
+             placeholder="Nhập lý do từ chối (nếu có)"
+             rows={3}
+           />
+         </Form.Item>
+       </Form>
      </Modal>
      {/* View Detail Modal */}
      {showDetailModal && selectedWarranty && (
@@ -374,66 +455,159 @@ const handleSortByTechnician = () => {
          onCancel={() => setShowDetailModal(false)}
          footer={null}
          title={null}
-         width={600}
+         width={960}
+         styles={{ body: { padding: 0, borderRadius: 16, overflow: 'hidden' } }}
        >
-         <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
-           <div style={{fontSize: 22, fontWeight: 600, marginBottom: 16}}>Warranty Detail</div>
-           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Booking Code</div>
-               <div>{bookingMap[selectedWarranty.bookingId] || "-"}</div>
+         <div style={{ background: '#fff', borderRadius: 16 }}>
+           <div style={{
+             background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+             padding: '20px 24px',
+             color: '#fff'
+           }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <div style={{ fontSize: 20, fontWeight: 700 }}>
+                 WARRANTY DETAIL
+               </div>
+               <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                 {selectedWarranty.status}
+               </Tag>
              </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Customer</div>
-               <div>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId || 'UNKNOWN'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Technician</div>
-               <div>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId || 'UNKNOWN'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Status</div>
-               <div>{selectedWarranty.status}</div>
-             </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reported Issue</div>
-               <div>{selectedWarranty.reportedIssue}</div>
-             </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolution Note</div>
-               <div>{selectedWarranty.resolutionNote || 'Chưa có'}</div>
-             </div>
-             <div style={{gridColumn: '1 / span 2'}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Rejection Reason</div>
-               <div>{selectedWarranty.rejectionReason || 'Chưa có'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Expire At</div>
-               <div>{selectedWarranty.expireAt ? new Date(selectedWarranty.expireAt).toLocaleDateString() : 'Chưa có'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Request Date</div>
-               <div>{new Date(selectedWarranty.requestDate).toLocaleString()}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Is Under Warranty</div>
-               <div>{selectedWarranty.isUnderWarranty ? 'Yes' : 'No'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Is Reviewed By Admin</div>
-               <div>{selectedWarranty.isReviewedByAdmin ? 'Yes' : 'No'}</div>
-             </div>
-             {/* Nếu có trường images hoặc ảnh liên quan trong Warranty Detail, hiển thị như gallery đẹp: */}
-             {selectedWarranty.images && selectedWarranty.images.length > 0 && (
-               <div style={{gridColumn: '1 / span 2'}}>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Images</div>
-                 <div style={{display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center', minHeight: 60}}>
-                   {selectedWarranty.images.map((img, idx) => (
-                     <img key={idx} src={img} alt="img" style={{maxWidth: 120, maxHeight: 120, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', objectFit: 'cover'}} />
-                   ))}
-                 </div>
+             {selectedWarranty.id && (
+               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>Warranty ID: {selectedWarranty.id}</span>
                </div>
              )}
+           </div>
+           <div style={{ padding: 24 }}>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+               {/* Overview */}
+               <div>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                   marginBottom: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                   <div style={{ display: 'grid', rowGap: 10 }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Status</span>
+                       <span style={{ fontWeight: 600, color: '#52c41a' }}>{selectedWarranty.status}</span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Under Warranty</span>
+                       <span style={{ fontWeight: 600, color: selectedWarranty.isUnderWarranty ? '#52c41a' : '#ff4d4f' }}>
+                         {selectedWarranty.isUnderWarranty ? 'Yes' : 'No'}
+                       </span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Reviewed By Admin</span>
+                       <span style={{ fontWeight: 600, color: selectedWarranty.isReviewedByAdmin ? '#52c41a' : '#faad14' }}>
+                         {selectedWarranty.isReviewedByAdmin ? 'Yes' : 'No'}
+                       </span>
+                     </div>
+                     
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Expire At</span>
+                       <span style={{ fontWeight: 600 }}>{selectedWarranty.expireAt ? new Date(selectedWarranty.expireAt).toLocaleDateString() : 'N/A'}</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               {/* People */}
+               <div>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                   <div style={{ display: 'grid', rowGap: 12 }}>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Customer</span>
+                       <span style={{ fontWeight: 600 }}>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId || 'UNKNOWN'}</span>
+                     </div>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Technician</span>
+                       <span style={{ fontWeight: 600 }}>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId || 'UNKNOWN'}</span>
+                     </div>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Booking Code</span>
+                       <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bookingMap[selectedWarranty.bookingId] || 'N/A'}</span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Request Date</span>
+                       <span style={{ fontWeight: 600 }}>{new Date(selectedWarranty.requestDate).toLocaleString()}</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Issue Details full width */}
+               <div style={{ gridColumn: '1 / span 2' }}>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                   marginBottom: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Issue Details</div>
+                   <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                     <div style={{ marginBottom: 12 }}>
+                       <div style={{ fontWeight: 600, marginBottom: 4 }}>Reported Issue:</div>
+                       <div style={{ color: '#262626' }}>{selectedWarranty.reportedIssue}</div>
+                     </div>
+                     {selectedWarranty.resolutionNote && (
+                       <div style={{ marginBottom: 12 }}>
+                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Resolution Note:</div>
+                         <div style={{ color: '#262626' }}>{selectedWarranty.resolutionNote}</div>
+                       </div>
+                     )}
+                     {selectedWarranty.rejectionReason && (
+                       <div>
+                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Rejection Reason:</div>
+                         <div style={{ color: '#ff4d4f' }}>{selectedWarranty.rejectionReason}</div>
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               </div>
+
+               {/* Images if available */}
+               {selectedWarranty.images && selectedWarranty.images.length > 0 && (
+                 <div style={{ gridColumn: '1 / span 2' }}>
+                   <div style={{
+                     background: '#ffffff',
+                     border: '1px solid #f0f0f0',
+                     borderRadius: 16,
+                     padding: 16,
+                   }}>
+                     <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Related Images</div>
+                     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+                       {selectedWarranty.images.map((img, idx) => (
+                         <img 
+                           key={idx} 
+                           src={img} 
+                           alt={`Warranty image ${idx + 1}`} 
+                           style={{
+                             maxWidth: 120, 
+                             maxHeight: 120, 
+                             borderRadius: 8, 
+                             boxShadow: '0 2px 8px rgba(0,0,0,0.08)', 
+                             objectFit: 'cover',
+                             cursor: 'pointer'
+                           }} 
+                         />
+                       ))}
+                     </div>
+                   </div>
+                 </div>
+               )}
+             </div>
            </div>
          </div>
        </Modal>

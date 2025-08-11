@@ -6,14 +6,14 @@ import couponUsageReducer from '../features/couponusages/couponUsageSlice';
 import userReducer from '../features/users/userSlice';
 import reportReducer from '../features/reports/reportSlice';
 import technicianReducer from '../features/technicians/technicianSlice';
-import systemReportReducer from '../features/systemReports/systemReportSlice';
-import authReducer from '../features/auth/authSlice';
+import systemReportReducer from '../features/systemreports/systemReportSlice';
 import categoryReducer from '../features/categories/categorySlice';
 import warrantyReducer from '../features/warranty/warrantySlice';
 import serviceReducer from '../features/service/serviceSlice';
 import statisticReducer from '../features/statistics/statisticSlice';
 import commissionConfigReducer from '../features/commissionConfig/commissionSlice';
 import commissionReducer from '../features/commission/commissionSlice';
+import financialReportReducer from '../features/financialReport/financialReportSlice';
 import adminReducer from '../features/admin/adminSlice';
 import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
@@ -28,7 +28,6 @@ const store = configureStore({
     reports: reportReducer,
     technicians: technicianReducer,
     systemReports: systemReportReducer,
-    auth: authReducer,
     categories: categoryReducer,
     warranty: warrantyReducer,
     transaction: transactionReducer,
@@ -36,8 +35,8 @@ const store = configureStore({
     statistics: statisticReducer,
     commissionConfig: commissionConfigReducer,
     commission: commissionReducer,
+    financialReport: financialReportReducer,
     admin: adminReducer,
-
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
     adminCertificate: adminCertificateReducer,
@@ -47,7 +46,6 @@ const store = configureStore({
       serializableCheck: false,
     }),
 });
-
 
 export default store;
 

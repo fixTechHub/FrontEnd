@@ -5,7 +5,6 @@ export const couponAPI = {
     getAll: async () => {
         try {
             const response = await ApiBE.get('/Coupon');
-            console.log('API raw response:', response);
             return response.data;
         } catch (error) {
             console.error('Get all coupons error:', error);
@@ -38,12 +37,6 @@ export const couponAPI = {
     // Update coupon
     update: async (id, couponData) => {
         try {
-            console.log('Sending update request with data:', {
-                id,
-                couponData,
-                url: `/Coupon/${id}`,
-                method: 'PUT'
-            });
             const response = await ApiBE.put(`/Coupon/${id}`, couponData);
             return response.data;
         } catch (error) {

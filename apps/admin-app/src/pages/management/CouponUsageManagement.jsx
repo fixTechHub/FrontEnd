@@ -4,9 +4,10 @@ import { fetchCouponUsages, setFilters } from '../../features/couponusages/coupo
 import { userAPI } from '../../features/users/userAPI';
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
-import { Modal, Button, Select, Descriptions, Spin } from 'antd';
+import { Modal, Button, Select, Descriptions, Spin, Tag } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
 import "../../../public/css/ManagementTableStyle.css";
+import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 
 
 const CouponUsageManagement = () => {
@@ -163,7 +164,32 @@ const [isDataReady, setIsDataReady] = useState(false);
   return 0;
 });
 const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
- const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
+
+// Set export data và columns
+useEffect(() => {
+  const exportColumns = [
+    { title: 'Coupon Code', dataIndex: 'couponCode' },
+    { title: 'User', dataIndex: 'userName' },
+    { title: 'Booking', dataIndex: 'bookingCode' },
+    { title: 'Discount Applied', dataIndex: 'discountApplied' },
+    { title: 'Used At', dataIndex: 'usedAt' },
+    { title: 'Created At', dataIndex: 'createdAt' },
+    { title: 'Updated At', dataIndex: 'updatedAt' },
+  ];
+
+  const exportData = sortedUsages.map(usage => ({
+    couponCode: couponMap[usage.couponId] || usage.couponId,
+    userName: userMap[usage.userId] || usage.userId,
+    bookingCode: bookingMap[usage.bookingId] || usage.bookingId,
+    discountApplied: formatCurrency(usage.discountApplied || 0),
+    usedAt: formatDateTime(usage.usedAt),
+    createdAt: formatDateTime(usage.createdAt),
+    updatedAt: formatDateTime(usage.updatedAt),
+  }));
+
+  createExportData(exportData, exportColumns, 'coupon_usages_export', 'Coupon Usages');
+}, [sortedUsages, couponMap, userMap, bookingMap]);
+const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
 
 
  const handlePageChange = (pageNumber) => {
@@ -227,7 +253,7 @@ const handleSortByUsedAt = () => {
 
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
@@ -348,32 +374,105 @@ const handleSortByUsedAt = () => {
      </div>
 
 
+     {/* Coupon Usage Details Modal */}
      {showDetailModal && selectedUsage && (
        <Modal
          open={showDetailModal}
          onCancel={() => setShowDetailModal(false)}
          footer={null}
          title={null}
-         width={600}
+         width={960}
+         styles={{ body: { padding: 0, borderRadius: 16, overflow: 'hidden' } }}
        >
-         <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
-           <div style={{fontSize: 22, fontWeight: 600, marginBottom: 16}}>Coupon Usage Detail</div>
-           <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>User</div>
-               <div>{userMap[selectedUsage.userId] || selectedUsage.userId || "UNKNOWN"}</div>
+         <div style={{ background: '#fff', borderRadius: 16 }}>
+           <div style={{
+             background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+             padding: '20px 24px',
+             color: '#fff'
+           }}>
+             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+               <div style={{ fontSize: 20, fontWeight: 700 }}>
+                 COUPON USAGE DETAIL
+               </div>
+               <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                 USED
+               </Tag>
              </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Coupon</div>
-               <div>{couponMap[selectedUsage.couponId] || selectedUsage.couponId || '-'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Booking Code</div>
-               <div>{bookingMap[selectedUsage.bookingId] || '-'}</div>
-             </div>
-             <div>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Used At</div>
-               <div>{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : ''}</div>
+             {selectedUsage.id && (
+               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>Usage ID: {selectedUsage.id}</span>
+               </div>
+             )}
+           </div>
+           <div style={{ padding: 24 }}>
+             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+               {/* Overview */}
+               <div>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                   marginBottom: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                   <div style={{ display: 'grid', rowGap: 10 }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Used At</span>
+                       <span style={{ fontWeight: 600 }}>{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : 'N/A'}</span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Status</span>
+                       <span style={{ fontWeight: 600, color: '#52c41a' }}>ACTIVE</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               {/* People */}
+               <div>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                   <div style={{ display: 'grid', rowGap: 12 }}>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>User</span>
+                       <span style={{ fontWeight: 600 }}>{userMap[selectedUsage.userId] || selectedUsage.userId || 'UNKNOWN'}</span>
+                     </div>
+                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Coupon</span>
+                       <span style={{ fontWeight: 600 }}>{couponMap[selectedUsage.couponId] || selectedUsage.couponId || 'N/A'}</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+
+               {/* Booking Information full width */}
+               <div style={{ gridColumn: '1 / span 2' }}>
+                 <div style={{
+                   background: '#ffffff',
+                   border: '1px solid #f0f0f0',
+                   borderRadius: 12,
+                   padding: 16,
+                   marginBottom: 16,
+                 }}>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Booking Information</div>
+                   <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+                       <span style={{ color: '#8c8c8c' }}>Booking Code:</span>
+                       <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bookingMap[selectedUsage.bookingId] || 'N/A'}</span>
+                     </div>
+                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                       <span style={{ color: '#8c8c8c' }}>Coupon Applied:</span>
+                       <span style={{ fontWeight: 600, color: '#52c41a' }}>✓ Yes</span>
+                     </div>
+                   </div>
+                 </div>
+               </div>
              </div>
            </div>
          </div>
