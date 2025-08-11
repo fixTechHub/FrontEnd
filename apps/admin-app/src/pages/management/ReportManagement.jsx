@@ -318,6 +318,7 @@ const ReportManagement = () => {
              >
                <Option value="REPORT">REPORT</Option>
                <Option value="VIOLATION">VIOLATION</Option>
+               <Option value="WARRANTY">WARRANTY</Option>
              </Select>
              <Select
                placeholder="Status"
