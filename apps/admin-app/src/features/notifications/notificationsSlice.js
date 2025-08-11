@@ -3,7 +3,7 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { sendNotifications, notificationAPI } from './notificationsAPI';
 
 export const sendNotificationsThunk = createAsyncThunk(
-  'notification/sendNotificationsThunk',
+  'notifications/sendNotificationsThunk',
   async (notifyData, { rejectWithValue }) => {
     try {
       const response = await sendNotifications(notifyData);

@@ -490,7 +490,7 @@ const TechnicianJobList = () => {
 
 const CardsRow = () => (
     <div className="row">
-        <ViewEarningAndCommission />
+        {/* <ViewEarningAndCommission /> */}
 
     </div>
 );
@@ -566,12 +566,12 @@ function TechnicianDashboard() {
                                                 <span>Ví của tôi</span>
                                             </Link>
                                         </li>
-                                        <li>
+                                        {/* <li>
                                             <Link to={`/technician/earning`}>
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>Thu nhập</span>
                                             </Link>
-                                        </li>
+                                        </li> */}
                                         {/* <li>
                                             <Link to={`/profile`}>
                                                 <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
