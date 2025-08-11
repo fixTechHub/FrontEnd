@@ -22,6 +22,7 @@ import couponsReducer from '../features/coupons/couponSlice';
 import aiChatReducer from '../features/chatbox/chatboxSlice'
 import technicianSubscriptionReducer from '../features/package/packageSlice';
 import suggestionReducer from '../features/suggestions/suggestionSlice';
+import { loadTechnicianFromStorage } from '../utils/loadTechnicianFromStorage';
 import systemReportReducer from '../features/systemReports/systemReportSlice';
 
 export const store = configureStore({
@@ -54,7 +55,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false,
-    }),
+    }).concat(loadTechnicianFromStorage),
 });
 
 export default store;

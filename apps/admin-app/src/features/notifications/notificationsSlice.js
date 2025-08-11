@@ -2,21 +2,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { sendNotifications, notificationAPI } from './notificationsAPI';
 
-
-
-
-
-
-
-
-const initialState = {
-    notifications: [],
-    status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
-    error: null,
-    notification: null,
-    loading: false,
-    
-};
 export const sendNotificationsThunk = createAsyncThunk(
   'notification/sendNotificationsThunk',
   async (notifyData, { rejectWithValue }) => {

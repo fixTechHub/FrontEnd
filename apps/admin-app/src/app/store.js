@@ -18,6 +18,8 @@ import adminReducer from '../features/admin/adminSlice';
 import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
 import notificationReducer from '../features/notifications/notificationsSlice'
+import adminCertificateReducer from '../features/certificates/certificateSlice';
+
 const store = configureStore({
   reducer: {
     bookings: bookingReducer,
@@ -39,6 +41,7 @@ const store = configureStore({
     notifications: notificationReducer,
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
+    adminCertificate: adminCertificateReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

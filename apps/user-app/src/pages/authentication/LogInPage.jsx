@@ -152,6 +152,10 @@ function LogInPage() {
         verificationStatus: result.verificationStatus
       }));
 
+      if (result.user.role?.name === "TECHNICIAN") {
+        localStorage.setItem("technician", JSON.stringify(result.user));
+      }
+
       // Hiển thị thông báo thành công
       if (result.wasReactivated) {
         toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
@@ -201,6 +205,10 @@ function LogInPage() {
               user: result.user,
               verificationStatus: result.verificationStatus
             }));
+
+            if (result.user.role?.name === "TECHNICIAN") {
+              localStorage.setItem("technician", JSON.stringify(result.user));
+            }
 
             // Thông báo tuỳ theo trạng thái
             if (result.wasReactivated) {
