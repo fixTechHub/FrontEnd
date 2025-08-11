@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api' || 'https://fixtech.id.vn/api',
+  // baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api' || 'https://fixtech.id.vn/api',
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://fixtech.id.vn/api',
 
   withCredentials: true, // Enable cookies
   headers: {
