@@ -46,6 +46,7 @@ import BookingHistory from "../pages/booking/common/BookingHistory";
 import UploadCertificateForm from "../pages/technician/UploadCer";
 import SubmitFeedback from "../pages/feedback/SubmitFeedback";
 import ServiceList from "../pages/home/ServiceList";
+import TechnicianScheduleComponent from "../pages/technician/TechnicianSchedule";
 
 export default function AppRoutes() {
   const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
@@ -109,6 +110,7 @@ export default function AppRoutes() {
       <Route path="/technician/booking/:bookingId" element={< TechnicianJob/>} />
       <Route path="/technician/:technicianId/certificate" element={< CertificateList/>} />
       <Route path="/technician/feedback" element={< ListFeedback/>} />
+      <Route path="/technician/schedule" element={< TechnicianScheduleComponent/>} />
       <Route path="/technician/upload-certificate" element={<UploadCertificateForm />} />
       <Route path="/feedback/submit/:bookingId" element={<SubmitFeedback />} />
 

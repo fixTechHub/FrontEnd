@@ -143,17 +143,17 @@ const PackageManagement = () => {
         {/* 🔹 Header & Breadcrumb */}
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
-            <h4 className="mb-1">Package Management</h4>
+            <h4 className="mb-1">Quản lí gói thành viên</h4>
             <nav>
               <ol className="breadcrumb mb-0">
-                <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-                <li className="breadcrumb-item active">Packages</li>
+                <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+                <li className="breadcrumb-item active">Quản lí gói</li>
               </ol>
             </nav>
           </div>
           <div>
-            <Button type="primary" onClick={handleAddPackage}>Add Package</Button>
-            <Button type="default" onClick={() => setShowRestoreModal(true)} style={{ marginLeft: 8 }}>Restore</Button>
+            <Button type="primary" onClick={handleAddPackage}>Thêm mới</Button>
+            <Button type="default" onClick={() => setShowRestoreModal(true)} style={{ marginLeft: 8 }}>Khôi phục</Button>
           </div>
         </div>
 
@@ -168,34 +168,34 @@ const PackageManagement = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search package name"
+                  placeholder="Tìm kiếm"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                 />
               </div>
             </div>
             <Select
-              placeholder="Status"
+              placeholder="Trạng thái"
               value={filterStatus || undefined}
               onChange={(value) => setFilterStatus(value)}
               style={{ width: 130 }}
               allowClear
             >
-              <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-              <Select.Option value="INACTIVE">INACTIVE</Select.Option>
+              <Select.Option value="ACTIVE">Đang hoạt động</Select.Option>
+              <Select.Option value="INACTIVE">Ngừng hoạt động</Select.Option>
             </Select>
           </div>
 
           {/* 🔹 Sort */}
           <div className="d-flex align-items-center" style={{ gap: 12 }}>
-            <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+            <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
             <Select
-              value={sortField === "createdAt" && sortOrder === "desc" ? "lasted" : "oldest"}
+              value={sortField === "createdAt" && sortOrder === "Giảm" ? "Mới nhất" : "Cũ nhất"}
               style={{ width: 120 }}
               onChange={handleSortChange}
               options={[
-                { value: "lasted", label: "Lasted" },
-                { value: "oldest", label: "Oldest" },
+                { value: "lasted", label: "Mới nhất" },
+                { value: "oldest", label: "Cũ nhất" },
               ]}
             />
           </div>
@@ -209,10 +209,10 @@ const PackageManagement = () => {
             <table className="table datatable">
               <thead className="thead-light">
                 <tr>
-                  <th>PACKAGE NAME</th>
-                  <th>PRICE</th>
-                  <th>STATUS</th>
-                  <th>ACTION</th>
+                  <th>Tên gói</th>
+                  <th>Giá</th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,7 +232,7 @@ const PackageManagement = () => {
                         onClick={() => handleViewDetail(pkg)}
                         style={{ marginRight: 8 }}
                       >
-                        Detail
+                        Chi tiết
                       </Button>
 
                       <Button
@@ -242,7 +242,7 @@ const PackageManagement = () => {
                         onClick={() => handleEditPackage(pkg)}
                         style={{ marginRight: 8 }}
                       >
-                        Edit
+                        Chỉnh sửa
                       </Button>
 
                       <Button
@@ -251,7 +251,7 @@ const PackageManagement = () => {
                         danger
                         onClick={() => handleDeletePackage(pkg)}
                       >
-                        Delete
+                        Xóa
                       </Button>
                     </td>
                   </tr>
@@ -437,7 +437,7 @@ const PackageManagement = () => {
       >
         <div className="modal-body text-center">
           <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
-          <h4 className="mb-1">Delete Package</h4>
+          <h4 className="mb-1">Xóa gói</h4>
           <p className="mb-3">Bạn có chắc muốn xóa gói này?</p>
           <div className="d-flex justify-content-center">
             <button
@@ -445,10 +445,10 @@ const PackageManagement = () => {
               className="btn btn-light me-3"
               onClick={() => setShowDeleteModal(false)}
             >
-              Cancel
+              Hủy
             </button>
             <button type="button" className="btn btn-danger" onClick={confirmDelete}>
-              Delete
+              Xóa
             </button>
           </div>
         </div>
@@ -466,11 +466,11 @@ const PackageManagement = () => {
           <table className="table datatable">
             <thead className="thead-light">
               <tr>
-                <th>NAME</th>
-                <th>PRICE</th>
-                <th>DESCRIPTION</th>
-                <th>STATUS</th>
-                <th>ACTION</th>
+                <th>Tên gói</th>
+                <th>Giá</th>
+                <th>Mô tả</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -500,7 +500,7 @@ const PackageManagement = () => {
             className="btn btn-light"
             onClick={() => setShowRestoreModal(false)}
           >
-            Close
+            Đóng
           </button>
         </div>
       </Modal>
@@ -510,21 +510,21 @@ const PackageManagement = () => {
         onCancel={handleCloseModal}
         footer={[
           <Button key="close" onClick={handleCloseModal}>
-            Close
+            Đóng
           </Button>,
         ]}
       >
         {selectedPackage && (
           <div>
-            <p><strong>Name:</strong> {selectedPackage.name}</p>
-            <p><strong>Price:</strong> ${selectedPackage.price}</p>
-            <p><strong>Description:</strong> ${selectedPackage.description}</p>
-            <p><strong>Status:</strong>
+            <p><strong>Tên gói:</strong> {selectedPackage.name}</p>
+            <p><strong>Giá:</strong> ${selectedPackage.price}</p>
+            <p><strong>Mô tả:</strong> ${selectedPackage.description}</p>
+            <p><strong>Trạng thái:</strong>
               <span className={`badge ${selectedPackage.isActive ? "bg-success-transparent" : "bg-danger-transparent"} text-dark`}>
                 {selectedPackage.isActive ? "ACTIVE" : "INACTIVE"}
               </span>
             </p>
-            <p><strong>Benefits:</strong></p>
+            <p><strong>Tiện ích:</strong></p>
             <ul>
               {selectedPackage.benefits.map((benefit, index) => (
                 <li key={index}>{benefit}</li>
