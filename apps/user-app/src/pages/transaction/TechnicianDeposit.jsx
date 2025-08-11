@@ -383,12 +383,12 @@ const TechnicianDeposit = () => {
                       <span>Thu nhập</span>
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link to={`/profile`}>
                       <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
                       <span>Cái đặt</span>
                     </Link>
-                  </li>
+                  </li> */}
                 </ul>
               </div>
             </div>

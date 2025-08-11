@@ -85,7 +85,7 @@ const CertificateList = () => {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/${technicianId}/certificate`}>
+                                            <Link to={`/technician/${technicianId}/certificate`} className="active">
                                                 <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
                                                 <span>Chứng chỉ</span>
                                             </Link>
@@ -103,17 +103,17 @@ const CertificateList = () => {
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to={`/technician/earning`} className="active">
+                                            <Link to={`/technician/earning`} >
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>Thu nhập</span>
                                             </Link>
                                         </li>
-                                        <li>
+                                        {/* <li>
                                             <Link to={`/profile`}>
                                                 <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
                                                 <span>Cái đặt</span>
                                             </Link>
-                                        </li>
+                                        </li> */}
                                     </ul>
                                 </div>
                             </div>

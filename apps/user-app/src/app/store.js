@@ -22,11 +22,8 @@ import couponsReducer from '../features/coupons/couponSlice';
 import aiChatReducer from '../features/chatbox/chatboxSlice'
 import technicianSubscriptionReducer from '../features/package/packageSlice';
 import suggestionReducer from '../features/suggestions/suggestionSlice';
-<<<<<<< HEAD
 import { loadTechnicianFromStorage } from '../utils/loadTechnicianFromStorage';
-=======
 import systemReportReducer from '../features/systemReports/systemReportSlice';
->>>>>>> ebfcb05055807e88395a7f620d533a93e03114e4
 
 export const store = configureStore({
   reducer: {
