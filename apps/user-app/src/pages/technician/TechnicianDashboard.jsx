@@ -60,7 +60,7 @@ const WidgetItem = ({ icon, title, value, color, link }) => (
 const WidgetsRow = () => {
     const { bookings } = useSelector((state) => state.technician);
     const { technician } = useSelector((state) => state.auth);
-    // console.log(technician);
+    console.log(technician);
 
 
     return (

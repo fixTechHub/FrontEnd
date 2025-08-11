@@ -1,0 +1,63 @@
+/* ===== Dynamic Background for Services Section ===== */
+.services-dark {
+  position: relative;
+  padding: 6rem 0;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+/* --- Subtle dot grid parallax layer --- */
+.services-dark::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle at center, rgba(0,0,0,0.06) 1px, transparent 1px),
+    radial-gradient(circle at center, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 80px 80px, 40px 40px;
+  animation: gridParallax 60s linear infinite;
+}
+@keyframes gridParallax {
+  0% { background-position: 0 0, 0 0; }
+  100% { background-position: 160px 160px, 80px 80px; }
+}
+
+/* --- Moving light sweep (disabled) --- */
+.services-dark::after {
+  display:none;
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -100%;
+  width: 250%;
+  height: 200%;
+  background: linear-gradient(60deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+  transform: translateX(-100%);
+  animation: lightSweep 25s linear infinite;
+  pointer-events: none;
+}
+@keyframes lightSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* --- Soft pastel blobs for depth --- */
+.blob-orange, .blob-blue {
+  position: absolute;
+  width: 550px;
+  height: 550px;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.85;
+  pointer-events: none;
+  animation: blobMove 40s ease-in-out infinite alternate;
+  z-index: 0;
+}
+.blob-orange { top: -220px; left: -160px; background: radial-gradient(circle at 30% 30%, #ffd4a8 0%, rgba(255, 212, 168, 0) 70%); }
+.blob-blue   { bottom: -220px; right: -160px; background: radial-gradient(circle at 70% 70%, #b6eaff 0%, rgba(182, 234, 255, 0) 70%); animation-delay: 8s; }
+@keyframes blobMove { 0%{transform:translate(0,0) scale(1);} 50%{transform:translate(60px,40px) scale(1.15);} 100%{transform:translate(0,0) scale(1);} }
+
+/* Typography overrides */
+.services-dark .section-title { color: #1f2937; background: none; -webkit-text-fill-color: initial; }
+.services-dark .section-description { color: #334155; }

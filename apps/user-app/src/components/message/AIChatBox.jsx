@@ -4,6 +4,7 @@ import { sendChatMessage, addUserMessage, clearConversation } from '../../featur
 import { Button, Form } from 'react-bootstrap';
 import { MdSupportAgent } from 'react-icons/md';
 import { toast } from 'react-toastify';
+import './MessageBox.css';
 
 // Simple markdown renderer that handles basic formatting
 const SimpleMarkdown = ({ children, className = "" }) => {
@@ -230,7 +231,7 @@ const AIChatbox = () => {
         >
           <div className="d-flex align-items-center">
             <MdSupportAgent className="text-white" style={{ fontSize: '24px' }} />
-            <span className="fs-6 fw-semibold ms-2">Hỗ Trợ</span>
+            <span className="fs-6 fw-semibold ms-2">Gia Dụng Pro</span>
           </div>
           <Button
             variant="link"
@@ -284,27 +285,17 @@ const AIChatbox = () => {
           {status === 'loading' && (
             <div className="p-2 mb-2 bg-white rounded-2 small d-flex align-items-center border border-light-subtle">
               <div className="d-flex gap-1 me-2">
-                <span className="d-block rounded-circle bg-primary" style={{ width: '6px', height: '6px', animation: 'bounce 1.4s infinite' }}></span>
+                <span className="d-block rounded-circle bg-primary bounce" style={{ width: '6px', height: '6px' }}></span>
                 <span 
-                  className="d-block rounded-circle bg-primary" 
-                  style={{ 
-                    width: '6px', 
-                    height: '6px', 
-                    animation: 'bounce 1.4s infinite',
-                    animationDelay: '0.16s'
-                  }}
+                  className="d-block rounded-circle bg-primary bounce" 
+                  style={{ width: '6px', height: '6px', animationDelay: '0.16s' }}
                 ></span>
                 <span 
-                  className="d-block rounded-circle bg-primary" 
-                  style={{ 
-                    width: '6px', 
-                    height: '6px', 
-                    animation: 'bounce 1.4s infinite',
-                    animationDelay: '0.32s'
-                  }}
+                  className="d-block rounded-circle bg-primary bounce" 
+                  style={{ width: '6px', height: '6px', animationDelay: '0.32s' }}
                 ></span>
               </div>
-              <span className="text-muted fst-italic">Đang xử lý...</span>
+              <span className="text-muted fst-italic"></span>
             </div>
           )}
           {error && <div className="text-danger text-center small py-2">{error}</div>}
@@ -344,18 +335,6 @@ const AIChatbox = () => {
           </div>
         </div>
       </div>
-
-      {/* Add CSS for bounce animation */}
-      <style jsx>{`
-        @keyframes bounce {
-          0%, 80%, 100% {
-            transform: scale(0);
-          }
-          40% {
-            transform: scale(1);
-          }
-        }
-      `}</style>
     </div>
   );
 };
