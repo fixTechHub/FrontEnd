@@ -132,7 +132,7 @@ const Sidebar = () => {
             <div className="bg-white border rounded shadow-sm mt-2 position-absolute w-100" style={{zIndex: 100, left: 0}}>
               <ul className="list-unstyled mb-0">
                 {filteredRoutes.length === 0 ? (
-                  <li className="px-3 py-2 text-muted">No results</li>
+                  <li className="px-3 py-2 text-muted">Không có kết quả</li>
                 ) : (
                   filteredRoutes.map(route => (
                     <li key={route.path}>
@@ -158,7 +158,7 @@ const Sidebar = () => {
       <div className="overflow-auto" style={{height: 'calc(100% - 130px)'}}>
         <ul className="list-unstyled m-0 p-0">
           <li className="text-uppercase text-muted px-4 pt-3 pb-2 mt-2" style={{fontSize: '12px', letterSpacing: '1px'}}>
-            <span>Main</span>
+            <span>Màn hình chính</span>
           </li>
           <li>
             <ul className="list-unstyled m-0 p-0">
@@ -166,7 +166,7 @@ const Sidebar = () => {
                 <Link to="/" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/" ? "" : "text-dark"}`}
                       style={currentPath === "/" ? customStyles.activeMenuItem : {}}>
                   <FaHome className="me-3" style={{width: '20px', ...(currentPath === "/" ? customStyles.activeIcon : {})}} />
-                  <span>Dashboard</span>
+                  <span>Bảng điều khiển</span>
                 </Link>
               </li>
             </ul>
@@ -174,7 +174,7 @@ const Sidebar = () => {
 
 
           <li className="text-uppercase text-muted px-4 pt-3 pb-2 mt-2" style={{fontSize: '12px', letterSpacing: '1px'}}>
-            <span>Users</span>
+            <span>Người dùng</span>
           </li>
           <li>
             <ul className="list-unstyled m-0 p-0">
@@ -182,14 +182,14 @@ const Sidebar = () => {
                 <Link to="/admin/user-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/user-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/user-management" ? customStyles.activeMenuItem : {}}>
                   <FaUser className="me-3" style={{width: '20px', ...(currentPath === "/admin/user-management" ? customStyles.activeIcon : {})}} />
-                  <span>User</span>
+                  <span>Khách hàng</span>
                 </Link>
               </li>
               <li>
                 <Link to="/admin/technician-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/technician-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/technician-management" ? customStyles.activeMenuItem : {}}>
                   <FaTools className="me-3" style={{width: '20px', ...(currentPath === "/admin/technician-management" ? customStyles.activeIcon : {})}} />
-                  <span>Technician</span>
+                  <span>Kĩ thuật viên</span>
                 </Link>
               </li>
             </ul>
@@ -197,7 +197,7 @@ const Sidebar = () => {
 
 
           <li className="text-uppercase text-muted px-4 pt-3 pb-2 mt-2" style={{fontSize: '12px', letterSpacing: '1px'}}>
-            <span>Reports</span>
+            <span>Báo cáo</span>
           </li>
           <li>
             <ul className="list-unstyled m-0 p-0">
@@ -205,14 +205,14 @@ const Sidebar = () => {
                 <Link to="/admin/report-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/report-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/report-management" ? customStyles.activeMenuItem : {}}>
                   <FaClipboard className="me-3" style={{width: '20px', ...(currentPath === "/admin/report-management" ? customStyles.activeIcon : {})}} />
-                  <span>Booking Report</span>
+                  <span>Báo cáo đơn </span>
                 </Link>
               </li>
               <li>
                 <Link to="/admin/system-report-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/system-report-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/system-report-management" ? customStyles.activeMenuItem : {}}>
                   <FaFileAlt className="me-3" style={{width: '20px', ...(currentPath === "/admin/system-report-management" ? customStyles.activeIcon : {})}} />
-                  <span>System Report</span>
+                  <span>Báo cáo hệ thống</span>
                 </Link>
               </li>
               <li>
@@ -227,7 +227,7 @@ const Sidebar = () => {
 
 
           <li className="text-uppercase text-muted px-4 pt-3 pb-2 mt-2" style={{fontSize: '12px', letterSpacing: '1px'}}>
-            <span>Management</span>
+            <span>Quản lí</span>
           </li>
           <li>
             <ul className="list-unstyled m-0 p-0">
@@ -235,7 +235,7 @@ const Sidebar = () => {
                 <Link to="/admin/coupon-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/coupon-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/coupon-management" ? customStyles.activeMenuItem : {}}>
                   <FaTag className="me-3" style={{width: '20px', ...(currentPath === "/admin/coupon-management" ? customStyles.activeIcon : {})}} />
-                  <span>Coupon</span>
+                  <span>Mã giảm giá</span>
                 </Link>
               </li>
               
@@ -243,35 +243,42 @@ const Sidebar = () => {
                 <Link to="/admin/category-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/category-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/category-management" ? customStyles.activeMenuItem : {}}>
                   <FaListAlt className="me-3" style={{width: '20px', ...(currentPath === "/admin/category-management" ? customStyles.activeIcon : {})}} />
-                  <span>Category</span>
+                  <span>Danh mục</span>
                 </Link>
               </li>
               <li>
                 <Link to="/admin/service-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/service-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/service-management" ? customStyles.activeMenuItem : {}}>
                   <FaTag className="me-3" style={{width: '20px', ...(currentPath === "/admin/service-management" ? customStyles.activeIcon : {})}} />
-                  <span>Service</span>
+                  <span>Dịch vụ</span>
                 </Link>
               </li>
               <li>
                 <Link to="/admin/commission-config-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/commission-config-management" ? customStyles.activeMenuItem : {}}>
                   <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/commission-config-management" ? customStyles.activeIcon : {})}} />
-                  <span>Commission Config</span>
+                  <span>Hoa Hồng</span>
                 </Link>
               </li>
               <li>
                 <Link to="/admin/feedback" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/feedback" ? customStyles.activeMenuItem : {}}>
                   <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/feedback" ? customStyles.activeIcon : {})}} />
-                  <span>Feedback</span>
+                  <span>Đánh giá</span>
                 </Link>
               </li>
               <li>
                 <Link to="/admin/package" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/package" ? customStyles.activeMenuItem : {}}>
                   <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/package" ? customStyles.activeIcon : {})}} />
-                  <span>Package</span>
+                  <span>Gói thành viên</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/certificate" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/certificate" ? customStyles.activeMenuItem : {}}>
+                  <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/certificate" ? customStyles.activeIcon : {})}} />
+                  <span>Chứng chỉ</span>
                 </Link>
               </li>
             </ul>
@@ -279,7 +286,7 @@ const Sidebar = () => {
 
 
           <li className="text-uppercase text-muted px-4 pt-3 pb-2 mt-2" style={{fontSize: '12px', letterSpacing: '1px'}}>
-            <span>Booking Management</span>
+            <span>Quản lí đơn hàng</span>
           </li>
           <li>
             <ul className="list-unstyled m-0 p-0">
@@ -287,14 +294,14 @@ const Sidebar = () => {
                 <Link to="/admin/booking-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/booking-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/booking-management" ? customStyles.activeMenuItem : {}}>
                   <FaCalendar className="me-3" style={{width: '20px', ...(currentPath === "/admin/booking-management" ? customStyles.activeIcon : {})}} />
-                  <span>Booking</span>
+                  <span>Đơn hàng</span>
                 </Link>
               </li>
               <li>
                 <Link to="/admin/coupon-usage-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/coupon-usage-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/coupon-usage-management" ? customStyles.activeMenuItem : {}}>
                   <FaTags className="me-3" style={{width: '20px', ...(currentPath === "/admin/coupon-usage-management" ? customStyles.activeIcon : {})}} />
-                  <span>Coupon Usage</span>
+                  <span>Sử dụng giảm giá</span>
                 </Link>
               </li>
             </ul>
@@ -303,7 +310,7 @@ const Sidebar = () => {
                 <Link to="/admin/warranty-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/warranty-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/warranty-management" ? customStyles.activeMenuItem : {}}>
                   <FaShieldAlt  className="me-3" style={{width: '20px', ...(currentPath === "/admin/warranty-management" ? customStyles.activeIcon : {})}} />
-                  <span>Warranty</span>
+                  <span>Bảo hành</span>
                 </Link>
               </li>
             </ul>

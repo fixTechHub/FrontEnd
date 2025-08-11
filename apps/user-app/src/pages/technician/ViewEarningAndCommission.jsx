@@ -273,11 +273,11 @@ const styles = {
 
 function ViewEarningAndCommission() {
     const dispatch = useDispatch();
-    
+
     const { earnings, loading, error } = useSelector((state) => state.technician);
     const { user, technician } = useSelector((state) => state.auth);
     const technicianId = technician._id;
-    
+
     const [currentPage, setCurrentPage] = useState(1);
     const [allEarnings, setAllEarnings] = useState([]); // Lưu tất cả dữ liệu
     const itemsPerPage = 5;
@@ -286,10 +286,10 @@ function ViewEarningAndCommission() {
     useEffect(() => {
         if (technicianId) {
             dispatch(fetchEarningAndCommission(technicianId))
-            .then((res) => {
-                const data = res.payload?.data || [];
-                setAllEarnings(data);
-            });
+                .then((res) => {
+                    const data = res.payload?.data || [];
+                    setAllEarnings(data);
+                });
         }
     }, [dispatch, technicianId]);
 
@@ -326,60 +326,60 @@ function ViewEarningAndCommission() {
                 <Header />
                 <BreadcrumbBar />
 
-                 <div className="dashboard-section">
+                <div className="dashboard-section">
                     <div className="container">
                         <div className="row">
                             <div className="col-lg-12">
                                 <div className="dashboard-menu">
                                     <ul>
                                         <li>
-                                            <Link to={`/technician/${technicianId}`}>
+                                            <Link to={`/technician`} >
                                                 <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
-                                                <span>Dashboard</span>
+                                                <span>Bảng điểu khiển</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to={`/technician/booking`} >
                                                 <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
-                                                <span>My Bookings</span>
+                                                <span>Đơn hàng</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/technician/feedback" >
+                                            <Link to="/technician/feedback">
                                                 <img src="/public/img/icons/review-icon.svg" alt="Icon" />
-                                                <span>Reviews</span>
+                                                <span>Đánh giá</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/user-wishlist">
-                                                <img src="/public/img/icons/wishlist-icon.svg" alt="Icon" />
-                                                <span>Wishlist</span>
+                                            <Link to={`/technician/${technicianId}/certificate`}>
+                                                <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
+                                                <span>Chứng chỉ</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/user-messages">
-                                                <img src="/public/img/icons/message-icon.svg" alt="Icon" />
-                                                <span>Messages</span>
+                                            <Link to="/technician/schedule">
+                                                <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                                                <span>Lịch trình</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/technician/deposit">
+                                            <Link to="/technician/deposit" >
                                                 <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
-                                                <span>My Wallet</span>
+                                                <span>Ví của tôi</span>
                                             </Link>
                                         </li>
                                         <li>
-                                            <Link to="/technician/earning" className="active">
+                                            <Link to={`/technician/earning`} className="active">
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
-                                                <span>My Earnings</span>
+                                                <span>Thu nhập</span>
                                             </Link>
                                         </li>
-                                        <li>
-                                            <Link to={`/technician/profile/${technicianId}`}>
+                                        {/* <li>
+                                            <Link to={`/profile`}>
                                                 <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
-                                                <span>Settings</span>
+                                                <span>Cái đặt</span>
                                             </Link>
-                                        </li>
+                                        </li> */}
                                     </ul>
                                 </div>
                             </div>
@@ -390,7 +390,7 @@ function ViewEarningAndCommission() {
                 <div className="content">
                     <div className="container">
                         <div className="content-header d-flex align-items-center justify-content-between">
-                            <h4>My Earnings</h4>
+                            <h4>Thu nhập của tôi</h4>
                             <ul className="booking-nav">
                                 <li>
                                     <a href="user-bookings.html" className="active">
@@ -404,23 +404,23 @@ function ViewEarningAndCommission() {
                                 </li>
                             </ul>
                         </div>
-                        
+
                         <div className="card-body">
                             {/* Thông tin trang */}
                             <div className="mb-3">
                                 <p style={styles.pageInfo}>
-                                    Hiển thị {startIndex + 1} - {Math.min(endIndex, allEarnings.length)} 
+                                    Hiển thị {startIndex + 1} - {Math.min(endIndex, allEarnings.length)}
                                     trong tổng số {allEarnings.length} bản ghi
                                 </p>
                             </div>
-                            
+
                             <div className="table-responsive dashboard-table">
                                 <table className="table datatable">
                                     <thead className="thead-light">
                                         <tr>
                                             <th>Khách hàng</th>
                                             <th>Dịch vụ</th>
-                                            <th>Tiền hoa hông</th>
+
                                             <th>Tiền giữ lại</th>
                                             <th>Thu nhập</th>
                                             <th>Tổng tiền</th>
@@ -432,7 +432,7 @@ function ViewEarningAndCommission() {
                                                 <tr key={item.bookingCode || index}>
                                                     <td>{item.bookingInfo?.customerName || 'Không có'}</td>
                                                     <td>{item.bookingInfo?.service || 'Không có'}</td>
-                                                    <td>{item.commissionAmount?.toLocaleString() || '0'} VNĐ</td>
+
                                                     <td>{item.holdingAmount?.toLocaleString() || '0'} VNĐ</td>
                                                     <td>{item.technicianEarning?.toLocaleString() || '0'} VNĐ</td>
                                                     <td>{item.finalPrice?.toLocaleString() || '0'} VNĐ</td>
@@ -448,7 +448,7 @@ function ViewEarningAndCommission() {
                                     </tbody>
                                 </table>
                             </div>
-                            
+
                             {/* Pagination - chỉ hiển thị khi có nhiều hơn 1 trang */}
                             {totalPages > 1 && (
                                 <div style={styles.pagination}>
@@ -463,7 +463,7 @@ function ViewEarningAndCommission() {
                                     >
                                         ← Trước
                                     </button>
-                                    
+
                                     {/* Các nút số trang */}
                                     {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
                                         <button
@@ -481,7 +481,7 @@ function ViewEarningAndCommission() {
                                             {page}
                                         </button>
                                     ))}
-                                    
+
                                     {/* Nút Trang Sau */}
                                     <button
                                         style={{

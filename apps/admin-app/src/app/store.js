@@ -17,6 +17,7 @@ import financialReportReducer from '../features/financialReport/financialReportS
 import adminReducer from '../features/admin/adminSlice';
 import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
+import adminCertificateReducer from '../features/certificates/certificateSlice';
 
 const store = configureStore({
   reducer: {
@@ -38,6 +39,7 @@ const store = configureStore({
     admin: adminReducer,
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
+    adminCertificate: adminCertificateReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

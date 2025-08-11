@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
+import { useState} from "react";
 import { useParams } from 'react-router-dom';
 import Rating from 'react-rating';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
@@ -12,30 +13,44 @@ function ViewTechnicianProfile() {
     const { profile, loading, error } = useSelector(state => state.technician);
     const technician  = useSelector((state) => state.auth);
     const  technicianId = technician.technician?._id ;
-    
-    useEffect(() => {
-        if (technicianId) {
-            console.log("Dispatching technicianId:", technicianId);
-            dispatch(fetchTechnicianProfile(technicianId))
+    const [technicianData, setTechnicianData] = useState(null);
+
+useEffect(() => {
+    if (technicianId) {
+        console.log("Dispatching technicianId:", technicianId);
+        dispatch(fetchTechnicianProfile(technicianId))
             .then((result) => {
-                    console.log("=== PROFILE DEBUG ===");
-                    console.log("Full result:", result);
-                    console.log("Result payload:", result.payload);
-                    console.log("Profile data:", profile);
-                })
-                .catch((err) => {
-                    console.error("Error fetching profile:", err);
-                });
-        }
-    }, [dispatch, technicianId]);
-    console.log(technicianId);
-    console.log("tech", technician);
+                console.log("=== PROFILE DEBUG ===");
+                console.log("Full result:", result);
+                console.log("Result payload:", result.payload);
+
+                // lấy phần tử đầu tiên nếu là mảng
+                const data = Array.isArray(result.payload)
+                    ? result.payload[0]
+                    : result.payload;
+                console.log("Technician data:", data);
+
+                setTechnicianData(data);
+            })
+            .catch((err) => {
+                console.error("Error fetching profile:", err);
+            });
+    }
+}, [dispatch, technicianId]);
+
     
+    console.log(technicianData);
+    
+    console.log("tech", technician);
+   
+    
+    console.log(technician?.technician?.certificate);
     
 
     const certificates = Array.isArray(profile[1])
   ? profile[1].filter(item => item.status === 'APPROVED')
   : [];
+   console.log("cer", certificates);
 
     console.log("profile", profile);
     

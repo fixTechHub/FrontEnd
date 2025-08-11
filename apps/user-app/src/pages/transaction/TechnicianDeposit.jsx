@@ -10,26 +10,41 @@ import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import { Link } from 'react-router-dom';
 
 const styles = {
+  // ===== Pagination =====
   pagination: {
     display: 'flex',
     justifyContent: 'center',
     marginTop: '20px',
+    flexWrap: 'wrap',
+    gap: '6px',
   },
   paginationBtn: {
     backgroundColor: '#f8f9fa',
     border: '1px solid #dee2e6',
-    borderRadius: '4px',
-    color: '#6c757d',
-    padding: '5px 10px',
-    margin: '0 5px',
+    borderRadius: '6px',
+    color: '#495057',
+    padding: '6px 12px',
+    fontSize: '14px',
+    fontWeight: '500',
     cursor: 'pointer',
-    transition: 'all 0.2s',
+    transition: 'all 0.2s ease',
+  },
+  activeBtn: {
+    backgroundColor: '#0d6efd',
+    color: '#fff',
+    borderColor: '#0d6efd',
+    boxShadow: '0 2px 6px rgba(13,110,253,0.3)',
+  },
+  hoverBtn: {
+    backgroundColor: '#e9ecef',
+    borderColor: '#ced4da',
   },
   disabledBtn: {
     opacity: 0.5,
     cursor: 'not-allowed',
-  },
+  }
 };
+
 
 const TechnicianDeposit = () => {
   const dispatch = useDispatch();
@@ -58,7 +73,7 @@ const TechnicianDeposit = () => {
   const [months, setMonths] = useState(1);
   const { technician } = useSelector((state) => state.auth);
   const technicianId = technician._id;
-  console.log(technicianId);
+  console.log(technician);
 
   const [page, setPage] = useState(0);
   const limit = 5;
@@ -187,7 +202,7 @@ const TechnicianDeposit = () => {
       const resultAction = await dispatch(extendSubscription({
         technicianId: technicianId,
         packageId: pkg._id,
-        days : months*30,
+        days: months * 30,
       })).unwrap();
 
       const checkoutUrl = resultAction;
@@ -327,53 +342,53 @@ const TechnicianDeposit = () => {
               <div className="dashboard-menu">
                 <ul>
                   <li>
-                    <Link to={`/technician`}>
+                    <Link to={`/technician`} >
                       <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
-                      <span>Dashboard</span>
+                      <span>Bảng điểu khiển</span>
                     </Link>
                   </li>
                   <li>
                     <Link to={`/technician/booking`} >
                       <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
-                      <span>My Bookings</span>
+                      <span>Đơn hàng</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/technician/feedback">
                       <img src="/public/img/icons/review-icon.svg" alt="Icon" />
-                      <span>Reviews</span>
+                      <span>Đánh giá</span>
                     </Link>
                   </li>
                   <li>
-                    <Link to="/user-wishlist">
-                      <img src="/public/img/icons/wishlist-icon.svg" alt="Icon" />
-                      <span>Wishlist</span>
+                    <Link to={`/technician/${technicianId}/certificate`}>
+                      <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
+                      <span>Chứng chỉ</span>
                     </Link>
                   </li>
                   <li>
-                    <Link to="/user-messages">
-                      <img src="/public/img/icons/message-icon.svg" alt="Icon" />
-                      <span>Messages</span>
+                    <Link to="/technician/schedule">
+                      <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                      <span>Lịch trình</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/technician/deposit" className="active">
                       <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
-                      <span>My Wallet</span>
+                      <span>Ví của tôi</span>
                     </Link>
                   </li>
                   <li>
                     <Link to={`/technician/earning`}>
                       <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
-                      <span>My Earnings</span>
+                      <span>Thu nhập</span>
                     </Link>
                   </li>
-                  <li>
-                    <Link to={`/technician/profile/${technician?._id}`}>
+                  {/* <li>
+                    <Link to={`/profile`}>
                       <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
-                      <span>Settings</span>
+                      <span>Cái đặt</span>
                     </Link>
-                  </li>
+                  </li> */}
                 </ul>
               </div>
             </div>
@@ -384,7 +399,7 @@ const TechnicianDeposit = () => {
       <div className="content">
         <div className="container">
           <div className="content-header"> {/* SỬA: className thay vì class */}
-            <h4>Wallet</h4>
+            <h4>Ví của tôi</h4>
           </div>
 
           <div className="row">
@@ -866,27 +881,38 @@ const TechnicianDeposit = () => {
               aria-labelledby="upgradeModalLabel"
               aria-hidden="true"
             >
-              <div className="modal-dialog modal-lg modal-dialog-scrollable">
+              <div className="modal-dialog modal-xl modal-dialog-scrollable">
                 <div className="modal-content">
                   <div className="modal-header">
                     <h5 className="modal-title" id="upgradeModalLabel">
                       Chọn gói nâng cấp
                     </h5>
-                    <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close" />
+                    <button
+                      type="button"
+                      className="btn-close"
+                      data-bs-dismiss="modal"
+                      aria-label="Close"
+                    />
                   </div>
                   <div className="modal-body">
-                    <div className="row">
+                    <div className="d-flex flex-wrap gap-3 justify-content-center">
                       {packages.map((item) => (
-                        <div key={item._id} className="col-md-4 mb-3">
-                          <div className="card h-100 shadow-sm">
-                            <div className="card-body">
-                              <h5 className="card-title">{item.name}</h5>
-                              <p className="card-text">{item.description}</p>
-                              <p className="text-primary fw-bold">
-                                {item.price.toLocaleString()}đ / tháng
-                              </p>
-                              <button className="btn btn-sm btn-success" onClick={() => handleSubscriptionSubmit(item)}>Chọn gói</button>
-                            </div>
+                        <div
+                          key={item._id}
+                          className="card flex-fill text-center shadow-sm package-card"
+                        >
+                          <div className="card-body d-flex flex-column">
+                            <h5 className="card-title">{item.name}</h5>
+                            <p className="card-text flex-grow-1">{item.description}</p>
+                            <p className="text-warning fw-bold mb-3">
+                              {item.price.toLocaleString()}đ / tháng
+                            </p>
+                            <button
+                              className="btn btn-success mt-auto align-self-center"
+                              onClick={() => handleSubscriptionSubmit(item)}
+                            >
+                              Chọn gói
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -895,6 +921,8 @@ const TechnicianDeposit = () => {
                 </div>
               </div>
             </div>
+
+
 
             <div className="modal fade" id="extendPackageModal" tabIndex="-1" aria-hidden="true">
               <div className="modal-dialog">
@@ -933,6 +961,140 @@ const TechnicianDeposit = () => {
           </div>
         </div>
       </div>
+
+      <style>{`
+        /* Backdrop đẹp hơn một chút */
+.modal-backdrop.show{
+  background: rgba(15,23,42,.55);
+  backdrop-filter: blur(2px);
+}
+
+/* Khung modal */
+.upgrade-modal{
+  border: 1px solid #e6eaf2;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(2,6,23,.25);
+}
+
+/* Header modal */
+.upgrade-modal__head{
+  background: linear-gradient(180deg, #fff, #f9fbff);
+  border-bottom: 1px solid #edf0f6;
+}
+.upgrade-modal__head .modal-title{
+  font-weight: 800;
+  letter-spacing: .2px;
+  color: #0f172a;
+}
+.upgrade-close{
+  filter: grayscale(100%);
+  opacity: .7;
+}
+.upgrade-close:hover{ opacity: 1; }
+
+/* Body modal */
+.upgrade-modal__body{
+  background: #fff;
+}
+
+/* Card gói */
+
+.package-card:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(2,6,23,.12);
+  border-color: #dbe4ff;
+}
+  .package-card {
+  min-width: 220px;
+  max-width: 250px;
+  display: flex;
+  flex-direction: column;
+}
+
+.package-card .card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.package-card button {
+  width: 100px;
+}
+
+/* Ribbon “Phổ biến” */
+.package-ribbon{
+  position: absolute;
+  top: 10px; right: -12px;
+  background: #111827; color: #fff;
+  font-weight: 800; font-size: 12px;
+  padding: 6px 10px; border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(0,0,0,.15);
+}
+.package-card.is-popular{ border-color: #111827; }
+
+/* Giá */
+.price-tag{
+  display: inline-flex; align-items: baseline; gap: 6px;
+  background: #f4f7ff; border: 1px solid #e3e9ff;
+  padding: 8px 12px; border-radius: 12px;
+}
+.price{ font-size: 20px; font-weight: 900; color: #111827; }
+.per{ color: #64748b; font-weight: 700; }
+
+/* Nút chọn gói */
+.btn-upgrade{
+  --btn-bg: #111827;
+  --btn-bg-hover: #0b1220;
+  --btn-border: #111827;
+  background: var(--btn-bg);
+  color: #fff; border: 1px solid var(--btn-border);
+  border-radius: 12px; padding: 10px 14px; font-weight: 800;
+}
+.btn-upgrade:hover{ background: var(--btn-bg-hover); color: #fff; }
+
+/* Responsive */
+@media (max-width: 576px){
+  .package-ribbon{ right: 10px; }
+  .price{ font-size: 18px; }
+} thêm phần css này vào 
+const styles = {
+  // ===== Pagination =====
+  pagination: {
+    display: 'flex',
+    justifyContent: 'center',
+    marginTop: '20px',
+    flexWrap: 'wrap',
+    gap: '6px',
+  },
+  paginationBtn: {
+    backgroundColor: '#f8f9fa',
+    border: '1px solid #dee2e6',
+    borderRadius: '6px',
+    color: '#495057',
+    padding: '6px 12px',
+    fontSize: '14px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
+  activeBtn: {
+    backgroundColor: '#0d6efd',
+    color: '#fff',
+    borderColor: '#0d6efd',
+    boxShadow: '0 2px 6px rgba(13,110,253,0.3)',
+  },
+  hoverBtn: {
+    backgroundColor: '#e9ecef',
+    borderColor: '#ced4da',
+  },
+  disabledBtn: {
+    opacity: 0.5,
+    cursor: 'not-allowed',
+  }
+};
+
+      `}</style>
     </div>
   );
 };
