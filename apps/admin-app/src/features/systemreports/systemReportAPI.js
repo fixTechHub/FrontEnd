@@ -4,7 +4,7 @@ export const systemReportAPI = {
     // Get all system reports
     getAll: async () => {
         try {
-            const response = await ApiBE.get('/system-reports');
+            const response = await ApiBE.get('/Dashboard/systemreports');
             return response.data;
         } catch (error) {
             // Don't log 404 errors as they're expected if endpoint doesn't exist
