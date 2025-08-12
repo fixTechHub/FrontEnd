@@ -51,7 +51,7 @@ export default function TechnicianDetail() {
           categoryAPI.getAll(),
         ]);
         if (!t) {
-          message.error('Technician not found');
+          message.error('Không tìm thấy kỹ thuật viên');
           navigate('/admin/technician-management');
           return;
         }
@@ -73,7 +73,7 @@ export default function TechnicianDetail() {
         setCategories(categories);
       } catch (e) {
         setError(e);
-        message.error('Failed to load technician detail');
+        message.error('Không thể tải thông tin chi tiết');
       } finally {
         setLoading(false);
       }
@@ -83,15 +83,15 @@ export default function TechnicianDetail() {
 
   const bookingColumns = useMemo(
     () => [
-      { title: 'Booking Code', dataIndex: 'bookingCode', key: 'bookingCode' },
+      { title: 'Mã đơn hàng', dataIndex: 'bookingCode', key: 'bookingCode' },
       {
-        title: 'Service',
+        title: 'Dịch vụ',
         dataIndex: 'serviceName',
         key: 'serviceName',
         render: (_, r) => serviceMap[r.serviceId] || r.serviceName || r.serviceId,
       },
-      { title: 'Status', dataIndex: 'status', key: 'status', render: (s) => <Tag>{formatStatusLabel(s)}</Tag> },
-      { title: 'Created At', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
+      { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => <Tag>{formatStatusLabel(s)}</Tag> },
+      { title: 'Thời gian tạo đơn hàng', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
     ],
     [serviceMap]
   );
@@ -120,8 +120,8 @@ export default function TechnicianDetail() {
     return (
       <div className="container-fluid">
         <Card>
-          <div style={{ color: 'red' }}>Failed to load technician detail.</div>
-          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
+          <div style={{ color: 'red' }}>Không thể tải thông tin chi tiết.</div>
+          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
         </Card>
       </div>
     );
@@ -138,32 +138,36 @@ export default function TechnicianDetail() {
               <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
             </Space>
 
-            <Card title="Technician Profile" bordered={false} style={{ borderRadius: 12 }}>
+            <Card title="Thông tin kỹ thuật viên" bordered={false} style={{ borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 16 }}>
                 <Avatar size={80} src={technician.avatar || user?.avatar || `https://i.pravatar.cc/150?u=${technician.id}`} style={{ flexShrink: 0 }}>
                   {(technician.fullName || user?.fullName || 'T').charAt(0).toUpperCase()}
                 </Avatar>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 20, fontWeight: 600 }}>{technician.fullName || user?.fullName || 'N/A'}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600 }}>{technician.fullName || user?.fullName || ''}</div>
                   <div style={{ color: '#888', marginTop: 4 }}>ID: {technician.id}</div>
+                  <br></br>
+
+                  {/* Thêm cảnh cáo ở dưới*/}
+
                 </div>
               </div>
 
               <Descriptions column={2} bordered>
-                <Descriptions.Item label="Full Name">{technician.fullName || user?.fullName || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Email">{technician.email || user?.email || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Phone">{technician.phone || user?.phone || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Status">{statusTag(technician.status)}</Descriptions.Item>
-                <Descriptions.Item label="Availability">{availabilityTag(technician.availability)}</Descriptions.Item>
-                <Descriptions.Item label="Rating">{technician.ratingAverage ?? 0}</Descriptions.Item>
-                <Descriptions.Item label="Jobs Completed">{technician.jobCompleted ?? 0}</Descriptions.Item>
-                <Descriptions.Item label="Experience Years">{technician.experienceYears || 0} năm</Descriptions.Item>
+                <Descriptions.Item label="Họ và tên">{technician.fullName || user?.fullName || ''}</Descriptions.Item>
+                <Descriptions.Item label="Email">{technician.email || user?.email || ''}</Descriptions.Item>
+                <Descriptions.Item label="SĐT">{technician.phone || user?.phone || ''}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">{statusTag(technician.status)}</Descriptions.Item>
+                <Descriptions.Item label="Tình trạng">{availabilityTag(technician.availability)}</Descriptions.Item>
+                <Descriptions.Item label="Đánh giá">{technician.ratingAverage ?? 0}</Descriptions.Item>
+                <Descriptions.Item label="Số công việc hoàn thành">{technician.jobCompleted ?? 0}</Descriptions.Item>
+                <Descriptions.Item label="Năm kinh nghiệm">{technician.experienceYears || 0} năm</Descriptions.Item>
               </Descriptions>
 
               {/* Specialties Section */}
               <div style={{ marginTop: 24 }}>
                 <div style={{ fontSize: 16, fontWeight: 600, color: '#333', marginBottom: 16 }}>
-                  Chuyên Ngành (Specialties)
+                  Chuyên Ngành
                 </div>
                 <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
                   {technician.specialtiesCategories && technician.specialtiesCategories.length > 0 ? (
@@ -200,7 +204,7 @@ export default function TechnicianDetail() {
                items={[
                  {
                    key: 'profile',
-                   label: 'Thông Tin Chi Tiết',
+                   label: 'Thông Tin Tài Khoản',
                    children: (
                      <Card bordered={false} style={{ borderRadius: 12 }}>
                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>

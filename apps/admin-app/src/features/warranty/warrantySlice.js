@@ -10,11 +10,13 @@ export const fetchWarrantyById = createAsyncThunk('warranty/fetchById', async (i
 });
 
 export const updateWarrantyStatus = createAsyncThunk('warranty/updateStatus', async ({ id, data }) => {
+  // data: { status } - IsReviewedByAdmin sẽ tự động được set thành true
   await warrantyAPI.updateStatus(id, data);
   return { id, ...data };
 });
 
 export const updateWarrantyDetails = createAsyncThunk('warranty/updateDetails', async ({ id, data }) => {
+  // data: { status, resolutionNote?, rejectionReason? } - IsReviewedByAdmin sẽ tự động được set thành true
   const result = await warrantyAPI.updateDetails(id, data);
   return result;
 });

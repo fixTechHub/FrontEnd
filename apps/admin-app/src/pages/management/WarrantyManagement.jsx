@@ -26,7 +26,7 @@ const WarrantyManagement = () => {
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState(null);
   const [editStatus, setEditStatus] = useState('');
-  const [editReviewed, setEditReviewed] = useState(false);
+  // 🔄 IsReviewedByAdmin sẽ tự động được set thành true khi admin thay đổi
   const [editResolutionNote, setEditResolutionNote] = useState('');
   const [editRejectionReason, setEditRejectionReason] = useState('');
   const [userNames, setUserNames] = useState({});
@@ -38,7 +38,7 @@ const WarrantyManagement = () => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterStatus, setFilterStatus] = useState();
   const [filterUnderWarranty, setFilterUnderWarranty] = useState();
-  const [filterReviewed, setFilterReviewed] = useState();
+  // 🔄 Không còn cần filter isReviewedByAdmin vì nó sẽ tự động được set thành true khi admin thay đổi
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedWarranty, setSelectedWarranty] = useState(null);
   const [serviceNames, setServiceNames] = useState({});
@@ -88,8 +88,7 @@ const WarrantyManagement = () => {
    return (
      (bookingId.includes(search) || customer.includes(search) || technician.includes(search)) &&
      (!filterStatus || w.status === filterStatus) &&
-     (!filterUnderWarranty || (filterUnderWarranty === 'Yes' ? w.isUnderWarranty : !w.isUnderWarranty)) &&
-     (!filterReviewed || (filterReviewed === 'Yes' ? w.isReviewedByAdmin : !w.isReviewedByAdmin))
+     (!filterUnderWarranty || (filterUnderWarranty === 'Yes' ? w.isUnderWarranty : !w.isUnderWarranty))
    );
  });
  const indexOfLast = currentPage * warrantiesPerPage;
@@ -135,14 +134,13 @@ const currentWarranties = sorted.slice(indexOfFirst, indexOfLast);
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Booking', dataIndex: 'bookingCode' },
-    { title: 'Customer', dataIndex: 'customerName' },
-    { title: 'Technician', dataIndex: 'technicianName' },
-    { title: 'Service', dataIndex: 'serviceName' },
-    { title: 'Status', dataIndex: 'status' },
-    { title: 'Under Warranty', dataIndex: 'underWarranty' },
-    { title: 'Reviewed', dataIndex: 'reviewed' },
-    { title: 'Created At', dataIndex: 'createdAt' }
+    { title: 'Mã đơn hàng', dataIndex: 'bookingCode' },
+    { title: 'Khách hàng', dataIndex: 'customerName' },
+    { title: 'Kỹ thuật viên', dataIndex: 'technicianName' },
+    { title: 'Dịch vụ', dataIndex: 'serviceName' },
+    { title: 'Trạng thái', dataIndex: 'status' },
+    { title: 'Tình trạng bảo hành', dataIndex: 'underWarranty' },
+    { title: 'Thời gian tạo', dataIndex: 'createdAt' }
   ];
 
   const exportData = sorted.map(warranty => ({
@@ -175,7 +173,7 @@ const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
  const openEdit = (w) => {
    setSelected(w);
    setEditStatus(w.status);
-   setEditReviewed(w.isReviewedByAdmin);
+   // 🔄 IsReviewedByAdmin sẽ tự động được set thành true khi admin thay đổi
    setEditResolutionNote(w.resolutionNote || '');
    setEditRejectionReason(w.rejectionReason || '');
    setShowModal(true);
@@ -186,7 +184,7 @@ const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
    try {
      const updateData = {
        status: editStatus,
-       isReviewedByAdmin: editReviewed,
+       // 🔄 IsReviewedByAdmin sẽ tự động được set thành true khi admin thay đổi
        resolutionNote: editResolutionNote.trim() || null,
        rejectionReason: editRejectionReason.trim() || null
      };
@@ -243,11 +241,11 @@ const handleSortByTechnician = () => {
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
-           <h4 className="mb-1">Booking Warranties</h4>
+           <h4 className="mb-1">Bảo hành đơn hàng</h4>
            <nav>
              <ol className="breadcrumb mb-0">
-               <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-               <li className="breadcrumb-item active">Booking Warranties</li>
+               <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+               <li className="breadcrumb-item active">Bảo hành đơn hàng</li>
              </ol>
            </nav>
          </div>
@@ -262,14 +260,14 @@ const handleSortByTechnician = () => {
                <input
                  type="text"
                  className="form-control"
-                 placeholder="Search booking, customer, technician"
+                 placeholder="Tìm kiếm bảo hành..."
                  value={searchText}
                  onChange={e => setSearchText(e.target.value)}
                />
              </div>
            </div>           
            <Select
-             placeholder="Under Warranty"
+             placeholder="Tình trạng bảo hành"
              value={filterUnderWarranty || undefined}
              onChange={value => setFilterUnderWarranty(value)}
              style={{ width: 150 }}
@@ -279,17 +277,7 @@ const handleSortByTechnician = () => {
              <Select.Option value="No">No</Select.Option>
            </Select>
            <Select
-             placeholder="Reviewed"
-             value={filterReviewed || undefined}
-             onChange={value => setFilterReviewed(value)}
-             style={{ width: 130 }}
-             allowClear
-           >
-             <Select.Option value="Yes">Yes</Select.Option>
-             <Select.Option value="No">No</Select.Option>
-           </Select>
-           <Select
-             placeholder="Status"
+             placeholder="Trạng thái"
              value={filterStatus || undefined}
              onChange={value => setFilterStatus(value)}
              style={{ width: 130 }}
@@ -304,14 +292,14 @@ const handleSortByTechnician = () => {
            </Select>
          </div>
          <div className="d-flex align-items-center">
-           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
            <Select
              value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
              style={{ width: 120 }}
              onChange={handleSortChange}
              options={[
-               { value: 'lasted', label: 'Lasted' },
-               { value: 'oldest', label: 'Oldest' },
+               { value: 'lasted', label: 'Mới nhất' },
+               { value: 'oldest', label: 'Cũ nhất' },
              ]}
            />
          </div>
@@ -325,7 +313,7 @@ const handleSortByTechnician = () => {
              <thead className="thead-light">
                <tr>
                  <th style={{ cursor: 'pointer' }} onClick={handleSortByBooking}>
-                   BOOKING CODE
+                   Mã đơn hàng
                    {sortField === 'bookingId' && (
                      <span style={{ marginLeft: 4 }}>
                        {sortOrder === 'asc' ? '▲' : '▼'}
@@ -333,7 +321,7 @@ const handleSortByTechnician = () => {
                    )}
                  </th>
                  <th style={{ cursor: 'pointer' }} onClick={handleSortByCustomer}>
-                   CUSTOMER
+                   Khách hàng
                    {sortField === 'customer' && (
                      <span style={{ marginLeft: 4 }}>
                        {sortOrder === 'asc' ? '▲' : '▼'}
@@ -341,35 +329,35 @@ const handleSortByTechnician = () => {
                    )}
                  </th>
                  <th style={{ cursor: 'pointer' }} onClick={handleSortByTechnician}>
-                   TECHNICIAN
+                   Kỹ thuật viên
                    {sortField === 'technician' && (
                      <span style={{ marginLeft: 4 }}>
                        {sortOrder === 'asc' ? '▲' : '▼'}
                      </span>
                    )}
                  </th>
-                 <th>STATUS</th>
-                 <th>UNDER WARRANTY</th>
-                 <th>REVIEWED</th>
-                 <th>ACTION</th>
+                 <th>Trạng thái</th>
+                 <th>Tình trạng bảo hành</th>
+                 <th>Duyệt</th>
+                 <th>Hành động</th>
                </tr>
              </thead>
              <tbody>
                {currentWarranties.map(w => (
                  <tr key={w.id}>
                    <td>{bookingMap[w.bookingId] || ''}</td>
-                   <td>{userNames[w.customerId]|| 'UNKNOWN'}</td>
-                   <td>{technicianNames[w.technicianId]|| 'UNKNOWN'}</td>
+                   <td>{userNames[w.customerId]|| ''}</td>
+                   <td>{technicianNames[w.technicianId]|| ''}</td>
                    <td>{w.status}</td>
                   
                    <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
                    <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
                    <td>
                      <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
-                        Edit
+                        Chỉnh sửa
                       </Button>
                      <Button className="management-action-btn" size="middle" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
-                       <EyeOutlined style={{marginRight: 4}} />View Detail
+                       <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
                      </Button>
                    </td>
                  </tr>
@@ -405,15 +393,15 @@ const handleSortByTechnician = () => {
          setEditRejectionReason('');
        }}
        onOk={handleUpdate}
-       title="Update Warranty Details"
-       okText="Update"
+       title="Cập nhật bảo hành"
+       okText="Lưu"
        confirmLoading={loading}
        width={600}
      >
        <Form layout="vertical">
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Status" required>
+             <Form.Item label="Trạng thái" required>
                <Select
                  value={editStatus}
                  onChange={setEditStatus}
@@ -422,14 +410,9 @@ const handleSortByTechnician = () => {
                />
              </Form.Item>
            </Col>
-           <Col span={12}>
-             <Form.Item label="Admin Reviewed">
-               <Switch checked={editReviewed} onChange={setEditReviewed} />
-             </Form.Item>
-           </Col>
          </Row>
          
-         <Form.Item label="Resolution Note">
+         <Form.Item label="Phương án giải quyết">
            <Input.TextArea
              value={editResolutionNote}
              onChange={(e) => setEditResolutionNote(e.target.value)}
@@ -438,7 +421,7 @@ const handleSortByTechnician = () => {
            />
          </Form.Item>
          
-         <Form.Item label="Rejection Reason">
+         <Form.Item label="Lý do từ chối">
            <Input.TextArea
              value={editRejectionReason}
              onChange={(e) => setEditRejectionReason(e.target.value)}
@@ -466,7 +449,7 @@ const handleSortByTechnician = () => {
            }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <div style={{ fontSize: 20, fontWeight: 700 }}>
-                 WARRANTY DETAIL
+                 Chi tiết bảo hành
                </div>
                <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
                  {selectedWarranty.status}
@@ -474,7 +457,7 @@ const handleSortByTechnician = () => {
              </div>
              {selectedWarranty.id && (
                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>Warranty ID: {selectedWarranty.id}</span>
+                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>ID: {selectedWarranty.id}</span>
                </div>
              )}
            </div>
@@ -489,27 +472,27 @@ const handleSortByTechnician = () => {
                    padding: 16,
                    marginBottom: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tổng quán</div>
                    <div style={{ display: 'grid', rowGap: 10 }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Status</span>
+                       <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
                        <span style={{ fontWeight: 600, color: '#52c41a' }}>{selectedWarranty.status}</span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Under Warranty</span>
+                       <span style={{ color: '#8c8c8c' }}>Tình trạng bảo hành</span>
                        <span style={{ fontWeight: 600, color: selectedWarranty.isUnderWarranty ? '#52c41a' : '#ff4d4f' }}>
                          {selectedWarranty.isUnderWarranty ? 'Yes' : 'No'}
                        </span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Reviewed By Admin</span>
+                       <span style={{ color: '#8c8c8c' }}>Admin duyệt</span>
                        <span style={{ fontWeight: 600, color: selectedWarranty.isReviewedByAdmin ? '#52c41a' : '#faad14' }}>
                          {selectedWarranty.isReviewedByAdmin ? 'Yes' : 'No'}
                        </span>
                      </div>
                      
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Expire At</span>
+                       <span style={{ color: '#8c8c8c' }}>Hạn bảo hành</span>
                        <span style={{ fontWeight: 600 }}>{selectedWarranty.expireAt ? new Date(selectedWarranty.expireAt).toLocaleDateString() : 'N/A'}</span>
                      </div>
                    </div>
@@ -524,22 +507,22 @@ const handleSortByTechnician = () => {
                    borderRadius: 12,
                    padding: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Thông tin liên quan</div>
                    <div style={{ display: 'grid', rowGap: 12 }}>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Customer</span>
+                       <span style={{ color: '#8c8c8c' }}>Khách hàng</span>
                        <span style={{ fontWeight: 600 }}>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId || 'UNKNOWN'}</span>
                      </div>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Technician</span>
+                       <span style={{ color: '#8c8c8c' }}>Kỹ thuật viên</span>
                        <span style={{ fontWeight: 600 }}>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId || 'UNKNOWN'}</span>
                      </div>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Booking Code</span>
+                       <span style={{ color: '#8c8c8c' }}>Mã đơn hàng</span>
                        <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bookingMap[selectedWarranty.bookingId] || 'N/A'}</span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Request Date</span>
+                       <span style={{ color: '#8c8c8c' }}>Ngày yêu cầu</span>
                        <span style={{ fontWeight: 600 }}>{new Date(selectedWarranty.requestDate).toLocaleString()}</span>
                      </div>
                    </div>
@@ -555,21 +538,21 @@ const handleSortByTechnician = () => {
                    padding: 16,
                    marginBottom: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Issue Details</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Chi tiết vấn đề</div>
                    <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
                      <div style={{ marginBottom: 12 }}>
-                       <div style={{ fontWeight: 600, marginBottom: 4 }}>Reported Issue:</div>
+                       <div style={{ fontWeight: 600, marginBottom: 4 }}>Vấn đề báo cáo:</div>
                        <div style={{ color: '#262626' }}>{selectedWarranty.reportedIssue}</div>
                      </div>
                      {selectedWarranty.resolutionNote && (
                        <div style={{ marginBottom: 12 }}>
-                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Resolution Note:</div>
+                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Phương án giải quyết:</div>
                          <div style={{ color: '#262626' }}>{selectedWarranty.resolutionNote}</div>
                        </div>
                      )}
                      {selectedWarranty.rejectionReason && (
                        <div>
-                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Rejection Reason:</div>
+                         <div style={{ fontWeight: 600, marginBottom: 4 }}>Lý do từ chối:</div>
                          <div style={{ color: '#ff4d4f' }}>{selectedWarranty.rejectionReason}</div>
                        </div>
                      )}
@@ -586,7 +569,7 @@ const handleSortByTechnician = () => {
                      borderRadius: 16,
                      padding: 16,
                    }}>
-                     <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Related Images</div>
+                     <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Hình ảnh liên quan</div>
                      <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
                        {selectedWarranty.images.map((img, idx) => (
                          <img 

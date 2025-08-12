@@ -84,7 +84,7 @@ const SystemReportManagement = () => {
        dispatch(setSystemReports(systemReports));
      } catch (error) {
        dispatch(setError(error.message));
-       message.error('Failed to load system reports');
+       message.error('Không thể tải thông tin');
      } finally {
        dispatch(setLoading(false));
      }
@@ -103,7 +103,7 @@ const SystemReportManagement = () => {
        
        setAdminUsers(adminUsersList);
      } catch (error) {
-       console.error('Failed to load admin users:', error);
+       console.error('Không thể tải thông tin các Admin:', error);
      }
    };
 
@@ -166,10 +166,10 @@ const SystemReportManagement = () => {
    try {
      const updatedSystemReport = await systemReportAPI.updateStatus(id, newStatus, note, resolvedByUser);
      dispatch(updateSystemReport(updatedSystemReport));
-     message.success(`Status updated to ${newStatus}`);
+     message.success(`Thay đổi trạng thái ${newStatus}`);
      return updatedSystemReport;
    } catch (error) {
-     message.error('Failed to update status');
+     message.error('Cập nhật thất bại');
    }
  };
 
@@ -222,22 +222,22 @@ const SystemReportManagement = () => {
  const handleSaveStatus = async () => {
    // Validation
    if (!statusValue) {
-     message.error('Please select a status');
+     message.error('Hãy chọn trạng thái');
      return;
    }
    
    if (statusValue === 'RESOLVED' && !resolvedBy) {
-     message.error('Please select an admin user for resolved status');
+     message.error('Chọn Admin để xử lý thành công báo cáo');
      return;
    }
    
    if (statusValue === 'RESOLVED' && !resolutionNote.trim()) {
-     message.error('Please enter a resolution note for resolved status');
+     message.error('Hãy nhập phương án giải quyết.');
      return;
    }
    
    if (statusValue === 'REJECTED' && !resolutionNote.trim()) {
-     message.error('Please enter a reason for rejected status');
+     message.error('Hãy nhập lý do từ chối báo cáo');
      return;
    }
    
@@ -251,7 +251,7 @@ const SystemReportManagement = () => {
        setResolvedBy('');
        setResolutionNote('');
      } catch (error) {
-       message.error('Failed to save status');
+       message.error('Không thể cập nhật trạng thái');
      }
    }
  };
@@ -270,7 +270,7 @@ const SystemReportManagement = () => {
 
  const columns = [
    {
-     title: 'TITLE',
+     title: 'Tiêu đề',
      dataIndex: 'title',
      key: 'title',
      render: (text) => (
@@ -280,7 +280,7 @@ const SystemReportManagement = () => {
      ),
    },
    {
-     title: 'TAG',
+     title: 'Phân loại',
      dataIndex: 'tag',
      key: 'tag',
      render: (tag) => (
@@ -290,7 +290,7 @@ const SystemReportManagement = () => {
      ),
    },
    {
-     title: 'DESCRIPTION',
+     title: 'Mô tả',
      dataIndex: 'description',
      key: 'description',
      render: (text) => (
@@ -300,7 +300,7 @@ const SystemReportManagement = () => {
      ),
    },
    {
-     title: 'STATUS',
+     title: 'Trạng thái',
      dataIndex: 'status',
      key: 'status',
       render: (status) => (
@@ -310,7 +310,7 @@ const SystemReportManagement = () => {
       ),
    },
    {
-     title: 'SUBMITTED BY',
+     title: 'Người báo cáo',
      dataIndex: 'submittedBy',
      key: 'submittedBy',
      render: (userId) => (
@@ -321,15 +321,15 @@ const SystemReportManagement = () => {
      ),
    },
    {
-     title: 'ACTIONS',
+     title: 'Hành động',
      key: 'actions',
      render: (_, record) => (
        <Space>
         <Button className="management-action-btn" type="default" icon={<EditIcon />} onClick={() => openEditStatusModal(record)}>
-           Edit
+           Chỉnh sửa
          </Button>
          <Button className="management-action-btn" size="middle" onClick={() => handleViewSystemReportDetails(record)}>
-     <EyeOutlined style={{marginRight: 4}} />View Detail
+     <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
    </Button>
          
        </Space>
@@ -354,13 +354,12 @@ const SystemReportManagement = () => {
  // Set export data và columns
  useEffect(() => {
    const exportColumns = [
-     { title: 'Title', dataIndex: 'title' },
-     { title: 'Description', dataIndex: 'description' },
-     { title: 'Tag', dataIndex: 'tag' },
-     { title: 'Status', dataIndex: 'status' },
-     { title: 'Submitted By', dataIndex: 'submittedBy' },
-     { title: 'Created At', dataIndex: 'createdAt' },
-     { title: 'Updated At', dataIndex: 'updatedAt' },
+     { title: 'Tiêu đề', dataIndex: 'title' },
+     { title: 'Mô tả', dataIndex: 'description' },
+     { title: 'Phân loại', dataIndex: 'tag' },
+     { title: 'Trạng thái', dataIndex: 'status' },
+     { title: 'Người báo cáo', dataIndex: 'submittedBy' },
+     { title: 'Thời gian tạo', dataIndex: 'createdAt' },
    ];
 
    const exportData = sortedSystemReports.map(report => ({
@@ -386,7 +385,7 @@ const SystemReportManagement = () => {
            <Col span={6}>
              <Card>
                <div style={{ textAlign: 'center' }}>
-                 <h5>Total System Reports</h5>
+                 <h5>Tông báo cáo hệ thống</h5>
                  <h3 style={{ color: '#1890ff', margin: 0 }}>{systemReportStats.total}</h3>
                </div>
              </Card>
@@ -394,7 +393,7 @@ const SystemReportManagement = () => {
            <Col span={6}>
              <Card>
                <div style={{ textAlign: 'center' }}>
-                 <h5>Pending</h5>
+                 <h5>Đang chờ</h5>
                  <h3 style={{ color: '#faad14', margin: 0 }}>{systemReportStats.pending}</h3>
                </div>
              </Card>
@@ -402,7 +401,7 @@ const SystemReportManagement = () => {
            <Col span={6}>
              <Card>
                <div style={{ textAlign: 'center' }}>
-                 <h5>Resolved</h5>
+                 <h5>Đã giải quyết</h5>
                  <h3 style={{ color: '#52c41a', margin: 0 }}>{systemReportStats.resolved}</h3>
                </div>
              </Card>
@@ -410,7 +409,7 @@ const SystemReportManagement = () => {
            <Col span={6}>
              <Card>
                <div style={{ textAlign: 'center' }}>
-                 <h5>Rejected</h5>
+                 <h5>Đã từ chối</h5>
                  <h3 style={{ color: '#ff4d4f', margin: 0 }}>{systemReportStats.rejected}</h3>
                </div>
              </Card>
@@ -429,14 +428,14 @@ const SystemReportManagement = () => {
                  <input
                    type="text"
                    className="form-control"
-                   placeholder="Search title, description"
+                   placeholder="Tìm kiếm tiêu đề, mô tả"
                    value={filters.search || ''}
                    onChange={e => handleFilterChange('search', e.target.value)}
                  />
                </div>
              </div>
              <Select
-               placeholder="Tag"
+               placeholder="Phân loại"
                value={filters.tag || undefined}
                onChange={value => handleFilterChange('tag', value)}
                style={{ width: 130 }}
@@ -449,7 +448,7 @@ const SystemReportManagement = () => {
                
              </Select>
              <Select
-               placeholder="Status"
+               placeholder="Trạng thái"
                value={filters.status || undefined}
                onChange={value => handleFilterChange('status', value)}
                style={{ width: 130 }}
@@ -462,14 +461,14 @@ const SystemReportManagement = () => {
              </Select>
            </div>
            <div className="d-flex align-items-center" style={{ gap: 12 }}>
-             <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sort by:</span>
+             <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sắp xếp:</span>
              <Select
                value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
                style={{ width: 120 }}
                onChange={handleSortChange}
                options={[
-                 { value: 'lasted', label: 'Lasted' },
-                 { value: 'oldest', label: 'Oldest' },
+                 { value: 'lasted', label: 'Mới nhất' },
+                 { value: 'oldest', label: 'Cũ nhất' },
                ]}
              />
            </div>
@@ -520,7 +519,7 @@ const SystemReportManagement = () => {
                 </div>
                 {selectedSystemReport.id && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontFamily: 'monospace', fontSize: 14 }}>Report ID: {selectedSystemReport.id}</span>
+                    <span style={{ fontFamily: 'monospace', fontSize: 14 }}>ID: {selectedSystemReport.id}</span>
                   </div>
                 )}
               </div>
@@ -535,22 +534,16 @@ const SystemReportManagement = () => {
                       padding: 16,
                       marginBottom: 16,
                     }}>
-                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tổng quan</div>
                       <div style={{ display: 'grid', rowGap: 10 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Status</span>
+                          <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
                           <span style={{ fontWeight: 600 }}>{(selectedSystemReport.status ? String(selectedSystemReport.status).replace(/_/g, ' ').toUpperCase() : 'N/A')}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Created At</span>
+                          <span style={{ color: '#8c8c8c' }}>Thời gian tạo</span>
                           <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport.createdAt)}</span>
                         </div>
-                        {selectedSystemReport.updatedAt && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#8c8c8c' }}>Updated At</span>
-                            <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport.updatedAt)}</span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -562,15 +555,15 @@ const SystemReportManagement = () => {
                       borderRadius: 12,
                       padding: 16,
                     }}>
-                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Các bên liên quan</div>
                       <div style={{ display: 'grid', rowGap: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Submitted By</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || 'UNKNOWN'}</span>
+                          <span style={{ color: '#8c8c8c' }}>Người báo cáo</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || ''}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Resolved By</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.resolvedBy] || selectedSystemReport.resolvedBy || 'N/A'}</span>
+                          <span style={{ color: '#8c8c8c' }}>Người xử lý</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.resolvedBy] || selectedSystemReport.resolvedBy || ''}</span>
                         </div>
                       </div>
                     </div>
@@ -584,7 +577,7 @@ const SystemReportManagement = () => {
                       padding: 16,
                       marginBottom: 16,
                     }}>
-                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Description</div>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Mô tả</div>
                       <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
                         {selectedSystemReport.description || 'No description'}
                       </div>
@@ -599,7 +592,7 @@ const SystemReportManagement = () => {
                         borderRadius: 12,
                         padding: 16,
                       }}>
-                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Resolution Note</div>
+                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Ghi chú</div>
                         <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
                           {selectedSystemReport.resolutionNote}
                         </div>
@@ -615,12 +608,12 @@ const SystemReportManagement = () => {
 
        {/* Modal Edit Status */}
        <Modal
-         title="Edit System Report Status"
+         title="Cập nhật báo cáo"
          open={showEditStatusModal}
          onCancel={handleCloseEditModal}
          onOk={handleSaveStatus}
-         okText="Save Changes"
-         cancelText="Cancel"
+         okText="Xác nhận"
+         cancelText="Hủy"
          width={600}
          okButtonProps={{
            disabled: !statusValue || 
@@ -630,7 +623,7 @@ const SystemReportManagement = () => {
        >
          <div style={{ marginBottom: 16 }}>
            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
-             Status <span style={{ color: 'red' }}>*</span>
+             Trạng thái <span style={{ color: 'red' }}>*</span>
            </label>
            <Select
              value={statusValue}
@@ -647,14 +640,14 @@ const SystemReportManagement = () => {
          
          <div style={{ marginBottom: 16 }}>
            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
-             Resolved By (Admin) 
+             Người xử lý (Admin) 
              {statusValue === 'RESOLVED' && <span style={{ color: 'red' }}>*</span>}
            </label>
            <Select
              value={resolvedBy}
              style={{ width: '100%' }}
              onChange={setResolvedBy}
-             placeholder="Select admin user"
+             placeholder="Chọn Admin xử lý"
              allowClear
              disabled={statusValue !== 'RESOLVED'}
            >
@@ -666,22 +659,22 @@ const SystemReportManagement = () => {
            </Select>
            {statusValue === 'RESOLVED' && !resolvedBy && (
              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-               Please select an admin user for resolved status
+               Hãy chọn Admin xử lý báo cáo
              </div>
            )}
          </div>
          
          <div style={{ marginBottom: 16 }}>
            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
-             Resolution Note
+             Phương án giải quyết
              {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && <span style={{ color: 'red' }}>*</span>}
            </label>
            <Input.TextArea
              value={resolutionNote}
              onChange={(e) => setResolutionNote(e.target.value)}
              placeholder={
-               statusValue === 'RESOLVED' ? "Enter resolution note..." :
-               statusValue === 'REJECTED' ? "Enter rejection reason..." :
+               statusValue === 'RESOLVED' ? "Hãy nhập phương án giải quyết..." :
+               statusValue === 'REJECTED' ? "Hãy nhập lý do từ chối giải quyết..." :
                "Enter note (optional)..."
              }
              rows={4}
@@ -690,12 +683,12 @@ const SystemReportManagement = () => {
            />
            {statusValue === 'RESOLVED' && !resolutionNote.trim() && (
              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-               Please enter a resolution note for resolved status
+               Hãy nhập phương án giải quyết
              </div>
            )}
            {statusValue === 'REJECTED' && !resolutionNote.trim() && (
              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-               Please enter a rejection reason
+               Hãy nhập lý do từ chối giải quyết
              </div>
            )}
          </div>

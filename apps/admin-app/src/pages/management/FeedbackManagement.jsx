@@ -56,7 +56,7 @@ function FeedbackAdmin() {
   if (status === "loading") return <Spin />;
 
   return (
-    <div className="modern-page-wrapper">
+    <div className="modern-page- wrapper">
       <div className="modern-content-card">
         {/* 🔹 Header & Breadcrumb */}
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">

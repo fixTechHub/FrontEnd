@@ -104,14 +104,13 @@ const CommissionConfigManagement = () => {
   // Set export data và columns
   useEffect(() => {
     const exportColumns = [
-      { title: 'Commission Percent', dataIndex: 'commissionPercent' },
-      { title: 'Holding Percent', dataIndex: 'holdingPercent' },
-      { title: 'Commission Min Amount', dataIndex: 'commissionMinAmount' },
-      { title: 'Commission Type', dataIndex: 'commissionType' },
-      { title: 'Start Date', dataIndex: 'startDate' },
-      { title: 'Status', dataIndex: 'status' },
-      { title: 'Created At', dataIndex: 'createdAt' },
-      { title: 'Updated At', dataIndex: 'updatedAt' },
+      { title: 'Phần trăm hoa hồng', dataIndex: 'commissionPercent' },
+      { title: 'Phần trăm giữ lại', dataIndex: 'holdingPercent' },
+      { title: 'Số tiền hoa hồng tối thiểu', dataIndex: 'commissionMinAmount' },
+      { title: 'Loại hoa hồng', dataIndex: 'commissionType' },
+      { title: 'Ngày bắt đầu', dataIndex: 'startDate' },
+      { title: 'Trạng thái', dataIndex: 'status' },
+      { title: 'Thời gian tạo', dataIndex: 'createdAt' },
     ];
 
     const exportData = sortedConfigs.map(config => ({
@@ -271,17 +270,17 @@ const CommissionConfigManagement = () => {
       <div className="modern-content-card">
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
-            <h4 className="mb-1">Commission Config Management</h4>
+            <h4 className="mb-1">Quản lý hoa hồng</h4>
             <nav>
               <ol className="breadcrumb mb-0">
-                <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-                <li className="breadcrumb-item active">Commission Configs</li>
+                <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+                <li className="breadcrumb-item active">Cấu hình hoa hồng</li>
               </ol>
             </nav>
           </div>
           <div>
-            <Button type="primary" onClick={handleAddConfig}>Add Config</Button>
-            <Button type="default" onClick={handleOpenRestoreModal} style={{ marginLeft: 8 }}>Restore</Button>
+            <Button type="primary" onClick={handleAddConfig}>Thêm</Button>
+            <Button type="default" onClick={handleOpenRestoreModal} style={{ marginLeft: 8 }}>Khôi phục</Button>
           </div>
         </div>
         <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
@@ -294,14 +293,14 @@ const CommissionConfigManagement = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search name"
+                  placeholder="Tìm kiếm"
                   value={searchText}
                   onChange={e => setSearchText(e.target.value)}
                 />
               </div>
             </div>
             <Select
-              placeholder="In Applied"
+              placeholder="Trạng thái"
               value={filterInApplied || undefined}
               onChange={value => setFilterInApplied(value)}
               style={{ width: 130 }}
@@ -312,14 +311,14 @@ const CommissionConfigManagement = () => {
             </Select>
           </div>
           <div className="d-flex align-items-center" style={{ gap: 12 }}>
-            <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+            <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
             <Select
               value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
               style={{ width: 120 }}
               onChange={handleSortChange}
               options={[
-                { value: 'lasted', label: 'Lasted' },
-                { value: 'oldest', label: 'Oldest' },
+                { value: 'lasted', label: 'Mới nhất' },
+                { value: 'oldest', label: 'Cũ nhất' },
               ]}
             />
           </div>
@@ -330,30 +329,30 @@ const CommissionConfigManagement = () => {
               <thead className="thead-light">
                 <tr>
                   <th style={{ cursor: 'pointer' }} onClick={() => handleSort('commissionPercent')}>
-                    COMMISSION % {renderSortIcon('commissionPercent')}
+                    Hoa hồng % {renderSortIcon('commissionPercent')}
                   </th>
                   <th style={{ cursor: 'pointer' }} onClick={() => handleSort('holdingPercent')}>
-                    HOLDING % {renderSortIcon('holdingPercent')}
+                    Giữ lại % {renderSortIcon('holdingPercent')}
                   </th>
                   <th style={{ cursor: 'pointer' }} onClick={() => handleSort('commissionMinAmount')}>
-                    MIN AMOUNT {renderSortIcon('commissionMinAmount')}
+                    Số tiền tối thiểu {renderSortIcon('commissionMinAmount')}
                   </th>
                   <th style={{ cursor: 'pointer' }} onClick={() => handleSort('commissionType')}>
-                    TYPE {renderSortIcon('commissionType')}
+                    Phân loại {renderSortIcon('commissionType')}
                   </th>
                   <th style={{ cursor: 'pointer' }} onClick={() => handleSort('startDate')}>
-                    START DATE {renderSortIcon('startDate')}
+                    Ngày bắt đầu {renderSortIcon('startDate')}
                   </th>
                   <th style={{ cursor: 'pointer' }} onClick={() => handleSort('isApplied')}>
-                    IN APPLIED {renderSortIcon('isApplied')}
+                    Trạng thái {renderSortIcon('isApplied')}
                   </th>
-                  <th>ACTION</th>
+                  <th>Hàng động</th>
                 </tr>
               </thead>
               <tbody>
                 {!isDataReady ? (
                   <tr>
-                    <td colSpan={7} className="text-center">Loading...</td>
+                    <td colSpan={7} className="text-center">Đang tải...</td>
                   </tr>
                 ) : (
                   currentConfigs.map((cfg) => (
@@ -370,7 +369,7 @@ const CommissionConfigManagement = () => {
                       </td>
                       <td>
                         <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditConfig(cfg)} style={{ marginRight: 8 }}>
-                          Edit
+                          Chỉnh sửa
                         </Button>
                         <Button 
                           className="management-action-btn" 
@@ -380,7 +379,7 @@ const CommissionConfigManagement = () => {
                           onClick={() => handleDeleteConfig(cfg)}
                           title={cfg.isApplied ? 'Không thể xóa cấu hình đang được áp dụng' : 'Xóa cấu hình'}
                         >
-                          Delete
+                          Xóa
                         </Button>
                       </td>
                     </tr>
@@ -412,7 +411,7 @@ const CommissionConfigManagement = () => {
         open={showAddModal}
         onCancel={() => setShowAddModal(false)}
         footer={null}
-        title="Add Commission Config"
+        title="Thêm cấu hình hoa hồng"
         width={700}
       >
         <Form layout="vertical" onSubmit={handleSubmit}>
@@ -427,7 +426,7 @@ const CommissionConfigManagement = () => {
           )}
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Commission Percent (%)" required validateStatus={validationErrors.CommissionPercent ? 'error' : ''} help={validationErrors.CommissionPercent ? validationErrors.CommissionPercent.join(', ') : ''}>
+              <Form.Item label="Phần trăm hoa hồng (%)" required validateStatus={validationErrors.CommissionPercent ? 'error' : ''} help={validationErrors.CommissionPercent ? validationErrors.CommissionPercent.join(', ') : ''}>
                 <InputNumber
                   name="commissionPercent"
                   value={formData.commissionPercent}
@@ -436,13 +435,13 @@ const CommissionConfigManagement = () => {
                   max={100}
                   step={0.01}
                   style={{ width: '100%' }}
-                  placeholder="Enter commission percent"
+                  placeholder="Nhập phần trăm hoa hồng"
                   required
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Holding Percent (%)" required validateStatus={validationErrors.HoldingPercent ? 'error' : ''} help={validationErrors.HoldingPercent ? validationErrors.HoldingPercent.join(', ') : ''}>
+              <Form.Item label="Phần trăm giữ lại (%)" required validateStatus={validationErrors.HoldingPercent ? 'error' : ''} help={validationErrors.HoldingPercent ? validationErrors.HoldingPercent.join(', ') : ''}>
                 <InputNumber
                   name="holdingPercent"
                   value={formData.holdingPercent}
@@ -451,7 +450,7 @@ const CommissionConfigManagement = () => {
                   max={100}
                   step={0.01}
                   style={{ width: '100%' }}
-                  placeholder="Enter holding percent"
+                  placeholder="Nhập phần trăm giữ lại"
                   required
                 />
               </Form.Item>
@@ -460,7 +459,7 @@ const CommissionConfigManagement = () => {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Commission Min Amount (VND)" required validateStatus={validationErrors.CommissionMinAmount ? 'error' : ''} help={validationErrors.CommissionMinAmount ? validationErrors.CommissionMinAmount.join(', ') : ''}>
+              <Form.Item label="Số tiền tối thiểu (VND)" required validateStatus={validationErrors.CommissionMinAmount ? 'error' : ''} help={validationErrors.CommissionMinAmount ? validationErrors.CommissionMinAmount.join(', ') : ''}>
                 <InputNumber
                   name="commissionMinAmount"
                   value={formData.commissionMinAmount}
@@ -468,18 +467,18 @@ const CommissionConfigManagement = () => {
                   min={0}
                   step={0.01}
                   style={{ width: '100%' }}
-                  placeholder="Enter minimum amount"
+                  placeholder="Nhập số tiền tối thiểu"
                   required
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Commission Type" required validateStatus={validationErrors.CommissionType ? 'error' : ''} help={validationErrors.CommissionType ? validationErrors.CommissionType.join(', ') : ''}>
+              <Form.Item label="Loại hoa hồng" required validateStatus={validationErrors.CommissionType ? 'error' : ''} help={validationErrors.CommissionType ? validationErrors.CommissionType.join(', ') : ''}>
                 <Select
                   name="commissionType"
                   value={formData.commissionType}
                   onChange={(value) => handleChange({ target: { name: 'commissionType', value } })}
-                  placeholder="Select commission type"
+                  placeholder="Chọn loại hoa hồng"
                   required
                 >
                   <Select.Option value="PERCENT">PERCENT</Select.Option>
@@ -491,18 +490,18 @@ const CommissionConfigManagement = () => {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Start Date" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
+              <Form.Item label="Ngày bắt đầu" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
                 <DatePicker
                   value={formData.startDate ? dayjs(formData.startDate) : null}
                   onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
                   style={{ width: '100%' }}
-                  placeholder="Select start date"
+                  placeholder="Chọn ngày bắt đầu"
                   required
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Status">
+              <Form.Item label="Trạng thái">
                 <Switch
                   name="isApplied"
                   checked={formData.isApplied}
@@ -516,10 +515,10 @@ const CommissionConfigManagement = () => {
 
           <div className="d-flex justify-content-end">
             <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
-              Cancel
+              Hủy
             </Button>
             <Button type="primary" onClick={handleSubmit}>
-              Save
+              Thêm
             </Button>
           </div>
         </Form>
@@ -530,7 +529,7 @@ const CommissionConfigManagement = () => {
         open={showEditModal}
         onCancel={() => setShowEditModal(false)}
         footer={null}
-        title="Update Commission Config"
+        title="Cập nhật cấu hình hoa hồng"
         width={700}
       >
         <Form layout="vertical" onSubmit={handleSubmit}>
@@ -545,7 +544,7 @@ const CommissionConfigManagement = () => {
           )}
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Commission Percent (%)" required validateStatus={validationErrors.CommissionPercent ? 'error' : ''} help={validationErrors.CommissionPercent ? validationErrors.CommissionPercent.join(', ') : ''}>
+              <Form.Item label="Phần trăm hoa hồng (%)" required validateStatus={validationErrors.CommissionPercent ? 'error' : ''} help={validationErrors.CommissionPercent ? validationErrors.CommissionPercent.join(', ') : ''}>
                 <InputNumber
                   name="commissionPercent"
                   value={formData.commissionPercent}
@@ -554,13 +553,13 @@ const CommissionConfigManagement = () => {
                   max={100}
                   step={0.01}
                   style={{ width: '100%' }}
-                  placeholder="Enter commission percent"
+                  placeholder="Nhập phần trăm hoa hồng"
                   required
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Holding Percent (%)" required validateStatus={validationErrors.HoldingPercent ? 'error' : ''} help={validationErrors.HoldingPercent ? validationErrors.HoldingPercent.join(', ') : ''}>
+              <Form.Item label="Phần trăm giữ lại (%)" required validateStatus={validationErrors.HoldingPercent ? 'error' : ''} help={validationErrors.HoldingPercent ? validationErrors.HoldingPercent.join(', ') : ''}>
                 <InputNumber
                   name="holdingPercent"
                   value={formData.holdingPercent}
@@ -569,7 +568,7 @@ const CommissionConfigManagement = () => {
                   max={100}
                   step={0.01}
                   style={{ width: '100%' }}
-                  placeholder="Enter holding percent"
+                  placeholder="Nhập phần trăm giữ lại"
                   required
                 />
               </Form.Item>
@@ -578,7 +577,7 @@ const CommissionConfigManagement = () => {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Commission Min Amount (VND)" required validateStatus={validationErrors.CommissionMinAmount ? 'error' : ''} help={validationErrors.CommissionMinAmount ? validationErrors.CommissionMinAmount.join(', ') : ''}>
+              <Form.Item label="Số tiền tối thiểu (VND)" required validateStatus={validationErrors.CommissionMinAmount ? 'error' : ''} help={validationErrors.CommissionMinAmount ? validationErrors.CommissionMinAmount.join(', ') : ''}>
                 <InputNumber
                   name="commissionMinAmount"
                   value={formData.commissionMinAmount}
@@ -586,18 +585,18 @@ const CommissionConfigManagement = () => {
                   min={0}
                   step={0.01}
                   style={{ width: '100%' }}
-                  placeholder="Enter minimum amount"
+                  placeholder="Nhập số tiền tối thiểu"
                   required
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Commission Type" required validateStatus={validationErrors.CommissionType ? 'error' : ''} help={validationErrors.CommissionType ? validationErrors.CommissionType.join(', ') : ''}>
+              <Form.Item label="Loại hoa hồng" required validateStatus={validationErrors.CommissionType ? 'error' : ''} help={validationErrors.CommissionType ? validationErrors.CommissionType.join(', ') : ''}>
                 <Select
                   name="commissionType"
                   value={formData.commissionType}
                   onChange={(value) => handleChange({ target: { name: 'commissionType', value } })}
-                  placeholder="Select commission type"
+                  placeholder="Chọn loại hoa hồng"
                   required
                 >
                   <Select.Option value="PERCENT">PERCENT</Select.Option>
@@ -609,18 +608,18 @@ const CommissionConfigManagement = () => {
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Start Date" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
+              <Form.Item label="Ngày bắt đầu" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
                 <DatePicker
                   value={formData.startDate ? dayjs(formData.startDate) : null}
                   onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
                   style={{ width: '100%' }}
-                  placeholder="Select start date"
+                  placeholder="Chọn ngày bắt đầu"
                   required
                 />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item label="Status">
+              <Form.Item label="Trạng thái">
                 <Switch
                   name="isApplied"
                   checked={formData.isApplied}
@@ -634,10 +633,10 @@ const CommissionConfigManagement = () => {
 
           <div className="d-flex justify-content-end">
             <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
-              Cancel
+              Hủy
             </Button>
             <Button type="primary" onClick={handleSubmit}>
-              Save
+              Lưu
             </Button>
           </div>
         </Form>
@@ -648,15 +647,15 @@ const CommissionConfigManagement = () => {
         open={showDeleteModal}
         onCancel={() => setShowDeleteModal(false)}
         footer={null}
-        title="Delete Commission Config"
+        title="Xóa cấu hình hoa hồng"
       >
         <div className="modal-body text-center">
           <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
-          <h4 className="mb-1">Delete Commission Config</h4>
+          <h4 className="mb-1">Xóa cấu hình hoa hồng</h4>
           <p className="mb-3">Bạn có chắc muốn xóa cấu hình này?</p>
           <div className="d-flex justify-content-center">
-            <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-            <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+            <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Hủy</button>
+            <button type="button" className="btn btn-danger" onClick={confirmDelete}>Xóa</button>
           </div>
         </div>
       </Modal>
@@ -666,19 +665,19 @@ const CommissionConfigManagement = () => {
         open={showRestoreModal}
         onCancel={() => setShowRestoreModal(false)}
         footer={null}
-        title="Restore Commission Config"
+        title="Khôi phục"
         width={800}
       >
         <div className="custom-datatable-filter table-responsive">
           <table className="table datatable">
             <thead className="thead-light">
               <tr>
-                <th>COMMISSION %</th>
-                <th>HOLDING %</th>
-                <th>MIN AMOUNT</th>
-                <th>START DATE</th>
-                <th>IN APPLIED</th>
-                <th>ACTION</th>
+                <th>Hoa hồng %</th>
+                <th>Giữ lại %</th>
+                <th>Số tiền tối thiểu</th>
+                <th>Ngày bắt đầu</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -695,7 +694,7 @@ const CommissionConfigManagement = () => {
                   </td>
                   <td>
                     <Button size="small" type="primary" onClick={() => handleRestoreConfig(cfg.id)}>
-                      Restore
+                      Khôi phục
                     </Button>
                   </td>
                 </tr>
@@ -704,7 +703,7 @@ const CommissionConfigManagement = () => {
           </table>
         </div>
         <div className="d-flex justify-content-end mt-3">
-          <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
+          <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Đóng</button>
         </div>
       </Modal>
     </div>

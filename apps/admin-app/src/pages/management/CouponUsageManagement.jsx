@@ -168,13 +168,11 @@ const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Coupon Code', dataIndex: 'couponCode' },
-    { title: 'User', dataIndex: 'userName' },
-    { title: 'Booking', dataIndex: 'bookingCode' },
-    { title: 'Discount Applied', dataIndex: 'discountApplied' },
-    { title: 'Used At', dataIndex: 'usedAt' },
-    { title: 'Created At', dataIndex: 'createdAt' },
-    { title: 'Updated At', dataIndex: 'updatedAt' },
+    { title: 'Mã giảm giá', dataIndex: 'couponCode' },
+    { title: 'Khách hàng', dataIndex: 'userName' },
+    { title: 'Đơn hàng', dataIndex: 'bookingCode' },
+    { title: 'Thời gian sử dụng', dataIndex: 'usedAt' },
+    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
   ];
 
   const exportData = sortedUsages.map(usage => ({
@@ -257,11 +255,11 @@ const handleSortByUsedAt = () => {
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
-           <h4 className="mb-1">Coupon Usages</h4>
+           <h4 className="mb-1">Lịch sử sử dụng mã giảm giá</h4>
            <nav>
              <ol className="breadcrumb mb-0">
-               <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-               <li className="breadcrumb-item active">Coupon Usages</li>
+               <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+               <li className="breadcrumb-item active">Lịch sử sử dụng mã giảm giá</li>
              </ol>
            </nav>
          </div>
@@ -275,21 +273,21 @@ const handleSortByUsedAt = () => {
              <input
                type="text"
                className="form-control"
-               placeholder="Search user, coupon, code"
+               placeholder="Tìm kiếm đơn hàng, mã giảm giá, khách hàng..."
                value={filters.search || ''}
                onChange={handleSearchChange}
              />
            </div>
          </div>
          <div className="d-flex align-items-center">
-           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
            <Select
              value={sortField === 'usedAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
              style={{ width: 120 }}
              onChange={handleSortChange}
              options={[
-               { value: 'lasted', label: 'Lasted' },
-               { value: 'oldest', label: 'Oldest' },
+               { value: 'lasted', label: 'Mới nhất' },
+               { value: 'oldest', label: 'Cũ nhất' },
              ]}
            />
          </div>
@@ -301,7 +299,7 @@ const handleSortByUsedAt = () => {
            <thead className="thead-light">
              <tr>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByUser}>
-                 USER
+                 Khách hàng
                  {sortField === 'user' && hasSorted && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -309,7 +307,7 @@ const handleSortByUsedAt = () => {
                  )}
                </th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByCoupon}>
-                 COUPON
+                 Mã giảm giá
                  {sortField === 'coupon' && hasSorted && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -317,7 +315,7 @@ const handleSortByUsedAt = () => {
                  )}
                </th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByBooking}>
-                 BOOKING CODE
+                 Mã đơn hàng
                  {sortField === 'booking' && hasSorted && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -325,14 +323,14 @@ const handleSortByUsedAt = () => {
                  )}
                </th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByUsedAt}>
-                 USED AT
+                 Thời gian sử dụng
                  {sortField === 'usedAt' && hasSorted && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
                    </span>
                  )}
                </th>
-               <th>ACTION</th>
+               <th>Hàng động</th>
              </tr>
            </thead>
            <tbody>
@@ -343,13 +341,13 @@ const handleSortByUsedAt = () => {
              ) : (
                currentPageData.map((usage) => (
                  <tr key={usage.id}>
-                   <td>{userMap[usage.userId] || usage.userId || "UNKNOWN"}</td>
+                   <td>{userMap[usage.userId] || usage.userId || ""}</td>
                    <td>{couponMap[usage.couponId]}</td>
                    <td>{bookingMap[usage.bookingId]}</td>
                    <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
                    <td>
                      <Button className="management-action-btn" size="middle" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>
-                       <EyeOutlined style={{marginRight: 4}} />View Detail
+                       <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
                      </Button>
                    </td>
                  </tr>
@@ -392,7 +390,7 @@ const handleSortByUsedAt = () => {
            }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <div style={{ fontSize: 20, fontWeight: 700 }}>
-                 COUPON USAGE DETAIL
+                 Chi tiết sử dụng mã giảm giá
                </div>
                <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
                  USED
@@ -400,7 +398,7 @@ const handleSortByUsedAt = () => {
              </div>
              {selectedUsage.id && (
                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>Usage ID: {selectedUsage.id}</span>
+                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>ID: {selectedUsage.id}</span>
                </div>
              )}
            </div>
@@ -415,14 +413,14 @@ const handleSortByUsedAt = () => {
                    padding: 16,
                    marginBottom: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tỏng quan</div>
                    <div style={{ display: 'grid', rowGap: 10 }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Used At</span>
-                       <span style={{ fontWeight: 600 }}>{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : 'N/A'}</span>
+                       <span style={{ color: '#8c8c8c' }}>Thời gian sử dụng</span>
+                       <span style={{ fontWeight: 600 }}>{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : ''}</span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Status</span>
+                       <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
                        <span style={{ fontWeight: 600, color: '#52c41a' }}>ACTIVE</span>
                      </div>
                    </div>
@@ -437,15 +435,15 @@ const handleSortByUsedAt = () => {
                    borderRadius: 12,
                    padding: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Thông tin</div>
                    <div style={{ display: 'grid', rowGap: 12 }}>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>User</span>
-                       <span style={{ fontWeight: 600 }}>{userMap[selectedUsage.userId] || selectedUsage.userId || 'UNKNOWN'}</span>
+                       <span style={{ color: '#8c8c8c' }}>Khách hàng</span>
+                       <span style={{ fontWeight: 600 }}>{userMap[selectedUsage.userId] || selectedUsage.userId || ''}</span>
                      </div>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Coupon</span>
-                       <span style={{ fontWeight: 600 }}>{couponMap[selectedUsage.couponId] || selectedUsage.couponId || 'N/A'}</span>
+                       <span style={{ color: '#8c8c8c' }}>Mã giảm giá</span>
+                       <span style={{ fontWeight: 600 }}>{couponMap[selectedUsage.couponId] || selectedUsage.couponId || ''}</span>
                      </div>
                    </div>
                  </div>
@@ -460,15 +458,15 @@ const handleSortByUsedAt = () => {
                    padding: 16,
                    marginBottom: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Booking Information</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Thông tin đơn hàng</div>
                    <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                       <span style={{ color: '#8c8c8c' }}>Booking Code:</span>
-                       <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bookingMap[selectedUsage.bookingId] || 'N/A'}</span>
+                       <span style={{ color: '#8c8c8c' }}>Mã đơn hàng:</span>
+                       <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bookingMap[selectedUsage.bookingId] || ''}</span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Coupon Applied:</span>
-                       <span style={{ fontWeight: 600, color: '#52c41a' }}>✓ Yes</span>
+                       <span style={{ color: '#8c8c8c' }}>Áp dụng:</span>
+                       <span style={{ fontWeight: 600, color: '#52c41a' }}>✓ Đã áp dụng</span>
                      </div>
                    </div>
                  </div>

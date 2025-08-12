@@ -110,19 +110,18 @@ const TechnicianManagement = () => {
   // Set export data và columns
   useEffect(() => {
     const exportColumns = [
-      { title: 'Full Name', dataIndex: 'fullName' },
+      { title: 'Họ và tên', dataIndex: 'fullName' },
       { title: 'Email', dataIndex: 'email' },
-      { title: 'Phone', dataIndex: 'phone' },
-      { title: 'Status', dataIndex: 'status' },
-      { title: 'Availability', dataIndex: 'availability' },
-      { title: 'Rating', dataIndex: 'rating' },
-      { title: 'Jobs Completed', dataIndex: 'jobsCompleted' },
-      { title: 'Total Earning', dataIndex: 'totalEarning' },
-      { title: 'Total Commission Paid', dataIndex: 'totalCommissionPaid' },
-      { title: 'Total Holding Amount', dataIndex: 'totalHoldingAmount' },
-      { title: 'Total Withdrawn', dataIndex: 'totalWithdrawn' },
-      { title: 'Created At', dataIndex: 'createdAt' },
-      { title: 'Updated At', dataIndex: 'updatedAt' },
+      { title: 'SĐT', dataIndex: 'phone' },
+      { title: 'Trạng thái', dataIndex: 'status' },
+      { title: 'Tình trạng', dataIndex: 'availability' },
+      { title: 'Đánh giá', dataIndex: 'rating' },
+      { title: 'Số công việc hoàn thành', dataIndex: 'jobsCompleted' },
+      { title: 'Tổng thu nhập', dataIndex: 'totalEarning' },
+      { title: 'Tổng phí hoa hồng', dataIndex: 'totalCommissionPaid' },
+      { title: 'Tổng số tiền bị giữ lại', dataIndex: 'totalHoldingAmount' },
+      { title: 'Tổng số tiền đã rút', dataIndex: 'totalWithdrawn' },
+      { title: 'Thời gian tạo', dataIndex: 'createdAt' },
     ];
 
     const exportData = sortedTechnicians.map(technician => ({
@@ -158,8 +157,8 @@ const TechnicianManagement = () => {
       const data = await technicianAPI.getAll();
       dispatch(setTechnicians(data || []));
     } catch (err) {
-      dispatch(setError(err.message || 'Failed to load technicians.'));
-      message.error('Failed to load technicians.');
+      dispatch(setError(err.message || 'Tải các kỹ thuật viên thất bại.'));
+      message.error('Tải các kỹ thuật viên thất bại.');
     } finally {
       dispatch(setLoading(false));
     }
@@ -226,12 +225,12 @@ const TechnicianManagement = () => {
       dispatch(setLoading(true));
       await technicianAPI.updateStatus(selectedTechnician.id, statusData.status, statusData.note);
       await fetchTechnicians();
-      message.success('Technician status updated successfully!');
+      message.success('Cập nhật thành công!');
       handleCloseEditStatus();
     } catch (err) {
-      console.error('Update status error:', err);
-      dispatch(setError(err.message || 'Failed to update status.'));
-      message.error('Failed to update status: ' + (err.message || 'Unknown error'));
+      console.error('Cập nhật thất bại:', err);
+      dispatch(setError(err.message || 'Cập nhật thất bại.'));
+      message.error('Cập nhật thất bại: ' + (err.message || 'Unknown error'));
     } finally {
       dispatch(setLoading(false));
     }
@@ -242,7 +241,7 @@ const TechnicianManagement = () => {
     const targetTechnician = technician || selectedTechnician;
 
     if (action === 'REJECTED' && !statusData.note.trim()) {
-      message.error('Please provide a reason for rejection');
+      message.error('Hãy cung cấp lý do để từ chối đăng kí');
       return;
     }
 
@@ -269,9 +268,9 @@ const TechnicianManagement = () => {
         handleCloseEditStatus();
       }
     } catch (err) {
-      console.error('Update status error:', err);
-      dispatch(setError(err.message || 'Failed to update status.'));
-      message.error('Failed to update status: ' + (err.message || 'Unknown error'));
+      console.error('Cập nhật thất bại:', err);
+      dispatch(setError(err.message || 'Cập nhật thất bại.'));
+      message.error('Cập nhật thất bại: ' + (err.message || 'Unknown error'));
     } finally {
       dispatch(setLoading(false));
     }
@@ -379,11 +378,11 @@ const TechnicianManagement = () => {
         {/* Breadcrumb */}
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
-            <h4 className="mb-1">Technicians</h4>
+            <h4 className="mb-1">Kỹ thuật viên</h4>
             <nav>
               <ol className="breadcrumb mb-0">
-                <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-                <li className="breadcrumb-item active">Technicians</li>
+                <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+                <li className="breadcrumb-item active">Kỹ thuật viên</li>
               </ol>
             </nav>
           </div>
@@ -399,14 +398,14 @@ const TechnicianManagement = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search technicians"
+                  placeholder="Tìm kiếm tên, email"
                   value={searchText}
                   onChange={e => setSearchText(e.target.value)}
                 />
               </div>
             </div>
             <Select
-              placeholder="Availability"
+              placeholder="Tình trạng"
               value={filterAvailability || undefined}
               onChange={value => setFilterAvailability(value)}
               style={{ width: 150, marginRight: 8 }}
@@ -417,7 +416,7 @@ const TechnicianManagement = () => {
               <Select.Option value="BUSY">BUSY</Select.Option>
             </Select>
             <Select
-              placeholder="Status"
+              placeholder="Trạng thái"
               value={filters.status || undefined}
               onChange={value => dispatch(setFilters({ ...filters, status: value }))}
               style={{ width: 130, marginRight: 8 }}
@@ -430,14 +429,14 @@ const TechnicianManagement = () => {
 
           </div>
           <div className="d-flex align-items-center" style={{ gap: 12 }}>
-            <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+            <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
             <Select
               value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
               style={{ width: 120 }}
               onChange={handleSortChange}
               options={[
-                { value: 'lasted', label: 'Lasted' },
-                { value: 'oldest', label: 'Oldest' },
+                { value: 'lasted', label: 'Mới nhất' },
+                { value: 'oldest', label: 'Cũ nhất' },
               ]}
             />
           </div>
@@ -448,7 +447,7 @@ const TechnicianManagement = () => {
             <thead className="thead-light">
               <tr>
                 <th style={{ cursor: 'pointer' }} onClick={handleSortByName}>
-                  NAME
+                  Họ và tên
                   {sortField === 'fullName' && (
                     <span style={{ marginLeft: 4 }}>
                       {sortOrder === 'asc' ? '▲' : '▼'}
@@ -456,16 +455,16 @@ const TechnicianManagement = () => {
                   )}
                 </th>
                 <th style={{ cursor: 'pointer' }} onClick={handleSortByEmail}>
-                  EMAIL
+                  Email
                   {sortField === 'email' && (
                     <span style={{ marginLeft: 4 }}>
                       {sortOrder === 'asc' ? '▲' : '▼'}
                     </span>
                   )}
                 </th>
-                <th>STATUS</th>
+                <th>Trạng thái</th>
                 <th style={{ cursor: 'pointer' }} onClick={handleSortByRating}>
-                  RATING
+                  Đánh giá
                   {sortField === 'rating' && (
                     <span style={{ marginLeft: 4 }}>
                       {sortOrder === 'asc' ? '▲' : '▼'}
@@ -473,15 +472,15 @@ const TechnicianManagement = () => {
                   )}
                 </th>
                 <th style={{ cursor: 'pointer' }} onClick={handleSortByJobs}>
-                  JOBS
+                  Công việc
                   {sortField === 'jobs' && (
                     <span style={{ marginLeft: 4 }}>
                       {sortOrder === 'asc' ? '▲' : '▼'}
                     </span>
                   )}
                 </th>
-                <th>AVAILABILITY</th>
-                <th>ACTION</th>
+                <th>Tình trạng</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -506,7 +505,7 @@ const TechnicianManagement = () => {
                       <div className="d-flex align-items-center gap-2">
                         
                         <Button className="management-action-btn" size="middle" onClick={() => handleOpenDetail(tech)}>
-                          <EyeOutlined style={{ marginRight: 4 }} />View Detail
+                          <EyeOutlined style={{ marginRight: 4 }} />Xem chi tiết
                         </Button>
                         {tech.status === "PENDING" ? (
                           <>
@@ -516,7 +515,7 @@ const TechnicianManagement = () => {
                               disabled={loading}
                             >
                               <i className="ti ti-check me-1"></i>
-                              APPROVE
+                              Đồng ý
                             </button>
                             <button
                               className="btn btn-sm btn-danger"
@@ -524,7 +523,7 @@ const TechnicianManagement = () => {
                               disabled={loading}
                             >
                               <i className="ti ti-x me-1"></i>
-                              REJECT
+                              Từ chối
                             </button>
                           </>
                         ) : null}
@@ -556,248 +555,29 @@ const TechnicianManagement = () => {
 
 
       {/* Detail Modal */}
-      {showDetailModal && selectedTechnician && (
-        <Modal
-          open={showDetailModal}
-          onCancel={handleCloseDetail}
-          footer={null}
-          title={null}
-          width={800}
-        >
-          <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
-            {/* Header Section */}
-            <div style={{ background: 'linear-gradient(135deg, #000 0%, #FFAF47 100%)', padding: '24px', color: 'white' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  borderRadius: '50%',
-                  overflow: 'hidden',
-                  background: 'rgba(255,255,255,0.2)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '32px',
-                  color: 'white',
-                  border: '3px solid rgba(255,255,255,0.3)'
-                }}>
-                  {selectedTechnician.avatar ? (
-                    <img
-                      src={selectedTechnician.avatar.startsWith('http') ? selectedTechnician.avatar : `${process.env.REACT_APP_API_URL || ''}${selectedTechnician.avatar}`}
-                      alt="avatar"
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    selectedTechnician.fullName ? selectedTechnician.fullName[0].toUpperCase() : 'T'
-                  )}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '24px', fontWeight: 700, marginBottom: '4px' }}>
-                    {selectedTechnician.fullName || 'UNKNOWN'}
-                  </div>
-                  <div style={{ fontSize: '14px', opacity: 0.9, marginBottom: '8px' }}>
-                    {selectedTechnician.email || "-"}
-                  </div>
-                  <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-                    <div style={{
-                      background: 'rgba(255,255,255,0.2)',
-                      padding: '4px 12px',
-                      borderRadius: '20px',
-                      fontSize: '12px',
-                      fontWeight: 600
-                    }}>
-                      {getTechnicianStatus(selectedTechnician.status)}
-                    </div>
-                    <div style={{ fontSize: '12px', opacity: 0.8 }}>
-                      {selectedTechnician.phone || "-"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Main Content */}
-            <div style={{ padding: '24px' }}>
-              {/* Basic Information Grid */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px' }}>Basic Information</div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                  gap: '16px'
-                }}>
-                  <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Experience (Years)</div>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
-                      {selectedTechnician.experienceYears ?? '-'} years
-                    </div>
-                  </div>
-                  <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Jobs Completed</div>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
-                      {selectedTechnician.jobCompleted ?? 0}
-                    </div>
-                  </div>
-                  <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Average Rating</div>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
-                      {selectedTechnician.ratingAverage?.toFixed(1) ?? '0.0'} ⭐
-                    </div>
-                  </div>
-                  <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Availability</div>
-                    <div style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
-                      {getTechnicianAvailability(selectedTechnician.availability)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Financial Information Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px' }}>Financial Information</div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '12px'
-                }}>
-                  <div style={{ textAlign: 'center', background: '#e6f7ff', padding: '12px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>Balance</div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#1890ff' }}>
-                      ${selectedTechnician.balance?.toLocaleString() ?? '0'}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'center', background: '#f6ffed', padding: '12px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>Total Earnings</div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#52c41a' }}>
-                      ${selectedTechnician.totalEarning?.toLocaleString() ?? '0'}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'center', background: '#fffbe6', padding: '12px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>Commission Paid</div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#faad14' }}>
-                      ${selectedTechnician.totalCommissionPaid?.toLocaleString() ?? '0'}
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'center', background: '#f0f0f0', padding: '12px', borderRadius: '8px' }}>
-                    <div style={{ fontSize: '11px', color: '#666', marginBottom: '4px' }}>Holding Amount</div>
-                    <div style={{ fontSize: '13px', fontWeight: 600, color: '#888' }}>
-                      ${selectedTechnician.totalHoldingAmount?.toLocaleString() ?? '0'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Specialties Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px' }}>Specialties</div>
-                <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {[...new Set(selectedTechnician.specialtiesCategories || [])].map(catIdRaw => {
-                      let catId = catIdRaw && typeof catIdRaw === 'object' && catIdRaw.$oid
-                        ? catIdRaw.$oid
-                        : (catIdRaw.id || catIdRaw._id || catIdRaw).toString().trim();
-                      return (
-                        <span
-                          key={catId}
-                          style={{
-                            background: '#667eea',
-                            color: 'white',
-                            padding: '4px 12px',
-                            borderRadius: '20px',
-                            fontSize: '12px',
-                            fontWeight: 500
-                          }}
-                        >
-                          {categoryMap[catId] || catId}
-                        </span>
-                      );
-                    })}
-                    {(!selectedTechnician.specialtiesCategories || selectedTechnician.specialtiesCategories.length === 0) && (
-                      <span style={{ color: '#999', fontSize: '14px' }}>No specialties listed</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Certificates Section */}
-              <div style={{ marginBottom: '24px' }}>
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px' }}>Certificates</div>
-                <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
-                  <div style={{ fontSize: '14px', color: '#333', lineHeight: '1.5' }}>
-                    {(selectedTechnician.certificate && selectedTechnician.certificate.length > 0)
-                      ? selectedTechnician.certificate.join(', ')
-                      : 'No certificates listed'}
-                  </div>
-                </div>
-              </div>
-
-              {/* Bank Account Section */}
-              <div>
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#333', marginBottom: '16px' }}>Bank Account</div>
-                <div style={{ background: '#f8f9fa', padding: '16px', borderRadius: '8px' }}>
-                  {selectedTechnician.bankAccount ? (
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                      gap: '12px'
-                    }}>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Bank Name</div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
-                          {selectedTechnician.bankAccount.bankName}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Account Number</div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
-                          {selectedTechnician.bankAccount.accountNumber}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Account Holder</div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
-                          {selectedTechnician.bankAccount.accountHolder}
-                        </div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: '12px', color: '#666', marginBottom: '4px' }}>Branch</div>
-                        <div style={{ fontSize: '14px', fontWeight: 500, color: '#333' }}>
-                          {selectedTechnician.bankAccount.branch}
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div style={{ color: '#999', fontSize: '14px', textAlign: 'center', padding: '20px' }}>
-                      No bank account information available
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </Modal>
-      )}
+      
+      
       {/* Edit Status Modal */}
       {showEditStatusModal && selectedTechnician && (
         <Modal
           open={showEditStatusModal}
           onCancel={handleCloseEditStatus}
           footer={null}
-          title="Reject Technician"
+          title="Từ chối đăng kí kỹ thuật viên"
         >
+          <hr></hr>
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '16px', fontWeight: 600, marginBottom: '10px' }}>
-              Technician: {selectedTechnician.fullName || 'Unknown'}
+            <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px' }}>
+              Họ và tên: {selectedTechnician.fullName || 'Unknown'}
             </div>
             <div style={{ fontSize: '14px', color: '#666' }}>
-              Current Status: {getTechnicianStatus(selectedTechnician.status)}
+              Tình trạng hiện tại: {getTechnicianStatus(selectedTechnician.status)}
             </div>
           </div>
 
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px', color: '#d32f2f' }}>
-              Rejection Note (Required):
+              Lý do từ chối đăng kí kỹ thuật viên:
             </div>
             <textarea
               name="note"
@@ -805,7 +585,7 @@ const TechnicianManagement = () => {
               value={statusData.note}
               onChange={handleStatusChange}
               rows="4"
-              placeholder="Please provide a reason for rejection..."
+              placeholder="Hãy cung cấp lý do để từ chối đăng kí kỹ thuật viên..."
               style={{ borderColor: statusData.note ? '#d9d9d9' : '#ff4d4f' }}
               required
             />
@@ -813,7 +593,7 @@ const TechnicianManagement = () => {
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
             <Button onClick={handleCloseEditStatus}>
-              Cancel
+              Hủy
             </Button>
             <Button
               danger
@@ -821,7 +601,7 @@ const TechnicianManagement = () => {
               loading={loading}
               disabled={!statusData.note.trim()}
             >
-              Reject Technician
+              Xác nhận
             </Button>
           </div>
         </Modal>

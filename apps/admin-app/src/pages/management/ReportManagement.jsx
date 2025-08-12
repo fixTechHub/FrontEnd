@@ -59,7 +59,7 @@ const ReportManagement = () => {
        dispatch(setReports(reports));
      } catch (error) {
        dispatch(setError(error.message));
-       message.error('Failed to load reports');
+       message.error('Tải các báo cáo thất bại');
      } finally {
        dispatch(setLoading(false));
      }
@@ -148,7 +148,7 @@ const ReportManagement = () => {
 
  const columns = [
    {
-     title: 'TYPE',
+     title: 'Vấn đề',
      dataIndex: 'type',
      key: 'type',
      render: (type) => (
@@ -158,7 +158,7 @@ const ReportManagement = () => {
      ),
    },
    {
-     title: 'DESCRIPTION',
+     title: 'Mô tả',
      dataIndex: 'description',
      key: 'description',
      render: (text) => (
@@ -168,7 +168,7 @@ const ReportManagement = () => {
      ),
    },
    {
-     title: 'STATUS',
+     title: 'Trạng thái',
      dataIndex: 'status',
      key: 'status',
      render: (status) => (
@@ -178,34 +178,35 @@ const ReportManagement = () => {
      ),
    },
    {
-     title: 'REPORTED USER',
+    title: 'Người báo cáo',
+    dataIndex: 'reporterId',
+    key: 'reporterId',
+    render: (userId) => (
+      <Space>
+        <UserOutlined />
+        <span>{userMap[userId] || userId || ""}</span>
+      </Space>
+    ),
+  },
+   {
+     title: 'Người bị báo cáo',
      dataIndex: 'reportedUserId',
      key: 'reportedUserId',
      render: (userId) => (
        <Space>
          <UserOutlined />
-         <span>{userMap[userId] || userId || "UNKNOWN"}</span>
+         <span>{userMap[userId] || userId || ""}</span>
        </Space>
      ),
    },
+   
    {
-     title: 'REPORTER',
-     dataIndex: 'reporterId',
-     key: 'reporterId',
-     render: (userId) => (
-       <Space>
-         <UserOutlined />
-         <span>{userMap[userId] || userId || "UNKNOWN"}</span>
-       </Space>
-     ),
-   },
-   {
-     title: 'ACTIONS',
+     title: 'Hành động',
      key: 'actions',
      render: (_, record) => (
      
      <Button className="management-action-btn" size="middle" onClick={() => handleViewReportDetails(record)}>
-     <EyeOutlined style={{marginRight: 4}} />View Detail
+     <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
    </Button>
      ),
    },
@@ -228,13 +229,12 @@ const ReportManagement = () => {
  // Set export data và columns
  useEffect(() => {
    const exportColumns = [
-     { title: 'Report Type', dataIndex: 'type' },
-     { title: 'Description', dataIndex: 'description' },
-     { title: 'Reporter', dataIndex: 'reporterName' },
-     { title: 'Reported User', dataIndex: 'reportedUserName' },
-     { title: 'Status', dataIndex: 'status' },
-     { title: 'Created At', dataIndex: 'createdAt' },
-     { title: 'Updated At', dataIndex: 'updatedAt' },
+     { title: 'Vấn đề', dataIndex: 'type' },
+     { title: 'Mô tả', dataIndex: 'description' },
+     { title: 'Người báo cáo', dataIndex: 'reporterName' },
+     { title: 'Người bị báo cáo', dataIndex: 'reportedUserName' },
+     { title: 'Trạng thái', dataIndex: 'status' },
+     { title: 'Thời gian tạo', dataIndex: 'createdAt' },
    ];
 
    const exportData = sortedReports.map(report => ({
@@ -260,7 +260,7 @@ const ReportManagement = () => {
            <Col span={6}>
              <Card>
                <div style={{ textAlign: 'center' }}>
-                 <h5>Total Reports</h5>
+                 <h5>Tổng báo cáo</h5>
                  <h3 style={{ color: '#1890ff', margin: 0 }}>{reportStats.total}</h3>
                </div>
              </Card>
@@ -268,7 +268,7 @@ const ReportManagement = () => {
            <Col span={6}>
              <Card>
                <div style={{ textAlign: 'center' }}>
-                 <h5>Pending</h5>
+                 <h5>Đang chờ</h5>
                  <h3 style={{ color: '#faad14', margin: 0 }}>{reportStats.pending}</h3>
                </div>
              </Card>
@@ -276,7 +276,7 @@ const ReportManagement = () => {
            <Col span={6}>
              <Card>
                <div style={{ textAlign: 'center' }}>
-                 <h5>Resolved</h5>
+                 <h5>Đã giải quyết</h5>
                  <h3 style={{ color: '#52c41a', margin: 0 }}>{reportStats.resolved}</h3>
                </div>
              </Card>
@@ -284,7 +284,7 @@ const ReportManagement = () => {
            <Col span={6}>
              <Card>
                <div style={{ textAlign: 'center' }}>
-                 <h5>Rejected</h5>
+                 <h5>Đã từ chối</h5>
                  <h3 style={{ color: '#ff4d4f', margin: 0 }}>{reportStats.rejected}</h3>
                </div>
              </Card>
@@ -303,14 +303,14 @@ const ReportManagement = () => {
                  <input
                    type="text"
                    className="form-control"
-                   placeholder="Search description"
+                   placeholder="Tìm kiếm theo các mô tả"
                    value={filters.search || ''}
                    onChange={e => handleFilterChange('search', e.target.value)}
                  />
                </div>
              </div>
              <Select
-               placeholder="Type"
+               placeholder="Vấn đề"
                value={filters.type || undefined}
                onChange={value => handleFilterChange('type', value)}
                style={{ width: 130 }}
@@ -321,7 +321,7 @@ const ReportManagement = () => {
                <Option value="WARRANTY">WARRANTY</Option>
              </Select>
              <Select
-               placeholder="Status"
+               placeholder="Trạng thái"
                value={filters.status || undefined}
                onChange={value => handleFilterChange('status', value)}
                style={{ width: 130 }}
@@ -335,14 +335,14 @@ const ReportManagement = () => {
              </Select>
            </div>
            <div className="d-flex align-items-center" style={{ gap: 12 }}>
-             <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sort by:</span>
+             <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sắp xếp:</span>
              <Select
                value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
                style={{ width: 120 }}
                onChange={handleSortChange}
                options={[
-                 { value: 'lasted', label: 'Lasted' },
-                 { value: 'oldest', label: 'Oldest' },
+                 { value: 'lasted', label: 'Mới nhất' },
+                 { value: 'oldest', label: 'Cũ nhất' },
                ]}
              />
            </div>
@@ -393,7 +393,7 @@ const ReportManagement = () => {
                 </div>
                 {selectedReport.id && (
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontFamily: 'monospace', fontSize: 15 }}>Report ID: {selectedReport.id}</span>
+                            <span style={{ fontFamily: 'monospace', fontSize: 15 }}>ID: {selectedReport.id}</span>
                           </div>
                         )}
               </div>
@@ -408,14 +408,14 @@ const ReportManagement = () => {
                       padding: 16,
                       marginBottom: 16,
                     }}>
-                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tổng quan</div>
                       <div style={{ display: 'grid', rowGap: 10 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Penalty</span>
-                          <span style={{ fontWeight: 600 }}>{selectedReport.penalty || 'N/A'}</span>
+                          <span style={{ color: '#8c8c8c' }}>Xử phạt</span>
+                          <span style={{ fontWeight: 600 }}>{selectedReport.penalty || ''}</span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Created At</span>
+                          <span style={{ color: '#8c8c8c' }}>Thời gian tạo</span>
                           <span style={{ fontWeight: 600 }}>{formatDateTime(selectedReport.createdAt)}</span>
                         </div>
                         
@@ -432,16 +432,17 @@ const ReportManagement = () => {
                       borderRadius: 12,
                       padding: 16,
                     }}>
-                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Các bên liên quan</div>
                       <div style={{ display: 'grid', rowGap: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Reported User</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId || 'UNKNOWN'}</span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Reporter</span>
+                          <span style={{ color: '#8c8c8c' }}>Người báo cáo</span>
                           <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reporterId] || selectedReport.reporterId || 'UNKNOWN'}</span>
                         </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Người bị báo cáo</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId || 'UNKNOWN'}</span>
+                        </div>
+                        
                       </div>
                     </div>
                   </div>
@@ -455,7 +456,7 @@ const ReportManagement = () => {
                       padding: 16,
                       marginBottom: 16,
                     }}>
-                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Description</div>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Mô tả</div>
                       <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
                         {selectedReport.description || 'No description'}
                       </div>
@@ -470,7 +471,7 @@ const ReportManagement = () => {
                         borderRadius: 12,
                         padding: 16,
                       }}>
-                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Evidence</div>
+                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Bằng chứng</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
                           {selectedReport.evidenceUrls.map((url, idx) => (
                             <a key={idx} href={url} target="_blank" rel="noreferrer">

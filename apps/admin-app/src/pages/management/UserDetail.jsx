@@ -78,10 +78,10 @@ export default function UserDetail() {
 
   const bookingColumns = useMemo(
     () => [
-      { title: 'Booking Code', dataIndex: 'bookingCode', key: 'bookingCode' },
-      { title: 'Service', dataIndex: 'serviceName', key: 'serviceName', render: (_, r) => serviceMap[r.serviceId] || r.serviceName || r.serviceId },
-      { title: 'Status', dataIndex: 'status', key: 'status', render: (s) => <Tag>{formatStatusLabel(s)}</Tag> },
-      { title: 'Created At', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
+      { title: 'Mã đơn hàng', dataIndex: 'bookingCode', key: 'bookingCode' },
+      { title: 'Dịch vụ', dataIndex: 'serviceName', key: 'serviceName', render: (_, r) => serviceMap[r.serviceId] || r.serviceName || r.serviceId },
+      { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => <Tag>{formatStatusLabel(s)}</Tag> },
+      { title: 'Thời gian tạo đơn hàng', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
     ],
     [serviceMap]
   );
@@ -130,8 +130,8 @@ export default function UserDetail() {
     return (
       <div className="container-fluid">
         <Card>
-          <div style={{ color: 'red' }}>Failed to load user detail.</div>
-          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
+          <div style={{ color: 'red' }}>Không thể tải thông tin người dùng.</div>
+          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
         </Card>
       </div>
     );
@@ -146,10 +146,10 @@ export default function UserDetail() {
         <div className="container-fluid">
               <Space direction="vertical" size={16} style={{ width: '100%' }}>
                 <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
-                  <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
+                  <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
                 </Space>
 
-                <Card title="User Profile" bordered={false} style={{ borderRadius: 12 }}>
+                <Card title="Thông tin người dùng" bordered={false} style={{ borderRadius: 12 }}>
                   <div style={{display:'flex', alignItems:'center', gap:24, marginBottom:16}}>
                     <Avatar
                       size={80}
@@ -161,24 +161,25 @@ export default function UserDetail() {
                     <div style={{flex:1}}>
                       <div style={{fontSize:20, fontWeight:600}}>{user.fullName || 'N/A'}</div>
                       <div style={{color:'#888', marginTop:4}}>ID: {user.id}</div>
+                      <br></br>
                       <div>
                       <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
                       </div>
                     </div>
                   </div>
                   <Descriptions column={2} bordered>
-                    <Descriptions.Item label="Full Name">{user.fullName || 'N/A'}</Descriptions.Item>
+                    <Descriptions.Item label="Họ và tên">{user.fullName || ''}</Descriptions.Item>
                     <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-                    <Descriptions.Item label="Phone">{user.phone || 'N/A'}</Descriptions.Item>
-                    <Descriptions.Item label="Role">{user.roleName || user.role || 'N/A'}</Descriptions.Item>
-                    <Descriptions.Item label="User Code">{user.userCode || 'N/A'}</Descriptions.Item>
-                    <Descriptions.Item label="Status">{statusTag(user.status)}</Descriptions.Item>
-                    <Descriptions.Item label="Created At">{formatDateTime(user.createdAt)}</Descriptions.Item>
+                    <Descriptions.Item label="SĐT">{user.phone || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Vai trò">{user.roleName || user.role || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Mã người dùng">{user.userCode || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Trạng thái">{statusTag(user.status)}</Descriptions.Item>
+                    <Descriptions.Item label="Thời gian tạo">{formatDateTime(user.createdAt)}</Descriptions.Item>
                     {user.lockedReason && (
                       <Descriptions.Item label="Locked Reason" span={2}>{user.lockedReason}</Descriptions.Item>
                     )}
                     {user.address && (
-                      <Descriptions.Item label="Address" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
+                      <Descriptions.Item label="Địa chỉ" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
                     )}
                   </Descriptions>
                 </Card>
@@ -187,7 +188,7 @@ export default function UserDetail() {
                   items={[
                     {
                       key: 'bookings',
-                      label: 'Bookings',
+                      label: 'Các đơn hàng của người dùng',
                       children: (
                         <Table
                           rowKey={(r) => r.id}
