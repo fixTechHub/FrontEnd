@@ -516,15 +516,13 @@ function BookingProcessing() {
                                         Thêm thiết bị phát sinh
                                     </button>
 
-                                
-                                       <button
-                                       style={{ marginLeft: 10 }}
-                                       className="btn btn-primary"
-                                       onClick={handleComfirmByTechnician}
-                                   >
-                                       Xác nhận hoàn thành
-                                   </button>
-                                
+                                    <button
+                                        style={{ marginLeft: 10 }}
+                                        className="btn btn-primary"
+                                        onClick={handleComfirmByTechnician}
+                                    >
+                                        Xác nhận hoàn thành
+                                    </button>
                                 </>
                             )}
                     </div>
@@ -576,13 +574,17 @@ function BookingProcessing() {
                                     <div className="col-md-6">
                                         <div className="modal-form-group">
                                             <label>
-                                                Giá <span className="text-danger">*</span>
+                                                Giá (VNĐ) <span className="text-danger">*</span>
                                             </label>
                                             <div className="form-icon">
-                                                <input type="number" className="form-control"
-                                                    value={modalItem.price}
-                                                    onChange={e => setModalItem({ ...modalItem, price: e.target.value })}
-                                                    min={0}
+                                                <input type="text" className="form-control"
+                                                    value={modalItem.price ? modalItem.price.toLocaleString() : ''}
+                                                    onChange={e => {
+                                                        const rawValue = e.target.value.replace(/[^\d]/g, '');
+                                                        const numericValue = rawValue ? Number(rawValue) : 0;
+                                                        setModalItem({ ...modalItem, price: numericValue });
+                                                    }}
+                                                    placeholder="0"
                                                     required
                                                 />
                                             </div>

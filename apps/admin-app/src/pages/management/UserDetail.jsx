@@ -102,20 +102,25 @@ export default function UserDetail() {
       message.error('Please enter notification content');
       return;
     }
-    try{
+    try {
       const notifyData = {
         userId: user.id,
         title: 'Cảnh cáo tài khoản',
         content: notificationContent,
+        // referenceId: user.id,
+        // referenceModel: 'User',
+
         type: 'NEW_REQUEST'
       }
+      // console.log(notifyData);
+
       await dispatch(sendNotificationsThunk(notifyData)).unwrap();
       message.success('Gửi cảnh cáo thành công!');
       setIsModalOpen(false); // Đóng modal sau khi gửi thành công
       setNotificationContent('');
-    }catch(error) {
+    } catch (error) {
       console.log(error);
-       message.error('Gửi cảnh cáo thất bại!');
+      message.error('Gửi cảnh cáo thất bại!');
     }
   }
   if (loading) {
@@ -140,88 +145,88 @@ export default function UserDetail() {
   if (!user) return null;
 
   return (
-   <>
-    <div className="modern-page- wrapper">
-      <div className="modern-content-card">
-        <div className="container-fluid">
-              <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
-                  <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
-                </Space>
+    <>
+      <div className="modern-page- wrapper">
+        <div className="modern-content-card">
+          <div className="container-fluid">
+            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+              <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
+                <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
+              </Space>
 
-                <Card title="User Profile" bordered={false} style={{ borderRadius: 12 }}>
-                  <div style={{display:'flex', alignItems:'center', gap:24, marginBottom:16}}>
-                    <Avatar
-                      size={80}
-                      src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`}
-                      style={{flexShrink:0}}
-                    >
-                      {(user.fullName || 'U').charAt(0).toUpperCase()}
-                    </Avatar>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:20, fontWeight:600}}>{user.fullName || 'N/A'}</div>
-                      <div style={{color:'#888', marginTop:4}}>ID: {user.id}</div>
-                      <div>
-                      <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
-                      </div>
+              <Card title="User Profile" bordered={false} style={{ borderRadius: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 16 }}>
+                  <Avatar
+                    size={80}
+                    src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`}
+                    style={{ flexShrink: 0 }}
+                  >
+                    {(user.fullName || 'U').charAt(0).toUpperCase()}
+                  </Avatar>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 20, fontWeight: 600 }}>{user.fullName || 'N/A'}</div>
+                    <div style={{ color: '#888', marginTop: 4 }}>ID: {user.id}</div>
+                    <div>
+                      {/* <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button> */}
                     </div>
                   </div>
-                  <Descriptions column={2} bordered>
-                    <Descriptions.Item label="Full Name">{user.fullName || 'N/A'}</Descriptions.Item>
-                    <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-                    <Descriptions.Item label="Phone">{user.phone || 'N/A'}</Descriptions.Item>
-                    <Descriptions.Item label="Role">{user.roleName || user.role || 'N/A'}</Descriptions.Item>
-                    <Descriptions.Item label="User Code">{user.userCode || 'N/A'}</Descriptions.Item>
-                    <Descriptions.Item label="Status">{statusTag(user.status)}</Descriptions.Item>
-                    <Descriptions.Item label="Created At">{formatDateTime(user.createdAt)}</Descriptions.Item>
-                    {user.lockedReason && (
-                      <Descriptions.Item label="Locked Reason" span={2}>{user.lockedReason}</Descriptions.Item>
-                    )}
-                    {user.address && (
-                      <Descriptions.Item label="Address" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
-                    )}
-                  </Descriptions>
-                </Card>
+                </div>
+                <Descriptions column={2} bordered>
+                  <Descriptions.Item label="Full Name">{user.fullName || 'N/A'}</Descriptions.Item>
+                  <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+                  <Descriptions.Item label="Phone">{user.phone || 'N/A'}</Descriptions.Item>
+                  <Descriptions.Item label="Role">{user.roleName || user.role || 'N/A'}</Descriptions.Item>
+                  <Descriptions.Item label="User Code">{user.userCode || 'N/A'}</Descriptions.Item>
+                  <Descriptions.Item label="Status">{statusTag(user.status)}</Descriptions.Item>
+                  <Descriptions.Item label="Created At">{formatDateTime(user.createdAt)}</Descriptions.Item>
+                  {user.lockedReason && (
+                    <Descriptions.Item label="Locked Reason" span={2}>{user.lockedReason}</Descriptions.Item>
+                  )}
+                  {user.address && (
+                    <Descriptions.Item label="Address" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
+                  )}
+                </Descriptions>
+              </Card>
 
-                <Tabs
-                  items={[
-                    {
-                      key: 'bookings',
-                      label: 'Bookings',
-                      children: (
-                        <Table
-                          rowKey={(r) => r.id}
-                          dataSource={bookings}
-                          columns={bookingColumns}
-                          pagination={{ pageSize: 10 }}
-                        />
-                      ),
-                    },
-                  ]}
-                />
-              </Space>
+              <Tabs
+                items={[
+                  {
+                    key: 'bookings',
+                    label: 'Bookings',
+                    children: (
+                      <Table
+                        rowKey={(r) => r.id}
+                        dataSource={bookings}
+                        columns={bookingColumns}
+                        pagination={{ pageSize: 10 }}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </Space>
+          </div>
         </div>
       </div>
-    </div>
-    <Modal
-    title="Gửi Cảnh Cáo"
-    open={isModalOpen}
-    onOk={handleSendWarningToUser}
-    onCancel={() => {
-      setIsModalOpen(false);
-      setNotificationContent('');
-    }}
-    okText="Gửi"
-    cancelText="Hủy"
-  >
-    <TextArea
-      rows={4}
-      value={notificationContent}
-      onChange={(e) => setNotificationContent(e.target.value)}
-      placeholder="Nhập nội dung cảnh cáo"
-    />
-  </Modal>
-   </>
+      <Modal
+        title="Gửi Cảnh Cáo"
+        open={isModalOpen}
+        onOk={handleSendWarningToUser}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setNotificationContent('');
+        }}
+        okText="Gửi"
+        cancelText="Hủy"
+      >
+        <TextArea
+          rows={4}
+          value={notificationContent}
+          onChange={(e) => setNotificationContent(e.target.value)}
+          placeholder="Nhập nội dung cảnh cáo"
+        />
+      </Modal>
+    </>
   );
 }
 

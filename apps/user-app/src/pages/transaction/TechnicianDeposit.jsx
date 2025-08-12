@@ -377,12 +377,12 @@ const TechnicianDeposit = () => {
                       <span>Ví của tôi</span>
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link to={`/technician/earning`}>
                       <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                       <span>Thu nhập</span>
                     </Link>
-                  </li>
+                  </li> */}
                   {/* <li>
                     <Link to={`/profile`}>
                       <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
@@ -451,7 +451,7 @@ const TechnicianDeposit = () => {
                         Rút
                       </button>
                     </div>
-                    <div className="wallet-btn">
+                    {/* <div className="wallet-btn">
                       <a
                         href="#deposit_modal"
                         className="btn"
@@ -460,7 +460,7 @@ const TechnicianDeposit = () => {
                       >
                         Nạp
                       </a>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>
@@ -768,8 +768,8 @@ const TechnicianDeposit = () => {
                               onChange={(e) => setPaymentMethod(e.target.value)}
                             >
                               <option value="BANK">Chuyển khoản ngân hàng</option>
-                              <option value="MOMO">Ví MoMo</option>
-                              <option value="ZALOPAY">ZaloPay</option>
+                              {/* <option value="MOMO">Ví MoMo</option>
+                              <option value="ZALOPAY">ZaloPay</option> */}
                             </select>
                           </div>
                         </div>

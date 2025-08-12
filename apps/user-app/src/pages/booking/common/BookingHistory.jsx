@@ -144,7 +144,7 @@ const BookingHistory = () => {
       await dispatch(requestWarrantyThunk(formData)).unwrap();
       toast.success('Yêu cầu bảo hành thành công, Vui lòng đợi trong vòng 24h để thợ phản hồi');
       handleWarrantyModalClose();
-      navigate(`/warranty?bookingWarrantyId=${selectedWarrantyBookingId}`)
+      // navigate(`/warranty?bookingWarrantyId=${selectedWarrantyBookingId}`)
     } catch (err) {
       const errorMessage = err?.error || 'Đã xảy ra lỗi khi yêu cầu bảo hành';
       toast.error(errorMessage);

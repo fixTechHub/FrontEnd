@@ -500,7 +500,7 @@ function TechnicianDashboard() {
     // console.log(user);
 
     const { technician } = useSelector((state) => state.auth);
-    const technicianId = technician._id;
+    const technicianId = technician?._id;
     // const dispatch = useDispatch();
     // const user = useSelector((s) => s.auth.user);
     // console.log("user:", user);

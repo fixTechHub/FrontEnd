@@ -312,7 +312,7 @@ const CheckoutPage = () => {
 
             try {
                 const response = await dispatch(getAcceptedBookingThunk(bookingId)).unwrap();
-                console.log('getAcceptedBooking response:', response.data);
+                console.log('getAcceptedBooking response:', response);
             } catch (error) {
                 toast.error(error.message || 'Có lỗi xảy ra khi tải thông tin đặt lịch');
             }
@@ -779,7 +779,7 @@ const CheckoutPage = () => {
                                                             <i className="bx bx-shield" style={{ color: '#ff6200', marginRight: '8px' }}></i>
                                                             Thời Hạn Bảo Hành
                                                         </div>
-                                                        <span style={{ color: '#495057', fontSize: '14px' }}>{acceptedBooking?.quote?.warrantiesDuration || 30} Tháng</span>
+                                                        <span style={{ color: '#495057', fontSize: '14px' }}>{acceptedBooking?.quote?.warrantiesDuration} Tháng</span>
                                                     </div>
                                                 </li>
                                                 <li>
