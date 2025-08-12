@@ -351,20 +351,6 @@ export const onBookingRequestStatusUpdate = (callback) => {
   return () => {};
 };
 
-// Cập nhật realtime danh sách thợ cho màn hình chọn thợ
-export const onTechniciansFoundUpdated = (callback) => {
-  if (socket) {
-    const listener = (data) => {
-      console.log('Received technicians found updated:', data);
-      callback(data);
-    };
-    socket.on('booking:techniciansFoundUpdated', listener);
-    return () => socket?.off('booking:techniciansFoundUpdated', listener);
-  }
-
-  return () => {};
-};
-
 // Thêm các hàm socket mới cho thiết bị phát sinh
 export const onAdditionalItemsAdded = (callback) => {
   if (socket) {

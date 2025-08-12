@@ -6,18 +6,18 @@ import { Modal, Dropdown, Switch, Input } from 'antd';
 import { ReactSortable } from 'react-sortablejs';
 import { useNavigate } from 'react-router-dom';
 import ApiBE from '../../services/ApiBE';
-
+import Notifications from '../common/Notifications';
 const AdminHeader = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [useDotNetBackend, setUseDotNetBackend] = useState(true);
   const navigate = useNavigate();
-  
+
   // Dữ liệu mẫu cho export - sẽ được cập nhật từ trang hiện tại
   const [exportData, setExportData] = useState([]);
   const [exportColumns, setExportColumns] = useState([]);
   const [defaultFileName, setDefaultFileName] = useState('exported_data');
   const [defaultSheetName, setDefaultSheetName] = useState('Sheet1');
-  
+
   // columnsState: [{dataIndex, title, checked}]
   const [columnsState, setColumnsState] = useState([]);
   const [fileName, setFileName] = useState(defaultFileName);
@@ -70,7 +70,7 @@ const AdminHeader = () => {
     if (window.currentPageExportData) {
       return window.currentPageExportData;
     }
-    
+
     // Fallback data cho booking page (legacy support)
     if (window.bookingsExportData && window.bookingsExportColumns) {
       return {
@@ -80,7 +80,7 @@ const AdminHeader = () => {
         sheetName: window.bookingsExportTitle || 'Bookings'
       };
     }
-    
+
     // Fallback data từ table HTML
     const table = document.querySelector('table');
     if (table) {
@@ -95,12 +95,12 @@ const AdminHeader = () => {
         });
         return rowData;
       });
-      
+
       const columns = headers.map(header => ({
         title: header,
         dataIndex: header.toLowerCase().replace(/\s+/g, '_')
       }));
-      
+
       return {
         data: rows,
         columns: columns,
@@ -108,7 +108,7 @@ const AdminHeader = () => {
         sheetName: 'Sheet1'
       };
     }
-    
+
     return null;
   };
 
@@ -190,7 +190,9 @@ const AdminHeader = () => {
         <button className="btn" style={{ background: '#f5f5f5', border: 'none', borderRadius: 6, padding: 8 }} onClick={handleExportExcel}>
           <FaDownload /> Export
         </button>
-        <FaBell className="icon" style={{ fontSize: 22, color: '#FFA726', marginLeft: 8, cursor: 'pointer' }} />
+        <Notifications
+        // style={{ fontSize: 22, color: '#FFA726', marginLeft: 8, cursor: 'pointer' }}
+        />
         <Dropdown menu={{ items: userMenuItems, onClick: onUserMenuClick }} trigger={["click"]} placement="bottomRight">
           <FaUserCircle className="icon" style={{ fontSize: 28, color: '#888', marginLeft: 8, cursor: 'pointer' }} />
         </Dropdown>

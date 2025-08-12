@@ -231,7 +231,7 @@ const AIChatbox = () => {
         >
           <div className="d-flex align-items-center">
             <MdSupportAgent className="text-white" style={{ fontSize: '24px' }} />
-            <span className="fs-6 fw-semibold ms-2">Gia Dụng Pro</span>
+            <span className="fs-6 fw-semibold ms-2">Trợ lý AI</span>
           </div>
           <Button
             variant="link"
@@ -264,8 +264,13 @@ const AIChatbox = () => {
           }}
         >
           {messages.length === 0 && (
-            <div className="text-center small py-2">
-              Bắt đầu cuộc trò chuyện bằng cách nhập tin nhắn!
+            <div
+              className="p-2 mb-2 rounded-2 small text-start bg-white text-dark border border-light-subtle"
+              style={{ maxWidth: '80%', wordWrap: 'break-word' }}
+            >
+              <SimpleMarkdown>
+                {transformMessage('Tôi sẽ hướng dẫn bạn từng bước xử lý khi đồ gia dụng hỏng hóc, và giúp đặt lịch với thợ sửa chữa phù hợp.')}
+              </SimpleMarkdown>
             </div>
           )}
           {messages.map((msg, index) => (

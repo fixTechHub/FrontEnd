@@ -81,6 +81,8 @@ export const checkOutCustomerAccess = async (dispatch, bookingId, userId) => {
         if (booking.status === 'DONE') {
             isAuthorized = false
         }
+        console.log(booking);
+        
         return {
             isAuthorized,
             error: isAuthorized ? null : 'Bạn không có quyền vào trang này ',

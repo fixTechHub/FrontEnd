@@ -102,20 +102,25 @@ export default function UserDetail() {
       message.error('Please enter notification content');
       return;
     }
-    try{
+    try {
       const notifyData = {
         userId: user.id,
         title: 'Cảnh cáo tài khoản',
         content: notificationContent,
+        // referenceId: user.id,
+        // referenceModel: 'User',
+
         type: 'NEW_REQUEST'
       }
+      // console.log(notifyData);
+
       await dispatch(sendNotificationsThunk(notifyData)).unwrap();
       message.success('Gửi cảnh cáo thành công!');
       setIsModalOpen(false); // Đóng modal sau khi gửi thành công
       setNotificationContent('');
-    }catch(error) {
+    } catch (error) {
       console.log(error);
-       message.error('Gửi cảnh cáo thất bại!');
+      message.error('Gửi cảnh cáo thất bại!');
     }
   }
   if (loading) {
