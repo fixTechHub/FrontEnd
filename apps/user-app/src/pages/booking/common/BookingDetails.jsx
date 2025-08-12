@@ -31,7 +31,10 @@ import {
     FaFileAlt,
     FaWrench,
     FaReceipt,
-    FaCircle
+    FaCircle,
+    FaUserTie,
+    FaHome,
+    FaCalendarCheck
 } from 'react-icons/fa';
 
 function BookingDetails({ bookingId }) {
@@ -40,8 +43,6 @@ function BookingDetails({ bookingId }) {
     const { user } = useSelector((state) => state.auth);
     const [selectedImage, setSelectedImage] = useState(null);
     const { booking, status: bookingStatusState } = useSelector((state) => state.booking);
-    // console.log('--- USER ---', user);
-    console.log('--- BOOKING ---', booking);
     const [confirming, setConfirming] = useState(false);
     const [rejecting, setRejecting] = useState(false);
     const [showCancelModal, setShowCancelModal] = useState(false);
@@ -60,39 +61,30 @@ function BookingDetails({ bookingId }) {
     useEffect(() => {
         if (!bookingId) return;
 
-        // Lắng nghe khi thợ thêm thiết bị phát sinh
         const unsubscribeAdded = onAdditionalItemsAdded((data) => {
-            console.log('Additional items added in BookingDetails:', data);
             if (data.bookingId === bookingId) {
                 dispatch(fetchBookingById(bookingId));
             }
         });
 
-        // Lắng nghe khi có cập nhật trạng thái thiết bị phát sinh
         const unsubscribeStatusUpdate = onAdditionalItemsStatusUpdate((data) => {
-            console.log('Additional items status update in BookingDetails:', data);
             if (data.bookingId === bookingId) {
                 dispatch(fetchBookingById(bookingId));
             }
         });
 
-        // Lắng nghe khi user chấp nhận thiết bị phát sinh
         const unsubscribeAccepted = onAdditionalItemsAccepted((data) => {
-            console.log('Additional items accepted in BookingDetails:', data);
             if (data.bookingId === bookingId) {
                 dispatch(fetchBookingById(bookingId));
             }
         });
 
-        // Lắng nghe khi user từ chối thiết bị phát sinh
         const unsubscribeRejected = onAdditionalItemsRejected((data) => {
-            console.log('Additional items rejected in BookingDetails:', data);
             if (data.bookingId === bookingId) {
                 dispatch(fetchBookingById(bookingId));
             }
         });
 
-        // Cleanup listeners khi component unmount hoặc bookingId thay đổi
         return () => {
             unsubscribeAdded();
             unsubscribeStatusUpdate();
@@ -100,8 +92,6 @@ function BookingDetails({ bookingId }) {
             unsubscribeRejected();
         };
     }, [bookingId, dispatch]);
-
-    console.log('--- BOOKING DETAILS ---', booking);
 
     const statusConfig = BOOKING_STATUS_CONFIG[booking?.status] || BOOKING_STATUS_CONFIG.default;
 
@@ -118,12 +108,10 @@ function BookingDetails({ bookingId }) {
         }
 
         try {
-            setCancelError(''); // Clear previous error
+            setCancelError('');
             dispatch(setLastCancelBy(user._id));
             
-            // Không sử dụng unwrap() để có thể xử lý error tốt hơn
             const resultAction = await dispatch(cancelBooking({ bookingId, reason: cancelReason }));
-            console.log('--- CANCEL RESULT ACTION ---', resultAction);
             
             if (cancelBooking.fulfilled.match(resultAction)) {
                 toast.success(resultAction.payload.message);
@@ -132,19 +120,10 @@ function BookingDetails({ bookingId }) {
                 navigate('/');
             } else {
                 const errorMessage = resultAction.payload || 'Hủy đơn thất bại!';
-                console.log('--- CANCEL ERROR FROM ACTION ---', errorMessage);
                 setCancelError(errorMessage);
             }
         } catch (error) {
-            // console.log('--- CANCEL ERROR ---', error);
-            // console.log('--- CANCEL ERROR PAYLOAD ---', error?.payload);
-            // console.log('--- CANCEL ERROR MESSAGE ---', error?.message);
-            // console.log('--- CANCEL ERROR TYPE ---', typeof error);
-            // console.log('--- CANCEL ERROR KEYS ---', Object.keys(error || {}));
-            
-            // Khi sử dụng unwrap(), error message thường là string trực tiếp
             const errorMessage = typeof error === 'string' ? error : (error?.payload || error?.message || error?.error || 'Hủy đơn thất bại!');
-            console.log('--- FINAL ERROR MESSAGE ---', errorMessage);
             setCancelError(errorMessage);
         }
     };
@@ -153,27 +132,17 @@ function BookingDetails({ bookingId }) {
         if (!bookingId) return;
         setConfirming(true);
         try {
-            // console.log('--- FRONTEND: Bắt đầu gửi request ---');
             const resultAction = await dispatch(technicianAcceptBookingThunk(bookingId));
-            // console.log('--- FRONTEND: Kết quả từ thunk ---', resultAction);
-            // console.log('--- FRONTEND: Action type ---', resultAction.type);
-            // console.log('--- FRONTEND: Payload ---', resultAction.payload);
-            // console.log('--- FRONTEND: Error ---', resultAction.error);
 
             if (technicianAcceptBookingThunk.fulfilled.match(resultAction)) {
-                console.log('--- FRONTEND: Thành công ---');
                 toast.success('Bạn đã xác nhận nhận đơn!');
                 dispatch(fetchBookingById(bookingId));
             } else {
-                console.log('--- FRONTEND: Thất bại ---');
                 const errorMessage = resultAction.payload || 'Có lỗi xảy ra!';
-                console.log('--- FRONTEND: Error message ---', errorMessage);
                 
-                // Xử lý lỗi race condition và MongoDB transaction
                 if (errorMessage.includes('đã được thợ khác nhận trước')) {
                     setErrorMessage(errorMessage);
                     setShowErrorModal(true);
-                    // Refresh booking data để đảm bảo UI hiển thị đúng trạng thái
                     setTimeout(() => {
                         dispatch(fetchBookingById(bookingId));
                     }, 1000);
@@ -186,15 +155,11 @@ function BookingDetails({ bookingId }) {
                 }
             }
         } catch (error) {
-            console.log('--- FRONTEND: Catch error ---', error);
             const errorMessage = error?.payload || error?.message || 'Có lỗi xảy ra!';
-            console.log('--- FRONTEND: Error message in catch ---', errorMessage);
             
-            // Xử lý lỗi race condition và MongoDB transaction
             if (errorMessage.includes('đã được thợ khác nhận trước')) {
                 setErrorMessage(errorMessage);
                 setShowErrorModal(true);
-                // Refresh booking data để đảm bảo UI hiển thị đúng trạng thái
                 setTimeout(() => {
                     dispatch(fetchBookingById(bookingId));
                 }, 1000);
@@ -214,15 +179,7 @@ function BookingDetails({ bookingId }) {
         if (!bookingId) return;
         setRejecting(true);
         try {
-            console.log('--- TECHNICIAN REJECT DEBUG ---');
-            console.log('Booking ID:', bookingId);
-            console.log('Booking Status:', booking?.status);
-            console.log('User ID:', user?._id);
-            console.log('User Role:', user?.role?.name);
-            console.log('Current Booking:', booking);
-
             const resultAction = await dispatch(technicianRejectBookingThunk(bookingId));
-            console.log('--- TECHNICIAN REJECT RESULT ---', resultAction);
 
             if (technicianRejectBookingThunk.fulfilled.match(resultAction)) {
                 toast.success('Bạn đã từ chối yêu cầu!');
@@ -233,7 +190,6 @@ function BookingDetails({ bookingId }) {
                 setShowErrorModal(true);
             }
         } catch (error) {
-            console.log('--- REJECT ERROR ---', error);
             const errorMessage = error?.payload || error?.message || 'Có lỗi xảy ra!';
             setErrorMessage(errorMessage);
             setShowErrorModal(true);
@@ -259,15 +215,63 @@ function BookingDetails({ bookingId }) {
 
     return (
         <div className="booking-details-container">
-            {/* Header */}
-            <div className="booking-details-header-banner">
-                <div className="booking-details-id">
-                    <FaTag className="booking-details-id-icon" />
-                    <span>{booking?.bookingCode}</span>
+            {/* Header Section */}
+            <div className="booking-details-header">
+                <div className="booking-details-header-main">
+                    <div className="booking-details-id-section">
+                        <FaTag className="booking-details-id-icon" />
+                        <div className="booking-details-id-info">
+                            <span className="booking-details-id-label">Mã đơn hàng</span>
+                            <span className="booking-details-id-value">{booking?.bookingCode}</span>
+                        </div>
+                    </div>
+                    <div className="booking-details-status-section">
+                        <FaCircle className={`booking-details-status-dot ${booking?.status?.toLowerCase()}`} />
+                        <span className="booking-details-status-text">{statusConfig.text}</span>
+                    </div>
                 </div>
-                <div className="booking-details-status-indicator">
-                    <FaCircle className={`booking-details-status-dot ${booking?.status?.toLowerCase()}`} />
-                    <span>{statusConfig.text}</span>
+            </div>
+
+            {/* Quick Info Cards */}
+            <div className="booking-details-quick-info">
+                <div className="booking-details-quick-card">
+                    <FaUserTie className="booking-details-quick-icon" />
+                    <div className="booking-details-quick-content">
+                        <span className="booking-details-quick-label">Khách hàng</span>
+                        <span className="booking-details-quick-value">
+                            {booking?.customerId?.fullName || 'Chưa có thông tin'}
+                        </span>
+                    </div>
+                </div>
+                
+                <div className="booking-details-quick-card">
+                    <FaTools className="booking-details-quick-icon" />
+                    <div className="booking-details-quick-content">
+                        <span className="booking-details-quick-label">Dịch vụ</span>
+                        <span className="booking-details-quick-value">
+                            {booking?.serviceId?.serviceName || 'Đang cập nhật...'}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="booking-details-quick-card">
+                    <FaHome className="booking-details-quick-icon" />
+                    <div className="booking-details-quick-content">
+                        <span className="booking-details-quick-label">Địa chỉ</span>
+                        <span className="booking-details-quick-value address-text">
+                            {booking?.location?.address || 'Đang cập nhật...'}
+                        </span>
+                    </div>
+                </div>
+
+                <div className="booking-details-quick-card">
+                    <FaCalendarCheck className="booking-details-quick-icon" />
+                    <div className="booking-details-quick-content">
+                        <span className="booking-details-quick-label">Loại đặt lịch</span>
+                        <span className="booking-details-quick-value">
+                            {booking?.isUrgent ? 'Đặt ngay' : 'Đặt lịch'}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -281,90 +285,50 @@ function BookingDetails({ bookingId }) {
                         </div>
                     }>
                         <div className="booking-details-tab-content">
-                            {/* Service Info */}
-                            <div className="booking-details-info-section">
-                                {/* <div className="booking-details-section-title">
-                                    <FaWrench className="booking-details-title-icon" />
-                                    <span>Thông tin dịch vụ</span>
-                                </div> */}
-                                <div className="booking-details-info-cards">
-                                    <div className="booking-details-info-card">
-                                        <div className="booking-details-card-icon">
-                                            <FaTools />
-                                        </div>
-                                        <div className="booking-details-card-content">
-                                            <div className="booking-details-card-label">Loại dịch vụ</div>
-                                            <div className="booking-details-card-value">{booking?.serviceId?.serviceName || 'Đang cập nhật...'}</div>
-                                        </div>
+                            {/* Service Details */}
+                            <div className="booking-details-section">
+                                <div className="booking-details-section-header">
+                                    <FaTools className="booking-details-section-icon" />
+                                    <h5>Chi tiết dịch vụ</h5>
+                                </div>
+                                <div className="booking-details-info-grid">
+                                    <div className="booking-details-info-item">
+                                        <span className="booking-details-info-label">Loại dịch vụ</span>
+                                        <span className="booking-details-info-value">
+                                            {booking?.serviceId?.serviceName || 'Đang cập nhật...'}
+                                        </span>
                                     </div>
-
-                                    <div className="booking-details-info-card">
-                                        <div className="booking-details-card-icon">
-                                            <FaClock />
-                                        </div>
-                                        <div className="booking-details-card-content">
-                                            <div className="booking-details-card-label">Loại đặt lịch</div>
-                                            <div className="booking-details-card-value">
-                                                {booking?.isUrgent ? 'Đặt ngay' : 'Đặt lịch'}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="booking-details-info-card full-width">
-                                        <div className="booking-details-card-icon">
-                                            <FaMapMarkerAlt />
-                                        </div>
-                                        <div className="booking-details-card-content">
-                                            <div className="booking-details-card-label">Địa chỉ</div>
-                                            <div className="booking-details-card-value address-text">
-                                                {booking?.location?.address || 'Đang cập nhật...'}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="booking-details-info-card full-width">
-                                        <div className="booking-details-card-icon">
-                                            <FaFileAlt />
-                                        </div>
-                                        <div className="booking-details-card-content">
-                                            <div className="booking-details-card-label">Mô tả</div>
-                                            <div className="booking-details-card-value description-text">
-                                                {booking?.description || 'Không có mô tả'}
-                                            </div>
-                                        </div>
+                                    
+                                    <div className="booking-details-info-item">
+                                        <span className="booking-details-info-label">Mô tả</span>
+                                        <span className="booking-details-info-value description-text">
+                                            {booking?.description || 'Không có mô tả'}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Schedule Info */}
                             {!booking?.isUrgent && (
-                                <div className="booking-details-info-section">
-                                    <div className="booking-details-section-title">
-                                        <FaCalendarAlt className="booking-details-title-icon" />
-                                        <span>Lịch trình</span>
+                                <div className="booking-details-section">
+                                    <div className="booking-details-section-header">
+                                        <FaCalendarAlt className="booking-details-section-icon" />
+                                        <h5>Lịch trình</h5>
                                     </div>
-                                    <div className="booking-details-info-cards">
-                                        <div className="booking-details-info-card">
-                                            <div className="booking-details-card-icon">
-                                                <FaCalendarAlt />
-                                            </div>
-                                            <div className="booking-details-card-content">
-                                                <div className="booking-details-card-label">Ngày đặt lịch</div>
-                                                <div className="booking-details-card-value">{formatDateOnly(booking?.schedule?.startTime) || 'Đang cập nhật...'}</div>
-                                            </div>
+                                    <div className="booking-details-info-grid">
+                                        <div className="booking-details-info-item">
+                                            <span className="booking-details-info-label">Ngày đặt lịch</span>
+                                            <span className="booking-details-info-value">
+                                                {formatDateOnly(booking?.schedule?.startTime) || 'Đang cập nhật...'}
+                                            </span>
                                         </div>
-                                        <div className="booking-details-info-card">
-                                            <div className="booking-details-card-icon">
-                                                <FaClock />
-                                            </div>
-                                            <div className="booking-details-card-content">
-                                                <div className="booking-details-card-label">Thời gian</div>
-                                                <div className="booking-details-card-value">
-                                                    {booking?.schedule?.startTime && booking?.schedule?.expectedEndTime
-                                                        ? `${formatTimeOnly(booking?.schedule?.startTime)} - ${formatTimeOnly(booking?.schedule?.expectedEndTime)}`
-                                                        : 'Thời gian không hợp lệ'}
-                                                </div>
-                                            </div>
+                                        <div className="booking-details-info-item">
+                                            <span className="booking-details-info-label">Thời gian</span>
+                                            <span className="booking-details-info-value">
+                                                {booking?.schedule?.startTime && booking?.schedule?.expectedEndTime
+                                                    ? `${formatTimeOnly(booking?.schedule?.startTime)} - ${formatTimeOnly(booking?.schedule?.expectedEndTime)}`
+                                                    : 'Thời gian không hợp lệ'}
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
@@ -380,10 +344,10 @@ function BookingDetails({ bookingId }) {
                     }>
                         <div className="booking-details-tab-content">
                             {Array.isArray(booking?.images) && booking.images.length > 0 ? (
-                                <div className="booking-details-info-section booking-details-images-section">
-                                    <div className="booking-details-section-title">
-                                        <FaImage className="booking-details-title-icon" />
-                                        <span>Hình ảnh đính kèm ({booking.images.length})</span>
+                                <div className="booking-details-section">
+                                    <div className="booking-details-section-header">
+                                        <FaImage className="booking-details-section-icon" />
+                                        <h5>Hình ảnh đính kèm ({booking.images.length})</h5>
                                     </div>
                                     <div className="booking-details-image-gallery">
                                         {booking.images.map((image, index) => (
@@ -397,8 +361,8 @@ function BookingDetails({ bookingId }) {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="booking-details-no-pricing-info">
-                                    <div className="booking-details-no-data-icon">
+                                <div className="booking-details-empty-state">
+                                    <div className="booking-details-empty-icon">
                                         <FaImage />
                                     </div>
                                     <h4>Chưa có hình ảnh</h4>
@@ -416,65 +380,49 @@ function BookingDetails({ bookingId }) {
                     }>
                         <div className="booking-details-tab-content">
                             {(booking?.quote && booking?.status !== 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL') || booking?.technicianService ? (
-                                <div className="booking-details-info-section booking-details-pricing-section">
-                                    <div className="booking-details-info-cards">
-                                        <div className="booking-details-info-card">
-                                            <div className="booking-details-card-icon">
-                                                <FaMoneyBillWave />
-                                            </div>
-                                            <div className="booking-details-card-content">
-                                                <div className="booking-details-card-label">Giá công</div>
-                                                <div className="booking-details-card-value booking-details-price-value">
-                                                    {booking.quote?.laborPrice?.toLocaleString() || booking.technicianService?.price?.toLocaleString() || 0} VNĐ
-                                                </div>
-                                            </div>
+                                <div className="booking-details-section">
+                                    <div className="booking-details-section-header">
+                                        <FaReceipt className="booking-details-section-icon" />
+                                        <h5>Thông tin chi phí</h5>
+                                    </div>
+                                    <div className="booking-details-pricing-grid">
+                                        <div className="booking-details-pricing-item">
+                                            <span className="booking-details-pricing-label">Giá công</span>
+                                            <span className="booking-details-pricing-value">
+                                                {booking.quote?.laborPrice?.toLocaleString() || booking.technicianService?.price?.toLocaleString() || 0} VNĐ
+                                            </span>
                                         </div>
-                                        <div className="booking-details-info-card">
-                                            <div className="booking-details-card-icon">
-                                                <FaShieldAlt />
-                                            </div>
-                                            <div className="booking-details-card-content">
-                                                <div className="booking-details-card-label">Thời gian bảo hành</div>
-                                                <div className="booking-details-card-value">
-                                                    {booking.quote?.warrantiesDuration || booking.technicianService?.warrantyDuration || 0} tháng
-                                                </div>
-                                            </div>
+                                        <div className="booking-details-pricing-item">
+                                            <span className="booking-details-pricing-label">Thời gian bảo hành</span>
+                                            <span className="booking-details-pricing-value">
+                                                {booking.quote?.warrantiesDuration || booking.technicianService?.warrantyDuration || 0} tháng
+                                            </span>
                                         </div>
-                                        <div className="booking-details-info-card">
-                                            <div className="booking-details-card-icon">
-                                                <FaTools />
-                                            </div>
-                                            <div className="booking-details-card-content">
-                                                <div className="booking-details-card-label">Giá thiết bị</div>
-                                                <div className="booking-details-card-value booking-details-price-value">
-                                                    {(() => {
-                                                        if (booking?.quote?.items && booking.quote.items.length > 0) {
-                                                            const acceptedItemsTotal = booking.quote.items
-                                                                .filter(item => item.status === 'ACCEPTED')
-                                                                .reduce((total, item) => total + (item.price * item.quantity), 0);
-                                                            return acceptedItemsTotal.toLocaleString();
-                                                        }
-                                                        return '0';
-                                                    })()} VNĐ
-                                                </div>
-                                            </div>
+                                        <div className="booking-details-pricing-item">
+                                            <span className="booking-details-pricing-label">Giá thiết bị</span>
+                                            <span className="booking-details-pricing-value">
+                                                {(() => {
+                                                    if (booking?.quote?.items && booking.quote.items.length > 0) {
+                                                        const acceptedItemsTotal = booking.quote.items
+                                                            .filter(item => item.status === 'ACCEPTED')
+                                                            .reduce((total, item) => total + (item.price * item.quantity), 0);
+                                                        return acceptedItemsTotal.toLocaleString();
+                                                    }
+                                                    return '0';
+                                                })()} VNĐ
+                                            </span>
                                         </div>
-                                        <div className="booking-details-info-card booking-details-total-card">
-                                            <div className="booking-details-card-icon">
-                                                <FaReceipt />
-                                            </div>
-                                            <div className="booking-details-card-content">
-                                                <div className="booking-details-card-label">Tổng tiền hiện tại</div>
-                                                <div className="booking-details-card-value booking-details-total-price">
-                                                    {booking?.finalPrice?.toLocaleString() || booking.technicianService?.price?.toLocaleString() || 0} VNĐ
-                                                </div>
-                                            </div>
+                                        <div className="booking-details-pricing-item total">
+                                            <span className="booking-details-pricing-label">Tổng tiền hiện tại</span>
+                                            <span className="booking-details-pricing-value total-price">
+                                                {booking?.finalPrice?.toLocaleString() || booking.technicianService?.price?.toLocaleString() || 0} VNĐ
+                                            </span>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="booking-details-no-pricing-info">
-                                    <div className="booking-details-no-data-icon">
+                                <div className="booking-details-empty-state">
+                                    <div className="booking-details-empty-icon">
                                         <FaReceipt />
                                     </div>
                                     <h4>Chưa có thông tin chi phí</h4>
@@ -492,10 +440,14 @@ function BookingDetails({ bookingId }) {
                     }>
                         <div className="booking-details-tab-content">
                             {booking?.quote?.items && booking.quote.items.length > 0 ? (
-                                <div className="booking-details-info-section booking-details-items-section">
-                                    <div className="table-responsive">
-                                        <table className="table table-hover booking-details-items-table">
-                                            <thead className="booking-details-table-header">
+                                <div className="booking-details-section">
+                                    <div className="booking-details-section-header">
+                                        <FaTools className="booking-details-section-icon" />
+                                        <h5>Danh sách thiết bị phát sinh</h5>
+                                    </div>
+                                    <div className="booking-details-items-table-container">
+                                        <table className="booking-details-items-table">
+                                            <thead>
                                                 <tr>
                                                     <th>STT</th>
                                                     <th>Tên thiết bị</th>
@@ -507,14 +459,14 @@ function BookingDetails({ bookingId }) {
                                             </thead>
                                             <tbody>
                                                 {booking.quote.items.map((item, idx) => (
-                                                    <tr key={idx} className="booking-details-table-row">
+                                                    <tr key={idx}>
                                                         <td className="text-center">{idx + 1}</td>
-                                                        <td className="booking-details-item-name">{item.name}</td>
-                                                        <td className="booking-details-item-price">{item.price.toLocaleString()} VNĐ</td>
+                                                        <td className="item-name">{item.name}</td>
+                                                        <td className="item-price">{item.price.toLocaleString()} VNĐ</td>
                                                         <td className="text-center">{item.quantity}</td>
-                                                        <td className="booking-details-item-total">{(item.price * item.quantity).toLocaleString()} VNĐ</td>
+                                                        <td className="item-total">{(item.price * item.quantity).toLocaleString()} VNĐ</td>
                                                         <td className="text-center">
-                                                            <span className={`booking-details-item-status ${item.status?.toLowerCase()}`}>
+                                                            <span className={`item-status ${item.status?.toLowerCase()}`}>
                                                                 {item.status === 'PENDING' && 'Chờ xác nhận'}
                                                                 {item.status === 'ACCEPTED' && 'Đã chấp nhận'}
                                                                 {item.status === 'REJECTED' && 'Đã từ chối'}
@@ -523,10 +475,10 @@ function BookingDetails({ bookingId }) {
                                                     </tr>
                                                 ))}
                                             </tbody>
-                                            <tfoot className="booking-details-table-footer">
+                                            <tfoot>
                                                 <tr>
                                                     <td colSpan="4" className="text-end fw-bold">Tổng giá thiết bị:</td>
-                                                    <td colSpan="2" className="booking-details-total-items-price fw-bold">
+                                                    <td colSpan="2" className="total-items-price fw-bold">
                                                         {booking.quote.items
                                                             .filter(item => item.status === 'PENDING' || item.status === 'ACCEPTED')
                                                             .reduce((total, item) => total + (item.price * item.quantity), 0)
@@ -538,8 +490,8 @@ function BookingDetails({ bookingId }) {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="booking-details-no-pricing-info">
-                                    <div className="booking-details-no-data-icon">
+                                <div className="booking-details-empty-state">
+                                    <div className="booking-details-empty-icon">
                                         <FaTools />
                                     </div>
                                     <h4>Chưa có thiết bị phát sinh</h4>
@@ -552,7 +504,7 @@ function BookingDetails({ bookingId }) {
             </div>
 
             {/* Action Buttons */}
-            <div className="booking-details-action-section">
+            <div className="booking-details-actions">
                 {/* Technician Actions */}
                 {user?.role?.name === 'TECHNICIAN' && booking?.status === 'AWAITING_CONFIRM' && !booking?.technicianId && (
                     <div className="booking-details-technician-actions">
@@ -598,10 +550,9 @@ function BookingDetails({ bookingId }) {
 
                 {/* Cancel Button */}
                 {booking?.status !== 'DONE' &&
-                    booking?.status !== 'AWAITING_DONE' && (
-                        (user?.role?.name === 'CUSTOMER') ||
-                        (user?.role?.name === 'TECHNICIAN' && canTechnicianCancel())
-                    ) && (
+                    booking?.status !== 'AWAITING_DONE' &&
+                    ((user?.role?.name === 'CUSTOMER') ||
+                    (user?.role?.name === 'TECHNICIAN' && canTechnicianCancel())) && (
                         <Button
                             variant="outline-danger"
                             className="booking-details-cancel-btn"
@@ -646,7 +597,7 @@ function BookingDetails({ bookingId }) {
                             value={cancelReason}
                             onChange={(e) => {
                                 setCancelReason(e.target.value);
-                                if (cancelError) setCancelError(''); // Clear error when user types
+                                if (cancelError) setCancelError('');
                             }}
                             placeholder="Nhập lý do hủy đơn..."
                             isInvalid={!!cancelError}
@@ -686,7 +637,6 @@ function BookingDetails({ bookingId }) {
                 <Modal.Footer>
                     <Button variant="primary" onClick={() => {
                         setShowErrorModal(false);
-                        // Chỉ navigate về home nếu không phải lỗi validation
                         if (!errorMessage.includes("Vui lòng nhập lý do hủy đơn")) {
                             navigate('/');
                         }

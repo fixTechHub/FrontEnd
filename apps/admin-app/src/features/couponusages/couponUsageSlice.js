@@ -9,7 +9,7 @@ export const fetchCouponUsages = createAsyncThunk(
       const response = await couponUsageAPI.getAll();
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(error.response?.data || error.message);   
     }
   }
 );
@@ -55,17 +55,14 @@ const couponUsageSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchCouponUsages.pending, (state) => {
-        console.log('fetchCouponUsages pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchCouponUsages.fulfilled, (state, action) => {
-        console.log('fetchCouponUsages fulfilled:', action.payload);
         state.loading = false;
         state.usages = action.payload;
       })
       .addCase(fetchCouponUsages.rejected, (state, action) => {
-        console.log('fetchCouponUsages rejected:', action.payload);
         state.loading = false;
         state.error = action.payload;
       });

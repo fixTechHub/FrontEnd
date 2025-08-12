@@ -604,4 +604,4 @@ function TechnicianDashboard() {
     );
 }
 
-export default TechnicianDashboard; 
+export default TechnicianDashboard;

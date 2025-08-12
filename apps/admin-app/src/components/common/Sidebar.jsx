@@ -18,7 +18,8 @@ import {
   FaCalendar,
   FaSearch,
   FaTimes,
-  FaShieldAlt
+  FaShieldAlt,
+  FaDollarSign
 } from "react-icons/fa";
 
 
@@ -82,6 +83,8 @@ const Sidebar = () => {
     { label: 'Coupon Usage Management', path: '/admin/coupon-usage-management' },
     { label: 'Booking Report', path: '/admin/report-management' },
     { label: 'System Report', path: '/admin/system-report-management' },
+    { label: 'Financial Management', path: '/admin/financial-management' },
+    { label: 'Commission Config Management', path: '/admin/commission-config-management' },
   ];
   const filteredRoutes = searchValue
     ? managementRoutes.filter(r =>
@@ -210,6 +213,13 @@ const Sidebar = () => {
                       style={currentPath === "/admin/system-report-management" ? customStyles.activeMenuItem : {}}>
                   <FaFileAlt className="me-3" style={{width: '20px', ...(currentPath === "/admin/system-report-management" ? customStyles.activeIcon : {})}} />
                   <span>Báo cáo hệ thống</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/financial-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/financial-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/financial-management" ? customStyles.activeMenuItem : {}}>
+                  <FaDollarSign className="me-3" style={{width: '20px', ...(currentPath === "/admin/financial-management" ? customStyles.activeIcon : {})}} />
+                  <span>Financial Report</span>
                 </Link>
               </li>
             </ul>
