@@ -42,6 +42,7 @@ const WarrantyList=()=>{
       try{
         setLoading(true);
         const res = await apiClient.get('/warranties');
+       
         const arr = Array.isArray(res.data) ? res.data : res.data.warranties || [];
         setList(arr);
       }catch(err){
@@ -127,7 +128,11 @@ const WarrantyList=()=>{
               )}
               {paginated.map(w=>(
                 <tr key={w._id}>
-                  <td>{w.code||w._id.slice(-6)}</td>
+                  <td>{w.code||
+                  w._id
+                  .slice(-6)
+                  }
+                  </td>
                   <td>{w.bookingId?.bookingCode||'N/A'}</td>
                   <td>{formatDateOnly(w.createdAt)} {formatTimeOnly(w.createdAt)}</td>
                   <td>

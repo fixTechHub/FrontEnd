@@ -1,7 +1,7 @@
 // UploadCer.jsx
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { uploadCertificate } from '../../features/technicians/technicianSlice';
+import { getCertificates, uploadCertificate } from '../../features/technicians/technicianSlice';
 
 export default function UploadCertificateForm({ technicianId }) {
   const dispatch = useDispatch();
@@ -41,6 +41,7 @@ export default function UploadCertificateForm({ technicianId }) {
     const formData = new FormData();
     formData.append('file', file);
     await dispatch(uploadCertificate({ formData, technicianId }));
+    await dispatch(getCertificates(technicianId));
   };
 
   return (

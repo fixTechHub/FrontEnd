@@ -5,8 +5,9 @@ import ToastProvider from '../components/common/ToastProvider';
 const AppProvider = ({ children }) => {
   return (
     <Provider store={store}>
+        <ToastProvider />
       {children}
-      <ToastProvider />
+    
     </Provider>
   );
 };

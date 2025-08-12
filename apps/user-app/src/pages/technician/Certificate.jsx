@@ -26,7 +26,8 @@ const CertificateList = () => {
   useEffect(() => {
     if (openUpload && certificateUpload?.fileUrl && !certificateUpload?.loading) {
       setOpenUpload(false);
-      if (technicianId) dispatch(getCertificates(technicianId));
+      // if (technicianId)
+         dispatch(getCertificates(technicianId));
     }
   }, [openUpload, certificateUpload?.fileUrl, certificateUpload?.loading, technicianId, dispatch]);
 
@@ -102,12 +103,12 @@ const CertificateList = () => {
                                                 <span>Ví của tôi</span>
                                             </Link>
                                         </li>
-                                        <li>
+                                        {/* <li>
                                             <Link to={`/technician/earning`} >
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>Thu nhập</span>
                                             </Link>
-                                        </li>
+                                        </li> */}
                                         {/* <li>
                                             <Link to={`/profile`}>
                                                 <img src="/public/img/icons/settings-icon.svg" alt="Icon" />

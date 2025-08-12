@@ -17,8 +17,6 @@ const BreadcrumbSection = () => (
                     <h2 className="breadcrumb-title">Technician Dashboard</h2>
                     <nav aria-label="breadcrumb" className="page-breadcrumb">
                         <ol className="breadcrumb">
-                            <li className="breadcrumb-item"><a href="/">Home</a></li>
-                            <li className="breadcrumb-item active" aria-current="page">Technician Dashboard</li>
                         </ol>
                     </nav>
                 </div>
@@ -492,7 +490,7 @@ const TechnicianJobList = () => {
 
 const CardsRow = () => (
     <div className="row">
-        <ViewEarningAndCommission />
+        {/* <ViewEarningAndCommission /> */}
 
     </div>
 );
@@ -502,7 +500,7 @@ function TechnicianDashboard() {
     // console.log(user);
 
     const { technician } = useSelector((state) => state.auth);
-    const technicianId = technician._id;
+    const technicianId = technician?._id;
     // const dispatch = useDispatch();
     // const user = useSelector((s) => s.auth.user);
     // console.log("user:", user);
@@ -568,12 +566,12 @@ function TechnicianDashboard() {
                                                 <span>Ví của tôi</span>
                                             </Link>
                                         </li>
-                                        <li>
+                                        {/* <li>
                                             <Link to={`/technician/earning`}>
                                                 <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>Thu nhập</span>
                                             </Link>
-                                        </li>
+                                        </li> */}
                                         {/* <li>
                                             <Link to={`/profile`}>
                                                 <img src="/public/img/icons/settings-icon.svg" alt="Icon" />

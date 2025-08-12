@@ -17,6 +17,7 @@ import financialReportReducer from '../features/financialReport/financialReportS
 import adminReducer from '../features/admin/adminSlice';
 import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
+import notificationReducer from '../features/notifications/notificationsSlice'
 import adminCertificateReducer from '../features/certificates/certificateSlice';
 
 const store = configureStore({
@@ -37,6 +38,7 @@ const store = configureStore({
     commission: commissionReducer,
     financialReport: financialReportReducer,
     admin: adminReducer,
+    notifications: notificationReducer,
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
     adminCertificate: adminCertificateReducer,
