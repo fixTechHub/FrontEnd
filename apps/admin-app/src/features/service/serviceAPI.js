@@ -3,13 +3,21 @@ import ApiBE from '../../services/ApiBE';
 export const serviceAPI = {
   // Lấy tất cả service
   getAll: async () => {
+    try {
     const res = await ApiBE.get('/Service');
     return res.data;
+    } catch (error) {
+      throw error;
+    }
   },
   // Lấy service theo id
   getById: async (id) => {
+    try {
     const res = await ApiBE.get(`/Service/${id}`);
     return res.data;
+    } catch (error) {
+      throw error;
+    }
   },
   // Tạo mới service
   create: async (data) => {

@@ -36,14 +36,15 @@ import {
  setLoading,
  setError,
  updateSystemReport
-} from '../../features/systemReports/systemReportSlice';
+} from '../../features/systemreports/systemReportSlice';
 import {
  selectFilteredSystemReports,
  selectSystemReportFilters,
  selectSystemReportStats
-} from '../../features/systemReports/systemReportSelectors';
+} from '../../features/systemreports/systemReportSelectors';
 import { userAPI } from '../../features/users/userAPI';
 import { selectReportStats } from '../../features/reports/reportSelectors';
+import { createExportData, formatDateTime } from '../../utils/exportUtils';
 
 
 const { Option } = Select;
@@ -60,6 +61,9 @@ const SystemReportManagement = () => {
  const [sortField, setSortField] = useState('createdAt');
  const [sortOrder, setSortOrder] = useState('desc');
  const [submittedByUser, setSubmittedByUser] = useState(null);
+ const [adminUsers, setAdminUsers] = useState([]);
+ const [resolvedBy, setResolvedBy] = useState('');
+ const [resolutionNote, setResolutionNote] = useState('');
 
 
  // Redux selectors
@@ -86,17 +90,37 @@ const SystemReportManagement = () => {
      }
    };
 
+   const fetchAdminUsers = async () => {
+     try {
+       const allUsers = await userAPI.getAll();
+       
+       const adminUsersList = allUsers.filter(user => 
+         user.roleName === 'ADMIN' || 
+         user.role === 'ADMIN' || 
+         user.role === 'admin' ||
+         user.roleName === 'admin'
+       );
+       
+       setAdminUsers(adminUsersList);
+     } catch (error) {
+       console.error('Failed to load admin users:', error);
+     }
+   };
 
    fetchSystemReports();
+   fetchAdminUsers();
  }, [dispatch]);
 
 
  useEffect(() => {
    // Lấy tên user cho tất cả submittedBy
    const fetchUserNames = async () => {
-     const userIds = Array.from(new Set((filteredSystemReports || []).map(r => r.submittedBy)));
+     const submittedByIds = Array.from(new Set((filteredSystemReports || []).map(r => r.submittedBy)));
+     const resolvedByIds = Array.from(new Set((filteredSystemReports || []).map(r => r.resolvedBy)));
+     const allUserIds = [...submittedByIds, ...resolvedByIds].filter(id => id);
+     
      const userMapTemp = { ...userMap };
-     await Promise.all(userIds.map(async (id) => {
+     await Promise.all(allUserIds.map(async (id) => {
        if (id && !userMapTemp[id]) {
          try {
            const user = await userAPI.getById(id);
@@ -138,10 +162,9 @@ const SystemReportManagement = () => {
  };
 
 
- const handleUpdateStatus = async (id, newStatus) => {
+ const handleUpdateStatus = async (id, newStatus, note, resolvedByUser) => {
    try {
-     const updatedSystemReport = await systemReportAPI.updateStatus(id, statusValue);
-     console.log('API trả về từ updateStatus:', updatedSystemReport);
+     const updatedSystemReport = await systemReportAPI.updateStatus(id, newStatus, note, resolvedByUser);
      dispatch(updateSystemReport(updatedSystemReport));
      message.success(`Status updated to ${newStatus}`);
      return updatedSystemReport;
@@ -181,16 +204,55 @@ const SystemReportManagement = () => {
 
  const openEditStatusModal = (record) => {
    setEditingStatusId(record.id);
-   setStatusValue(record.status);
+   setStatusValue(record.status || 'PENDING');
+   setResolvedBy(record.resolvedBy || '');
+   setResolutionNote(record.resolutionNote || '');
    setShowEditStatusModal(true);
+ };
+
+ const handleCloseEditModal = () => {
+   setShowEditStatusModal(false);
+   setEditingStatusId(null);
+   setStatusValue('');
+   setResolvedBy('');
+   setResolutionNote('');
  };
 
 
  const handleSaveStatus = async () => {
+   // Validation
+   if (!statusValue) {
+     message.error('Please select a status');
+     return;
+   }
+   
+   if (statusValue === 'RESOLVED' && !resolvedBy) {
+     message.error('Please select an admin user for resolved status');
+     return;
+   }
+   
+   if (statusValue === 'RESOLVED' && !resolutionNote.trim()) {
+     message.error('Please enter a resolution note for resolved status');
+     return;
+   }
+   
+   if (statusValue === 'REJECTED' && !resolutionNote.trim()) {
+     message.error('Please enter a reason for rejected status');
+     return;
+   }
+   
    if (editingStatusId && statusValue) {
-     await handleUpdateStatus(editingStatusId, statusValue.toUpperCase());
-     setShowEditStatusModal(false);
-     setEditingStatusId(null);
+     try {
+       await handleUpdateStatus(editingStatusId, statusValue.toUpperCase(), resolutionNote, resolvedBy);
+       setShowEditStatusModal(false);
+       setEditingStatusId(null);
+       // Reset form
+       setStatusValue('');
+       setResolvedBy('');
+       setResolutionNote('');
+     } catch (error) {
+       message.error('Failed to save status');
+     }
    }
  };
 
@@ -241,11 +303,11 @@ const SystemReportManagement = () => {
      title: 'STATUS',
      dataIndex: 'status',
      key: 'status',
-     render: (status) => (
-       <Tag color={getStatusColor(status)}>
-         {status?.toUpperCase()}
-       </Tag>
-     ),
+      render: (status) => (
+        <Tag color={getStatusColor(status)}>
+          {String(status || '').replace(/_/g, ' ').toUpperCase()}
+        </Tag>
+      ),
    },
    {
      title: 'SUBMITTED BY',
@@ -263,12 +325,13 @@ const SystemReportManagement = () => {
      key: 'actions',
      render: (_, record) => (
        <Space>
+        <Button className="management-action-btn" type="default" icon={<EditIcon />} onClick={() => openEditStatusModal(record)}>
+           Edit
+         </Button>
          <Button className="management-action-btn" size="middle" onClick={() => handleViewSystemReportDetails(record)}>
      <EyeOutlined style={{marginRight: 4}} />View Detail
    </Button>
-         <Button className="management-action-btn" type="default" icon={<EditIcon />} onClick={() => openEditStatusModal(record)}>
-           Edit
-         </Button>
+         
        </Space>
      ),
    },
@@ -288,9 +351,34 @@ const SystemReportManagement = () => {
    return 0;
  });
 
+ // Set export data và columns
+ useEffect(() => {
+   const exportColumns = [
+     { title: 'Title', dataIndex: 'title' },
+     { title: 'Description', dataIndex: 'description' },
+     { title: 'Tag', dataIndex: 'tag' },
+     { title: 'Status', dataIndex: 'status' },
+     { title: 'Submitted By', dataIndex: 'submittedBy' },
+     { title: 'Created At', dataIndex: 'createdAt' },
+     { title: 'Updated At', dataIndex: 'updatedAt' },
+   ];
+
+   const exportData = sortedSystemReports.map(report => ({
+     title: report.title,
+     description: report.description,
+     tag: report.tag,
+     status: report.status?.toUpperCase(),
+     submittedBy: userMap[report.submittedBy] || report.submittedBy,
+     createdAt: formatDateTime(report.createdAt),
+     updatedAt: formatDateTime(report.updatedAt),
+   }));
+
+   createExportData(exportData, exportColumns, 'system_reports_export', 'System Reports');
+ }, [sortedSystemReports, userMap]);
+
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <Card>
          {/* Stats Cards */}
@@ -406,69 +494,210 @@ const SystemReportManagement = () => {
        </Card>
 
 
-       {/* System Report Details Modal */}
-       {isModalVisible && selectedSystemReport && (
-         <Modal
-           open={isModalVisible}
-           onCancel={() => setIsModalVisible(false)}
-           footer={null}
-           title={null}
-           width={600}
-         >
-           <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
-             <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
-               <div style={{flex: 1}}>
-                 <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>
-                   <span style={{marginRight: 12}}>{selectedSystemReport.title}</span>
-                   <Tag color={getTagColor(selectedSystemReport.tag)} style={{fontSize: 14, padding: '2px 12px', marginRight: 8}}>{selectedSystemReport.tag?.toUpperCase()}</Tag>
-                   <Tag color={getStatusColor(selectedSystemReport.status)} style={{fontSize: 14, padding: '2px 12px'}}>{selectedSystemReport.status?.toUpperCase()}</Tag>
-                 </div>
-               </div>
-             </div>
-             <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
-             <div style={{marginBottom: 16}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
-               <div>{selectedSystemReport.description}</div>
-             </div>
-             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Submitted By</div>
-                 <div>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || "UNKNOWN"}</div>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolved By</div>
-                 <div>{selectedSystemReport.resolvedBy || 'Chưa có'}</div>
-               </div>
-               <div style={{gridColumn: '1 / span 2'}}>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Resolution Note</div>
-                 <div>{selectedSystemReport.resolutionNote || 'Chưa có'}</div>
-               </div>
-             </div>
-           </div>
-         </Modal>
-       )}
+        {/* System Report Details Modal */}
+        {isModalVisible && selectedSystemReport && (
+          <Modal
+            open={isModalVisible}
+            onCancel={() => setIsModalVisible(false)}
+            footer={null}
+            title={null}
+            width={960}
+            styles={{ body: { padding: 0, borderRadius: 16, overflow: 'hidden' } }}
+          >
+            <div style={{ background: '#fff', borderRadius: 16 }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+                padding: '20px 24px',
+                color: '#fff'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>
+                    {selectedSystemReport.title || 'SYSTEM REPORT'}
+                  </div>
+                  <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                    {selectedSystemReport.tag?.toUpperCase()}
+                  </Tag>
+                </div>
+                {selectedSystemReport.id && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontFamily: 'monospace', fontSize: 14 }}>Report ID: {selectedSystemReport.id}</span>
+                  </div>
+                )}
+              </div>
+              <div style={{ padding: 24 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {/* Overview */}
+                  <div>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                      <div style={{ display: 'grid', rowGap: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Status</span>
+                          <span style={{ fontWeight: 600 }}>{(selectedSystemReport.status ? String(selectedSystemReport.status).replace(/_/g, ' ').toUpperCase() : 'N/A')}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Created At</span>
+                          <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport.createdAt)}</span>
+                        </div>
+                        {selectedSystemReport.updatedAt && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#8c8c8c' }}>Updated At</span>
+                            <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport.updatedAt)}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {/* People */}
+                  <div>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                      <div style={{ display: 'grid', rowGap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Submitted By</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || 'UNKNOWN'}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Resolved By</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.resolvedBy] || selectedSystemReport.resolvedBy || 'N/A'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Description full width */}
+                  <div style={{ gridColumn: '1 / span 2' }}>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Description</div>
+                      <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                        {selectedSystemReport.description || 'No description'}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Resolution Note full width if any */}
+                  {selectedSystemReport.resolutionNote && (
+                    <div style={{ gridColumn: '1 / span 2' }}>
+                      <div style={{
+                        background: '#ffffff',
+                        border: '1px solid #f0f0f0',
+                        borderRadius: 12,
+                        padding: 16,
+                      }}>
+                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Resolution Note</div>
+                        <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                          {selectedSystemReport.resolutionNote}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Modal>
+        )}
 
 
        {/* Modal Edit Status */}
        <Modal
-         title="Edit Status"
+         title="Edit System Report Status"
          open={showEditStatusModal}
-         onCancel={() => setShowEditStatusModal(false)}
+         onCancel={handleCloseEditModal}
          onOk={handleSaveStatus}
-         okText="Save"
+         okText="Save Changes"
          cancelText="Cancel"
+         width={600}
+         okButtonProps={{
+           disabled: !statusValue || 
+             (statusValue === 'RESOLVED' && (!resolvedBy || !resolutionNote.trim())) ||
+             (statusValue === 'REJECTED' && !resolutionNote.trim())
+         }}
        >
          <div style={{ marginBottom: 16 }}>
+           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+             Status <span style={{ color: 'red' }}>*</span>
+           </label>
            <Select
              value={statusValue}
              style={{ width: '100%' }}
              onChange={setStatusValue}
+             placeholder="Select status"
            >
              <Option value="PENDING">PENDING</Option>
              <Option value="IN_PROGRESS">IN PROGRESS</Option>
              <Option value="RESOLVED">RESOLVED</Option>
              <Option value="REJECTED">REJECTED</Option>
            </Select>
+         </div>
+         
+         <div style={{ marginBottom: 16 }}>
+           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+             Resolved By (Admin) 
+             {statusValue === 'RESOLVED' && <span style={{ color: 'red' }}>*</span>}
+           </label>
+           <Select
+             value={resolvedBy}
+             style={{ width: '100%' }}
+             onChange={setResolvedBy}
+             placeholder="Select admin user"
+             allowClear
+             disabled={statusValue !== 'RESOLVED'}
+           >
+             {adminUsers.map(user => (
+               <Option key={user.id} value={user.id}>
+                 {user.fullName || user.email} ({user.roleName || user.role})
+               </Option>
+             ))}
+           </Select>
+           {statusValue === 'RESOLVED' && !resolvedBy && (
+             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+               Please select an admin user for resolved status
+             </div>
+           )}
+         </div>
+         
+         <div style={{ marginBottom: 16 }}>
+           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
+             Resolution Note
+             {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && <span style={{ color: 'red' }}>*</span>}
+           </label>
+           <Input.TextArea
+             value={resolutionNote}
+             onChange={(e) => setResolutionNote(e.target.value)}
+             placeholder={
+               statusValue === 'RESOLVED' ? "Enter resolution note..." :
+               statusValue === 'REJECTED' ? "Enter rejection reason..." :
+               "Enter note (optional)..."
+             }
+             rows={4}
+             style={{ width: '100%' }}
+             disabled={statusValue !== 'RESOLVED' && statusValue !== 'REJECTED'}
+           />
+           {statusValue === 'RESOLVED' && !resolutionNote.trim() && (
+             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+               Please enter a resolution note for resolved status
+             </div>
+           )}
+           {statusValue === 'REJECTED' && !resolutionNote.trim() && (
+             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+               Please enter a rejection reason
+             </div>
+           )}
          </div>
        </Modal>
      </div>

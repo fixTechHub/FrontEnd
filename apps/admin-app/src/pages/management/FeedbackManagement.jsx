@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Button, Select, Spin } from "antd";
 import { fetchAllFeedback, updateFeedbackVisibility } from "../../features/feedback/feedbackSlice";
+import { Button, Select, Spin, Modal, Form, Input, Typography } from "antd";
+import { ExclamationCircleTwoTone } from "@ant-design/icons";
+
 
 function FeedbackAdmin() {
   const dispatch = useDispatch();
@@ -12,6 +14,7 @@ function FeedbackAdmin() {
   const [reason, setReason] = useState("");
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState(null);
+  const [form] = Form.useForm();
 
   // ✅ Load tất cả feedback khi vào trang
   useEffect(() => {
@@ -44,8 +47,8 @@ function FeedbackAdmin() {
       filterStatus === null
         ? true
         : filterStatus === "VISIBLE"
-        ? fb.isVisible
-        : !fb.isVisible;
+          ? fb.isVisible
+          : !fb.isVisible;
 
     return matchSearch && matchStatus;
   });
@@ -58,13 +61,13 @@ function FeedbackAdmin() {
         {/* 🔹 Header & Breadcrumb */}
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
-            <h4 className="mb-1">Feedback Management</h4>
+            <h4 className="mb-1">Quản lí đánh giá</h4>
             <nav>
               <ol className="breadcrumb mb-0">
                 <li className="breadcrumb-item">
-                  <a href="/admin">Home</a>
+                  <a href="/admin">Trang chủ</a>
                 </li>
-                <li className="breadcrumb-item active">Feedback</li>
+                <li className="breadcrumb-item active">Đánh giá</li>
               </ol>
             </nav>
           </div>
@@ -81,21 +84,21 @@ function FeedbackAdmin() {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search by user or content"
+                  placeholder="Tìm kiếm"
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                 />
               </div>
             </div>
             <Select
-              placeholder="Status"
+              placeholder="Trạng thái"
               value={filterStatus || undefined}
               onChange={(value) => setFilterStatus(value)}
               style={{ width: 140 }}
               allowClear
             >
-              <Select.Option value="VISIBLE">VISIBLE</Select.Option>
-              <Select.Option value="HIDDEN">HIDDEN</Select.Option>
+              <Select.Option value="VISIBLE">Hiển thị</Select.Option>
+              <Select.Option value="HIDDEN">Ẩn</Select.Option>
             </Select>
           </div>
         </div>
@@ -105,10 +108,10 @@ function FeedbackAdmin() {
           <table className="table datatable">
             <thead className="thead-light">
               <tr>
-                <th>USER</th>
-                <th>CONTENT</th>
-                <th>STATUS</th>
-                <th>ACTION</th>
+                <th>Người dùng</th>
+                <th>Nội dung</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -125,13 +128,12 @@ function FeedbackAdmin() {
                     <td>{fb.content}</td>
                     <td>
                       <span
-                        className={`badge ${
-                          fb.isVisible
-                            ? "bg-success-transparent"
-                            : "bg-danger-transparent"
-                        } text-dark`}
+                        className={`badge ${fb.isVisible
+                          ? "bg-success-transparent"
+                          : "bg-danger-transparent"
+                          } text-dark`}
                       >
-                        {fb.isVisible ? "VISIBLE" : "HIDDEN"}
+                        {fb.isVisible ? " Đang hiển thị " : "Đã ẩn"}
                       </span>
                     </td>
                     <td>
@@ -142,7 +144,7 @@ function FeedbackAdmin() {
                           danger
                           onClick={() => handleHideClick(fb._id)}
                         >
-                          Hide
+                          Ẩn
                         </Button>
                       )}
                     </td>
@@ -155,18 +157,15 @@ function FeedbackAdmin() {
 
         {/* ✅ Modal nhập lý do ẩn Feedback */}
         {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-xl shadow-lg w-96">
-              <h3 className="text-lg font-semibold mb-3">
-                Nhập lý do ẩn Feedback
-              </h3>
+          <div className="feedback-modal-overlay">
+            <div className="feedback-modal">
+              <h3>Nhập lý do ẩn Feedback</h3>
               <textarea
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 placeholder="Nhập lý do..."
-                className="w-full border rounded-md p-2 h-24 focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4"
               />
-              <div className="text-right space-x-2">
+              <div className="feedback-modal-footer">
                 <Button onClick={() => setShowModal(false)}>Hủy</Button>
                 <Button type="primary" onClick={handleConfirmHide}>
                   Xác nhận
@@ -175,6 +174,74 @@ function FeedbackAdmin() {
             </div>
           </div>
         )}
+
+        <style>
+          {`
+  .feedback-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .feedback-modal {
+    background: #fff;
+    border-radius: 10px;
+    padding: 24px;
+    width: 380px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+    animation: fadeInScale 0.25s ease;
+  }
+
+  .feedback-modal h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #333;
+  }
+
+  .feedback-modal textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .feedback-modal textarea:focus {
+    outline: none;
+    border-color: #4096ff;
+    box-shadow: 0 0 0 2px rgba(64, 150, 255, 0.2);
+  }
+
+  .feedback-modal-footer {
+    text-align: right;
+    margin-top: 16px;
+  }
+
+  .feedback-modal-footer button {
+    margin-left: 8px;
+  }
+
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+`}
+        </style>
+
       </div>
     </div>
   );

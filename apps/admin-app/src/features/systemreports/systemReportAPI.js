@@ -7,29 +7,37 @@ export const systemReportAPI = {
             const response = await ApiBE.get('/Dashboard/systemreports');
             return response.data;
         } catch (error) {
-            console.error('Get all system reports error:', error);
-            throw error;
+            // Don't log 404 errors as they're expected if endpoint doesn't exist
+            if (error.response?.status !== 404) {
+                console.error('Get system reports error:', error);
+            }
+            return []; // Return empty array instead of throwing
         }
     },
 
+    //Sửa ở đây
+
     // Update system report status
-    updateStatus: async (id, statusValue) => {
+    updateStatus: async (id, statusValue, resolutionNote, resolvedBy) => {
         try {
             if (typeof statusValue !== 'string') {
                 throw new Error('statusValue must be a string');
             }
-            const payload = { status: statusValue.toUpperCase() };
-            console.log('Payload gửi lên:', payload);
+
+            const payload = { 
+                status: statusValue.toUpperCase(),
+                resolutionNote: resolutionNote || null,
+                resolvedBy: resolvedBy || null
+            };
             const response = await ApiBE.patch(`/Dashboard/systemreports/${id}/status`, payload);
+
             return response.data;
         } catch (error) {
-            console.error('Update system report status error:', error);
-            if (error.response) {
-                console.error('Response data:', error.response.data);
-                console.error('Response status:', error.response.status);
-                console.error('Response errors:', error.response.data.errors);
+            // Don't log 404 errors as they're expected if endpoint doesn't exist
+            if (error.response?.status !== 404) {
+                console.error('Update system report error:', error);
             }
-            throw error;
+            return null; // Return null instead of throwing
         }
     },
 }; 

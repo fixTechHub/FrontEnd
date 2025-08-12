@@ -15,6 +15,7 @@ import { fetchBookingById, customerAcceptQuoteThunk, customerRejectQuoteThunk, t
 import { BOOKING_STATUS } from "../../constants/bookingConstants";
 import { Modal, Button } from "react-bootstrap";
 import { FaSpinner } from "react-icons/fa";
+import { toast } from "react-toastify";
 
 function BookingProcessing() {
     const navigate = useNavigate();
@@ -22,7 +23,7 @@ function BookingProcessing() {
     const { bookingId, stepsForCurrentUser } = useBookingParams();
     const { user } = useSelector((state) => state.auth);
     const { booking, status: bookingStatusState } = useSelector((state) => state.booking);
-    const [isChecking, setIsChecking] = useState(false);
+    const [isChecking, setIsChecking] = useState(true);
     const [isAuthorized, setIsAuthorized] = useState(null);
     const [authError, setAuthError] = useState(null);
 
@@ -87,7 +88,7 @@ function BookingProcessing() {
 
             setIsAuthorized(isAuthorized);
             setAuthError(error);
-            setIsChecking(true);
+            setIsChecking(false);
         };
 
         verifyAccess();
@@ -96,7 +97,7 @@ function BookingProcessing() {
     useEffect(() => {
         if (isChecking) return;
 
-        if (isChecking && isAuthorized === false) {
+        if (isAuthorized === false) {
             toast.error("Bạn không có quyền truy cập trang này.");
             // Redirect to the original page or default to '/'
             const redirectPath = location.state?.from?.pathname || '/';
@@ -441,7 +442,7 @@ function BookingProcessing() {
                             <div className="col-lg-4">
                                 {booking?.isChatAllowed && booking?.isVideoCallAllowed ? (
                                     <div style={{ paddingBottom: 10 }}>
-                                        <MessageBox bookingId={bookingId} />
+                                        <MessageBox bookingId={booking?._id} />
                                     </div>
                                 ) : (
                                     <div className="alert alert-warning">
@@ -573,13 +574,17 @@ function BookingProcessing() {
                                     <div className="col-md-6">
                                         <div className="modal-form-group">
                                             <label>
-                                                Giá <span className="text-danger">*</span>
+                                                Giá (VNĐ) <span className="text-danger">*</span>
                                             </label>
                                             <div className="form-icon">
-                                                <input type="number" className="form-control"
-                                                    value={modalItem.price}
-                                                    onChange={e => setModalItem({ ...modalItem, price: e.target.value })}
-                                                    min={0}
+                                                <input type="text" className="form-control"
+                                                    value={modalItem.price ? modalItem.price.toLocaleString() : ''}
+                                                    onChange={e => {
+                                                        const rawValue = e.target.value.replace(/[^\d]/g, '');
+                                                        const numericValue = rawValue ? Number(rawValue) : 0;
+                                                        setModalItem({ ...modalItem, price: numericValue });
+                                                    }}
+                                                    placeholder="0"
                                                     required
                                                 />
                                             </div>

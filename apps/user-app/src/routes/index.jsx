@@ -46,6 +46,7 @@ import BookingHistory from "../pages/booking/common/BookingHistory";
 import UploadCertificateForm from "../pages/technician/UploadCer";
 import SubmitFeedback from "../pages/feedback/SubmitFeedback";
 import ServiceList from "../pages/home/ServiceList";
+import TechnicianScheduleComponent from "../pages/technician/TechnicianSchedule";
 
 export default function AppRoutes() {
   const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
@@ -53,11 +54,11 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* ================= PUBLIC ROUTES ================= */}
-      <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
       <Route path="/services" element={<ServiceList />} />
 
@@ -109,6 +110,7 @@ export default function AppRoutes() {
       <Route path="/technician/booking/:bookingId" element={< TechnicianJob/>} />
       <Route path="/technician/:technicianId/certificate" element={< CertificateList/>} />
       <Route path="/technician/feedback" element={< ListFeedback/>} />
+      <Route path="/technician/schedule" element={< TechnicianScheduleComponent/>} />
       <Route path="/technician/upload-certificate" element={<UploadCertificateForm />} />
       <Route path="/feedback/submit/:bookingId" element={<SubmitFeedback />} />
 
@@ -117,7 +119,6 @@ export default function AppRoutes() {
         } /> */}
 
       
-      {/* <Route
       <Route
         path="/technician/complete-profile"
         element={

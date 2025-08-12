@@ -3869,3 +3869,9 @@ body {
         text-align: center;
     }
 }
+
+/* ----- FIX blank page: ensure main wrapper always has height ----- */
+.main-wrapper {
+  display: block !important;
+  min-height: 100vh !important;
+}

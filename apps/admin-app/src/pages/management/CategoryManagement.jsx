@@ -12,7 +12,9 @@ import {
 } from '../../features/categories/categorySlice';
 import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
-
+import { createExportData, formatDateTime } from '../../utils/exportUtils';
+import IconUploader from '../../components/common/IconUploader';
+import IconDisplay from '../../components/common/IconDisplay';
 
 const initialFormState = {
  categoryName: '',
@@ -20,27 +22,25 @@ const initialFormState = {
  isActive: true,
 };
 
-
 const CategoryManagement = () => {
- const dispatch = useDispatch();
- const categoryState = useSelector((state) => state.categories) || {};
- const { categories = [], loading = false, error = null, success = false } = categoryState;
+  const dispatch = useDispatch();
+  const categoryState = useSelector((state) => state.categories) || {};
+  const { categories = [], loading = false, error = null, success = false } = categoryState;
 
 
- const [showAddModal, setShowAddModal] = useState(false);
- const [showEditModal, setShowEditModal] = useState(false);
- const [showDeleteModal, setShowDeleteModal] = useState(false);
- const [selectedCategory, setSelectedCategory] = useState(null);
- const [formData, setFormData] = useState(initialFormState);
- const [searchText, setSearchText] = useState('');
- const [currentPage, setCurrentPage] = useState(1);
- const categoriesPerPage = 10;
- const [sortField, setSortField] = useState('createdAt');
-const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
-const [filterStatus, setFilterStatus] = useState();
-const [showRestoreModal, setShowRestoreModal] = useState(false);
-const [validationErrors, setValidationErrors] = useState({});
-
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [formData, setFormData] = useState(initialFormState);
+  const [searchText, setSearchText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const categoriesPerPage = 10;
+  const [sortField, setSortField] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
+  const [filterStatus, setFilterStatus] = useState();
+  const [showRestoreModal, setShowRestoreModal] = useState(false);
+  const [validationErrors, setValidationErrors] = useState({});
 
  const handlePageChange = (page) => {
    setCurrentPage(page);
@@ -95,8 +95,28 @@ const indexOfLastCategory = currentPage * categoriesPerPage;
 const indexOfFirstCategory = indexOfLastCategory - categoriesPerPage;
 const currentCategories = sortedCategories.slice(indexOfFirstCategory, indexOfLastCategory);
 
+// Set export data và columns
+useEffect(() => {
+  const exportColumns = [
+    { title: 'Category Name', dataIndex: 'categoryName' },
+    { title: 'Icon', dataIndex: 'icon' },
+    { title: 'Status', dataIndex: 'status' },
+    { title: 'Created At', dataIndex: 'createdAt' },
+    { title: 'Updated At', dataIndex: 'updatedAt' },
+  ];
 
- const totalPages = Math.ceil(filteredCategories.length / categoriesPerPage);
+  const exportData = sortedCategories.map(category => ({
+    categoryName: category.categoryName,
+    icon: category.icon,
+    status: category.isActive ? 'ACTIVE' : 'INACTIVE',
+    createdAt: formatDateTime(category.createdAt),
+    updatedAt: formatDateTime(category.updatedAt),
+  }));
+
+  createExportData(exportData, exportColumns, 'categories_export', 'Categories');
+}, [sortedCategories]);
+
+const totalPages = Math.ceil(filteredCategories.length / categoriesPerPage);
  const handleChange = (e) => {
    const { name, value, type, checked } = e.target;
    setFormData(prev => ({
@@ -130,6 +150,14 @@ const processErrors = (apiErrors) => {
 const handleSubmit = (e) => {
   e.preventDefault();
   setValidationErrors({});
+  
+  // Validation for category name length
+  if (formData.categoryName && formData.categoryName.length > 100) {
+    setValidationErrors({ CategoryName: ['Category name cannot exceed 100 characters'] });
+    message.error('Category name cannot exceed 100 characters');
+    return;
+  }
+  
   if (!formData.categoryName || !formData.icon) {
     setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
     return;
@@ -197,6 +225,7 @@ const handleDeleteCategory = (category) => {
 
 const confirmDelete = () => {
   if (selectedCategory) {
+    // Use DELETE endpoint which now properly handles soft delete
     dispatch(deleteCategory(selectedCategory.id));
   }
 };
@@ -213,13 +242,10 @@ const handleOpenRestoreModal = () => {
   setShowRestoreModal(true);
 };
 
-
- console.log('categories:', categories);
-
 const isDataReady = categories.length > 0;
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
@@ -304,7 +330,9 @@ const isDataReady = categories.length > 0;
                  currentCategories.map((cat) => (
                    <tr key={cat.id}>
                      <td>{cat.categoryName}</td>
-                     <td>{cat.icon}</td>
+                     <td>
+                       <IconDisplay icon={cat.icon} size={40} />
+                     </td>
                      <td>
                        <span className={`badge ${cat.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
                          {cat.isActive ? 'ACTIVE' : 'INACTIVE'}
@@ -345,7 +373,6 @@ const isDataReady = categories.length > 0;
 
      </div>
 
-
      {/* Add Modal */}
      <Modal
        open={showAddModal}
@@ -354,7 +381,7 @@ const isDataReady = categories.length > 0;
        title="Add Category"
        width={600}
      >
-       <Form layout="vertical" onSubmit={handleSubmit}>
+        <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
            <div style={{ color: 'red', marginBottom: 8 }}>
              {validationErrors.general.includes('The dto field is required') ||
@@ -364,32 +391,43 @@ const isDataReady = categories.length > 0;
                : validationErrors.general}
            </div>
          )}
-         <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
-           <Input
-             name="categoryName"
-             value={formData.categoryName}
-             onChange={handleChange}
-             placeholder="Enter category name"
-             required
-           />
-         </Form.Item>
-         <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-           <Input
-             name="icon"
-             value={formData.icon}
-             onChange={handleChange}
-             placeholder="Enter icon (e.g., ti ti-tools)"
-           />
-         </Form.Item>
-         <Form.Item label="Status">
-           <Switch
-             name="isActive"
-             checked={formData.isActive}
-             onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-             checkedChildren="Active"
-             unCheckedChildren="Inactive"
-           />
-         </Form.Item>
+          <Row gutter={16}>
+            <Col span={16}>
+              <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+                <Input
+                  name="categoryName"
+                  value={formData.categoryName}
+                  onChange={handleChange}
+                  placeholder="Enter category name"
+                  required
+                  maxLength={100}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Status">
+                <Switch
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                  checkedChildren="Active"
+                  unCheckedChildren="Inactive"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+                <IconUploader
+                  value={formData.icon}
+                  onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                  placeholder="Upload icon image"
+                />
+                <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>PNG/SVG, kích thước đề xuất 64x64</div>
+              </Form.Item>
+            </Col>
+          </Row>
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
              Cancel
@@ -401,7 +439,6 @@ const isDataReady = categories.length > 0;
        </Form>
      </Modal>
 
-
      {/* Edit Modal */}
      <Modal
        open={showEditModal}
@@ -410,7 +447,7 @@ const isDataReady = categories.length > 0;
        title="Update Category"
        width={600}
      >
-       <Form layout="vertical" onSubmit={handleSubmit}>
+        <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
            <div style={{ color: 'red', marginBottom: 8 }}>
              {validationErrors.general.includes('The dto field is required') ||
@@ -420,32 +457,44 @@ const isDataReady = categories.length > 0;
                : validationErrors.general}
            </div>
          )}
-         <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
-           <Input
-             name="categoryName"
-             value={formData.categoryName}
-             onChange={handleChange}
-             placeholder="Enter category name"
-             required
-           />
-         </Form.Item>
-         <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-           <Input
-             name="icon"
-             value={formData.icon}
-             onChange={handleChange}
-             placeholder="Enter icon (e.g., ti ti-tools)"
-           />
-         </Form.Item>
-         <Form.Item label="Status">
-           <Switch
-             name="isActive"
-             checked={formData.isActive}
-             onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-             checkedChildren="Active"
-             unCheckedChildren="Inactive"
-           />
-         </Form.Item>
+          <Row gutter={16}>
+            <Col span={16}>
+              <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+                <Input
+                  name="categoryName"
+                  value={formData.categoryName}
+                  onChange={handleChange}
+                  placeholder="Enter category name"
+                  required
+                  maxLength={100}
+                />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item label="Status">
+                <Switch
+                  name="isActive"
+                  checked={formData.isActive}
+                  onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                  checkedChildren="Active"
+                  unCheckedChildren="Inactive"
+                />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+                <IconUploader
+                  value={formData.icon}
+                  onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                  placeholder="Upload icon image"
+                />
+                <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>PNG/SVG, kích thước đề xuất 64x64</div>
+              </Form.Item>
+            </Col>
+            
+          </Row>
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
              Cancel
@@ -456,7 +505,6 @@ const isDataReady = categories.length > 0;
          </div>
        </Form>
      </Modal>
-
 
      {/* Delete Modal */}
      <Modal
@@ -498,7 +546,9 @@ const isDataReady = categories.length > 0;
              {deletedCategories.map((cat) => (
                <tr key={cat.id}>
                  <td>{cat.categoryName}</td>
-                 <td>{cat.icon}</td>
+                 <td>
+                   <IconDisplay icon={cat.icon} size={40} />
+                 </td>
                  <td>
                    <span className={`badge ${cat.isActive ? 'bg-success' : 'bg-danger'}`}>
                      {cat.isActive ? 'Active' : 'Inactive'}
@@ -524,4 +574,3 @@ const isDataReady = categories.length > 0;
 
 
 export default CategoryManagement;
-

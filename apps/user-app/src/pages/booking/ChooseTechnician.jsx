@@ -439,9 +439,9 @@ function ChooseTechnician() {
                                                                 />
                                                             </a>
                                                             <div className="fav-item justify-content-end">
-                                                                <a href="#" className="fav-icon">
+                                                                {/* <a href="#" className="fav-icon">
                                                                     <i className="feather-heart" />
-                                                                </a>
+                                                                </a> */}
                                                             </div>
                                                         </div>
                                                         <div className="bloglist-content w-100">
@@ -530,7 +530,7 @@ function ChooseTechnician() {
                                                                                 </h6>
                                                                             </div>
                                                                             <div className="list-km">
-                                                                                <span className="km-count">
+                                                                                <span style={{display: 'flex'}} className="km-count">
                                                                                     <img src="/img/icons/map-pin.svg" alt="author" />
                                                                                     {technician?.distanceInKm + 'km'}
                                                                                 </span>
@@ -721,7 +721,7 @@ function ChooseTechnician() {
 
                 <Modal.Body>
                     <div style={{ fontSize: 16, lineHeight: 1.6 }}>
-                        <p>
+                        {/* <p>
                             <strong>Phí kiểm tra:</strong>{' '}
                             <span style={{ color: 'red', fontWeight: 'bold' }}>
                                 {selectedTechnician?.inspectionFee?.toLocaleString() || 0} VNĐ
@@ -730,7 +730,7 @@ function ChooseTechnician() {
 
                         <p style={{ fontSize: 12, color: '#6c757d', marginBottom: 12 }}>
                             (*) Phí này chỉ thu nếu bạn không đồng ý sửa chữa. Nếu tiếp tục sửa, bạn <strong>không cần thanh toán</strong> phí kiểm tra.
-                        </p>
+                        </p> */}
 
                         <p>
                             Bạn có chắc chắn muốn gửi yêu cầu cho kỹ thuật viên{' '}

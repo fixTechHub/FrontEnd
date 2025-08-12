@@ -431,11 +431,13 @@ const determineVerificationStatus = (user, technician) => {
       if (!technician) return false;
       // Kiểm tra các trường bắt buộc thực tế có trong model
       const hasSpecialties = Array.isArray(technician.specialtiesCategories) && technician.specialtiesCategories.length > 0;
-      const hasCertificates = Array.isArray(technician.certificate) && technician.certificate.length > 0;
       const hasIdentification = technician.identification && technician.identification.trim() !== '';
       const hasFrontIdImage = technician.frontIdImage && technician.frontIdImage.trim() !== '';
       const hasBackIdImage = technician.backIdImage && technician.backIdImage.trim() !== '';
-      return hasSpecialties && hasCertificates && hasIdentification && hasFrontIdImage && hasBackIdImage;
+      const hasBankAccount = technician.bankAccount && technician.bankAccount.bankName && technician.bankAccount.accountNumber;
+      const hasInspectionFee = technician.inspectionFee && Number(technician.inspectionFee) > 0;
+      // Certificates are optional, so not required for profile completion
+      return hasSpecialties && hasIdentification && hasFrontIdImage && hasBackIdImage && hasBankAccount && hasInspectionFee;
     })();
 
     if (!profileCompleted) {
@@ -501,6 +503,10 @@ const authSlice = createSlice({
       state.technician = action.payload.technician;
       state.verificationStatus = determineVerificationStatus(action.payload, state.technician);
     },
+    setTechnician: (state, action) => {
+    state.technician = action.payload;
+    state.isAuthenticated = true;
+  },
   },
   extraReducers: (builder) => {
     builder

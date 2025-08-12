@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import ApiBE from '../../services/ApiBE';
-import { Modal, Button, Select, Descriptions, Spin } from 'antd';
+import { Modal, Button, Select, Descriptions, Spin, Row, Col, Tag, Divider, Image } from 'antd';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined } from '@ant-design/icons';
 import "../../../public/css/ManagementTableStyle.css";
@@ -10,6 +10,7 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
+import { createExportData, formatDateTime, formatStatus } from '../../utils/exportUtils';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
@@ -31,6 +32,25 @@ const [filterStatus,  setFilterStatus] = useState('');
 const [allServices, setAllServices] = useState([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
+  const getStatusColor = (status) => {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING':
+        return 'default';
+      case 'CONFIRMED':
+        return 'processing';
+      case 'IN_PROGRESS':
+        return 'blue';
+      case 'AWAITING_DONE':
+      case 'WAITING_CONFIRM':
+        return 'gold';
+      case 'DONE':
+        return 'green';
+      case 'CANCELLED':
+        return 'red';
+      default:
+        return 'default';
+    }
+  };
 
 
  useEffect(() => {
@@ -133,6 +153,34 @@ useEffect(() => {
 const currentBookings = sortedBookings.slice(indexOfFirstBooking, indexOfLastBooking);
  const totalPages = Math.ceil(filteredBookings.length / bookingsPerPage);
 
+ // Set export data và columns
+ useEffect(() => {
+  const exportColumns = [
+    { title: 'Booking Code', dataIndex: 'bookingCode' },
+    { title: 'Customer', dataIndex: 'customerName' },
+    { title: 'Service', dataIndex: 'serviceName' },
+    { title: 'Status', dataIndex: 'status' },
+    { title: 'Technician', dataIndex: 'technicianName' },
+    { title: 'Created At', dataIndex: 'createdAt' },
+    { title: 'Updated At', dataIndex: 'updatedAt' },
+    { title: 'Description', dataIndex: 'description' },
+  ];
+
+  const exportData = sortedBookings.map(b => ({
+    bookingCode: b.bookingCode,
+    customerName: userMap[b.customerId],
+    serviceName: serviceMap[b.serviceId],
+    status: formatStatus(b.status),
+    technicianName: technicianMap[b.technicianId],
+    createdAt: formatDateTime(b.createdAt),
+    updatedAt: formatDateTime(b.updatedAt),
+    description: b.description,
+  }));
+
+  createExportData(exportData, exportColumns, 'bookings_export', 'Bookings');
+
+}, [sortedBookings, userMap, serviceMap, technicianMap]);
+
 
  const handlePageChange = (pageNumber) => {
    setCurrentPage(pageNumber);
@@ -180,8 +228,33 @@ const isServiceMapReady = bookings.every(b => !b.serviceId || serviceMap[b.servi
 const isDataReady = isUserMapReady && isServiceMapReady;
 
 
+ // Định nghĩa các cột export cho booking
+ const exportColumns = [
+   { title: 'Booking Code', dataIndex: 'bookingCode' },
+   { title: 'Customer', dataIndex: 'customerName' },
+   { title: 'Service', dataIndex: 'serviceName' },
+   { title: 'Status', dataIndex: 'status' },
+   { title: 'Technician', dataIndex: 'technicianName' },
+   { title: 'Created At', dataIndex: 'createdAt' },
+   { title: 'Updated At', dataIndex: 'updatedAt' },
+   { title: 'Description', dataIndex: 'description' },
+ ];
+
+ // Chuẩn hóa dữ liệu export (map id sang tên, format ngày...)
+ const exportData = sortedBookings.map(b => ({
+   bookingCode: b.bookingCode,
+   customerName: userMap[b.customerId],
+   serviceName: serviceMap[b.serviceId],
+   status: b.status,
+   technicianName: technicianMap[b.technicianId],
+   createdAt: b.createdAt,
+   updatedAt: b.updatedAt,
+   description: b.description,
+ }));
+
+
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
@@ -234,7 +307,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              <Select.Option value="IN_PROGRESS">IN PROGRESS</Select.Option>
              <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
              <Select.Option value="DONE">DONE</Select.Option>
-             <Select.Option value="AWAITING_DONE">AWAITING_DONE</Select.Option>
+             <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center">
@@ -337,101 +410,134 @@ const isDataReady = isUserMapReady && isServiceMapReady;
          </nav>
        </div>
      </div>
-     {showDetailModal && selectedBooking && (
-       <Modal
-         open={showDetailModal}
-         onCancel={() => setShowDetailModal(false)}
-         footer={null}
-         title={null}
-         width={650}
-       >
-         <div style={{background: '#f8fafc', borderRadius: 16, boxShadow: '0 2px 16px rgba(0,0,0,0.10)', padding: 0}}>
-           {/* Section: Main Info */}
-           <div style={{padding: 24, borderBottom: '1px solid #eee', background: '#fff', borderTopLeftRadius: 16, borderTopRightRadius: 16}}>
-             <div style={{fontSize: 22, fontWeight: 700, marginBottom: 8, color: '#222'}}>Booking Detail</div>
-             <div style={{display: 'flex', flexWrap: 'wrap', gap: 24}}>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Booking Code</div>
-                 <div>{selectedBooking.bookingCode || selectedBooking.id}</div>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Customer</div>
-                 <div>{userMap[selectedBooking.customerId] || selectedBooking.customerId || "UNKNOWN"}</div>
-               </div>
-               <div>
-                <div style={{fontWeight: 500, color: '#888'}}>Technician</div>
-                <div>{selectedBooking?.technicianId
-                  ? (technicianMap[selectedBooking.technicianId] ? technicianMap[selectedBooking.technicianId] : "-")
-                  : "UNKNOWN"}
+      {showDetailModal && selectedBooking && (
+        <Modal
+          open={showDetailModal}
+          onCancel={() => setShowDetailModal(false)}
+          footer={null}
+          title={null}
+          width={960}
+          styles={{ body: { padding: 0 } }}
+        >
+          <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
+            {/* Header */}
+            <div style={{ background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)', padding: 24, color: '#fff' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 22, fontWeight: 700 }}>Booking Details</div>
+                  <div style={{ fontSize: 13, opacity: 0.9 }}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <Tag color={getStatusColor(selectedBooking.status)} style={{ fontSize: 12, fontWeight: 600 }}>
+                    {selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}
+                  </Tag>
                 </div>
               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Service</div>
-                 <div>{serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId}</div>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Location</div>
-                 <div>{selectedBooking.location?.address}</div>
-               </div>
-             </div>
-           </div>
-           {/* Section: Status & Payment */}
-           <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#f6faff'}}>
-             <div style={{display: 'flex', gap: 24, flexWrap: 'wrap'}}>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Status</div>
-                 <span style={{background: '#e6f7ff', color: '#1890ff', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}</span>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Payment</div>
-                 <span style={{background: '#f6ffed', color: '#52c41a', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.paymentStatus}</span>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Is Urgent</div>
-                 <span style={{background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', color: selectedBooking.isUrgent ? '#faad14' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</span>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Customer Confirmed</div>
-                 <span style={{background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</span>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888'}}>Technician Confirmed</div>
-                 <span style={{background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888', borderRadius: 6, padding: '2px 12px', fontWeight: 600}}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</span>
-               </div>
-             </div>
-           </div>
-           {/* Section: Schedule & Description */}
-           <div style={{padding: 20, borderBottom: '1px solid #eee', background: '#fff'}}>
-             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Schedule</div>
-             <div style={{marginBottom: 12}}>
-                {selectedBooking.schedule?.startTime
-                  ? dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')
-                  : ''}
-                {selectedBooking.schedule?.endTime
-                  ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
-                  : (selectedBooking.schedule?.expectedEndTime
-                      ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
-                      : '')}
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: 24 }}>
+              <Row gutter={16}>
+                {/* Overview */}
+                <Col span={12}>
+                  <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 12 }}>Overview</div>
+                    <Descriptions size="small" column={1} bordered={false}
+                      items={[
+                        { key: 'service', label: 'Service', children: serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId },
+                        { key: 'location', label: 'Location', children: selectedBooking.location?.address || 'N/A' },
+                        { key: 'scheduledAt', label: 'Schedule', children: (
+                          selectedBooking.schedule?.startTime
+                            ? `${dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}${selectedBooking.schedule?.endTime
+                                ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                                : (selectedBooking.schedule?.expectedEndTime
+                                    ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
+                                    : '')}`
+                            : 'Not scheduled'
+                        ) },
+                      ]}
+                    />
+                  </div>
+                </Col>
+                {/* People */}
+                <Col span={12}>
+                  <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                    <div style={{ fontWeight: 600, marginBottom: 12 }}>People</div>
+                    <Descriptions size="small" column={1} bordered={false}
+                      items={[
+                        { key: 'customer', label: 'Customer', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || 'UNKNOWN' },
+                        { key: 'technician', label: 'Technician', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : 'UNKNOWN') },
+                      ]}
+                    />
+                  </div>
+                </Col>
+              </Row>
+
+              <Divider style={{ margin: '16px 0' }} />
+
+              {/* Status & Flags */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Status & Payment</div>
+                <Row gutter={12}>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center', background: '#e6f7ff', padding: 12, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Payment Status</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || 'N/A'}</div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center', background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Urgent</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888' }}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center', background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Customer Confirmed</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</div>
+                    </div>
+                  </Col>
+                  <Col span={6}>
+                    <div style={{ textAlign: 'center', background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Technician Confirmed</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</div>
+                    </div>
+                  </Col>
+                </Row>
               </div>
-             <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
-             <div>{selectedBooking.description}</div>
-           </div>
-           {/* Section: Images */}
-           <div style={{padding: 20, background: '#f6faff', borderBottomLeftRadius: 16, borderBottomRightRadius: 16}}>
-             <div style={{fontWeight: 500, color: '#888', marginBottom: 8}}>Images</div>
-             <div style={{display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', minHeight: 60}}>
-               {selectedBooking.images && selectedBooking.images.length > 0 ? selectedBooking.images.map((img, idx) => (
-                 <img key={idx} src={img} alt="img" style={{maxWidth: 120, maxHeight: 120, borderRadius: 8, boxShadow: '0 2px 8px rgba(0,0,0,0.08)', objectFit: 'cover'}} />
-               )) : <span style={{color: '#aaa'}}>N/A</span>}
-             </div>
-           </div>
-         </div>
-       </Modal>
-     )}
+
+              <Divider style={{ margin: '16px 0' }} />
+
+              {/* Description */}
+              <div style={{ background: '#fafafa', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Description</div>
+                <div style={{ color: '#333' }}>{selectedBooking.description || 'No description provided'}</div>
+              </div>
+
+              {/* Images */}
+              <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Images</div>
+                {selectedBooking.images && selectedBooking.images.length > 0 ? (
+                  <Image.PreviewGroup>
+                    <Row gutter={[8, 8]}>
+                      {selectedBooking.images.map((img, idx) => (
+                        <Col key={idx} span={4}>
+                          <Image src={img} alt="booking" width={80} height={80} style={{ objectFit: 'cover', borderRadius: 6 }} />
+                        </Col>
+                      ))}
+                    </Row>
+                  </Image.PreviewGroup>
+                ) : (
+                  <div style={{ color: '#999', fontSize: 14, textAlign: 'center', padding: 20 }}>No images available</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </Modal>
+      )}
    </div>
  );
 };
 
 
 export default BookingManagement;
-
