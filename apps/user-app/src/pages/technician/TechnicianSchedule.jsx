@@ -274,19 +274,19 @@ const TechnicianScheduleComponent = () => {
                     <div className="row"><div className="col-lg-12">
                         <div className="dashboard-menu">
                             <ul>
-                                <li><Link to={`/technician`}><img src="/public/img/icons/dashboard-icon.svg" alt="Icon" /><span>Bảng điều khiển</span></Link></li>
-                                <li><Link to={`/technician/booking`}><img src="/public/img/icons/booking-icon.svg" alt="Icon" /><span>Đơn hàng</span></Link></li>
-                                <li><Link to="/technician/feedback"><img src="/public/img/icons/review-icon.svg" alt="Icon" /><span>Đánh giá</span></Link></li>
+                                <li><Link to={`/technician`}><img src="/img/icons/dashboard-icon.svg" alt="Icon" /><span>Bảng điều khiển</span></Link></li>
+                                <li><Link to={`/technician/booking`}><img src="/img/icons/booking-icon.svg" alt="Icon" /><span>Đơn hàng</span></Link></li>
+                                <li><Link to="/technician/feedback"><img src="/img/icons/review-icon.svg" alt="Icon" /><span>Đánh giá</span></Link></li>
                                 <li>
                                     <Link to={`/technician/${technicianId}/certificate`}>
-                                        <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
+                                        <img style={{ height: '28px' }} src="/img/cer.png" alt="Icon" />
                                         <span>Chứng chỉ</span>
                                     </Link>
                                 </li>
-                                <li><Link to="/technician/schedule" className="active"><img src="/public/img/icons/booking-icon.svg" alt="Icon" /><span>Lịch trình</span></Link></li>
-                                <li><Link to="/technician/deposit"><img src="/public/img/icons/wallet-icon.svg" alt="Icon" /><span>Ví của tôi</span></Link></li>
-                                {/* <li><Link to={`/technician/earning`}><img src="/public/img/icons/payment-icon.svg" alt="Icon" /><span>Thu nhập</span></Link></li> */}
-                                {/* <li><Link to={`/profile`}><img src="/public/img/icons/settings-icon.svg" alt="Icon" /><span>Cài đặt</span></Link></li> */}
+                                <li><Link to="/technician/schedule" className="active"><img src="/img/icons/booking-icon.svg" alt="Icon" /><span>Lịch trình</span></Link></li>
+                                <li><Link to="/technician/deposit"><img src="/img/icons/wallet-icon.svg" alt="Icon" /><span>Ví của tôi</span></Link></li>
+                                {/* <li><Link to={`/technician/earning`}><img src="/img/icons/payment-icon.svg" alt="Icon" /><span>Thu nhập</span></Link></li> */}
+                                {/* <li><Link to={`/profile`}><img src="/img/icons/settings-icon.svg" alt="Icon" /><span>Cài đặt</span></Link></li> */}
                             </ul>
                         </div>
                     </div></div>
