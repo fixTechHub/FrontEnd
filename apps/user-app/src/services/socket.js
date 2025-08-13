@@ -31,13 +31,14 @@ export const initializeSocket = (userId) => {
     , {
       // path: '/socket.io',
       withCredentials: true,
-      transports: ['websocket'],
+      transports: ['websocket', 'polling'], // Hỗ trợ cả WebSocket và HTTP long polling
       reconnection: true,
-      // reconnectionAttempts: 5,     // Max attempts
-      // reconnectionDelay: 1000,     // Start with 1s delay
-      // reconnectionDelayMax: 5000,  // Cap the delay to 5s
-      // timeout: 10000,              // Timeout for each connection attempt
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 10000,
       query: { userId },
+      secure: true, // Sử dụng HTTPS
     });
 
   socket.on('connect', () => {
