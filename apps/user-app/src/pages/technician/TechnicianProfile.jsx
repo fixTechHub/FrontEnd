@@ -80,49 +80,49 @@ useEffect(() => {
                                     <ul>
                                         <li>
                                             <Link to={`/technician`}>
-                                                <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
                                                 <span>Dashboard</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to={`/technician/booking`} >
-                                                <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/booking-icon.svg" alt="Icon" />
                                                 <span>My Bookings</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to="/techincian/feedback">
-                                                <img src="/public/img/icons/review-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/review-icon.svg" alt="Icon" />
                                                 <span>Reviews</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to="/user-wishlist">
-                                                <img src="/public/img/icons/wishlist-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/wishlist-icon.svg" alt="Icon" />
                                                 <span>Wishlist</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to="/user-messages">
-                                                <img src="/public/img/icons/message-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/message-icon.svg" alt="Icon" />
                                                 <span>Messages</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to="/technician/deposit">
-                                                <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/wallet-icon.svg" alt="Icon" />
                                                 <span>My Wallet</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to={`/technician/earning`} >
-                                                <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>My Earnings</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to={`/technician/profile/${technicianId}`} className="active">
-                                                <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/settings-icon.svg" alt="Icon" />
                                                 <span>Settings</span>
                                             </Link>
                                         </li>
