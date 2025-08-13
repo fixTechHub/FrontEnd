@@ -22,7 +22,7 @@ export const createCategory = createAsyncThunk(
       dispatch(fetchCategories());
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(error.response?.data || { message: error.message });
     }
   }
 );
@@ -35,7 +35,7 @@ export const updateCategory = createAsyncThunk(
       dispatch(fetchCategories());
       return response;
     } catch (error) {
-      return rejectWithValue(error.response?.data || error.message);
+      return rejectWithValue(error.response?.data || { message: error.message });
     }
   }
 );

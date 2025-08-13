@@ -14,6 +14,11 @@ export const updateWarrantyStatus = createAsyncThunk('warranty/updateStatus', as
   return { id, ...data };
 });
 
+export const updateWarrantyDetails = createAsyncThunk('warranty/updateDetails', async ({ id, data }) => {
+  const result = await warrantyAPI.updateDetails(id, data);
+  return result;
+});
+
 const warrantySlice = createSlice({
   name: 'warranty',
   initialState: {
@@ -65,6 +70,25 @@ const warrantySlice = createSlice({
         }
       })
       .addCase(updateWarrantyStatus.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
+      .addCase(updateWarrantyDetails.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(updateWarrantyDetails.fulfilled, (state, action) => {
+        state.loading = false;
+        // Cập nhật warranty trong list
+        const idx = state.list.findIndex(w => w.id === action.payload.id);
+        if (idx !== -1) {
+          state.list[idx] = action.payload;
+        }
+        if (state.detail && state.detail.id === action.payload.id) {
+          state.detail = action.payload;
+        }
+      })
+      .addCase(updateWarrantyDetails.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
       });

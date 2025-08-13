@@ -277,21 +277,9 @@ const CheckoutPage = () => {
     const { user } = useSelector((state) => state.auth);
     const [isChecking, setIsChecking] = useState(true);
     let discount = 0;
-
-    useEffect(() => {
-        const fetchBookingData = async () => {
-            if (!bookingId) return;
-
-            try {
-                await dispatch(getAcceptedBookingThunk(bookingId)).unwrap();
-            } catch (error) {
-                toast.error(error.message || 'Có lỗi xảy ra khi tải thông tin đặt lịch');
-            }
-        };
-
-        fetchBookingData();
-    }, [dispatch, bookingId]);
-
+    
+   
+    
     useEffect(() => {
         const verifyAccess = async () => {
             if (!bookingId || !user?._id) {
@@ -304,7 +292,7 @@ const CheckoutPage = () => {
             const { acceptedBooking, isAuthorized, error } = await checkOutCustomerAccess(dispatch, bookingId, user._id);
             setIsAuthorize(isAuthorized);
             setAuthError(error);
-            setIsChecking(true);
+            setIsChecking(false);
         };
 
         verifyAccess();
@@ -318,6 +306,25 @@ const CheckoutPage = () => {
             navigate(redirectPath, { replace: true });
         }
     }, [isAuthorize, isChecking, navigate]);
+    useEffect(() => {
+        const fetchBookingData = async () => {
+            if (!bookingId) return;
+
+            try {
+                const response = await dispatch(getAcceptedBookingThunk(bookingId)).unwrap();
+                console.log('getAcceptedBooking response:', response);
+            } catch (error) {
+                toast.error(error.message || 'Có lỗi xảy ra khi tải thông tin đặt lịch');
+            }
+        };
+        if (isChecking) {
+            fetchBookingData();
+        }
+    }, [dispatch, bookingId]);
+
+    
+
+  
 
     const itemsTotal = acceptedBooking?.quote?.items?.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) || 0;
     const laborPrice = acceptedBooking?.quote?.laborPrice || 0;
@@ -369,25 +376,26 @@ const CheckoutPage = () => {
         }
 
         setIsProcessing(true);
-
+        let discount1 = 0;
         if (appliedCoupon) {
             if (appliedCoupon.type === 'PERCENT') {
-                discount = subTotal * (appliedCoupon.value / 100);
-                if (appliedCoupon.maxDiscount && discount > appliedCoupon.maxDiscount) {
-                    discount = appliedCoupon.maxDiscount;
+                discount1 = subTotal * (appliedCoupon.value / 100);
+                if (appliedCoupon.maxDiscount && discount1 > appliedCoupon.maxDiscount) {
+                    discount1 = appliedCoupon.maxDiscount;
                 }
             } else if (appliedCoupon.type === 'FIXED') {
-                discount = appliedCoupon.value;
+                discount1 = appliedCoupon.value;
             }
         }
 
-        const newFinalPrice = subTotal - discount;
-
+        const newFinalPrice = subTotal - discount1;
+        console.log(newFinalPrice);
+        
         try {
             const resultAction = await dispatch(finalizeBookingThunk({
                 bookingId: bookingId,
                 couponCode: appliedCoupon ? appliedCoupon.code : null,
-                discountValue: discount,
+                discountValue: discount1,
                 finalPrice: newFinalPrice,
                 paymentMethod: paymentMethod
             })).unwrap();
@@ -439,7 +447,7 @@ const CheckoutPage = () => {
 
     const estimatedTotal = subTotal - discount;
 
-    if (bookingLoading || !isChecking || isAuthorize === false) {
+    if (bookingLoading ||  isAuthorize === false) {
         return null;
     }
 
@@ -508,7 +516,7 @@ const CheckoutPage = () => {
                                             <ul className="adons-lists" style={{ listStyle: 'none', padding: '0', margin: '0' }}>
 
                                                 {acceptedBooking?.quote?.items?.length > 0 ? (
-                                                    acceptedBooking.quote.items.map((item, index) => (
+                                                    acceptedBooking?.quote?.items?.map((item, index) => (
                                                         <li
                                                             key={item.name}
                                                             style={{
@@ -541,8 +549,8 @@ const CheckoutPage = () => {
                                                                             gap: '10px'
                                                                         }}>
                                                                             <i className="bx bx-wrench" style={{ color: '#ff6200', fontSize: '18px' }}></i>
-                                                                            {item.name}
-                                                                            {item.quantity > 1 && (
+                                                                            {item?.name}
+                                                                            {item?.quantity > 1 && (
                                                                                 <span style={{
                                                                                     backgroundColor: '#ff6200',
                                                                                     color: 'white',
@@ -554,7 +562,7 @@ const CheckoutPage = () => {
                                                                                     x{item.quantity}
                                                                                 </span>
                                                                             )}
-                                                                            {item.note && (
+                                                                            {item?.note && (
                                                                                 <i
                                                                                     className="bx bx-info-circle"
                                                                                     style={{
@@ -574,7 +582,7 @@ const CheckoutPage = () => {
                                                                                 />
                                                                             )}
                                                                         </h6>
-                                                                        {item.status && (
+                                                                        {item?.status && (
                                                                             <span
                                                                                 className="badge"
                                                                                 style={{
@@ -771,7 +779,7 @@ const CheckoutPage = () => {
                                                             <i className="bx bx-shield" style={{ color: '#ff6200', marginRight: '8px' }}></i>
                                                             Thời Hạn Bảo Hành
                                                         </div>
-                                                        <span style={{ color: '#495057', fontSize: '14px' }}>{acceptedBooking?.quote?.warrantiesDuration || 30} Tháng</span>
+                                                        <span style={{ color: '#495057', fontSize: '14px' }}>{acceptedBooking?.quote?.warrantiesDuration} Tháng</span>
                                                     </div>
                                                 </li>
                                                 <li>

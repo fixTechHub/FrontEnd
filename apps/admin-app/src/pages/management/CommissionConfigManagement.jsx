@@ -13,6 +13,7 @@ import {
 import "../../../public/css/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 
 const initialFormState = {
   commissionPercent: '',
@@ -59,7 +60,7 @@ const CommissionConfigManagement = () => {
       } else {
         message.error(error.title || 'Đã có lỗi xảy ra. Vui lòng thử lại!');
       }
-      dispatch(resetState());v
+      dispatch(resetState());
     }
     if (success) {
       message.success('Thao tác thành công!');
@@ -99,6 +100,33 @@ const CommissionConfigManagement = () => {
   const indexOfLastConfig = currentPage * configsPerPage;
   const indexOfFirstConfig = indexOfLastConfig - configsPerPage;
   const currentConfigs = sortedConfigs.slice(indexOfFirstConfig, indexOfLastConfig);
+
+  // Set export data và columns
+  useEffect(() => {
+    const exportColumns = [
+      { title: 'Commission Percent', dataIndex: 'commissionPercent' },
+      { title: 'Holding Percent', dataIndex: 'holdingPercent' },
+      { title: 'Commission Min Amount', dataIndex: 'commissionMinAmount' },
+      { title: 'Commission Type', dataIndex: 'commissionType' },
+      { title: 'Start Date', dataIndex: 'startDate' },
+      { title: 'Status', dataIndex: 'status' },
+      { title: 'Created At', dataIndex: 'createdAt' },
+      { title: 'Updated At', dataIndex: 'updatedAt' },
+    ];
+
+    const exportData = sortedConfigs.map(config => ({
+      commissionPercent: `${config.commissionPercent}%`,
+      holdingPercent: `${config.holdingPercent}%`,
+      commissionMinAmount: formatCurrency(config.commissionMinAmount),
+      commissionType: config.commissionType,
+      startDate: formatDateTime(config.startDate),
+      status: config.isApplied ? 'APPLIED' : 'NOT APPLIED',
+      createdAt: formatDateTime(config.createdAt),
+      updatedAt: formatDateTime(config.updatedAt),
+    }));
+
+    createExportData(exportData, exportColumns, 'commission_configs_export', 'Commission Configs');
+  }, [sortedConfigs]);
 
   const totalPages = Math.ceil(filteredConfigs.length / configsPerPage);
   const handleChange = (e) => {
@@ -239,7 +267,7 @@ const CommissionConfigManagement = () => {
   ) : null;
 
   return (
-    <div className="modern-page-wrapper">
+    <div className="modern-page- wrapper">
       <div className="modern-content-card">
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
@@ -683,4 +711,4 @@ const CommissionConfigManagement = () => {
   );
 };
 
-export default CommissionConfigManagement; 
+export default CommissionConfigManagement;

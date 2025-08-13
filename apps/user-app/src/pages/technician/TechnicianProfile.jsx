@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchTechnicianProfile } from '../../features/technicians/technicianSlice';
+import { useState} from "react";
 import { useParams } from 'react-router-dom';
 import Rating from 'react-rating';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
@@ -12,30 +13,44 @@ function ViewTechnicianProfile() {
     const { profile, loading, error } = useSelector(state => state.technician);
     const technician  = useSelector((state) => state.auth);
     const  technicianId = technician.technician?._id ;
-    
-    useEffect(() => {
-        if (technicianId) {
-            console.log("Dispatching technicianId:", technicianId);
-            dispatch(fetchTechnicianProfile(technicianId))
+    const [technicianData, setTechnicianData] = useState(null);
+
+useEffect(() => {
+    if (technicianId) {
+        console.log("Dispatching technicianId:", technicianId);
+        dispatch(fetchTechnicianProfile(technicianId))
             .then((result) => {
-                    console.log("=== PROFILE DEBUG ===");
-                    console.log("Full result:", result);
-                    console.log("Result payload:", result.payload);
-                    console.log("Profile data:", profile);
-                })
-                .catch((err) => {
-                    console.error("Error fetching profile:", err);
-                });
-        }
-    }, [dispatch, technicianId]);
-    console.log(technicianId);
-    console.log("tech", technician);
+                console.log("=== PROFILE DEBUG ===");
+                console.log("Full result:", result);
+                console.log("Result payload:", result.payload);
+
+                // lấy phần tử đầu tiên nếu là mảng
+                const data = Array.isArray(result.payload)
+                    ? result.payload[0]
+                    : result.payload;
+                console.log("Technician data:", data);
+
+                setTechnicianData(data);
+            })
+            .catch((err) => {
+                console.error("Error fetching profile:", err);
+            });
+    }
+}, [dispatch, technicianId]);
+
     
+    console.log(technicianData);
+    
+    console.log("tech", technician);
+   
+    
+    console.log(technician?.technician?.certificate);
     
 
     const certificates = Array.isArray(profile[1])
   ? profile[1].filter(item => item.status === 'APPROVED')
   : [];
+   console.log("cer", certificates);
 
     console.log("profile", profile);
     
@@ -250,8 +265,13 @@ function ViewTechnicianProfile() {
                                                     </div>
                                                     <div className="col-md-6">
                                                         <div className="profile-form-group">
-                                                            <label>Kinh nghiệm:  {technician?.technician?.experienceYears} năm</label>
+                                                            <label>Kinh nghiệm:  {technician?.experienceYears} năm</label>
+                                                        </div>
+                                                    </div>
 
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Số job hoàn thành: {technician?.jobCompleted || 0}</label>
                                                         </div>
                                                     </div>
 
@@ -270,10 +290,70 @@ function ViewTechnicianProfile() {
                                                                 />
                                                                 <span>({technician?.technician?.ratingAverage})</span>
                                                             </div>
-
-
                                                         </div>
                                                     </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Trạng thái: {technician?.status}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Khả dụng: {technician?.availability}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Số dư: {technician?.balance || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Tổng thu nhập: {technician?.totalEarning || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Tổng hoa hồng đã trả: {technician?.totalCommissionPaid || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Tổng giữ lại: {technician?.totalHoldingAmount || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Tổng đã rút: {technician?.totalWithdrawn || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Phí kiểm tra: {technician?.inspectionFee || 0}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="col-md-6">
+                                                        <div className="profile-form-group">
+                                                            <label>Ngày cập nhật giá: {technician?.pricesLastUpdatedAt ? new Date(technician.pricesLastUpdatedAt).toLocaleDateString() : 'Chưa cập nhật'}</label>
+                                                        </div>
+                                                    </div>
+
+                                                    {technician?.note && (
+                                                        <div className="col-md-12">
+                                                            <div className="profile-form-group">
+                                                                <label>Ghi chú: {technician.note}</label>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                     <div className="col-md-12">
                                                         <div className="profile-form-group">
                                                             <label>Chứng chỉ:</label>

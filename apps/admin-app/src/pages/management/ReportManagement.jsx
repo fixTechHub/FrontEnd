@@ -27,6 +27,7 @@ import { reportAPI } from '../../features/reports/reportAPI';
 import { setReports, setSelectedReport, setFilters, clearFilters, setLoading, setError } from '../../features/reports/reportSlice';
 import { selectFilteredReports, selectReportFilters, selectReportStats } from '../../features/reports/reportSelectors';
 import { userAPI } from '../../features/users/userAPI';
+import { createExportData, formatDateTime } from '../../utils/exportUtils';
 
 
 const { Option } = Select;
@@ -224,9 +225,34 @@ const ReportManagement = () => {
    return 0;
  });
 
+ // Set export data và columns
+ useEffect(() => {
+   const exportColumns = [
+     { title: 'Report Type', dataIndex: 'type' },
+     { title: 'Description', dataIndex: 'description' },
+     { title: 'Reporter', dataIndex: 'reporterName' },
+     { title: 'Reported User', dataIndex: 'reportedUserName' },
+     { title: 'Status', dataIndex: 'status' },
+     { title: 'Created At', dataIndex: 'createdAt' },
+     { title: 'Updated At', dataIndex: 'updatedAt' },
+   ];
+
+   const exportData = sortedReports.map(report => ({
+     type: report.type,
+     description: report.description,
+     reporterName: userMap[report.reporterId] || report.reporterId,
+     reportedUserName: userMap[report.reportedUserId] || report.reportedUserId,
+     status: report.status?.toUpperCase(),
+     createdAt: formatDateTime(report.createdAt),
+     updatedAt: formatDateTime(report.updatedAt),
+   }));
+
+   createExportData(exportData, exportColumns, 'reports_export', 'Reports');
+ }, [sortedReports, userMap]);
+
 
  return (
-   <div className="modern-page-wrapper">
+   <div className="modern-page- wrapper">
      <div className="modern-content-card">
        <Card>
          {/* Stats Cards */}
@@ -292,6 +318,7 @@ const ReportManagement = () => {
              >
                <Option value="REPORT">REPORT</Option>
                <Option value="VIOLATION">VIOLATION</Option>
+               <Option value="WARRANTY">WARRANTY</Option>
              </Select>
              <Select
                placeholder="Status"
@@ -341,44 +368,124 @@ const ReportManagement = () => {
 
 
        {/* Report Details Modal */}
-       {isModalVisible && selectedReport && (
-         <Modal
-           open={isModalVisible}
-           onCancel={() => setIsModalVisible(false)}
-           footer={null}
-           title={null}
-           width={600}
-         >
-           <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
-             <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
-               <div style={{flex: 1}}>
-                 <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>
-                   <span style={{marginRight: 12}}>{selectedReport.type}</span>
-                   <Tag color={getStatusColor(selectedReport.status)} style={{fontSize: 14, padding: '2px 12px'}}>{selectedReport.status?.toUpperCase()}</Tag>
-                 </div>
-                 <div style={{fontSize: 15, color: '#888', marginBottom: 2}}>
-                   <b>Penalty:</b> {selectedReport.penalty || 'Chưa có'}
-                 </div>
-               </div>
-             </div>
-             <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
-             <div style={{marginBottom: 16}}>
-               <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Description</div>
-               <div>{selectedReport.description}</div>
-             </div>
-             <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reported User</div>
-                 <div>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId || "UNKNOWN"}</div>
-               </div>
-               <div>
-                 <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Reporter</div>
-                 <div>{userMap[selectedReport.reporterId] || selectedReport.reporterId || "UNKNOWN"}</div>
-               </div>
-             </div>
-           </div>
-         </Modal>
-       )}
+        {isModalVisible && selectedReport && (
+          <Modal
+            open={isModalVisible}
+            onCancel={() => setIsModalVisible(false)}
+            footer={null}
+            title={null}
+            width={960}
+            styles={{ body: { padding: 0, borderRadius: 16, overflow: 'hidden' } }}
+          >
+            <div style={{ background: '#fff', borderRadius: 16 }}>
+              <div style={{
+                background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+                padding: '20px 24px',
+                color: '#fff'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 20, fontWeight: 700 }}>
+                    {selectedReport.type || 'REPORT'}
+                  </div>
+                  <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                    {selectedReport.status?.toUpperCase()}
+                  </Tag>
+                </div>
+                {selectedReport.id && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ fontFamily: 'monospace', fontSize: 15 }}>Report ID: {selectedReport.id}</span>
+                          </div>
+                        )}
+              </div>
+              <div style={{ padding: 24 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  {/* Overview */}
+                  <div>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                      <div style={{ display: 'grid', rowGap: 10 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Penalty</span>
+                          <span style={{ fontWeight: 600 }}>{selectedReport.penalty || 'N/A'}</span>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Created At</span>
+                          <span style={{ fontWeight: 600 }}>{formatDateTime(selectedReport.createdAt)}</span>
+                        </div>
+                        
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* People */}
+                  <div>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                      <div style={{ display: 'grid', rowGap: 12 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Reported User</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId || 'UNKNOWN'}</span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span style={{ color: '#8c8c8c' }}>Reporter</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reporterId] || selectedReport.reporterId || 'UNKNOWN'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Description full width */}
+                  <div style={{ gridColumn: '1 / span 2' }}>
+                    <div style={{
+                      background: '#ffffff',
+                      border: '1px solid #f0f0f0',
+                      borderRadius: 12,
+                      padding: 16,
+                      marginBottom: 16,
+                    }}>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Description</div>
+                      <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                        {selectedReport.description || 'No description'}
+                      </div>
+                    </div>
+                  </div>
+
+                  {selectedReport.evidenceUrls && selectedReport.evidenceUrls.length > 0 && (
+                    <div style={{ gridColumn: '1 / span 2' }}>
+                      <div style={{
+                        background: '#ffffff',
+                        border: '1px solid #f0f0f0',
+                        borderRadius: 12,
+                        padding: 16,
+                      }}>
+                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Evidence</div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+                          {selectedReport.evidenceUrls.map((url, idx) => (
+                            <a key={idx} href={url} target="_blank" rel="noreferrer">
+                              <img src={url} alt={`evidence-${idx}`} style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8 }} />
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Modal>
+        )}
      </div>
    </div>
  );

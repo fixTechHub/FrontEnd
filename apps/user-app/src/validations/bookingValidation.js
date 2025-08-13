@@ -12,14 +12,14 @@ export const validateBookingData = (bookingData, addressInput, geoJson, type) =>
     if (!bookingData.description || bookingData.description.trim().length < 10) {
         newErrors.description = "Vui lòng nhập mô tả chi tiết (tối thiểu 10 ký tự).";
     }
-    if (bookingData.images) {
-        const count = bookingData.images.length;
-        if (count === 2) {
-            newErrors.images = "Cần tải lên ít nhất 1 ảnh.";
-        } else if (count > 5) {
-            newErrors.images = "Chỉ được tải lên tối đa 5 ảnh.";
-        }
-    }
+    // if (bookingData.images) {
+    //     const count = bookingData.images.length;
+    //     if (count === 2) {
+    //         newErrors.images = "Cần tải lên ít nhất 1 ảnh.";
+    //     } else if (count > 5) {
+    //         newErrors.images = "Chỉ được tải lên tối đa 5 ảnh.";
+    //     }
+    // }
     if (type === 'scheduled') {
         if (!bookingData.scheduleDate) {
             newErrors.scheduleDate = "Vui lòng chọn ngày đặt lịch.";

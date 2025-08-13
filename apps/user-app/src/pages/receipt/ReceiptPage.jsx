@@ -137,12 +137,12 @@ const ReceiptPage = () => {
   const formatDate = (date) =>
     date
       ? new Date(date).toLocaleString('vi-VN', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
       : 'N/A';
 
   return (
@@ -166,10 +166,10 @@ const ReceiptPage = () => {
                         {dateFilter === 'thisWeek'
                           ? 'Tuần Này'
                           : dateFilter === 'thisMonth'
-                          ? 'Tháng Này'
-                          : dateFilter === 'custom'
-                          ? 'Tùy Chỉnh'
-                          : 'Lọc Theo Ngày'}
+                            ? 'Tháng Này'
+                            : dateFilter === 'custom'
+                              ? 'Tùy Chỉnh'
+                              : 'Lọc Theo Ngày'}
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
                         <Dropdown.Item onClick={() => handleDateFilterChange('')}>Tất cả</Dropdown.Item>
@@ -208,8 +208,8 @@ const ReceiptPage = () => {
                         {paymentMethodFilter === 'BANK'
                           ? 'Ngân hàng'
                           : paymentMethodFilter === 'CASH'
-                          ? 'Tiền mặt'
-                          : 'Lọc Theo Thanh Toán'}
+                            ? 'Tiền mặt'
+                            : 'Lọc Theo Thanh Toán'}
                       </Dropdown.Toggle>
                       <Dropdown.Menu>
                         <Dropdown.Item onClick={() => handlePaymentMethodFilterChange('')}>
@@ -291,7 +291,7 @@ const ReceiptPage = () => {
                             </td>
                             <td>{formatDate(receipt.issuedDate)}</td>
                             <td>
-                              <p className="text-darker">{formatCurrency(receipt.totalAmount || 0)}</p>
+                              <p className="text-darker">{formatCurrency(receipt.paidAmount || 0)}</p>
                             </td>
                             <td>
                               <span className={`badge ${getStatusBadgeClass(receipt.paymentMethod)}`}>
@@ -428,19 +428,14 @@ const ReceiptPage = () => {
                     <div className="invoice-total-box">
                       <div className="invoice-total-inner">
                         <p>
-                          Phí Công{' '}
-                          <span>
-                            {formatCurrency(selectedReceipt?.bookingId?.quote?.laborPrice || 0)}
-                          </span>
+                          Phí dịch vụ{' '}
+                          <span>{formatCurrency(selectedReceipt?.serviceAmount || 0)}</span>
                         </p>
                         <p>
                           Giảm{' '}
                           <span>{formatCurrency(selectedReceipt?.discountAmount || 0)}</span>
                         </p>
-                        <p>
-                          Phí dịch vụ{' '}
-                          <span>{formatCurrency(selectedReceipt?.serviceAmount || 0)}</span>
-                        </p>
+
                         {selectedReceipt?.bookingId?.quote?.items?.length > 0 && (
                           <>
                             <hr />

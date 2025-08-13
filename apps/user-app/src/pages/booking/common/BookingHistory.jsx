@@ -144,6 +144,7 @@ const BookingHistory = () => {
       await dispatch(requestWarrantyThunk(formData)).unwrap();
       toast.success('Yêu cầu bảo hành thành công, Vui lòng đợi trong vòng 24h để thợ phản hồi');
       handleWarrantyModalClose();
+      // navigate(`/warranty?bookingWarrantyId=${selectedWarrantyBookingId}`)
     } catch (err) {
       const errorMessage = err?.error || 'Đã xảy ra lỗi khi yêu cầu bảo hành';
       toast.error(errorMessage);
@@ -249,15 +250,18 @@ const BookingHistory = () => {
                                 }}
                                 className="text-primary"
                               >
-                                {booking.status === 'PENDING' ? (
+                                {booking.status === 'PENDING' && (
                                   <>
                                     <FaUserCheck className="me-2" /> Chọn thợ
                                   </>
-                                ) : (
+                                ) }
+                                {booking.status !=='DONE' && booking.status !=='PENDING' && booking.status!=='CANCELLED'&& (
                                   <>
                                     <FaSpinner className="me-2" /> Xem tiến trình
                                   </>
-                                )}
+                                )
+                                 
+                                }
                               </Dropdown.Item>
                             )}
                           </Dropdown.Menu>

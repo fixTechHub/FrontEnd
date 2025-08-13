@@ -87,3 +87,13 @@ export const uploadCertificateAPI = async (formData, technicianId) => {
   });
   return response.data;
 };
+
+export const deleteCertificateAPI = async (certificateId) => {
+  const res = await apiClient.delete(`/certificates/${certificateId}`);
+  return res.data; // { message: 'Certificate deleted successfully' }
+};
+
+export const getScheduleByTechnicianId = async (technicianId) => {
+  const response = await apiClient.get(`/technicians/${technicianId}/schedules`);
+  return response.data;
+};

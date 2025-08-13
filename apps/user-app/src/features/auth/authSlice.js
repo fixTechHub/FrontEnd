@@ -496,6 +496,10 @@ const authSlice = createSlice({
       state.technician = action.payload.technician;
       state.verificationStatus = determineVerificationStatus(action.payload, state.technician);
     },
+    setTechnician: (state, action) => {
+    state.technician = action.payload;
+    state.isAuthenticated = true;
+  },
   },
   extraReducers: (builder) => {
     builder
