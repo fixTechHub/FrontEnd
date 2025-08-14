@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import apiClient from '../../services/apiClient';
-import { Table, Badge, Spinner, Alert, Form, Button } from 'react-bootstrap';
+import { Table, Badge, Spinner, Alert, Form, Button, Dropdown } from 'react-bootstrap';
 import { formatDateOnly, formatTimeOnly } from '../../utils/formatDate';
+import { FaSpinner } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 
 const statusColorMap={
   PENDING:'warning',
@@ -25,6 +27,7 @@ const statusLabel=(s)=>{
 };
 
 const WarrantyList=()=>{
+  const navigate = useNavigate();
   const[loading,setLoading]=useState(false);
   const[error,setError]=useState('');
   const[list,setList]=useState([]);
@@ -120,6 +123,7 @@ const WarrantyList=()=>{
                 <th>Đặt lịch</th>
                 <th>Ngày yêu cầu</th>
                 <th>Trạng thái</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -137,6 +141,35 @@ const WarrantyList=()=>{
                   <td>{formatDateOnly(w.createdAt)} {formatTimeOnly(w.createdAt)}</td>
                   <td>
                     <Badge bg={statusColorMap[w.status]||'secondary'}>{statusLabel(w.status)}</Badge>
+                  </td>
+                  <td>
+                  <Dropdown>
+                          <Dropdown.Toggle variant="link" className="p-0">
+                            <i className="fas fa-ellipsis-v"></i>
+                          </Dropdown.Toggle>
+                          <Dropdown.Menu align="end">
+                           
+
+                      
+                              <Dropdown.Item
+                                onClick={() => {
+                                    console.log(w._id);
+                                    
+                                    navigate(`/warranty?bookingWarrantyId=${w._id}`);
+                                  
+                                }}
+                                className="text-primary"
+                              >
+                              
+                           
+                                  <>
+                                    <FaSpinner className="me-2" /> Xem tiến trình
+                                  </>
+                                
+                              </Dropdown.Item>
+                            
+                          </Dropdown.Menu>
+                        </Dropdown>
                   </td>
                 </tr>
               ))}

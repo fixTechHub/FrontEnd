@@ -4,10 +4,10 @@ import { sendNotifications, notificationAPI } from './notificationsAPI';
 
 export const sendNotificationsThunk = createAsyncThunk(
   'notifications/sendNotificationsThunk',
-  async (notifyData, { rejectWithValue }) => {
+  async (notificationData, { rejectWithValue }) => {
     try {
-      const response = await sendNotifications(notifyData);
-      return response.data.notification;
+      const response = await sendNotifications(notificationData);
+      return response;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to sending notifications');
     }
