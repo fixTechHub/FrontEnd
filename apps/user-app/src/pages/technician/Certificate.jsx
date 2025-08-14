@@ -69,49 +69,49 @@ const CertificateList = () => {
                                     <ul>
                                         <li>
                                             <Link to={`/technician`} >
-                                                <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
                                                 <span>Bảng điểu khiển</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to={`/technician/booking`} >
-                                                <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/booking-icon.svg" alt="Icon" />
                                                 <span>Đơn hàng</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to="/technician/feedback">
-                                                <img src="/public/img/icons/review-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/review-icon.svg" alt="Icon" />
                                                 <span>Đánh giá</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to={`/technician/${technicianId}/certificate`} className="active">
-                                                <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
+                                                <img style={{ height: '28px' }} src="/img/cer.png" alt="Icon" />
                                                 <span>Chứng chỉ</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to="/technician/schedule">
-                                                <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/booking-icon.svg" alt="Icon" />
                                                 <span>Lịch trình</span>
                                             </Link>
                                         </li>
                                         <li>
                                             <Link to="/technician/deposit" >
-                                                <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/wallet-icon.svg" alt="Icon" />
                                                 <span>Ví của tôi</span>
                                             </Link>
                                         </li>
                                         {/* <li>
                                             <Link to={`/technician/earning`} >
-                                                <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>Thu nhập</span>
                                             </Link>
                                         </li> */}
                                         {/* <li>
                                             <Link to={`/profile`}>
-                                                <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
+                                                <img src="/img/icons/settings-icon.svg" alt="Icon" />
                                                 <span>Cái đặt</span>
                                             </Link>
                                         </li> */}
