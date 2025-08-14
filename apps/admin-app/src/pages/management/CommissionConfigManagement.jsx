@@ -452,12 +452,6 @@ const CommissionConfigManagement = () => {
             <div className="text-muted">
               Hiển thị {indexOfFirstConfig + 1}-{Math.min(indexOfLastConfig, filteredConfigs.length)} trong tổng số {filteredConfigs.length} cấu hình hoa hồng
             </div>
-            {(searchText || filterInApplied) && (
-              <div className="text-muted">
-                <i className="ti ti-filter me-1"></i>
-                Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterInApplied && `Trạng thái: ${filterInApplied === 'APPLIED' ? 'Đang áp dụng' : 'Không áp dụng'}`}
-              </div>
-            )}
           </div>
           {filteredConfigs.length > 0 && (
             <nav>

@@ -227,12 +227,6 @@ function FeedbackAdmin() {
             <div className="text-muted">
               Hiển thị {indexOfFirstFeedback + 1}-{Math.min(indexOfLastFeedback, filteredFeedbacks.length)} trong tổng số {filteredFeedbacks.length} feedback
             </div>
-            {(searchText || filterStatus) && (
-              <div className="text-muted">
-                <i className="ti ti-filter me-1"></i>
-                Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterStatus && `Trạng thái: ${filterStatus === 'VISIBLE' ? 'Hiển thị' : 'Ẩn'}`}
-              </div>
-            )}
           </div>
           {filteredFeedbacks.length > 0 && (
             <nav>

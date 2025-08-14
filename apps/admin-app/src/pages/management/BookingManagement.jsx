@@ -341,7 +341,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            {filterStatus && (
              <span className="badge bg-warning-transparent">
                <i className="ti ti-filter me-1"></i>
-               Trạng thái: {filterStatus}
+               Trạng thái: {filterStatus.replace(/_/g, ' ')}
              </span>
            )}
            <button 
@@ -458,12 +458,6 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            <div className="text-muted">
              Hiển thị {indexOfFirstBooking + 1}-{Math.min(indexOfLastBooking, filteredBookings.length)} trong tổng số {filteredBookings.length} đơn hàng
            </div>
-           {(searchText || filterService || filterStatus) && (
-             <div className="text-muted">
-               <i className="ti ti-filter me-1"></i>
-               Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterService && `Dịch vụ: ${serviceMap[filterService] || filterService}`} {filterStatus && `Trạng thái: ${filterStatus}`}
-             </div>
-           )}
          </div>
          {filteredBookings.length > 0 && (
            <nav>

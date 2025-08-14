@@ -730,7 +730,7 @@ const AdminDashboard = () => {
                   </div>
                   <div className="d-flex align-items-center mt-2">
                     <span className="small text-white-50">
-                      - {dashboardStats.pendingBookings} đơn hàng đang chờ xác nhận
+                      {dashboardStats.pendingBookings} đơn hàng chờ xác nhận
                     </span>
                   </div>
                 </div>

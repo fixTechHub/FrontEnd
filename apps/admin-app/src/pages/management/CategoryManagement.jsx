@@ -413,12 +413,6 @@ const isDataReady = categories.length > 0;
            <div className="text-muted">
              Hiển thị {indexOfFirstCategory + 1}-{Math.min(indexOfLastCategory, filteredCategories.length)} trong tổng số {filteredCategories.length} danh mục
            </div>
-           {(searchText || filterStatus) && (
-             <div className="text-muted">
-               <i className="ti ti-filter me-1"></i>
-               Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterStatus && `Trạng thái: ${filterStatus}`}
-             </div>
-           )}
          </div>
          {filteredCategories.length > 0 && (
            <nav>

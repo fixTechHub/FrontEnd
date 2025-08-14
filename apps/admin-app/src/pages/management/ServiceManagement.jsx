@@ -478,12 +478,6 @@ const ServiceManagement = () => {
             <div className="text-muted">
               Hiển thị {indexOfFirstService + 1}-{Math.min(indexOfLastService, filteredServices.length)} trong tổng số {filteredServices.length} dịch vụ
             </div>
-            {(searchText || filterStatus || filterCategory) && (
-              <div className="text-muted">
-                <i className="ti ti-filter me-1"></i>
-                Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterCategory && `Danh mục: ${categories.find(cat => cat.id === filterCategory)?.categoryName || filterCategory}`} {filterStatus && `Trạng thái: ${filterStatus}`}
-              </div>
-            )}
           </div>
           {filteredServices.length > 0 && (
             <nav>

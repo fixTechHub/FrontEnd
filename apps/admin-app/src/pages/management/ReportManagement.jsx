@@ -348,6 +348,39 @@ const ReportManagement = () => {
            </div>
          </div>
 
+         {/* Filter Info */}
+         {(filters.search || filters.type || filters.status) && (
+           <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+             <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+             {filters.search && (
+               <span className="badge bg-primary-transparent">
+                 <i className="ti ti-search me-1"></i>
+                 Tìm kiếm: "{filters.search}"
+               </span>
+             )}
+             {filters.type && (
+               <span className="badge bg-info-transparent">
+                 <i className="ti ti-alert-circle me-1"></i>
+                 Vấn đề: {filters.type}
+               </span>
+             )}
+             {filters.status && (
+               <span className="badge bg-warning-transparent">
+                 <i className="ti ti-filter me-1"></i>
+                 Trạng thái: {filters.status}
+               </span>
+             )}
+             <button 
+               className="btn btn-sm btn-outline-secondary"
+               onClick={() => {
+                 dispatch(clearFilters());
+               }}
+             >
+               <i className="ti ti-x me-1"></i>
+               Xóa tất cả
+             </button>
+           </div>
+         )}
 
          {/* Reports Table */}
          <Table

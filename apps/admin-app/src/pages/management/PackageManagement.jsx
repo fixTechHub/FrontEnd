@@ -343,12 +343,6 @@ const PackageManagement = () => {
             <div className="text-muted">
               Hiển thị {indexOfFirstPackage + 1}-{Math.min(indexOfLastPackage, filteredPackages.length)} trong tổng số {filteredPackages.length} gói
             </div>
-            {(searchText || filterStatus) && (
-              <div className="text-muted">
-                <i className="ti ti-filter me-1"></i>
-                Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterStatus && `Trạng thái: ${filterStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}`}
-              </div>
-            )}
           </div>
           {filteredPackages.length > 0 && (
             <nav>

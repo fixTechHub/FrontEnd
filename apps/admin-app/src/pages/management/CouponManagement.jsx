@@ -874,12 +874,6 @@ const handleConfirmUserSelection = () => {
            <div className="text-muted">
              Hiển thị {indexOfFirstCoupon + 1}-{Math.min(indexOfLastCoupon, filteredCoupons.length)} trong tổng số {filteredCoupons.length} mã giảm giá
            </div>
-           {(searchText || filterType || filterStatus) && (
-             <div className="text-muted">
-               <i className="ti ti-filter me-1"></i>
-               Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterType && `Loại: ${filterType}`} {filterStatus && `Trạng thái: ${filterStatus}`}
-             </div>
-           )}
            
            
          </div>

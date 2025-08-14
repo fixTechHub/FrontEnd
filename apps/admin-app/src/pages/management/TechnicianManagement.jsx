@@ -632,12 +632,6 @@ const TechnicianManagement = () => {
             <div className="text-muted">
               Hiển thị {indexOfFirstTechnician + 1}-{Math.min(indexOfLastTechnician, filteredTechnicians.length)} trong tổng số {filteredTechnicians.length} kỹ thuật viên
             </div>
-            {filterAvailability && (
-              <div className="text-muted">
-                <i className="ti ti-filter me-1"></i>
-                Đã lọc theo: {getTechnicianAvailability(filterAvailability)}
-              </div>
-            )}
             {totalPages > 1 && (
               <div className="text-muted">
                 Trang {currentPage} / {totalPages}

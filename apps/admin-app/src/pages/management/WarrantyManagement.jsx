@@ -442,12 +442,6 @@ const handleSortByTechnician = () => {
            <div className="text-muted">
              Hiển thị {indexOfFirst + 1}-{Math.min(indexOfLast, filtered.length)} trong tổng số {filtered.length} bảo hành
            </div>
-           {(searchText || filterStatus || filterUnderWarranty) && (
-             <div className="text-muted">
-               <i className="ti ti-filter me-1"></i>
-               Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterStatus && `Trạng thái: ${filterStatus}`} {filterUnderWarranty && `Tình trạng bảo hành: ${filterUnderWarranty === 'Yes' ? 'Có bảo hành' : 'Không bảo hành'}`}
-             </div>
-           )}
          </div>
          {filtered.length > 0 && (
            <nav>

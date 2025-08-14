@@ -32,6 +32,8 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    const usersPerPage = 10;
    const [sortField, setSortField] = useState('createdAt');
    const [sortOrder, setSortOrder] = useState('desc');
+   const [filterRole, setFilterRole] = useState('');
+   const [filterStatus, setFilterStatus] = useState('');
 
 
    const indexOfLastUser = currentPage * usersPerPage;
@@ -153,7 +155,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    // Reset to first page when filters change
    useEffect(() => {
        setCurrentPage(1);
-   }, [filteredUsers.length]);
+   }, [search, filterRole, filterStatus]);
 
 
    const handleEditUser = (user) => {
@@ -351,7 +353,11 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                            allowClear
                            placeholder="Vai trò"
                            style={{ width: 130 }}
-                           onChange={value => dispatch(setFilters({ role: value }))}
+                           value={filterRole || undefined}
+                           onChange={value => {
+                             setFilterRole(value);
+                             dispatch(setFilters({ role: value }));
+                           }}
                            options={roles.map(role => ({ value: role.id, label: role.name }))}
                        />
                        {/* Status Filter */}
@@ -359,7 +365,11 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                            allowClear
                            placeholder="Trạng thái"
                            style={{ width: 130 }}
-                           onChange={value => dispatch(setFilters({ status: value }))}
+                           value={filterStatus || undefined}
+                           onChange={value => {
+                             setFilterStatus(value);
+                             dispatch(setFilters({ status: value }));
+                           }}
                            options={[
                                { value: 'ACTIVE', label: 'ACTIVE' },
                                { value: 'INACTIVE', label: 'INACTIVE' },
@@ -379,6 +389,43 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                        />
                    </div>
                </div>
+
+               {/* Filter Info */}
+               {(search || filterRole || filterStatus) && (
+                 <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+                   <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+                   {search && (
+                     <span className="badge bg-primary-transparent">
+                       <i className="ti ti-search me-1"></i>
+                       Tìm kiếm: "{search}"
+                     </span>
+                   )}
+                   {filterRole && (
+                     <span className="badge bg-info-transparent">
+                       <i className="ti ti-user me-1"></i>
+                       Vai trò: {roles.find(r => r.id === filterRole)?.name || filterRole}
+                     </span>
+                   )}
+                   {filterStatus && (
+                     <span className="badge bg-warning-transparent">
+                       <i className="ti ti-filter me-1"></i>
+                       Trạng thái: {filterStatus}
+                     </span>
+                   )}
+                   <button 
+                     className="btn btn-sm btn-outline-secondary"
+                     onClick={() => {
+                       dispatch(setFilters({ search: '', role: undefined, status: undefined }));
+                       setFilterRole('');
+                       setFilterStatus('');
+                     }}
+                   >
+                     <i className="ti ti-x me-1"></i>
+                     Xóa tất cả
+                   </button>
+                 </div>
+               )}
+
                <div className="custom-datatable-filter table-responsive">
                    <table className="table datatable">
                        <thead className="thead-light">

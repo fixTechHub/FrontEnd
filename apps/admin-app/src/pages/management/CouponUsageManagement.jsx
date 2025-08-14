@@ -450,12 +450,6 @@ const handleSortByUsedAt = () => {
            <div className="text-muted">
              Hiển thị {indexOfFirst + 1}-{Math.min(indexOfLast, filteredUsages.length)} trong tổng số {filteredUsages.length} lịch sử sử dụng
            </div>
-           {filters.search && (
-             <div className="text-muted">
-               <i className="ti ti-filter me-1"></i>
-               Đã lọc theo: {filters.search && `Tìm kiếm: "${filters.search}"`}
-             </div>
-           )}
          </div>
          {filteredUsages.length > 0 && (
            <nav>
