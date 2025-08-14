@@ -49,6 +49,7 @@ import ServiceCardDark from "../../components/common/ServiceCardDark"
 import "../../styles/services-dark.css"
 import "../../styles/testimonials-swiper.css"
 import "../../styles/testimonials-modern.css"
+import "../../styles/homepage-complete.css"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Autoplay, Pagination } from "swiper/modules"
 import "swiper/css"
@@ -210,78 +211,69 @@ function NewHomePage() {
       {/* Hero Banner */}
       <HeroBanner />
 
-      {/* Stats Section */}
+      {/* Enhanced Stats Section */}
       <section className="stats-section">
         <div className="container">
-          {/* Trust Badges */}
-          <div style={{ textAlign: "center", marginBottom: "3rem" }}>
-            <div className="trust-badge">
+          {/* Enhanced Trust Badges */}
+          <div className="trust-badges-enhanced">
+            <div className="trust-badge-enhanced">
               <Shield size={20} />
-              <span>Được chứng nhận bởi Cục Tiêu chuẩn Đo lường Chất lượng</span>
+              <span>Chứng nhận chất lượng quốc gia</span>
             </div>
-            <div className="social-proof" style={{ marginLeft: "1rem" }}>
-              <Heart size={16} style={{ animation: "heartbeat 1.5s ease-in-out infinite" }} />
+            <div className="social-proof-enhanced">
+              <Heart size={16} />
               <span>2,500+ khách hàng tin tưởng</span>
             </div>
           </div>
 
-          <div className="stats-grid" style={{ gridTemplateColumns: "repeat(4, 1fr)", gap: "1.5rem" }}>
+          <div className="stats-grid-enhanced">
             {[
-              { icon: Users, number: 2500, suffix: "+", label: "Khách hàng hài lòng", color: "#3b82f6", delay: 0 },
-              { icon: Wrench, number: 150, suffix: "+", label: "Thợ chuyên nghiệp", color: "#fe9307", delay: 200 },
-              { icon: Award, number: 99, suffix: "%", label: "Tỷ lệ thành công", color: "#10b981", delay: 400 },
-              { icon: Clock, number: 24, suffix: "/7", label: "Hỗ trợ liên tục", color: "#8b5cf6", delay: 600 },
+              { icon: Users, number: 2500, suffix: "+", label: "Khách hàng hài lòng", color: "#3b82f6", rgb: "59, 130, 246" },
+              { icon: Wrench, number: 150, suffix: "+", label: "Thợ chuyên nghiệp", color: "#ff6b6b", rgb: "255, 107, 107" },
+              { icon: Award, number: 99, suffix: "%", label: "Tỷ lệ thành công", color: "#10b981", rgb: "16, 185, 129" },
+              { icon: Clock, number: 24, suffix: "/7", label: "Hỗ trợ liên tục", color: "#8b5cf6", rgb: "139, 92, 246" },
             ].map((stat, index) => (
-              <div key={index} className="card-premium stat-card scroll-animate" style={{ animationDelay: `${stat.delay}ms` }}>
-                <div
-                  className="stat-icon"
-                  style={{
-                    '--ring-color': stat.color,
-                    backgroundColor: `${stat.color}15`,
-                    border: `2px solid ${stat.color}30`,
-                  }}
-                >
-                  <stat.icon size={32} color={stat.color} />
+              <div 
+                key={index} 
+                className="stat-card-enhanced" 
+                style={{ 
+                  '--card-color': stat.color,
+                  '--card-color-light': `${stat.color}CC`,
+                  '--card-color-rgb': stat.rgb,
+                  animationDelay: `${index * 0.2}s`
+                }}
+              >
+                <div className="stat-icon-enhanced">
+                  <stat.icon size={36} color="white" />
                 </div>
-                <div className="stat-number" style={{ color: stat.color }}>
+                <div className="stat-number-enhanced">
                   <AnimatedCounter end={stat.number} suffix={stat.suffix} />
                 </div>
-                <p style={{ color: stat.color, fontWeight: 600, fontSize: "1rem" }}>{stat.label}</p>
+                <p className="stat-label-enhanced">{stat.label}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section id="dich-vu" className="services-section services-dark">
-      <div className="floating-particles">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div key={i} className="particle" />
-        ))}
-      </div>
+      {/* Enhanced Services Section */}
+      <section id="dich-vu" className="services-section-enhanced">
+        <div className="services-floating-bg"></div>
  
         <div className="container">
-          <div className="section-header scroll-animate">
-            <div className="section-badge pulse-glow">
-              <Sparkles size={24} style={{ animation: "pulse 2s ease-in-out infinite" }} />
-              <span className="typewriter">DỊCH VỤ CHUYÊN NGHIỆP</span>
-              <Sparkles size={24} style={{ animation: "pulse 2s ease-in-out infinite" }} />
+          <div className="section-header-enhanced">
+            <div className="section-badge-enhanced">
+              <Tools size={20} />
+              <span>DỊCH VỤ CHUYÊN NGHIỆP</span>
+              <Medal size={20} />
             </div>
-            <h2 className="section-title magic-text neon-glow">Dịch vụ sửa chữa toàn diện</h2>
-            <p className="section-description text-reveal">
-              <Flash size={16} style={{ display: "inline", marginRight: "0.5rem" }} />
-              Chúng tôi cung cấp dịch vụ sửa chữa cho tất cả các loại thiết bị gia dụng với kỹ thuật tiên tiến
-              <br />
-              <Tools size={16} style={{ display: "inline", marginRight: "0.5rem" }} />
-              Đội ngũ thợ có kinh nghiệm và được chứng nhận kỹ thuật
-              <br />
-              <Medal size={16} style={{ display: "inline", marginRight: "0.5rem" }} />
-              Cam kết sửa tận nơi, uy tín, bảo hành lên đến 6 tháng
+            <h2 className="section-title-enhanced">Dịch vụ sửa chữa toàn diện</h2>
+            <p className="section-description-enhanced">
+              Chúng tôi cung cấp dịch vụ sửa chữa cho tất cả các loại thiết bị gia dụng với kỹ thuật tiên tiến nhất
             </p>
           </div>
 
-          <div className="services-grid">
+          <div className="services-grid" style={{ position: "relative", zIndex: 2 }}>
             {[
               {
                 icon: Refrigerator,
@@ -399,58 +391,66 @@ function NewHomePage() {
             })}
           </div>
         </div>
-          <div style={{textAlign:"center",marginTop:"2rem"}}>
-            <button className="btn-orange">Xem thêm dịch vụ</button>
+          <div style={{textAlign:"center",marginTop:"2rem", position: "relative", zIndex: 2}}>
+            <button className="btn-orange" style={{
+              background: "rgba(255, 255, 255, 0.2)",
+              border: "2px solid rgba(255, 255, 255, 0.3)",
+              color: "white",
+              backdropFilter: "blur(20px)",
+              transition: "all 0.3s ease"
+            }}>Xem thêm dịch vụ</button>
           </div>
       </section>
 
-      {/* Process Section */}
+      {/* Enhanced Process Section */}
       <section className="process-section" id="quy-trinh">
         <div className="container">
-          <div className="section-header">
-            <div className="section-badge">
-              <Sparkles size={24} style={{ animation: "pulse 2s ease-in-out infinite" }} />
+          <div className="section-header-enhanced">
+            <div className="section-badge-enhanced">
+              <Rocket size={20} />
               <span>QUY TRÌNH LÀM VIỆC</span>
-              <Sparkles size={24} style={{ animation: "pulse 2s ease-in-out infinite" }} />
+              <Star size={20} />
             </div>
-            <h2 className="section-title">4 bước đơn giản</h2>
-            <p className="section-description">
+            <h2 className="section-title-enhanced">4 bước đơn giản</h2>
+            <p className="section-description-enhanced">
               Quy trình làm việc chuyên nghiệp, minh bạch từ khi nhận cuộc gọi đến khi hoàn thành dịch vụ
             </p>
           </div>
 
-          <div className="process-grid">
+          <div className="process-grid-enhanced">
             {processSteps.map((step, index) => (
-              <div key={index} className="process-step">
-                <div className="process-icon" data-step={index + 1}>
-                  <step.icon size={24} color="white" />
+              <div key={index} className="process-step-enhanced">
+                <div className="process-icon-enhanced">
+                  <step.icon size={32} color="#ff6b6b" />
                 </div>
-                <h3 className="process-title">{step.title}</h3>
-                <p className="process-description">{step.description}</p>
+                <h3 className="process-title-enhanced">{step.title}</h3>
+                <p className="process-description-enhanced">{step.description}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section className="testimonials-section" id="danh-gia">
+      {/* Enhanced Testimonials Section */}
+      <section className="testimonials-section-enhanced" id="danh-gia">
+        <div className="testimonials-floating-particles">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="testimonial-particle"></div>
+          ))}
+        </div>
+        
         <div className="container">
-          <div className="section-header scroll-animate">
-            <div className="section-badge pulse-glow">
-              <Sparkles size={24} style={{ animation: "pulse 2s ease-in-out infinite" }} />
-              <span className="magic-text">KHÁCH HÀNG THỰC TẾ</span>
-              <Sparkles size={24} style={{ animation: "pulse 2s ease-in-out infinite" }} />
+          <div className="section-header-enhanced">
+            <div className="section-badge-enhanced">
+              <Trophy size={20} />
+              <span>KHÁCH HÀNG THỰC TẾ</span>
+              <Heart size={20} />
             </div>
-            <h2 className="section-title" style={{ color: "#fe9307", textShadow: "0 2px 4px rgba(0,0,0,.25)", background: "none", WebkitTextFillColor: "#fe9307", WebkitBackgroundClip: "initial" }}>
+            <h2 className="section-title-enhanced" style={{ color: "white" }}>
               2,500+ khách hàng đã hài lòng
             </h2>
-            <p className="section-description" style={{ color: "#d1d5db" }}>
-              <Trophy size={16} style={{ display: "inline", marginRight: "0.5rem" }} />
+            <p className="section-description-enhanced" style={{ color: "#cbd5e0" }}>
               Từ nhà riêng đến doanh nghiệp, miễn là thiết bị gia dụng, chúng tôi đều có thể sửa được
-              <br />
-              <Star size={16} style={{ display: "inline", marginRight: "0.5rem" }} />
-              Đánh giá trung bình 4.7/5 sao trên tổng số đơn đánh giá
             </p>
           </div>
 
@@ -475,50 +475,49 @@ function NewHomePage() {
             >
             {testimonials.map((testimonial, index) => (
               <SwiperSlide key={index}>
-                <div className="testi-modern-card">
-                <div className="testimonial-content">
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                    <div className="badge-service">{testimonial.service}</div>
-                    <div className="badge-price">
-                      {testimonial.price}
+                <div className="testi-card-enhanced">
+                  <div className="testi-header-enhanced">
+                    <div className="testi-badges">
+                      <div className="service-badge-enhanced">{testimonial.service}</div>
+                      <div className="price-badge-enhanced">{testimonial.price}</div>
                     </div>
                     {testimonial.verified && (
-                      <div style={{ color: "#10b981", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                      <div className="verified-badge">
                         <Verified size={16} />
-                        <span style={{ fontSize: "0.75rem" }}>Xác thực</span>
+                        <span>Xác thực</span>
                       </div>
                     )}
                   </div>
-                  <p className="testi-modern-content">
+                  
+                  <p className="testi-content-enhanced">
                     "{testimonial.content}"
                   </p>
-                </div>
                 
-                <div className="testimonial-author">
-                  <img className="testi-modern-avatar" 
-                    src={testimonial.avatar} 
-                    alt={testimonial.name}
-                   
-                  />
-                  <div className="testimonial-info">
-                    <h4 className="testi-modern-name">{testimonial.name}</h4>
-                    <p className="testi-modern-location">{testimonial.location}</p>
-                    <div className="testi-modern-stars">
-                      {[...Array(testimonial.rating)].map((_, i) => (
-                        <Star 
-                          key={i} 
-                          size={16} 
-                          color="#fbbf24" 
-                          fill="#fbbf24"
-                          style={{ animation: `pulse ${0.5 + i * 0.1}s ease-in-out infinite` }}
-                        />
-                      ))}
-                      <span style={{ marginLeft: "0.5rem", color: "#fbbf24", fontSize: "0.875rem", fontWeight: "600" }}>
-                        {testimonial.rating}.0
-                      </span>
+                  <div className="testi-author-enhanced">
+                    <img className="testi-avatar-enhanced" 
+                      src={testimonial.avatar} 
+                      alt={testimonial.name}
+                    />
+                    <div className="testi-info">
+                      <h4 className="testi-name">{testimonial.name}</h4>
+                      <p className="testi-location">{testimonial.location}</p>
+                      <div className="testi-stars">
+                        {[...Array(testimonial.rating)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            size={14} 
+                            color="#fbbf24" 
+                            fill="#fbbf24"
+                          />
+                        ))}
+                        <span className="testi-rating-text">
+                          {testimonial.rating}.0
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div></div></SwiperSlide>
+                </div>
+              </SwiperSlide>
             ))}
             </Swiper>
           </div>
@@ -536,11 +535,15 @@ function NewHomePage() {
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <FAQSection />
+      {/* Enhanced FAQ Section */}
+      <div className="faq-section-enhanced">
+        <FAQSection />
+      </div>
 
-      {/* Footer */}
-      <Footer />
+      {/* Enhanced Footer */}
+      <div className="footer-enhanced">
+        <Footer />
+      </div>
 
       {/* Premium Floating Chat Button */}
       <div style={{ position: "fixed", bottom: "3rem", right: "3.5rem", zIndex: 100 }}>
