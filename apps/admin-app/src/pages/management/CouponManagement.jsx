@@ -219,6 +219,11 @@ const totalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
    setCurrentPage(page);
  };
 
+ // Reset to first page when filters change
+ useEffect(() => {
+   setCurrentPage(1);
+ }, [filteredCoupons.length, searchText, filterType, filterStatus]);
+
 
  useEffect(() => {
    dispatch(fetchCoupons());
@@ -702,6 +707,43 @@ const handleConfirmUserSelection = () => {
            />
          </div>
        </div>
+
+       {/* Filter Info */}
+       {(searchText || filterType || filterStatus) && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           {searchText && (
+             <span className="badge bg-primary-transparent">
+               <i className="ti ti-search me-1"></i>
+               Tìm kiếm: "{searchText}"
+             </span>
+           )}
+           {filterType && (
+             <span className="badge bg-info-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Phân loại: {filterType}
+             </span>
+           )}
+           {filterStatus && (
+             <span className="badge bg-warning-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Trạng thái: {filterStatus}
+             </span>
+           )}
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               setSearchText('');
+               setFilterType(undefined);
+               setFilterStatus(undefined);
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
+
        {loading ? <Spin /> : (
          <div className="custom-datatable-filter table-responsive">
            <table className="table datatable">
@@ -739,56 +781,84 @@ const handleConfirmUserSelection = () => {
                </tr>
              </thead>
              <tbody>
-               {currentCoupons.map((coupon) => (
-                 <tr key={coupon.id}>
-                   <td>{coupon.code}</td>
-                   {/* <td style={{
-                      maxWidth: 260,
-                      minWidth: 120,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                      title={coupon.description}
-                    >
-                      <div 
-                        dangerouslySetInnerHTML={{ 
-                          __html: renderFormattedDescription(coupon.description) 
-                        }}
-                        style={{
-                          fontFamily: coupon.fontFamily || 'Arial',
-                          fontSize: `${coupon.fontSize || 14}px`,
-                          textAlign: coupon.textAlign || 'left'
-                        }}
-                      />
-                    </td> */}
-                   <td>{coupon.type}</td>
-                   <td>{coupon.value}</td>
-                   <td>{coupon.maxDiscount}</td>
-                   <td>
-                     <span className={`badge ${(coupon.usedCount || 0) >= (coupon.totalUsageLimit || 1) ? 'bg-warning-transparent' : 'bg-info-transparent'} text-dark`}>
-                       {coupon.usedCount || 0}
-                     </span>
-                   </td>
-                   <td>{coupon.totalUsageLimit || 0}</td>
-                   <td>
-                     <span className={`badge ${coupon.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                       {coupon.isActive ? 'ACTIVE' : 'INACTIVE'}
-                     </span>
-                   </td>
-                   <td>
-                     {/* <Button className="management-action-btn" type="default" icon={<EyeOutlined />} onClick={() => handleViewDetail(coupon)} style={{ marginRight: 8 }}>
-                        Xem chi tiết
-                      </Button> */}
-                     <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditCoupon(coupon)} style={{ marginRight: 8 }}>
-                        Chỉnh sửa
-                      </Button>
-                     <Button className="management-action-btn" size="middle" danger onClick={() => { setSelectedCoupon(coupon); setShowDeleteModal(true); }} style={{ marginRight: 8 }}>
-                       Xóa
-                     </Button>
+               {loading ? (
+                 <tr>
+                   <td colSpan={8} className="text-center">
+                     <div className="spinner-border text-primary" role="status">
+                       <span className="visually-hidden">Loading...</span>
+                     </div>
                    </td>
                  </tr>
-               ))}
+               ) : filteredCoupons.length === 0 ? (
+                 <tr>
+                   <td colSpan={8} className="text-center text-muted py-4">
+                     <div>
+                       <i className="ti ti-ticket" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                       <p className="mb-0">Không có mã giảm giá nào</p>
+                     </div>
+                   </td>
+                 </tr>
+               ) : currentCoupons.length === 0 ? (
+                 <tr>
+                   <td colSpan={8} className="text-center text-muted py-4">
+                     <div>
+                       <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                       <p className="mb-0">Không tìm thấy mã giảm giá nào phù hợp</p>
+                     </div>
+                   </td>
+                 </tr>
+               ) : (
+                 currentCoupons.map((coupon) => (
+                   <tr key={coupon.id}>
+                     <td>{coupon.code}</td>
+                     {/* <td style={{
+                        maxWidth: 260,
+                        minWidth: 120,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                        title={coupon.description}
+                      >
+                        <div 
+                          dangerouslySetInnerHTML={{ 
+                            __html: renderFormattedDescription(coupon.description) 
+                          }}
+                          style={{
+                            fontFamily: coupon.fontFamily || 'Arial',
+                            fontSize: `${coupon.fontSize || 14}px`,
+                            textAlign: coupon.textAlign || 'left'
+                          }}
+                        />
+                      </td> */}
+                     <td>{coupon.type}</td>
+                     <td>{coupon.value}</td>
+                     <td>{coupon.maxDiscount}</td>
+                     <td>
+                       <span className={`badge ${(coupon.usedCount || 0) >= (coupon.totalUsageLimit || 1) ? 'bg-warning-transparent' : 'bg-info-transparent'} text-dark`}>
+                         {coupon.usedCount || 0}
+                       </span>
+                     </td>
+                     <td>{coupon.totalUsageLimit || 0}</td>
+                     <td>
+                       <span className={`badge ${coupon.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
+                         {coupon.isActive ? 'ACTIVE' : 'INACTIVE'}
+                       </span>
+                     </td>
+                     <td>
+                       {/* <Button className="management-action-btn" type="default" icon={<EyeOutlined />} onClick={() => handleViewDetail(coupon)} style={{ marginRight: 8 }}>
+                          Xem chi tiết
+                        </Button> */}
+                       <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditCoupon(coupon)} style={{ marginRight: 8 }}>
+                          Chỉnh sửa
+                        </Button>
+                       <Button className="management-action-btn" size="middle" danger onClick={() => { setSelectedCoupon(coupon); setShowDeleteModal(true); }} style={{ marginRight: 8 }}>
+                         Xóa
+                       </Button>
+                     </td>
+                   </tr>
+                 ))
+               )}
              </tbody>
            </table>
 
@@ -799,21 +869,130 @@ const handleConfirmUserSelection = () => {
 
 
        )}
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, i) => (
-               <li
-                 key={i}
-                 className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}
-               >
-                 <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                   {i + 1}
+       <div className="d-flex justify-content-between align-items-center mt-3">
+         <div className="d-flex align-items-center gap-3">
+           <div className="text-muted">
+             Hiển thị {indexOfFirstCoupon + 1}-{Math.min(indexOfLastCoupon, filteredCoupons.length)} trong tổng số {filteredCoupons.length} mã giảm giá
+           </div>
+           {(searchText || filterType || filterStatus) && (
+             <div className="text-muted">
+               <i className="ti ti-filter me-1"></i>
+               Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterType && `Loại: ${filterType}`} {filterStatus && `Trạng thái: ${filterStatus}`}
+             </div>
+           )}
+           
+           
+         </div>
+         {totalPages > 1 && (
+           <nav>
+             <ul className="pagination mb-0" style={{ gap: '2px' }}>
+               {/* Previous button */}
+               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage - 1)}
+                   disabled={currentPage === 1}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-left"></i>
                  </button>
                </li>
-             ))}
-           </ul>
-         </nav>
+               
+               {/* Page numbers */}
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNumber = i + 1;
+                 // Show all pages if total pages <= 7
+                 if (totalPages <= 7) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 }
+                 
+                 // Show first page, last page, current page, and pages around current page
+                 if (
+                   pageNumber === 1 || 
+                   pageNumber === totalPages || 
+                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                 ) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 } else if (
+                   pageNumber === currentPage - 2 || 
+                   pageNumber === currentPage + 2
+                 ) {
+                   return (
+                     <li key={i} className="page-item disabled">
+                       <span className="page-link" style={{ 
+                         border: '1px solid #dee2e6',
+                         borderRadius: '6px',
+                         padding: '8px 12px',
+                         minWidth: '40px',
+                         backgroundColor: '#f8f9fa',
+                         color: '#6c757d'
+                       }}>...</span>
+                     </li>
+                   );
+                 }
+                 return null;
+               })}
+               
+               {/* Next button */}
+               <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage + 1)}
+                   disabled={currentPage === totalPages}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-right"></i>
+                 </button>
+               </li>
+             </ul>
+           </nav>
+         )}
        </div>
      </div>
 

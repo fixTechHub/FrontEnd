@@ -180,13 +180,30 @@ export default function UserDetail() {
                     <Descriptions.Item label="Mã người dùng">{user.userCode || ''}</Descriptions.Item>
                     <Descriptions.Item label="Trạng thái">{statusTag(user.status)}</Descriptions.Item>
                     <Descriptions.Item label="Thời gian tạo">{formatDateTime(user.createdAt)}</Descriptions.Item>
-                    {user.lockedReason && (
-                      <Descriptions.Item label="Locked Reason" span={2}>{user.lockedReason}</Descriptions.Item>
-                    )}
                     {user.address && (
                       <Descriptions.Item label="Địa chỉ" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
                     )}
                   </Descriptions>
+
+                  {/* Locked Reason - Hiển thị riêng */}
+                  {user.lockedReason && (
+                    <div style={{ marginTop: 16 }}>
+                      <h4 style={{ marginBottom: 12, color: '#333', fontSize: '16px', fontWeight: '600' }}>
+                        Lý Do Khóa Tài Khoản
+                      </h4>
+                      <div style={{ 
+                        background: '#fff2f0', 
+                        border: '1px solid #ffccc7', 
+                        borderRadius: '8px', 
+                        padding: '16px',
+                        color: '#cf1322',
+                        fontSize: '14px',
+                        lineHeight: '1.5'
+                      }}>
+                        <strong>⚠️ Lý do:</strong> {user.lockedReason}
+                      </div>
+                    </div>
+                  )}
                 </Card>
 
                 <Tabs

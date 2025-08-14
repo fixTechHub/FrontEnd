@@ -672,7 +672,7 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Số lượng kỹ thuật viên đăng ký của tháng</div>
+                  <div className="text-white-50 small mb-1">Kỹ thuật viên đăng ký tháng</div>
                   <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
                     {totalTechnicians.toLocaleString()}
                 </div>
@@ -730,7 +730,7 @@ const AdminDashboard = () => {
                   </div>
                   <div className="d-flex align-items-center mt-2">
                     <span className="small text-white-50">
-                      {dashboardStats.pendingBookings} đơn hàng đang chờ
+                      - {dashboardStats.pendingBookings} đơn hàng đang chờ xác nhận
                     </span>
                   </div>
                 </div>

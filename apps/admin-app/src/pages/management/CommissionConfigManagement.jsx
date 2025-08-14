@@ -36,7 +36,7 @@ const CommissionConfigManagement = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const configsPerPage = 10;
+  const [configsPerPage, setConfigsPerPage] = useState(10);
   const [sortField, setSortField] = useState('startDate');
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterInApplied, setFilterInApplied] = useState();
@@ -101,6 +101,13 @@ const CommissionConfigManagement = () => {
   const indexOfFirstConfig = indexOfLastConfig - configsPerPage;
   const currentConfigs = sortedConfigs.slice(indexOfFirstConfig, indexOfLastConfig);
 
+  const totalPages = Math.ceil(filteredConfigs.length / configsPerPage);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredConfigs.length, searchText, filterInApplied]);
+
   // Set export data và columns
   useEffect(() => {
     const exportColumns = [
@@ -127,7 +134,6 @@ const CommissionConfigManagement = () => {
     createExportData(exportData, exportColumns, 'commission_configs_export', 'Commission Configs');
   }, [sortedConfigs]);
 
-  const totalPages = Math.ceil(filteredConfigs.length / configsPerPage);
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prev => ({
@@ -323,6 +329,36 @@ const CommissionConfigManagement = () => {
             />
           </div>
         </div>
+
+        {/* Filter Info */}
+        {(searchText || filterInApplied) && (
+          <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+            <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+            {searchText && (
+              <span className="badge bg-primary-transparent">
+                <i className="ti ti-search me-1"></i>
+                Tìm kiếm: "{searchText}"
+              </span>
+            )}
+            {filterInApplied && (
+              <span className="badge bg-warning-transparent">
+                <i className="ti ti-filter me-1"></i>
+                Trạng thái: {filterInApplied === 'APPLIED' ? 'Đang áp dụng' : 'Không áp dụng'}
+              </span>
+            )}
+            <button 
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                setSearchText('');
+                setFilterInApplied(undefined);
+              }}
+            >
+              <i className="ti ti-x me-1"></i>
+              Xóa tất cả
+            </button>
+          </div>
+        )}
+
         {loading ? <Spin /> : (
           <div className="custom-datatable-filter table-responsive">
             <table className="table datatable">
@@ -350,9 +386,31 @@ const CommissionConfigManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {!isDataReady ? (
+                {loading ? (
                   <tr>
-                    <td colSpan={7} className="text-center">Đang tải...</td>
+                    <td colSpan={7} className="text-center">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredConfigs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center text-muted py-4">
+                      <div>
+                        <i className="ti ti-percentage" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                        <p className="mb-0">Không có cấu hình hoa hồng nào</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : currentConfigs.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center text-muted py-4">
+                      <div>
+                        <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                        <p className="mb-0">Không tìm thấy cấu hình hoa hồng nào phù hợp</p>
+                      </div>
+                    </td>
                   </tr>
                 ) : (
                   currentConfigs.map((cfg) => (
@@ -389,21 +447,128 @@ const CommissionConfigManagement = () => {
             </table>
           </div>
         )}
-        <div className="d-flex justify-content-end mt-3">
-          <nav>
-            <ul className="pagination mb-0">
-              {[...Array(totalPages)].map((_, i) => (
-                <li
-                  key={i}
-                  className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}
-                >
-                  <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                    {i + 1}
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <div className="d-flex align-items-center gap-3">
+            <div className="text-muted">
+              Hiển thị {indexOfFirstConfig + 1}-{Math.min(indexOfLastConfig, filteredConfigs.length)} trong tổng số {filteredConfigs.length} cấu hình hoa hồng
+            </div>
+            {(searchText || filterInApplied) && (
+              <div className="text-muted">
+                <i className="ti ti-filter me-1"></i>
+                Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterInApplied && `Trạng thái: ${filterInApplied === 'APPLIED' ? 'Đang áp dụng' : 'Không áp dụng'}`}
+              </div>
+            )}
+          </div>
+          {filteredConfigs.length > 0 && (
+            <nav>
+              <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                {/* Previous button */}
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <button 
+                    className="page-link" 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    style={{ 
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    <i className="ti ti-chevron-left"></i>
                   </button>
                 </li>
-              ))}
-            </ul>
-          </nav>
+                
+                {/* Page numbers */}
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNumber = i + 1;
+                  // Show all pages if total pages <= 7
+                  if (totalPages <= 7) {
+                    return (
+                      <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(pageNumber)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px',
+                            backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                            color: currentPage === pageNumber ? 'white' : '#007bff',
+                            borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      </li>
+                    );
+                  }
+                  
+                  // Show first page, last page, current page, and pages around current page
+                  if (
+                    pageNumber === 1 || 
+                    pageNumber === totalPages || 
+                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                  ) {
+                    return (
+                      <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(pageNumber)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px',
+                            backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                            color: currentPage === pageNumber ? 'white' : '#007bff',
+                            borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      </li>
+                    );
+                  } else if (
+                    pageNumber === currentPage - 2 || 
+                    pageNumber === currentPage + 2
+                  ) {
+                    return (
+                      <li key={i} className="page-item disabled">
+                        <span className="page-link" style={{ 
+                          border: '1px solid #dee2e6',
+                          borderRadius: '6px',
+                          padding: '8px 12px',
+                          minWidth: '40px',
+                          backgroundColor: '#f8f9fa',
+                          color: '#6c757d'
+                        }}>...</span>
+                      </li>
+                    );
+                  }
+                  return null;
+                })}
+                
+                {/* Next button */}
+                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button 
+                    className="page-link" 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    style={{ 
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    <i className="ti ti-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </div>
       {/* Add Modal */}

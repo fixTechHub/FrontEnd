@@ -24,7 +24,7 @@ const BookingManagement = () => {
  const [showDetailModal, setShowDetailModal] = useState(false);
  const [selectedBooking, setSelectedBooking] = useState(null);
  const [currentPage, setCurrentPage] = useState(1);
- const bookingsPerPage = 10;
+ const [bookingsPerPage, setBookingsPerPage] = useState(10);
  const [sortField, setSortField] = useState('createdAt');
 const [sortOrder, setSortOrder] = useState('desc');
 const [filterService, setFilterService] = useState('');
@@ -90,7 +90,7 @@ const [error, setError] = useState(null);
 
 useEffect(() => {
   setCurrentPage(1);
-}, [filterService, filterStatus]);
+}, [filterService, filterStatus, searchText]);
 
 
  const filteredBookings = bookings.filter(b => {
@@ -321,6 +321,44 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            />
          </div>
        </div>
+
+       {/* Filter Info */}
+       {(searchText || filterService || filterStatus) && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           {searchText && (
+             <span className="badge bg-primary-transparent">
+               <i className="ti ti-search me-1"></i>
+               Tìm kiếm: "{searchText}"
+             </span>
+           )}
+           {filterService && (
+             <span className="badge bg-info-transparent">
+               <i className="ti ti-tools me-1"></i>
+               Dịch vụ: {serviceMap[filterService] || filterService}
+             </span>
+           )}
+           {filterStatus && (
+             <span className="badge bg-warning-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Trạng thái: {filterStatus}
+             </span>
+           )}
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               setSearchText('');
+               setFilterService('');
+               setFilterStatus('');
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
+
+       {/* Table */}
        <div className="custom-datatable-filter table-responsive">
          <table className="table datatable">
            <thead className="thead-light">
@@ -356,11 +394,33 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            <tbody>
              {loading ? (
                <tr>
-                 <td><Spin /></td>
+                 <td colSpan={5} className="text-center">
+                   <div className="spinner-border text-primary" role="status">
+                     <span className="visually-hidden">Loading...</span>
+                   </div>
+                 </td>
                </tr>
              ) : error ? (
                <tr>
-                 <td colSpan={6} style={{ color: 'red' }}>{error.message || 'Không thể tải các đơn hàng.'}</td>
+                 <td colSpan={5} style={{ color: 'red' }}>{error.message || 'Không thể tải các đơn hàng.'}</td>
+               </tr>
+             ) : filteredBookings.length === 0 ? (
+               <tr>
+                 <td colSpan={5} className="text-center text-muted py-4">
+                   <div>
+                     <i className="ti ti-calendar" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                     <p className="mb-0">Không có đơn hàng nào</p>
+                   </div>
+                 </td>
+               </tr>
+             ) : currentBookings.length === 0 ? (
+               <tr>
+                 <td colSpan={5} className="text-center text-muted py-4">
+                   <div>
+                     <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                     <p className="mb-0">Không tìm thấy đơn hàng nào phù hợp</p>
+                   </div>
+                 </td>
                </tr>
              ) : (
                currentBookings.map(b => (
@@ -391,24 +451,134 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            </tbody>
          </table>
        </div>
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, i) => (
-               <li
-                 key={i}
-                 className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}
-               >
-                 <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                   {i + 1}
+
+       {/* Pagination Info and Controls */}
+       <div className="d-flex justify-content-between align-items-center mt-3">
+         <div className="d-flex align-items-center gap-3">
+           <div className="text-muted">
+             Hiển thị {indexOfFirstBooking + 1}-{Math.min(indexOfLastBooking, filteredBookings.length)} trong tổng số {filteredBookings.length} đơn hàng
+           </div>
+           {(searchText || filterService || filterStatus) && (
+             <div className="text-muted">
+               <i className="ti ti-filter me-1"></i>
+               Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterService && `Dịch vụ: ${serviceMap[filterService] || filterService}`} {filterStatus && `Trạng thái: ${filterStatus}`}
+             </div>
+           )}
+         </div>
+         {filteredBookings.length > 0 && (
+           <nav>
+             <ul className="pagination mb-0" style={{ gap: '2px' }}>
+               {/* Previous button */}
+               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage - 1)}
+                   disabled={currentPage === 1}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-left"></i>
                  </button>
                </li>
-             ))}
-           </ul>
-         </nav>
+               
+               {/* Page numbers */}
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNumber = i + 1;
+                 // Show all pages if total pages <= 7
+                 if (totalPages <= 7) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 }
+                 
+                 // Show first page, last page, current page, and pages around current page
+                 if (
+                   pageNumber === 1 || 
+                   pageNumber === totalPages || 
+                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                 ) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 } else if (
+                   pageNumber === currentPage - 2 || 
+                   pageNumber === currentPage + 2
+                 ) {
+                   return (
+                     <li key={i} className="page-item disabled">
+                       <span className="page-link" style={{ 
+                         border: '1px solid #dee2e6',
+                         borderRadius: '6px',
+                         padding: '8px 12px',
+                         minWidth: '40px',
+                         backgroundColor: '#f8f9fa',
+                         color: '#6c757d'
+                       }}>...</span>
+                     </li>
+                   );
+                 }
+                 return null;
+               })}
+               
+               {/* Next button */}
+               <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage + 1)}
+                   disabled={currentPage === totalPages}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-right"></i>
+                 </button>
+               </li>
+             </ul>
+           </nav>
+         )}
        </div>
      </div>
-      {showDetailModal && selectedBooking && (
+
+     {showDetailModal && selectedBooking && (
         <Modal
           open={showDetailModal}
           onCancel={() => setShowDetailModal(false)}

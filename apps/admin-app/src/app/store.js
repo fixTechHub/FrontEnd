@@ -19,6 +19,7 @@ import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
 import notificationReducer from '../features/notifications/notificationsSlice'
 import adminCertificateReducer from '../features/certificates/certificateSlice';
+import technicianSubscriptionReducer from '../features/technicianSubscription/technicianSubscriptionSlice';
 
 const store = configureStore({
   reducer: {
@@ -42,6 +43,7 @@ const store = configureStore({
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
     adminCertificate: adminCertificateReducer,
+    technicianSubscription: technicianSubscriptionReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

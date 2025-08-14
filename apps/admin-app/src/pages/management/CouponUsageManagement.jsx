@@ -21,8 +21,8 @@ const CouponUsageManagement = () => {
  const [showDetailModal, setShowDetailModal] = useState(false);
  const [selectedUsage, setSelectedUsage] = useState(null);
  const [currentPage, setCurrentPage] = useState(1);
- const couponsPerPage = 10;
- const [sortField, setSortField] = useState('');
+ const [couponsPerPage, setCouponsPerPage] = useState(10);
+ const [sortField, setSortField] = useState('usedAt');
 const [sortOrder, setSortOrder] = useState('desc');
 const [hasSorted, setHasSorted] = useState(false);
 const [isDataReady, setIsDataReady] = useState(false);
@@ -45,6 +45,12 @@ const [isDataReady, setIsDataReady] = useState(false);
      }
    };
    fetchBookings();
+   
+   // Reset sort state khi component mount
+   setHasSorted(false);
+   setSortField('usedAt');
+   setSortOrder('desc');
+   console.log('🚀 Component mounted, resetting sort state');
  }, [dispatch]);
 
 
@@ -52,6 +58,11 @@ const [isDataReady, setIsDataReady] = useState(false);
  useEffect(() => {
    setCurrentPage(1);
  }, [filters]);
+
+ // Reset to first page when search text changes
+ useEffect(() => {
+   setCurrentPage(1);
+ }, [filters.search, filters.user, filters.coupon, filters.bookingId]);
 
 
  // Lấy thông tin user + coupon
@@ -106,6 +117,17 @@ const [isDataReady, setIsDataReady] = useState(false);
    if (usages.length > 0) fetchDetails();
  }, [usages]);
 
+ // Đảm bảo sắp xếp mặc định khi dữ liệu được load
+ useEffect(() => {
+   if (usages.length > 0) {
+     // Force set sort state
+     setSortField('usedAt');
+     setSortOrder('desc');
+     setHasSorted(false);
+     console.log('🔧 FORCE setting default sort: usedAt desc');
+   }
+ }, [usages]);
+
 
  // Lọc dữ liệu
  const filteredUsages = usages.filter((usage) => {
@@ -127,7 +149,19 @@ const [isDataReady, setIsDataReady] = useState(false);
  // Phân trang
  const indexOfLast = currentPage * couponsPerPage;
  const indexOfFirst = indexOfLast - couponsPerPage;
+ // Force sắp xếp mới nhất trước theo usedAt
  const sortedUsages = [...filteredUsages].sort((a, b) => {
+  console.log(`🔍 Sorting: sortField=${sortField}, sortOrder=${sortOrder}`);
+  
+  // LUÔN sắp xếp theo usedAt mới nhất trước khi không có sortField cụ thể
+  if (!sortField || sortField === 'usedAt') {
+    const dateA = new Date(a.usedAt || 0);
+    const dateB = new Date(b.usedAt || 0);
+    console.log(`📅 FORCE sorting by usedAt DESC: ${dateA.toISOString()} vs ${dateB.toISOString()}`);
+    // Luôn trả về mới nhất trước, bỏ qua sortOrder
+    return dateB - dateA;
+  }
+  
   if (sortField === 'user') {
     const nameA = (userMap[a.userId] || '').toLowerCase();
     const nameB = (userMap[b.userId] || '').toLowerCase();
@@ -152,17 +186,14 @@ const [isDataReady, setIsDataReady] = useState(false);
     } else {
       return codeB.localeCompare(codeA);
     }
-  } else if (sortField === 'usedAt') {
-    const dateA = new Date(a.usedAt);
-    const dateB = new Date(b.usedAt);
-    if (sortOrder === 'asc') {
-      return dateA - dateB;
-    } else {
-      return dateB - dateA;
-    }
   }
-  return 0;
-});
+  
+  // Fallback: LUÔN sắp xếp theo thời gian sử dụng mới nhất trước
+  const dateA = new Date(a.usedAt || 0);
+  const dateB = new Date(b.usedAt || 0);
+  console.log(`📅 FORCE fallback sorting DESC: ${dateA.toISOString()} vs ${dateB.toISOString()}`);
+  return dateB - dateA;
+ });
 const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
 
 // Set export data và columns
@@ -186,12 +217,26 @@ useEffect(() => {
   }));
 
   createExportData(exportData, exportColumns, 'coupon_usages_export', 'Coupon Usages');
-}, [sortedUsages, couponMap, userMap, bookingMap]);
-const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
+ }, [sortedUsages, couponMap, userMap, bookingMap]);
 
+ // Debug: Log dữ liệu sắp xếp
+ useEffect(() => {
+   if (sortedUsages.length > 0) {
+     console.log('🔍 Original usages:', usages.slice(0, 3).map(u => ({ id: u.id, usedAt: u.usedAt })));
+     console.log('🔍 Sorted usages:', sortedUsages.slice(0, 3).map(u => ({ id: u.id, usedAt: u.usedAt })));
+     console.log('🔍 Sort config:', { sortField, sortOrder });
+   }
+ }, [sortedUsages, sortField, sortOrder]);
 
- const handlePageChange = (pageNumber) => {
-   setCurrentPage(pageNumber);
+ // Force re-render khi sort state thay đổi
+ useEffect(() => {
+   console.log('🔄 Sort state changed:', { sortField, sortOrder, hasSorted });
+ }, [sortField, sortOrder, hasSorted]);
+
+ const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
+
+ const handlePageChange = (page) => {
+   setCurrentPage(page);
  };
 
 
@@ -281,19 +326,39 @@ const handleSortByUsedAt = () => {
          </div>
          <div className="d-flex align-items-center">
            <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
-           <Select
-             value={sortField === 'usedAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
-             style={{ width: 120 }}
-             onChange={handleSortChange}
-             options={[
-               { value: 'lasted', label: 'Mới nhất' },
-               { value: 'oldest', label: 'Cũ nhất' },
-             ]}
-           />
+                       <Select
+              value="lasted"
+              style={{ width: 120 }}
+              onChange={handleSortChange}
+              options={[
+                { value: 'lasted', label: 'Mới nhất' },
+                { value: 'oldest', label: 'Cũ nhất' },
+              ]}
+            />
          </div>
        </div>
 
+       {/* Filter Info */}
+       {filters.search && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           <span className="badge bg-primary-transparent">
+             <i className="ti ti-search me-1"></i>
+             Tìm kiếm: "{filters.search}"
+           </span>
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               dispatch(setFilters({ ...filters, search: '' }));
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
 
+       {/* Table */}
        <div className="custom-datatable-filter table-responsive">
          <table className="table datatable">
            <thead className="thead-light">
@@ -336,7 +401,29 @@ const handleSortByUsedAt = () => {
            <tbody>
              {!isDataReady ? (
                <tr>
-                 <td><Spin /></td>
+                 <td colSpan={5} className="text-center">
+                   <div className="spinner-border text-primary" role="status">
+                     <span className="visually-hidden">Loading...</span>
+                   </div>
+                 </td>
+               </tr>
+             ) : filteredUsages.length === 0 ? (
+               <tr>
+                 <td colSpan={5} className="text-center text-muted py-4">
+                   <div>
+                     <i className="ti ti-ticket" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                     <p className="mb-0">Không có lịch sử sử dụng nào</p>
+                   </div>
+                 </td>
+               </tr>
+             ) : currentPageData.length === 0 ? (
+               <tr>
+                 <td colSpan={5} className="text-center text-muted py-4">
+                   <div>
+                     <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                     <p className="mb-0">Không tìm thấy lịch sử sử dụng nào phù hợp</p>
+                   </div>
+                 </td>
                </tr>
              ) : (
                currentPageData.map((usage) => (
@@ -357,17 +444,129 @@ const handleSortByUsedAt = () => {
          </table>
        </div>
 
-
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, i) => (
-               <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                 <button className="page-link" onClick={() => handlePageChange(i + 1)}>{i + 1}</button>
+       {/* Pagination Info and Controls */}
+       <div className="d-flex justify-content-between align-items-center mt-3">
+         <div className="d-flex align-items-center gap-3">
+           <div className="text-muted">
+             Hiển thị {indexOfFirst + 1}-{Math.min(indexOfLast, filteredUsages.length)} trong tổng số {filteredUsages.length} lịch sử sử dụng
+           </div>
+           {filters.search && (
+             <div className="text-muted">
+               <i className="ti ti-filter me-1"></i>
+               Đã lọc theo: {filters.search && `Tìm kiếm: "${filters.search}"`}
+             </div>
+           )}
+         </div>
+         {filteredUsages.length > 0 && (
+           <nav>
+             <ul className="pagination mb-0" style={{ gap: '2px' }}>
+               {/* Previous button */}
+               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage - 1)}
+                   disabled={currentPage === 1}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-left"></i>
+                 </button>
                </li>
-             ))}
-           </ul>
-         </nav>
+               
+               {/* Page numbers */}
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNumber = i + 1;
+                 // Show all pages if total pages <= 7
+                 if (totalPages <= 7) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 }
+                 
+                 // Show first page, last page, current page, and pages around current page
+                 if (
+                   pageNumber === 1 || 
+                   pageNumber === totalPages || 
+                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                 ) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 } else if (
+                   pageNumber === currentPage - 2 || 
+                   pageNumber === currentPage + 2
+                 ) {
+                   return (
+                     <li key={i} className="page-item disabled">
+                       <span className="page-link" style={{ 
+                         border: '1px solid #dee2e6',
+                         borderRadius: '6px',
+                         padding: '8px 12px',
+                         minWidth: '40px',
+                         backgroundColor: '#f8f9fa',
+                         color: '#6c757d'
+                       }}>...</span>
+                     </li>
+                   );
+                 }
+                 return null;
+               })}
+               
+               {/* Next button */}
+               <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage + 1)}
+                   disabled={currentPage === totalPages}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-right"></i>
+                 </button>
+               </li>
+             </ul>
+           </nav>
+         )}
        </div>
      </div>
 

@@ -14,6 +14,8 @@ function FeedbackAdmin() {
   const [reason, setReason] = useState("");
   const [searchText, setSearchText] = useState("");
   const [filterStatus, setFilterStatus] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [feedbacksPerPage, setFeedbacksPerPage] = useState(10);
   const [form] = Form.useForm();
 
   // ✅ Load tất cả feedback khi vào trang
@@ -52,6 +54,21 @@ function FeedbackAdmin() {
 
     return matchSearch && matchStatus;
   });
+
+  // ✅ Phân trang
+  const indexOfLastFeedback = currentPage * feedbacksPerPage;
+  const indexOfFirstFeedback = indexOfLastFeedback - feedbacksPerPage;
+  const currentFeedbacks = filteredFeedbacks.slice(indexOfFirstFeedback, indexOfLastFeedback);
+  const totalPages = Math.ceil(filteredFeedbacks.length / feedbacksPerPage);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  // ✅ Reset trang khi filter thay đổi
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, filterStatus]);
 
   if (status === "loading") return <Spin />;
 
@@ -103,6 +120,35 @@ function FeedbackAdmin() {
           </div>
         </div>
 
+        {/* Filter Info */}
+        {(searchText || filterStatus) && (
+          <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+            <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+            {searchText && (
+              <span className="badge bg-primary-transparent">
+                <i className="ti ti-search me-1"></i>
+                Tìm kiếm: "{searchText}"
+              </span>
+            )}
+            {filterStatus && (
+              <span className="badge bg-warning-transparent">
+                <i className="ti ti-filter me-1"></i>
+                Trạng thái: {filterStatus === 'VISIBLE' ? 'Hiển thị' : 'Ẩn'}
+              </span>
+            )}
+            <button 
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                setSearchText('');
+                setFilterStatus(null);
+              }}
+            >
+              <i className="ti ti-x me-1"></i>
+              Xóa tất cả
+            </button>
+          </div>
+        )}
+
         {/* 🔹 Table */}
         <div className="custom-datatable-filter table-responsive">
           <table className="table datatable">
@@ -115,14 +161,34 @@ function FeedbackAdmin() {
               </tr>
             </thead>
             <tbody>
-              {filteredFeedbacks.length === 0 ? (
+              {status === "loading" ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-3">
-                    Không có feedback nào
+                  <td colSpan="4" className="text-center">
+                    <div className="spinner-border text-primary" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : filteredFeedbacks.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="text-center text-muted py-4">
+                    <div>
+                      <i className="ti ti-message-circle" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                      <p className="mb-0">Không có feedback nào</p>
+                    </div>
+                  </td>
+                </tr>
+              ) : currentFeedbacks.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="text-center text-muted py-4">
+                    <div>
+                      <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                      <p className="mb-0">Không tìm thấy feedback nào phù hợp</p>
+                    </div>
                   </td>
                 </tr>
               ) : (
-                filteredFeedbacks.map((fb) => (
+                currentFeedbacks.map((fb) => (
                   <tr key={fb._id}>
                     <td>{fb.fromUser?.fullName}</td>
                     <td>{fb.content}</td>
@@ -153,6 +219,131 @@ function FeedbackAdmin() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Pagination Info and Controls */}
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <div className="d-flex align-items-center gap-3">
+            <div className="text-muted">
+              Hiển thị {indexOfFirstFeedback + 1}-{Math.min(indexOfLastFeedback, filteredFeedbacks.length)} trong tổng số {filteredFeedbacks.length} feedback
+            </div>
+            {(searchText || filterStatus) && (
+              <div className="text-muted">
+                <i className="ti ti-filter me-1"></i>
+                Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterStatus && `Trạng thái: ${filterStatus === 'VISIBLE' ? 'Hiển thị' : 'Ẩn'}`}
+              </div>
+            )}
+          </div>
+          {filteredFeedbacks.length > 0 && (
+            <nav>
+              <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                {/* Previous button */}
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <button 
+                    className="page-link" 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    style={{ 
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    <i className="ti ti-chevron-left"></i>
+                  </button>
+                </li>
+                
+                {/* Page numbers */}
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNumber = i + 1;
+                  // Show all pages if total pages <= 7
+                  if (totalPages <= 7) {
+                    return (
+                      <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(pageNumber)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px',
+                            backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                            color: currentPage === pageNumber ? 'white' : '#007bff',
+                            borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      </li>
+                    );
+                  }
+                  
+                  // Show first page, last page, current page, and pages around current page
+                  if (
+                    pageNumber === 1 || 
+                    pageNumber === totalPages || 
+                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                  ) {
+                    return (
+                      <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(pageNumber)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px',
+                            backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                            color: currentPage === pageNumber ? 'white' : '#007bff',
+                            borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      </li>
+                    );
+                  } else if (
+                    pageNumber === currentPage - 2 || 
+                    pageNumber === currentPage + 2
+                  ) {
+                    return (
+                      <li key={i} className="page-item disabled">
+                        <span className="page-link" style={{ 
+                          border: '1px solid #dee2e6',
+                          borderRadius: '6px',
+                          padding: '8px 12px',
+                          minWidth: '40px',
+                          backgroundColor: '#f8f9fa',
+                          color: '#6c757d'
+                        }}>...</span>
+                      </li>
+                    );
+                  }
+                  return null;
+                })}
+                
+                {/* Next button */}
+                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button 
+                    className="page-link" 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    style={{ 
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    <i className="ti ti-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
 
         {/* ✅ Modal nhập lý do ẩn Feedback */}

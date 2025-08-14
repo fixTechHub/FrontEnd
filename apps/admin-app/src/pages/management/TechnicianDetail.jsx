@@ -7,7 +7,9 @@ import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { userAPI } from '../../features/users/userAPI';
 import { categoryAPI } from '../../features/categories/categoryAPI';
+import { financialReportAPI } from '../../features/financialReport/financialReportAPI';
 import { createExportData, formatDateTime } from '../../utils/exportUtils';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 const statusTag = (status) => {
   const colorMap = {
@@ -38,6 +40,8 @@ export default function TechnicianDetail() {
   const [error, setError] = useState(null);
   const [serviceMap, setServiceMap] = useState({});
   const [categories, setCategories] = useState([]);
+  const [financialData, setFinancialData] = useState(null);
+  const [financialLoading, setFinancialLoading] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -95,6 +99,35 @@ export default function TechnicianDetail() {
     ],
     [serviceMap]
   );
+
+  // Load financial data for technician
+  useEffect(() => {
+    const loadFinancialData = async () => {
+      if (!technician?.id) return;
+      
+      try {
+        setFinancialLoading(true);
+        const [technicianDetails, technicianBookings] = await Promise.all([
+          financialReportAPI.getTechnicianFinancialDetails(technician.id),
+          financialReportAPI.getBookingsByTechnicianId(technician.id)
+        ]);
+        
+        if (technicianDetails) {
+          setFinancialData({
+            ...technicianDetails,
+            bookings: technicianBookings || []
+          });
+        }
+      } catch (error) {
+        console.error('Error loading financial data:', error);
+        // Don't show error message for financial data as it's not critical
+      } finally {
+        setFinancialLoading(false);
+      }
+    };
+
+    loadFinancialData();
+  }, [technician?.id]);
 
   useEffect(() => {
     if (!bookings || bookings.length === 0) return;
@@ -209,6 +242,49 @@ export default function TechnicianDetail() {
                      <Card bordered={false} style={{ borderRadius: 12 }}>
                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
                          
+
+                         {/* Location Information */}
+                         <div>
+                           <h4 style={{ marginBottom: 16, color: '#333' }}>Vị Trí</h4>
+                           <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
+                             {technician.currentLocation && technician.currentLocation.coordinates && technician.currentLocation.coordinates.length >= 2 ? (
+                               <>
+                                 <div style={{ marginBottom: 12 }}>
+                                   <strong>Vĩ độ:</strong> {technician.currentLocation.coordinates[1]?.toFixed(6) || 'N/A'}
+                                 </div>
+                                 <div style={{ marginBottom: 12 }}>
+                                   <strong>Kinh độ:</strong> {technician.currentLocation.coordinates[0]?.toFixed(6) || 'N/A'}
+                                 </div>
+                                 <div style={{ marginBottom: 12 }}>
+                                   <strong>Loại vị trí:</strong> {technician.currentLocation.type || 'Point'}
+                                 </div>
+                                 <div style={{ marginBottom: 8 }}>
+                                   <strong>Google Maps: </strong>
+                                    <a 
+                                    href={`https://www.google.com/maps?q=${technician.currentLocation.coordinates[1]},${technician.currentLocation.coordinates[0]}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ 
+                                      color: '#1890ff', 
+                                      textDecoration: 'none',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                  >
+                                    <i className="ti ti-map-pin" style={{ fontSize: '16px' }}></i>
+                                    Xem trên Google Maps
+                                  </a>
+                                 </div>
+                                 
+                               </>
+                             ) : (
+                               <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
+                                 Chưa cập nhật vị trí
+                               </div>
+                             )}
+                           </div>
+                         </div>
 
                          {/* Bank Information */}
                          <div>
@@ -392,6 +468,117 @@ export default function TechnicianDetail() {
                        columns={bookingColumns}
                        pagination={{ pageSize: 10 }}
                      />
+                   ),
+                 },
+                 {
+                   key: 'financial',
+                   label: 'Tài Chính & Thu Nhập',
+                   children: (
+                     <Card bordered={false} style={{ borderRadius: 12 }}>
+                       {financialLoading ? (
+                         <div style={{ textAlign: 'center', padding: '50px' }}>
+                           <Spin size="large" />
+                         </div>
+                       ) : financialData ? (
+                         <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                           {/* Financial Summary */}
+                           <div>
+                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                               <Card size="small">
+                                 <div style={{ textAlign: 'center' }}>
+                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#52c41a', marginBottom: 8 }}>
+                                     {formatCurrency(financialData.totalEarning || 0)}
+                                   </div>
+                                   <div style={{ color: '#666', fontSize: '14px' }}>Tổng Thu Nhập</div>
+                                 </div>
+                               </Card>
+                               <Card size="small">
+                                 <div style={{ textAlign: 'center' }}>
+                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#1890ff', marginBottom: 8 }}>
+                                     {formatCurrency(financialData.totalCommissionPaid || 0)}
+                                   </div>
+                                   <div style={{ color: '#666', fontSize: '14px' }}>Hoa Hồng Đã Trả</div>
+                                 </div>
+                               </Card>
+                               <Card size="small">
+                                 <div style={{ textAlign: 'center' }}>
+                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#faad14', marginBottom: 8 }}>
+                                     {formatCurrency(financialData.totalHoldingAmount || 0)}
+                                   </div>
+                                   <div style={{ color: '#666', fontSize: '14px' }}>Số Tiền Đang Giữ</div>
+                                 </div>
+                               </Card>
+                               <Card size="small">
+                                 <div style={{ textAlign: 'center' }}>
+                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#722ed1', marginBottom: 8 }}>
+                                     {formatCurrency(financialData.totalWithdrawn || 0)}
+                                   </div>
+                                   <div style={{ color: '#666', fontSize: '14px' }}>Đã Rút Tiền</div>
+                                 </div>
+                               </Card>
+                             </div>
+                           </div>
+
+                           {/* Financial Bookings Table */}
+                           {financialData.bookings && financialData.bookings.length > 0 && (
+                             <div>
+                               <Table
+                                 dataSource={financialData.bookings}
+                                 columns={[
+                                   {
+                                     title: 'Mã đơn hàng',
+                                     dataIndex: 'bookingCode',
+                                     key: 'bookingCode',
+                                   },
+                                   {
+                                     title: 'Giá cuối',
+                                     dataIndex: 'finalPrice',
+                                     key: 'finalPrice',
+                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                                   },
+                                   {
+                                     title: 'Số tiền giữ',
+                                     dataIndex: 'holdingAmount',
+                                     key: 'holdingAmount',
+                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                                   },
+                                   {
+                                     title: 'Hoa hồng',
+                                     dataIndex: 'commissionAmount',
+                                     key: 'commissionAmount',
+                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                                   },
+                                   {
+                                     title: 'Thu nhập',
+                                     dataIndex: 'technicianEarning',
+                                     key: 'technicianEarning',
+                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                                   },
+                                   {
+                                     title: 'Thanh toán',
+                                     dataIndex: 'paymentStatus',
+                                     key: 'paymentStatus',
+                                     render: (status) => <Tag color={status === 'PAID' ? 'green' : 'orange'}>{status}</Tag>,
+                                   },
+                                   {
+                                     title: 'Ngày tạo',
+                                     dataIndex: 'createdAt',
+                                     key: 'createdAt',
+                                     render: (date) => formatDateTime(date),
+                                   },
+                                 ]}
+                                 pagination={{ pageSize: 10 }}
+                                 size="small"
+                               />
+                             </div>
+                           )}
+                         </Space>
+                       ) : (
+                         <div style={{ textAlign: 'center', padding: '50px', color: '#999' }}>
+                           Không có dữ liệu tài chính
+                         </div>
+                       )}
+                     </Card>
                    ),
                  },
                ]}

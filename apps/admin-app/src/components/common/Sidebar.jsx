@@ -85,6 +85,7 @@ const Sidebar = () => {
     { label: 'System Report', path: '/admin/system-report-management' },
     { label: 'Financial Management', path: '/admin/financial-management' },
     { label: 'Commission Config Management', path: '/admin/commission-config-management' },
+    { label: 'Technician Subscription Analytics', path: '/admin/technician-subscription-analytics' },
   ];
   const filteredRoutes = searchValue
     ? managementRoutes.filter(r =>
@@ -220,6 +221,13 @@ const Sidebar = () => {
                       style={currentPath === "/admin/financial-management" ? customStyles.activeMenuItem : {}}>
                   <FaDollarSign className="me-3" style={{width: '20px', ...(currentPath === "/admin/financial-management" ? customStyles.activeIcon : {})}} />
                   <span>Financial Report</span>
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/technician-subscription-analytics" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/technician-subscription-analytics" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/technician-subscription-analytics" ? customStyles.activeMenuItem : {}}>
+                  <FaChartBar className="me-3" style={{width: '20px', ...(currentPath === "/admin/technician-subscription-analytics" ? customStyles.activeIcon : {})}} />
+                  <span>Doanh thu</span>
                 </Link>
               </li>
             </ul>

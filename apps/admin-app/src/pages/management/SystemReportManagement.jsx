@@ -137,13 +137,21 @@ const SystemReportManagement = () => {
  }, [filteredSystemReports]);
 
 
- useEffect(() => {
-   if (selectedSystemReport?.submittedBy) {
-     userAPI.getById(selectedSystemReport.submittedBy)
-       .then(user => setSubmittedByUser(user))
-       .catch(() => setSubmittedByUser(null));
-   }
- }, [selectedSystemReport?.submittedBy]);
+   useEffect(() => {
+    if (selectedSystemReport?.submittedBy) {
+      userAPI.getById(selectedSystemReport.submittedBy)
+        .then(user => setSubmittedByUser(user))
+        .catch(() => setSubmittedByUser(null));
+    }
+  }, [selectedSystemReport?.submittedBy]);
+
+  // Tự động xóa ResolvedBy và ResolutionNote khi status thay đổi thành PENDING hoặc IN_PROGRESS
+  useEffect(() => {
+    if (statusValue === 'PENDING' || statusValue === 'IN_PROGRESS') {
+      setResolvedBy('');
+      setResolutionNote('');
+    }
+  }, [statusValue]);
 
 
  const handleFilterChange = (filterType, value) => {
@@ -219,42 +227,46 @@ const SystemReportManagement = () => {
  };
 
 
- const handleSaveStatus = async () => {
-   // Validation
-   if (!statusValue) {
-     message.error('Hãy chọn trạng thái');
-     return;
-   }
-   
-   if (statusValue === 'RESOLVED' && !resolvedBy) {
-     message.error('Chọn Admin để xử lý thành công báo cáo');
-     return;
-   }
-   
-   if (statusValue === 'RESOLVED' && !resolutionNote.trim()) {
-     message.error('Hãy nhập phương án giải quyết.');
-     return;
-   }
-   
-   if (statusValue === 'REJECTED' && !resolutionNote.trim()) {
-     message.error('Hãy nhập lý do từ chối báo cáo');
-     return;
-   }
-   
-   if (editingStatusId && statusValue) {
-     try {
-       await handleUpdateStatus(editingStatusId, statusValue.toUpperCase(), resolutionNote, resolvedBy);
-       setShowEditStatusModal(false);
-       setEditingStatusId(null);
-       // Reset form
-       setStatusValue('');
-       setResolvedBy('');
-       setResolutionNote('');
-     } catch (error) {
-       message.error('Không thể cập nhật trạng thái');
-     }
-   }
- };
+   const handleSaveStatus = async () => {
+    // Validation
+    if (!statusValue) {
+      message.error('Hãy chọn trạng thái');
+      return;
+    }
+    
+    if (statusValue === 'RESOLVED' && !resolvedBy) {
+      message.error('Chọn Admin để xử lý thành công báo cáo');
+      return;
+    }
+    
+    if (statusValue === 'RESOLVED' && !resolutionNote.trim()) {
+      message.error('Hãy nhập phương án giải quyết.');
+      return;
+    }
+    
+    if (statusValue === 'REJECTED' && !resolutionNote.trim()) {
+      message.error('Hãy nhập lý do từ chối báo cáo');
+      return;
+    }
+    
+    if (editingStatusId && statusValue) {
+      try {
+        // Nếu status là PENDING hoặc IN_PROGRESS, xóa resolvedBy và resolutionNote
+        const finalResolvedBy = (statusValue === 'PENDING' || statusValue === 'IN_PROGRESS') ? '' : resolvedBy;
+        const finalResolutionNote = (statusValue === 'PENDING' || statusValue === 'IN_PROGRESS') ? '' : resolutionNote;
+        
+        await handleUpdateStatus(editingStatusId, statusValue.toUpperCase(), finalResolutionNote, finalResolvedBy);
+        setShowEditStatusModal(false);
+        setEditingStatusId(null);
+        // Reset form
+        setStatusValue('');
+        setResolvedBy('');
+        setResolutionNote('');
+      } catch (error) {
+        message.error('Không thể cập nhật trạng thái');
+      }
+    }
+  };
 
 
  const handleSortChange = (value) => {
@@ -618,7 +630,7 @@ const SystemReportManagement = () => {
          okButtonProps={{
            disabled: !statusValue || 
              (statusValue === 'RESOLVED' && (!resolvedBy || !resolutionNote.trim())) ||
-             (statusValue === 'REJECTED' && !resolutionNote.trim())
+             (statusValue === 'REJECTED' && (!resolvedBy || !resolutionNote.trim()))
          }}
        >
          <div style={{ marginBottom: 16 }}>
@@ -641,7 +653,7 @@ const SystemReportManagement = () => {
          <div style={{ marginBottom: 16 }}>
            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
              Người xử lý (Admin) 
-             {statusValue === 'RESOLVED' && <span style={{ color: 'red' }}>*</span>}
+             {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && <span style={{ color: 'red' }}>*</span>}
            </label>
            <Select
              value={resolvedBy}
@@ -649,7 +661,7 @@ const SystemReportManagement = () => {
              onChange={setResolvedBy}
              placeholder="Chọn Admin xử lý"
              allowClear
-             disabled={statusValue !== 'RESOLVED'}
+             disabled={statusValue !== 'RESOLVED' && statusValue !== 'REJECTED'}
            >
              {adminUsers.map(user => (
                <Option key={user.id} value={user.id}>
@@ -657,7 +669,7 @@ const SystemReportManagement = () => {
                </Option>
              ))}
            </Select>
-           {statusValue === 'RESOLVED' && !resolvedBy && (
+           {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && !resolvedBy && (
              <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
                Hãy chọn Admin xử lý báo cáo
              </div>

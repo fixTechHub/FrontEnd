@@ -150,6 +150,11 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
        fetchRoles();
    }, [dispatch]);
 
+   // Reset to first page when filters change
+   useEffect(() => {
+       setCurrentPage(1);
+   }, [filteredUsers.length]);
+
 
    const handleEditUser = (user) => {
        setSelectedUser(user);
@@ -412,6 +417,24 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                <tr>
                                    <td colSpan={6} className="text-center"><Spin /></td>
                                </tr>
+                           ) : filteredUsers.length === 0 ? (
+                               <tr>
+                                   <td colSpan={6} className="text-center text-muted py-4">
+                                       <div>
+                                           <i className="ti ti-users" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                                           <p className="mb-0">Không có người dùng nào</p>
+                                       </div>
+                                   </td>
+                               </tr>
+                           ) : currentUsers.length === 0 ? (
+                               <tr>
+                                   <td colSpan={6} className="text-center text-muted py-4">
+                                       <div>
+                                           <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                                           <p className="mb-0">Không tìm thấy người dùng nào phù hợp</p>
+                                       </div>
+                                   </td>
+                               </tr>
                            ) : (
                                currentUsers.map(user => (
                                    <tr key={user.id}>
@@ -458,18 +481,99 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
 
 
                </div>
-               <div className="d-flex justify-content-end mt-3">
+               <div className="d-flex justify-content-between align-items-center mt-3">
+                   <div className="d-flex align-items-center gap-3">
+                       <div className="text-muted">
+                           Hiển thị {indexOfFirstUser + 1}-{Math.min(indexOfLastUser, filteredUsers.length)} trong tổng số {filteredUsers.length} người dùng
+                       </div>
+                   </div>
+                   {totalPages > 1 && (
                    <nav>
-                       <ul className="pagination mb-0">
-                           {[...Array(totalPages)].map((_, i) => (
-                               <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                                   <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                                       {i + 1}
+                           <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                                {/* Previous button */}
+                                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                    <button 
+                                        className="page-link" 
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        style={{ 
+                                            border: '1px solid #dee2e6',
+                                            borderRadius: '6px',
+                                            padding: '8px 12px',
+                                            minWidth: '40px'
+                                        }}
+                                    >
+                                        <i className="ti ti-chevron-left"></i>
+                                    </button>
+                                </li>
+                                
+                                {/* Page numbers */}
+                                {[...Array(totalPages)].map((_, i) => {
+                                    const pageNumber = i + 1;
+                                    // Show first page, last page, current page, and pages around current page
+                                    if (
+                                        pageNumber === 1 || 
+                                        pageNumber === totalPages || 
+                                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                                    ) {
+                                        return (
+                                            <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                                                <button 
+                                                    className="page-link" 
+                                                    onClick={() => handlePageChange(pageNumber)}
+                                                    style={{ 
+                                                        border: '1px solid #dee2e6',
+                                                        borderRadius: '6px',
+                                                        padding: '8px 12px',
+                                                        minWidth: '40px',
+                                                        backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                                        color: currentPage === pageNumber ? 'white' : '#007bff',
+                                                        borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                                    }}
+                                                >
+                                                    {pageNumber}
+                                                </button>
+                                            </li>
+                                        );
+                                    } else if (
+                                        pageNumber === currentPage - 2 || 
+                                        pageNumber === currentPage + 2
+                                    ) {
+                                        return (
+                                            <li key={i} className="page-item disabled">
+                                                <span className="page-link" style={{ 
+                                                    border: '1px solid #dee2e6',
+                                                    borderRadius: '6px',
+                                                    padding: '8px 12px',
+                                                    minWidth: '40px',
+                                                    backgroundColor: '#f8f9fa',
+                                                    color: '#6c757d'
+                                                }}>...</span>
+                                            </li>
+                                        );
+                                    }
+                                    return null;
+                                })}
+                                
+                                {/* Next button */}
+                                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                    <button 
+                                        className="page-link" 
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        style={{ 
+                                            border: '1px solid #dee2e6',
+                                            borderRadius: '6px',
+                                            padding: '8px 12px',
+                                            minWidth: '40px'
+                                        }}
+                                    >
+                                        <i className="ti ti-chevron-right"></i>
                                    </button>
                                </li>
-                           ))}
                        </ul>
                    </nav>
+                    )}
                </div>
 
 

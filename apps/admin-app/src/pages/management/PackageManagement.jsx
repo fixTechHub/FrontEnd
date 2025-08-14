@@ -23,6 +23,7 @@ const PackageManagement = () => {
   const [sortField, setSortField] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState("desc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [packagesPerPage, setPackagesPerPage] = useState(10);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -125,10 +126,35 @@ const PackageManagement = () => {
     }
   };
 
-  // Pagination setup
-  const pageSize = 5;
-  const totalPages = Math.ceil(packages.length / pageSize);
-  const currentPackages = packages.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  // Filter and pagination logic
+  const filteredPackages = packages.filter(pkg =>
+    pkg.name?.toLowerCase().includes(searchText.toLowerCase()) &&
+    (!filterStatus || (filterStatus === 'ACTIVE' ? pkg.isActive : !pkg.isActive))
+  );
+
+  const sortedPackages = [...filteredPackages].sort((a, b) => {
+    if (sortField === 'createdAt') {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+    return 0;
+  });
+
+  const indexOfLastPackage = currentPage * packagesPerPage;
+  const indexOfFirstPackage = indexOfLastPackage - packagesPerPage;
+  const currentPackages = sortedPackages.slice(indexOfFirstPackage, indexOfLastPackage);
+
+  const totalPages = Math.ceil(filteredPackages.length / packagesPerPage);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredPackages.length, searchText, filterStatus]);
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
 
   return (
     <div className="modern-page- wrapper">
@@ -194,6 +220,35 @@ const PackageManagement = () => {
           </div>
         </div>
 
+        {/* Filter Info */}
+        {(searchText || filterStatus) && (
+          <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+            <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+            {searchText && (
+              <span className="badge bg-primary-transparent">
+                <i className="ti ti-search me-1"></i>
+                Tìm kiếm: "{searchText}"
+              </span>
+            )}
+            {filterStatus && (
+              <span className="badge bg-warning-transparent">
+                <i className="ti ti-filter me-1"></i>
+                Trạng thái: {filterStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+              </span>
+            )}
+            <button 
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                setSearchText('');
+                setFilterStatus(null);
+              }}
+            >
+              <i className="ti ti-x me-1"></i>
+              Xóa tất cả
+            </button>
+          </div>
+        )}
+
         {/* 🔹 Table */}
         {loading ? (
           <Spin />
@@ -209,64 +264,202 @@ const PackageManagement = () => {
                 </tr>
               </thead>
               <tbody>
-                {currentPackages.map((pkg) => (
-                  <tr key={pkg.id}>
-                    <td>{pkg.name}</td>
-                    <td>{pkg.price}</td>
-                    <td>
-                      <span className={`badge ${pkg.isActive ? "bg-success-transparent" : "bg-danger-transparent"} text-dark`}>
-                        {pkg.isActive ? "ACTIVE" : "INACTIVE"}
-                      </span>
-                    </td>
-                    <td>
-                      <Button
-                        className="management-action-btn"
-                        type="primary"
-                        onClick={() => handleViewDetail(pkg)}
-                        style={{ marginRight: 8 }}
-                      >
-                        Chi tiết
-                      </Button>
-
-                      <Button
-                        className="management-action-btn"
-                        type="default"
-                        icon={<EditOutlined />}
-                        onClick={() => handleEditPackage(pkg)}
-                        style={{ marginRight: 8 }}
-                      >
-                        Chỉnh sửa
-                      </Button>
-
-                      <Button
-                        className="management-action-btn"
-                        size="middle"
-                        danger
-                        onClick={() => handleDeletePackage(pkg)}
-                      >
-                        Xóa
-                      </Button>
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="text-center">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : filteredPackages.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted py-4">
+                      <div>
+                        <i className="ti ti-package" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                        <p className="mb-0">Không có gói nào</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : currentPackages.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted py-4">
+                      <div>
+                        <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                        <p className="mb-0">Không tìm thấy gói nào phù hợp</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  currentPackages.map((pkg) => (
+                    <tr key={pkg.id}>
+                      <td>{pkg.name}</td>
+                      <td>{pkg.price}</td>
+                      <td>
+                        <span className={`badge ${pkg.isActive ? "bg-success-transparent" : "bg-danger-transparent"} text-dark`}>
+                          {pkg.isActive ? "ACTIVE" : "INACTIVE"}
+                        </span>
+                      </td>
+                      <td>
+                        <Button
+                          className="management-action-btn"
+                          type="primary"
+                          onClick={() => handleViewDetail(pkg)}
+                          style={{ marginRight: 8 }}
+                        >
+                          Chi tiết
+                        </Button>
+
+                        <Button
+                          className="management-action-btn"
+                          type="default"
+                          icon={<EditOutlined />}
+                          onClick={() => handleEditPackage(pkg)}
+                          style={{ marginRight: 8 }}
+                        >
+                          Chỉnh sửa
+                        </Button>
+
+                        <Button
+                          className="management-action-btn"
+                          size="middle"
+                          danger
+                          onClick={() => handleDeletePackage(pkg)}
+                        >
+                          Xóa
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
         )}
 
-        {/* 🔹 Pagination */}
-        <div className="d-flex justify-content-end mt-3">
-          <nav>
-            <ul className="pagination mb-0">
-              {[...Array(totalPages)].map((_, i) => (
-                <li key={i} className={`page-item ${currentPage === i + 1 ? "active" : ""}`}>
-                  <button className="page-link" onClick={() => setCurrentPage(i + 1)}>
-                    {i + 1}
+        {/* Pagination Info and Controls */}
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <div className="d-flex align-items-center gap-3">
+            <div className="text-muted">
+              Hiển thị {indexOfFirstPackage + 1}-{Math.min(indexOfLastPackage, filteredPackages.length)} trong tổng số {filteredPackages.length} gói
+            </div>
+            {(searchText || filterStatus) && (
+              <div className="text-muted">
+                <i className="ti ti-filter me-1"></i>
+                Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterStatus && `Trạng thái: ${filterStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}`}
+              </div>
+            )}
+          </div>
+          {filteredPackages.length > 0 && (
+            <nav>
+              <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                {/* Previous button */}
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <button 
+                    className="page-link" 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    style={{ 
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    <i className="ti ti-chevron-left"></i>
                   </button>
                 </li>
-              ))}
-            </ul>
-          </nav>
+                
+                {/* Page numbers */}
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNumber = i + 1;
+                  // Show all pages if total pages <= 7
+                  if (totalPages <= 7) {
+                    return (
+                      <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(pageNumber)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px',
+                            backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                            color: currentPage === pageNumber ? 'white' : '#007bff',
+                            borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      </li>
+                    );
+                  }
+                  
+                  // Show first page, last page, current page, and pages around current page
+                  if (
+                    pageNumber === 1 || 
+                    pageNumber === totalPages || 
+                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                  ) {
+                    return (
+                      <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(pageNumber)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px',
+                            backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                            color: currentPage === pageNumber ? 'white' : '#007bff',
+                            borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      </li>
+                    );
+                  } else if (
+                    pageNumber === currentPage - 2 || 
+                    pageNumber === currentPage + 2
+                  ) {
+                    return (
+                      <li key={i} className="page-item disabled">
+                        <span className="page-link" style={{ 
+                          border: '1px solid #dee2e6',
+                          borderRadius: '6px',
+                          padding: '8px 12px',
+                          minWidth: '40px',
+                          backgroundColor: '#f8f9fa',
+                          color: '#6c757d'
+                        }}>...</span>
+                      </li>
+                    );
+                  }
+                  return null;
+                })}
+                
+                {/* Next button */}
+                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button 
+                    className="page-link" 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    style={{ 
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    <i className="ti ti-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </div>
 

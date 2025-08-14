@@ -32,7 +32,7 @@ const WarrantyManagement = () => {
   const [userNames, setUserNames] = useState({});
   const [technicianNames, setTechnicianNames] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
-  const warrantiesPerPage = 10;
+  const [warrantiesPerPage, setWarrantiesPerPage] = useState(10);
   const [bookingMap, setBookingMap] = useState({});
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
@@ -79,6 +79,10 @@ const WarrantyManagement = () => {
    fetchBookings();
  }, [dispatch]);
 
+ // Reset to first page when filters change
+ useEffect(() => {
+   setCurrentPage(1);
+ }, [searchText, filterStatus, filterUnderWarranty]);
 
  const filtered = warranties.filter(w => {
    const bookingId = (w.bookingId || '').toLowerCase();
@@ -304,6 +308,43 @@ const handleSortByTechnician = () => {
            />
          </div>
        </div>
+
+       {/* Filter Info */}
+       {(searchText || filterStatus || filterUnderWarranty) && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           {searchText && (
+             <span className="badge bg-primary-transparent">
+               <i className="ti ti-search me-1"></i>
+               Tìm kiếm: "{searchText}"
+             </span>
+           )}
+           {filterStatus && (
+             <span className="badge bg-warning-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Trạng thái: {filterStatus}
+             </span>
+           )}
+           {filterUnderWarranty && (
+             <span className="badge bg-info-transparent">
+               <i className="ti ti-shield me-1"></i>
+               Tình trạng bảo hành: {filterUnderWarranty === 'Yes' ? 'Có bảo hành' : 'Không bảo hành'}
+             </span>
+           )}
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               setSearchText('');
+               setFilterStatus(undefined);
+               setFilterUnderWarranty(undefined);
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
+
        <div className="custom-datatable-filter table-responsive">
          {/* Bảng warranties */}
          {loading || !warranties || warranties.length === 0 ? (
@@ -343,47 +384,182 @@ const handleSortByTechnician = () => {
                </tr>
              </thead>
              <tbody>
-               {currentWarranties.map(w => (
-                 <tr key={w.id}>
-                   <td>{bookingMap[w.bookingId] || ''}</td>
-                   <td>{userNames[w.customerId]|| ''}</td>
-                   <td>{technicianNames[w.technicianId]|| ''}</td>
-                   <td>{w.status}</td>
-                  
-                   <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
-                   <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
-                   <td>
-                     <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
-                        Chỉnh sửa
-                      </Button>
-                     <Button className="management-action-btn" size="middle" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
-                       <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
-                     </Button>
+               {loading ? (
+                 <tr>
+                   <td colSpan={7} className="text-center">
+                     <div className="spinner-border text-primary" role="status">
+                       <span className="visually-hidden">Loading...</span>
+                     </div>
                    </td>
                  </tr>
-               ))}
+               ) : filtered.length === 0 ? (
+                 <tr>
+                   <td colSpan={7} className="text-center text-muted py-4">
+                     <div>
+                       <i className="ti ti-shield" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                       <p className="mb-0">Không có bảo hành nào</p>
+                     </div>
+                   </td>
+                 </tr>
+               ) : currentWarranties.length === 0 ? (
+                 <tr>
+                   <td colSpan={7} className="text-center text-muted py-4">
+                     <div>
+                       <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                       <p className="mb-0">Không tìm thấy bảo hành nào phù hợp</p>
+                     </div>
+                   </td>
+                 </tr>
+               ) : (
+                 currentWarranties.map(w => (
+                   <tr key={w.id}>
+                     <td>{bookingMap[w.bookingId] || ''}</td>
+                     <td>{userNames[w.customerId]|| ''}</td>
+                     <td>{technicianNames[w.technicianId]|| ''}</td>
+                     <td>{w.status}</td>
+                    
+                     <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
+                     <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
+                     <td>
+                       <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
+                          Chỉnh sửa
+                        </Button>
+                       <Button className="management-action-btn" size="middle" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
+                         <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
+                       </Button>
+                     </td>
+                   </tr>
+                 ))
+               )}
              </tbody>
            </table>
          )}
        </div>
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, index) => (
-               <li
-                 key={index}
-                 className={`page-item ${currentPage === index + 1 ? 'active' : ''}`}
-               >
-                 <button className="page-link" onClick={() => handlePageChange(index + 1)}>
-                   {index + 1}
+
+       {/* Pagination Info and Controls */}
+       <div className="d-flex justify-content-between align-items-center mt-3">
+         <div className="d-flex align-items-center gap-3">
+           <div className="text-muted">
+             Hiển thị {indexOfFirst + 1}-{Math.min(indexOfLast, filtered.length)} trong tổng số {filtered.length} bảo hành
+           </div>
+           {(searchText || filterStatus || filterUnderWarranty) && (
+             <div className="text-muted">
+               <i className="ti ti-filter me-1"></i>
+               Đã lọc theo: {searchText && `Tìm kiếm: "${searchText}"`} {filterStatus && `Trạng thái: ${filterStatus}`} {filterUnderWarranty && `Tình trạng bảo hành: ${filterUnderWarranty === 'Yes' ? 'Có bảo hành' : 'Không bảo hành'}`}
+             </div>
+           )}
+         </div>
+         {filtered.length > 0 && (
+           <nav>
+             <ul className="pagination mb-0" style={{ gap: '2px' }}>
+               {/* Previous button */}
+               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage - 1)}
+                   disabled={currentPage === 1}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-left"></i>
                  </button>
                </li>
-             ))}
-           </ul>
-         </nav>
+               
+               {/* Page numbers */}
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNumber = i + 1;
+                 // Show all pages if total pages <= 7
+                 if (totalPages <= 7) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 }
+                 
+                 // Show first page, last page, current page, and pages around current page
+                 if (
+                   pageNumber === 1 || 
+                   pageNumber === totalPages || 
+                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                 ) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 } else if (
+                   pageNumber === currentPage - 2 || 
+                   pageNumber === currentPage + 2
+                 ) {
+                   return (
+                     <li key={i} className="page-item disabled">
+                       <span className="page-link" style={{ 
+                         border: '1px solid #dee2e6',
+                         borderRadius: '6px',
+                         padding: '8px 12px',
+                         minWidth: '40px',
+                         backgroundColor: '#f8f9fa',
+                         color: '#6c757d'
+                       }}>...</span>
+                     </li>
+                   );
+                 }
+                 return null;
+               })}
+               
+               {/* Next button */}
+               <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage + 1)}
+                   disabled={currentPage === totalPages}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-right"></i>
+                 </button>
+               </li>
+             </ul>
+           </nav>
+         )}
        </div>
-
-
      </div>
      <Modal
        open={showModal}
