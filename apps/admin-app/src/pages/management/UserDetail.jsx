@@ -103,18 +103,18 @@ export default function UserDetail() {
       return;
     }
     try {
-      const notifyData = {
+      const notificationData = {
         userId: user.id,
         title: 'Cảnh cáo tài khoản',
         content: notificationContent,
-        // referenceId: user.id,
-        // referenceModel: 'User',
+        referenceId: user.id,
+        referenceModel: 'User',
 
         type: 'NEW_REQUEST'
       }
       // console.log(notifyData);
 
-      await dispatch(sendNotificationsThunk(notifyData)).unwrap();
+      await dispatch(sendNotificationsThunk(notificationData)).unwrap();
       message.success('Gửi cảnh cáo thành công!');
       setIsModalOpen(false); // Đóng modal sau khi gửi thành công
       setNotificationContent('');
@@ -167,7 +167,7 @@ export default function UserDetail() {
                     <div style={{ fontSize: 20, fontWeight: 600 }}>{user.fullName || 'N/A'}</div>
                     <div style={{ color: '#888', marginTop: 4 }}>ID: {user.id}</div>
                     <div>
-                      {/* <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button> */}
+                      <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
                     </div>
                   </div>
                 </div>
