@@ -435,7 +435,10 @@ const ReceiptPage = () => {
                           Giảm{' '}
                           <span>{formatCurrency(selectedReceipt?.discountAmount || 0)}</span>
                         </p>
-
+                        <p>
+                          Thuế{' '}
+                          <span>{formatCurrency(selectedReceipt?.bookingId?.quote?.totalAmount*0.08 || 0)}</span>
+                        </p>
                         {selectedReceipt?.bookingId?.quote?.items?.length > 0 && (
                           <>
                             <hr />

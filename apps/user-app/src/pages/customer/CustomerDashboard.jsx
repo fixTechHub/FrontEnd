@@ -533,6 +533,7 @@ const FavoriteTechniciansSection = ({ favorites, loading, onRemove }) => (
 function CustomerDashboard() {
 	const dispatch = useDispatch();
 	const { list: favorites, loading: favLoading } = useSelector(state => state.favorites);
+	const { user } = useSelector(state => state.auth);
 	const [bookingsCount, setBookingsCount] = useState(0);
 	const warrantyState = useSelector(state => state.warranty);
 	const warrantyCount = warrantyState?.warranty ? 1 : 0; // Hiện tại chỉ có 1 bản ghi khi yêu cầu, sau này có thể thay bằng mảng
@@ -551,7 +552,9 @@ function CustomerDashboard() {
 	useEffect(() => {
 		dispatch(getFavoritesThunk());
 		dispatch(fetchNotificationsThunk());
-		dispatch(fetchUserCouponsThunk());
+		if (user?._id) {
+			dispatch(fetchUserCouponsThunk(user._id));
+		}
 		// fetch last 5 bookings
 		(async () => {
 			try {
@@ -566,7 +569,7 @@ function CustomerDashboard() {
 			}
 		})();
 
-	}, [dispatch]);
+	}, [dispatch, user?._id]);
 
 	return (
 		<>

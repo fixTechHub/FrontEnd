@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { submitSystemReportThunk, clearMessages } from '../../features/systemReports/systemReportSlice';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { toast } from 'react-toastify';
 
 // Inject scoped styles once
 const injectStyles = () => {
@@ -180,7 +179,7 @@ const SystemReportButton = () => {
         </div>
       )}
 
-      <ToastContainer position="bottom-center" theme="colored" autoClose={3000} />
+
     </>
   );
 };

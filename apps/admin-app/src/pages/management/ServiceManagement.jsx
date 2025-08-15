@@ -39,7 +39,7 @@ const ServiceManagement = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const servicesPerPage = 10;
+  const [servicesPerPage, setServicesPerPage] = useState(10);
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
   const [filterStatus, setFilterStatus] = useState();
@@ -78,6 +78,34 @@ const ServiceManagement = () => {
     (!filterStatus || (filterStatus === 'ACTIVE' ? svc.isActive : !svc.isActive)) &&
     (!filterCategory || svc.categoryId === filterCategory)
   );
+
+  const sortedServices = [...filteredServices].sort((a, b) => {
+    if (sortField === 'serviceName') {
+      if (!a.serviceName) return 1;
+      if (!b.serviceName) return -1;
+      if (sortOrder === 'asc') {
+        return a.serviceName.localeCompare(b.serviceName);
+      } else {
+        return b.serviceName.localeCompare(a.serviceName);
+      }
+    } else if (sortField === 'createdAt' || sortField === 'lasted') {
+      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+    return 0;
+  });
+
+  const indexOfLastService = currentPage * servicesPerPage;
+  const indexOfFirstService = indexOfLastService - servicesPerPage;
+  const currentServices = sortedServices.slice(indexOfFirstService, indexOfLastService);
+
+  const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filteredServices.length, searchText, filterStatus, filterCategory]);
 
   const handleSortChange = (value) => {
     if (value === 'lasted') {
@@ -150,48 +178,14 @@ const ServiceManagement = () => {
     setShowRestoreModal(true);
   };
 
-  const indexOfLastService = currentPage * servicesPerPage;
-  const indexOfFirstService = indexOfLastService - servicesPerPage;
-  const sortedServices = [...filteredServices].sort((a, b) => {
-    if (sortField === 'serviceName') {
-      if (!a.serviceName) return 1;
-      if (!b.serviceName) return -1;
-      if (sortOrder === 'asc') {
-        return a.serviceName.localeCompare(b.serviceName);
-      } else {
-        return b.serviceName.localeCompare(a.serviceName);
-      }
-    } else if (sortField === 'category') {
-      const catA = categories.find(cat => cat.id === a.categoryId)?.categoryName?.toLowerCase() || 'zzz';
-      const catB = categories.find(cat => cat.id === b.categoryId)?.categoryName?.toLowerCase() || 'zzz';
-      if (sortOrder === 'asc') {
-        return catA.localeCompare(catB);
-      } else {
-        return catB.localeCompare(catA);
-      }
-    } else if (sortField === 'createdAt') {
-      const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-      const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-      if (sortOrder === 'asc') {
-        return dateA - dateB;
-      } else {
-        return dateB - dateA;
-      }
-    }
-    return 0;
-  });
-  const currentServices = sortedServices.slice(indexOfFirstService, indexOfLastService);
-
   // Set export data và columns
   useEffect(() => {
     const exportColumns = [
-      { title: 'Service Name', dataIndex: 'serviceName' },
-      { title: 'Category', dataIndex: 'categoryName' },
-      { title: 'Status', dataIndex: 'status' },
-      { title: 'Description', dataIndex: 'description' },
-      { title: 'Embedding Dimensions', dataIndex: 'embeddingDimensions' },
-      { title: 'Created At', dataIndex: 'createdAt' },
-      { title: 'Updated At', dataIndex: 'updatedAt' },
+      { title: 'Tên dịch vụ', dataIndex: 'serviceName' },
+      { title: 'Danh mục', dataIndex: 'categoryName' },
+      { title: 'Trạn thái', dataIndex: 'status' },
+      { title: 'Mô tả', dataIndex: 'description' },
+      { title: 'Thời gian tạo', dataIndex: 'createdAt' },
     ];
 
     const exportData = sortedServices.map(service => {
@@ -210,7 +204,6 @@ const ServiceManagement = () => {
     createExportData(exportData, exportColumns, 'services_export', 'Services');
   }, [sortedServices, categories]);
 
-  const totalPages = Math.ceil(filteredServices.length / servicesPerPage);
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (name === 'serviceType') {
@@ -266,8 +259,8 @@ const ServiceManagement = () => {
     
     // Validation for service name length
     if (formData.serviceName && formData.serviceName.length > 100) {
-      setValidationErrors({ ServiceName: ['Service name cannot exceed 100 characters'] });
-      message.error('Service name cannot exceed 100 characters');
+      setValidationErrors({ ServiceName: ['Tên dịch vụ không được vượt quá 100 ký tự'] });
+      message.error('Tên dịch vụ không được vượt quá 100 ký tự');
       return;
     }
     
@@ -301,17 +294,17 @@ const ServiceManagement = () => {
       <div className="modern-content-card">
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
           <div className="my-auto mb-2">
-            <h4 className="mb-1">Service Management</h4>
+            <h4 className="mb-1">Quản lý dịch vụ</h4>
             <nav>
               <ol className="breadcrumb mb-0">
-                <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-                <li className="breadcrumb-item active">Services</li>
+                <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+                <li className="breadcrumb-item active">Dịch vụ</li>
               </ol>
             </nav>
           </div>
           <div>
-            <Button type="primary" onClick={handleAddService}>Add Service</Button>
-            <Button type="default" onClick={handleOpenRestoreModal} style={{ marginLeft: 8 }}>Restore</Button>
+            <Button type="primary" onClick={handleAddService}>Thêm</Button>
+            <Button type="default" onClick={handleOpenRestoreModal} style={{ marginLeft: 8 }}>Khôi phục</Button>
           </div>
         </div>
         <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
@@ -324,14 +317,14 @@ const ServiceManagement = () => {
                 <input
                   type="text"
                   className="form-control"
-                  placeholder="Search name"
+                  placeholder="Tìm tên dịch vụ"
                   value={searchText}
                   onChange={e => setSearchText(e.target.value)}
                 />
               </div>
             </div>            
             <Select
-              placeholder="Category"
+              placeholder="Danh mục"
               value={filterCategory || undefined}
               onChange={value => setFilterCategory(value)}
               style={{ width: 150 }}
@@ -342,7 +335,7 @@ const ServiceManagement = () => {
               ))}
             </Select>
             <Select
-              placeholder="Status"
+              placeholder="Trạng thái"
               value={filterStatus || undefined}
               onChange={value => setFilterStatus(value)}
               style={{ width: 130 }}
@@ -353,25 +346,62 @@ const ServiceManagement = () => {
             </Select>
           </div>
           <div className="d-flex align-items-center">
-            <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+            <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
             <Select
               value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
               style={{ width: 120 }}
               onChange={handleSortChange}
               options={[
-                { value: 'lasted', label: 'Lasted' },
-                { value: 'oldest', label: 'Oldest' },
+                { value: 'lasted', label: 'Mới nhất' },
+                { value: 'oldest', label: 'Cũ nhất' },
               ]}
             />
           </div>
         </div>
+
+        {/* Filter Info */}
+        {(searchText || filterStatus || filterCategory) && (
+          <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+            <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+            {searchText && (
+              <span className="badge bg-primary-transparent">
+                <i className="ti ti-search me-1"></i>
+                Tìm kiếm: "{searchText}"
+              </span>
+            )}
+            {filterCategory && (
+              <span className="badge bg-info-transparent">
+                <i className="ti ti-category me-1"></i>
+                Danh mục: {categories.find(cat => cat.id === filterCategory)?.categoryName || filterCategory}
+              </span>
+            )}
+            {filterStatus && (
+              <span className="badge bg-warning-transparent">
+                <i className="ti ti-filter me-1"></i>
+                Trạng thái: {filterStatus}
+              </span>
+            )}
+            <button 
+              className="btn btn-sm btn-outline-secondary"
+              onClick={() => {
+                setSearchText('');
+                setFilterStatus(undefined);
+                setFilterCategory(undefined);
+              }}
+            >
+              <i className="ti ti-x me-1"></i>
+              Xóa tất cả
+            </button>
+          </div>
+        )}
+
         {loading ? <Spin /> : (
           <div className="custom-datatable-filter table-responsive">
             <table className="table datatable">
               <thead className="thead-light">
                 <tr>
                   <th style={{ cursor: 'pointer' }} onClick={handleSortByName}>
-                    SERVICE NAME
+                    Tên dịch vụ
                     {sortField === 'serviceName' && (
                       <span style={{ marginLeft: 4 }}>
                         {sortOrder === 'asc' ? '▲' : '▼'}
@@ -379,62 +409,191 @@ const ServiceManagement = () => {
                     )}
                   </th>
                                      <th style={{ cursor: 'pointer' }} onClick={handleSortByCategory}>
-                     CATEGORY
+                     Danh mục
                      {sortField === 'category' && (
                        <span style={{ marginLeft: 4 }}>
                          {sortOrder === 'asc' ? '▲' : '▼'}
                        </span>
                      )}
                    </th>
-                   <th>STATUS</th>
-                   <th>ACTION</th>
+                   <th>Trạng thái</th>
+                   <th>Hàng động</th>
                 </tr>
               </thead>
               <tbody>
-                {currentServices.map((svc) => {
-                  const category = categories.find(cat => cat.id === svc.categoryId);
-                  return (
-                    <tr key={svc.id}>
-                      <td>{svc.serviceName}</td>
-                      <td>{category ? category.categoryName : '-'}</td>
-                      <td>
-                        <span className={`badge ${svc.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                          {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
-                        </span>
-                      </td>
-                      <td>
-                        <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditService(svc)} style={{ marginRight: 8 }}>
-                          Edit
-                        </Button>
-                        <Button className="management-action-btn" size="middle" danger onClick={() => handleDeleteService(svc)}>Delete</Button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {loading ? (
+                  <tr>
+                    <td colSpan={4} className="text-center">
+                      <div className="spinner-border text-primary" role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    </td>
+                  </tr>
+                ) : filteredServices.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted py-4">
+                      <div>
+                        <i className="ti ti-tools" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                        <p className="mb-0">Không có dịch vụ nào</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : currentServices.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="text-center text-muted py-4">
+                      <div>
+                        <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                        <p className="mb-0">Không tìm thấy dịch vụ nào phù hợp</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  currentServices.map((svc) => {
+                    const category = categories.find(cat => cat.id === svc.categoryId);
+                    return (
+                      <tr key={svc.id}>
+                        <td>{svc.serviceName}</td>
+                        <td>{category ? category.categoryName : '-'}</td>
+                        <td>
+                          <span className={`badge ${svc.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
+                            {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
+                          </span>
+                        </td>
+                        <td>
+                          <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditService(svc)} style={{ marginRight: 8 }}>
+                            Chỉnh sửa
+                          </Button>
+                          <Button className="management-action-btn" size="middle" danger onClick={() => handleDeleteService(svc)}>Xóa</Button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
         )}
-        <div className="d-flex justify-content-end mt-3">
-          <nav>
-            <ul className="pagination mb-0">
-              {[...Array(totalPages)].map((_, i) => (
-                <li
-                  key={i}
-                  className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}
-                >
-                  <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                    {i + 1}
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <div className="d-flex align-items-center gap-3">
+            <div className="text-muted">
+              Hiển thị {indexOfFirstService + 1}-{Math.min(indexOfLastService, filteredServices.length)} trong tổng số {filteredServices.length} dịch vụ
+            </div>
+          </div>
+          {filteredServices.length > 0 && (
+            <nav>
+              <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                {/* Previous button */}
+                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                  <button 
+                    className="page-link" 
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    style={{ 
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    <i className="ti ti-chevron-left"></i>
                   </button>
                 </li>
-              ))}
-            </ul>
-          </nav>
+                
+                {/* Page numbers */}
+                {[...Array(totalPages)].map((_, i) => {
+                  const pageNumber = i + 1;
+                  // Show all pages if total pages <= 7
+                  if (totalPages <= 7) {
+                    return (
+                      <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(pageNumber)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px',
+                            backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                            color: currentPage === pageNumber ? 'white' : '#007bff',
+                            borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      </li>
+                    );
+                  }
+                  
+                  // Show first page, last page, current page, and pages around current page
+                  if (
+                    pageNumber === 1 || 
+                    pageNumber === totalPages || 
+                    (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                  ) {
+                    return (
+                      <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(pageNumber)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px',
+                            backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                            color: currentPage === pageNumber ? 'white' : '#007bff',
+                            borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                          }}
+                        >
+                          {pageNumber}
+                        </button>
+                      </li>
+                    );
+                  } else if (
+                    pageNumber === currentPage - 2 || 
+                    pageNumber === currentPage + 2
+                  ) {
+                    return (
+                      <li key={i} className="page-item disabled">
+                        <span className="page-link" style={{ 
+                          border: '1px solid #dee2e6',
+                          borderRadius: '6px',
+                          padding: '8px 12px',
+                          minWidth: '40px',
+                          backgroundColor: '#f8f9fa',
+                          color: '#6c757d'
+                        }}>...</span>
+                      </li>
+                    );
+                  }
+                  return null;
+                })}
+                
+                {/* Next button */}
+                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                  <button 
+                    className="page-link" 
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    style={{ 
+                      border: '1px solid #dee2e6',
+                      borderRadius: '6px',
+                      padding: '8px 12px',
+                      minWidth: '40px'
+                    }}
+                  >
+                    <i className="ti ti-chevron-right"></i>
+                  </button>
+                </li>
+              </ul>
+            </nav>
+          )}
         </div>
       </div>
       {/* Modal Thêm/Sửa */}
       <Modal
-        title={showAddModal ? 'Add Service' : 'Update Service'}
+        title={showAddModal ? 'Thêm dịch vụ' : 'Cập nhật dịch vụ'}
         open={showAddModal || showEditModal}
         onCancel={() => {
           setShowAddModal(false);
@@ -457,20 +616,20 @@ const ServiceManagement = () => {
           )}
           <Row gutter={16}>
                          <Col span={12}>
-               <Form.Item label="Service Name *" required validateStatus={validationErrors.ServiceName ? 'error' : ''} help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}>
+               <Form.Item label="Tên dịch vụ" required validateStatus={validationErrors.ServiceName ? 'error' : ''} help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}>
                  <Input
                    name="serviceName"
                    value={formData.serviceName}
                    onChange={handleChange}
-                   placeholder="Enter service name"
+                   placeholder="Nhập tên dịch vụ"
                    required
                  />
                </Form.Item>
              </Col>
              <Col span={12}>
-               <Form.Item label="Category *" required validateStatus={validationErrors.CategoryId ? 'error' : ''} help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}>
+               <Form.Item label="Danh mục" required validateStatus={validationErrors.CategoryId ? 'error' : ''} help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}>
                  <Select
-                   placeholder="Choose category"
+                   placeholder="Chọn danh mục"
                    name="categoryId"
                    value={formData.categoryId}
                    onChange={(value) => handleChange({ target: { name: 'categoryId', value } })}
@@ -486,16 +645,16 @@ const ServiceManagement = () => {
 
                      <Row gutter={16}>
              <Col span={12}>
-               <Form.Item label="Icon *" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+               <Form.Item label="Chọn hình ảnh" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
                  <IconUploader
                    value={formData.icon}
                    onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-                   placeholder="Upload icon image"
+                   placeholder="Đăng tải hình ảnh"
                  />
                </Form.Item>
              </Col>
              <Col span={12}>
-               <Form.Item label="Status">
+               <Form.Item label="Trạng thái">
                  <Switch
                    name="isActive"
                    checked={formData.isActive}
@@ -507,44 +666,13 @@ const ServiceManagement = () => {
              </Col>
            </Row>
 
-          {formData.serviceType === 'COMPLEX' && (
-            <Row gutter={16}>
-              <Col span={12}>
-                <Form.Item label="Min Market Price (VND)" required>
-                  <InputNumber
-                    name="min"
-                    value={formData.estimatedMarketPrice.min}
-                    onChange={(value) => handleChange({ target: { name: 'min', value: value?.toString() || '' } })}
-                    min={1}
-                    style={{ width: '100%' }}
-                    placeholder="Enter min price"
-                    required={formData.serviceType === 'COMPLEX'}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={12}>
-                <Form.Item label="Max Market Price (VND)" required>
-                  <InputNumber
-                    name="max"
-                    value={formData.estimatedMarketPrice.max}
-                    onChange={(value) => handleChange({ target: { name: 'max', value: value?.toString() || '' } })}
-                    min={1}
-                    style={{ width: '100%' }}
-                    placeholder="Enter max price"
-                    required={formData.serviceType === 'COMPLEX'}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          )}
-
-                     <Form.Item label="Description *" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
+            <Form.Item label="Mô tả" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
              <Input.TextArea
                name="description"
                value={formData.description}
                onChange={handleChange}
                rows={3}
-               placeholder="Enter service description"
+               placeholder="Nhập mô tả dịch vụ"
              />
            </Form.Item>
 
@@ -553,10 +681,10 @@ const ServiceManagement = () => {
               setShowAddModal(false);
               setShowEditModal(false);
             }} style={{ marginRight: 8 }}>
-              Cancel
+              Hủy 
             </Button>
             <Button type="primary" onClick={handleSubmit}>
-              {showAddModal ? 'Add' : 'Save'}
+              {showAddModal ? 'Thêm' : 'Lưu'}
             </Button>
           </div>
         </Form>
@@ -566,15 +694,15 @@ const ServiceManagement = () => {
         open={showDeleteModal}
         onCancel={() => setShowDeleteModal(false)}
         footer={null}
-        title="Delete service"
+        title="Xóa dịch vụ"
       >
         <div className="modal-body text-center">
           <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
-          <h4 className="mb-1">Delete service</h4>
+          <h4 className="mb-1">Xóa dịch vụ</h4>
           <p className="mb-3">Bạn có chắc muốn xóa dịch vụ này?</p>
           <div className="d-flex justify-content-center">
-            <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-            <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+            <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Hủy</button>
+            <button type="button" className="btn btn-danger" onClick={confirmDelete}>Xóa</button>
           </div>
         </div>
       </Modal>
@@ -583,17 +711,17 @@ const ServiceManagement = () => {
         open={showRestoreModal}
         onCancel={() => setShowRestoreModal(false)}
         footer={null}
-        title="Restore Service"
+        title="Khôi phục dịch vụ"
         width={800}
       >
         <div className="custom-datatable-filter table-responsive">
           <table className="table datatable">
             <thead className="thead-light">
               <tr>
-                <th>NAME</th>
-                <th>CATEGORY</th>
-                <th>STATUS</th>
-                <th>ACTION</th>
+                <th>Tên dịch vụ</th>
+                <th>Danh mục</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
               </tr>
             </thead>
             <tbody>
@@ -608,7 +736,7 @@ const ServiceManagement = () => {
                   </td>
                   <td>
                     <Button size="small" type="primary" onClick={() => handleRestoreService(svc.id)}>
-                      Restore
+                      Khôi phục
                     </Button>
                   </td>
                 </tr>
@@ -617,32 +745,8 @@ const ServiceManagement = () => {
           </table>
         </div>
         <div className="d-flex justify-content-end mt-3">
-          <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
+          <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Đóng</button>
         </div>
-      </Modal>
-      {/* Detail Modal */}
-      <Modal
-        open={showDetailModal}
-        onCancel={() => setShowDetailModal(false)}
-        title="Service Detail"
-        width={600}
-        destroyOnHidden
-      >
-        {selectedService && (
-          <div className="p-3">
-            <p><strong>Service Name:</strong> {selectedService.serviceName}</p>
-            <p><strong>Category:</strong> {categories.find(cat => cat.id === selectedService.categoryId)?.categoryName || '-'}</p>
-            <p><strong>Icon:</strong></p>
-            <div style={{ marginBottom: 16 }}>
-              <IconDisplay icon={selectedService.icon} size={60} />
-            </div>
-            <p><strong>Status:</strong> {selectedService.isActive ? 'Active' : 'Inactive'}</p>
-            <p><strong>Estimated Market Price:</strong> {selectedService.estimatedMarketPrice ? `${selectedService.estimatedMarketPrice.min} - ${selectedService.estimatedMarketPrice.max}` : 'N/A'}</p>
-            <p><strong>Description:</strong> {selectedService.description || 'N/A'}</p>
-            <p><strong>Created At:</strong> {new Date(selectedService.createdAt).toLocaleDateString()}</p>
-            <p><strong>Updated At:</strong> {new Date(selectedService.updatedAt).toLocaleDateString()}</p>
-          </div>
-        )}
       </Modal>
     </div>
   );

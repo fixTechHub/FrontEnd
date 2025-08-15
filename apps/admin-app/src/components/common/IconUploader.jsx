@@ -100,7 +100,7 @@ const IconUploader = ({ value, onChange, placeholder = "Upload icon image" }) =>
                         onClick={handleRemove}
                         style={{ marginLeft: 8 }}
                     >
-                        Remove
+                        Gỡ
                     </Button>
                 </div>
             )}

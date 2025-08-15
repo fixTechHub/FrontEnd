@@ -53,6 +53,7 @@ const [showAddModal, setShowAddModal] = useState(false);
 const [showEditModal, setShowEditModal] = useState(false);
 const [showDeleteModal, setShowDeleteModal] = useState(false);
 const [showRestoreModal, setShowRestoreModal] = useState(false);
+const [showDetailModal, setShowDetailModal] = useState(false);
 const [selectedCoupon, setSelectedCoupon] = useState(null);
 const [formData, setFormData] = useState(initialFormState);
 const [searchText, setSearchText] = useState('');
@@ -176,20 +177,19 @@ const couponsPerPage = 10;
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Coupon Code', dataIndex: 'code' },
-    { title: 'Description', dataIndex: 'description' },
-    { title: 'Type', dataIndex: 'type' },
-    { title: 'Value', dataIndex: 'value' },
-    { title: 'Max Discount', dataIndex: 'maxDiscount' },
-    { title: 'Min Order Value', dataIndex: 'minOrderValue' },
-    { title: 'Total Usage Limit', dataIndex: 'totalUsageLimit' },
-    { title: 'Used Count', dataIndex: 'usedCount' },
-    { title: 'Start Date', dataIndex: 'startDate' },
-    { title: 'End Date', dataIndex: 'endDate' },
-    { title: 'Status', dataIndex: 'status' },
-    { title: 'Audience', dataIndex: 'audience' },
-    { title: 'Created At', dataIndex: 'createdAt' },
-    { title: 'Updated At', dataIndex: 'updatedAt' },
+    { title: 'Mã', dataIndex: 'code' },
+    { title: 'Mô tả', dataIndex: 'description' },
+    { title: 'Loại', dataIndex: 'type' },
+    { title: 'Giá trị', dataIndex: 'value' },
+    { title: 'Giảm tối đa', dataIndex: 'maxDiscount' },
+    { title: 'Giá trị đơn hàng tối thiểu', dataIndex: 'minOrderValue' },
+    { title: 'Số lượng mã giảm giá', dataIndex: 'totalUsageLimit' },
+    { title: 'Số lượng mã đã sử dụng', dataIndex: 'usedCount' },
+    { title: 'Ngày bắt đầu', dataIndex: 'startDate' },
+    { title: 'Ngày kết thúc', dataIndex: 'endDate' },
+    { title: 'Trạng thái', dataIndex: 'status' },
+    { title: 'Loại người dùng', dataIndex: 'audience' },
+    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
   ];
 
   const exportData = sortedCoupons.map(coupon => ({
@@ -218,6 +218,11 @@ const totalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
  const handlePageChange = (page) => {
    setCurrentPage(page);
  };
+
+ // Reset to first page when filters change
+ useEffect(() => {
+   setCurrentPage(1);
+ }, [filteredCoupons.length, searchText, filterType, filterStatus]);
 
 
  useEffect(() => {
@@ -302,6 +307,21 @@ const totalPages = Math.ceil(filteredCoupons.length / couponsPerPage);
      dispatch(fetchCoupons());
    } catch (err) {
      message.error('Khôi phục coupon thất bại!');
+   }
+ };
+
+ const handleViewDetail = async (coupon) => {
+   try {
+     // Lấy thông tin chi tiết coupon từ API
+     const detailedCoupon = await couponAPI.getById(coupon.id);
+     setSelectedCoupon(detailedCoupon);
+     setShowDetailModal(true);
+   } catch (error) {
+     console.error('Lỗi khi lấy thông tin chi tiết coupon:', error);
+     message.error('Không thể lấy thông tin chi tiết coupon');
+     // Fallback: sử dụng thông tin cơ bản
+     setSelectedCoupon(coupon);
+     setShowDetailModal(true);
    }
  };
 
@@ -501,8 +521,8 @@ const handleConfirmUserSelection = () => {
    
    // Validation cho code không quá 30 ký tự
    if (formData.code && formData.code.length > 30) {
-     setValidationErrors({ Code: ['Code không được dài quá 30 ký tự'] });
-     message.error('Code không được dài quá 30 ký tự');
+     setValidationErrors({ Code: ['Mã không được dài quá 30 ký tự'] });
+     message.error('Mã không được dài quá 30 ký tự');
      return;
    }
    
@@ -526,8 +546,8 @@ const handleConfirmUserSelection = () => {
    if (dataToSend.audience !== 'SPECIFIC_USERS') {
      dataToSend.userIds = [];
    } else if (!dataToSend.userIds || dataToSend.userIds.length === 0) {
-     setValidationErrors({ UserIds: ['Bạn phải chọn ít nhất 1 user khi audience là SPECIFIC_USERS'] });
-     message.error('Bạn phải chọn ít nhất 1 user khi audience là SPECIFIC_USERS');
+     setValidationErrors({ UserIds: ['Bạn phải chọn ít nhất 1 user khi loại người dùng là SPECIFIC USERS'] });
+     message.error('Bạn phải chọn ít nhất 1 user khi loại người dùng là SPECIFIC USERS');
      return;
    }
 
@@ -624,17 +644,17 @@ const handleConfirmUserSelection = () => {
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
-           <h4 className="mb-1">Coupon Management</h4>
+           <h4 className="mb-1">Quản lý mã giảm giá</h4>
            <nav>
              <ol className="breadcrumb mb-0">
-               <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-               <li className="breadcrumb-item active">Coupons</li>
+               <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+               <li className="breadcrumb-item active">Mã giảm giá</li>
              </ol>
            </nav>
          </div>
          <div className="d-flex">
-           <Button type="primary" onClick={handleAddCoupon} style={{ marginRight: 8 }}>Add coupon</Button>
-           <Button type="default" onClick={() => setShowRestoreModal(true)}>Restore</Button>
+           <Button type="primary" onClick={handleAddCoupon} style={{ marginRight: 8 }}>Thêm</Button>
+           <Button type="default" onClick={() => setShowRestoreModal(true)}>Khôi phục</Button>
          </div>
        </div>
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
@@ -647,14 +667,14 @@ const handleConfirmUserSelection = () => {
                <input
                  type="text"
                  className="form-control"
-                 placeholder="Search Coupons"
+                 placeholder="Tìm kiếm mã giảm giá"
                  value={searchText}
                  onChange={e => setSearchText(e.target.value)}
                />
              </div>
            </div>
            <Select
-             placeholder="Type"
+             placeholder="Phân loại"
              value={filterType || undefined}
              onChange={value => setFilterType(value)}
              style={{ width: 130 }}
@@ -664,7 +684,7 @@ const handleConfirmUserSelection = () => {
              <Select.Option value="FIXED">FIXED</Select.Option>
            </Select>
            <Select
-             placeholder="Status"
+             placeholder="Trạng thái"
              value={filterStatus || undefined}
              onChange={value => setFilterStatus(value)}
              style={{ width: 130 }}
@@ -675,35 +695,71 @@ const handleConfirmUserSelection = () => {
            </Select>
          </div>
          <div className="d-flex align-items-center" style={{ gap: 12 }}>
-           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
            <Select
              value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
              style={{ width: 120 }}
              onChange={handleSortChange}
              options={[
-               { value: 'lasted', label: 'Lasted' },
-               { value: 'oldest', label: 'Oldest' },
+               { value: 'lasted', label: 'Mới nhất' },
+               { value: 'oldest', label: 'Cũ nhất' },
              ]}
            />
          </div>
        </div>
+
+       {/* Filter Info */}
+       {(searchText || filterType || filterStatus) && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           {searchText && (
+             <span className="badge bg-primary-transparent">
+               <i className="ti ti-search me-1"></i>
+               Tìm kiếm: "{searchText}"
+             </span>
+           )}
+           {filterType && (
+             <span className="badge bg-info-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Phân loại: {filterType}
+             </span>
+           )}
+           {filterStatus && (
+             <span className="badge bg-warning-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Trạng thái: {filterStatus}
+             </span>
+           )}
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               setSearchText('');
+               setFilterType(undefined);
+               setFilterStatus(undefined);
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
+
        {loading ? <Spin /> : (
          <div className="custom-datatable-filter table-responsive">
            <table className="table datatable">
              <thead className="thead-light">
                <tr>
                  <th style={{ cursor: 'pointer' }} onClick={handleSortByCode}>
-                    CODE
+                    Mã
                    {sortField === 'code' && (
                      <span style={{ marginLeft: 4 }}>
                        {sortOrder === 'asc' ? '▲' : '▼'}
                      </span>
                    )}
                  </th>
-                 <th>DESCRIPTION</th>
-                 <th>TYPE</th>
+                 <th>Phân loại</th>
                  <th style={{ cursor: 'pointer' }} onClick={handleSortByValue}>
-                    VALUE
+                    Giá trị
                    {sortField === 'value' && (
                      <span style={{ marginLeft: 4 }}>
                        {sortOrder === 'asc' ? '▲' : '▼'}
@@ -711,59 +767,98 @@ const handleConfirmUserSelection = () => {
                    )}
                  </th>
                  <th style={{ cursor: 'pointer' }} onClick={handleSortByMaxDiscount}>
-                   MAX DISCOUNT
+                   Giảm tối đa
                    {sortField === 'maxDiscount' && (
                      <span style={{ marginLeft: 4 }}>
                        {sortOrder === 'asc' ? '▲' : '▼'}
                      </span>
                    )}
                  </th>
-                 <th>STATUS</th>
-                 <th>ACTION</th>
+                 <th>Số lần sử dụng</th>
+                 <th>Giới hạn sử dụng</th>
+                 <th>Trạng thái</th>
+                 <th>Hành động</th>
                </tr>
              </thead>
              <tbody>
-               {currentCoupons.map((coupon) => (
-                 <tr key={coupon.id}>
-                   <td>{coupon.code}</td>
-                   <td style={{
-                      maxWidth: 260,
-                      minWidth: 120,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}
-                      title={coupon.description}
-                    >
-                      <div 
-                        dangerouslySetInnerHTML={{ 
-                          __html: renderFormattedDescription(coupon.description) 
-                        }}
-                        style={{
-                          fontFamily: coupon.fontFamily || 'Arial',
-                          fontSize: `${coupon.fontSize || 14}px`,
-                          textAlign: coupon.textAlign || 'left'
-                        }}
-                      />
-                    </td>
-                   <td>{coupon.type}</td>
-                   <td>{coupon.value}</td>
-                   <td>{coupon.maxDiscount}</td>
-                   <td>
-                     <span className={`badge ${coupon.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                       {coupon.isActive ? 'ACTIVE' : 'INACTIVE'}
-                     </span>
-                   </td>
-                   <td>
-                     <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditCoupon(coupon)} style={{ marginRight: 8 }}>
-                        Edit
-                      </Button>
-                     <Button className="management-action-btn" size="middle" danger onClick={() => { setSelectedCoupon(coupon); setShowDeleteModal(true); }} style={{ marginRight: 8 }}>
-                       Delete
-                     </Button>
+               {loading ? (
+                 <tr>
+                   <td colSpan={8} className="text-center">
+                     <div className="spinner-border text-primary" role="status">
+                       <span className="visually-hidden">Loading...</span>
+                     </div>
                    </td>
                  </tr>
-               ))}
+               ) : filteredCoupons.length === 0 ? (
+                 <tr>
+                   <td colSpan={8} className="text-center text-muted py-4">
+                     <div>
+                       <i className="ti ti-ticket" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                       <p className="mb-0">Không có mã giảm giá nào</p>
+                     </div>
+                   </td>
+                 </tr>
+               ) : currentCoupons.length === 0 ? (
+                 <tr>
+                   <td colSpan={8} className="text-center text-muted py-4">
+                     <div>
+                       <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                       <p className="mb-0">Không tìm thấy mã giảm giá nào phù hợp</p>
+                     </div>
+                   </td>
+                 </tr>
+               ) : (
+                 currentCoupons.map((coupon) => (
+                   <tr key={coupon.id}>
+                     <td>{coupon.code}</td>
+                     {/* <td style={{
+                        maxWidth: 260,
+                        minWidth: 120,
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis'
+                      }}
+                        title={coupon.description}
+                      >
+                        <div 
+                          dangerouslySetInnerHTML={{ 
+                            __html: renderFormattedDescription(coupon.description) 
+                          }}
+                          style={{
+                            fontFamily: coupon.fontFamily || 'Arial',
+                            fontSize: `${coupon.fontSize || 14}px`,
+                            textAlign: coupon.textAlign || 'left'
+                          }}
+                        />
+                      </td> */}
+                     <td>{coupon.type}</td>
+                     <td>{coupon.value}</td>
+                     <td>{coupon.maxDiscount}</td>
+                     <td>
+                       <span className={`badge ${(coupon.usedCount || 0) >= (coupon.totalUsageLimit || 1) ? 'bg-warning-transparent' : 'bg-info-transparent'} text-dark`}>
+                         {coupon.usedCount || 0}
+                       </span>
+                     </td>
+                     <td>{coupon.totalUsageLimit || 0}</td>
+                     <td>
+                       <span className={`badge ${coupon.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
+                         {coupon.isActive ? 'ACTIVE' : 'INACTIVE'}
+                       </span>
+                     </td>
+                     <td>
+                       {/* <Button className="management-action-btn" type="default" icon={<EyeOutlined />} onClick={() => handleViewDetail(coupon)} style={{ marginRight: 8 }}>
+                          Xem chi tiết
+                        </Button> */}
+                       <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditCoupon(coupon)} style={{ marginRight: 8 }}>
+                          Chỉnh sửa
+                        </Button>
+                       <Button className="management-action-btn" size="middle" danger onClick={() => { setSelectedCoupon(coupon); setShowDeleteModal(true); }} style={{ marginRight: 8 }}>
+                         Xóa
+                       </Button>
+                     </td>
+                   </tr>
+                 ))
+               )}
              </tbody>
            </table>
 
@@ -774,21 +869,124 @@ const handleConfirmUserSelection = () => {
 
 
        )}
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, i) => (
-               <li
-                 key={i}
-                 className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}
-               >
-                 <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                   {i + 1}
+       <div className="d-flex justify-content-between align-items-center mt-3">
+         <div className="d-flex align-items-center gap-3">
+           <div className="text-muted">
+             Hiển thị {indexOfFirstCoupon + 1}-{Math.min(indexOfLastCoupon, filteredCoupons.length)} trong tổng số {filteredCoupons.length} mã giảm giá
+           </div>
+           
+           
+         </div>
+         {totalPages > 1 && (
+           <nav>
+             <ul className="pagination mb-0" style={{ gap: '2px' }}>
+               {/* Previous button */}
+               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage - 1)}
+                   disabled={currentPage === 1}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-left"></i>
                  </button>
                </li>
-             ))}
-           </ul>
-         </nav>
+               
+               {/* Page numbers */}
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNumber = i + 1;
+                 // Show all pages if total pages <= 7
+                 if (totalPages <= 7) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 }
+                 
+                 // Show first page, last page, current page, and pages around current page
+                 if (
+                   pageNumber === 1 || 
+                   pageNumber === totalPages || 
+                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                 ) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 } else if (
+                   pageNumber === currentPage - 2 || 
+                   pageNumber === currentPage + 2
+                 ) {
+                   return (
+                     <li key={i} className="page-item disabled">
+                       <span className="page-link" style={{ 
+                         border: '1px solid #dee2e6',
+                         borderRadius: '6px',
+                         padding: '8px 12px',
+                         minWidth: '40px',
+                         backgroundColor: '#f8f9fa',
+                         color: '#6c757d'
+                       }}>...</span>
+                     </li>
+                   );
+                 }
+                 return null;
+               })}
+               
+               {/* Next button */}
+               <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage + 1)}
+                   disabled={currentPage === totalPages}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-right"></i>
+                 </button>
+               </li>
+             </ul>
+           </nav>
+         )}
        </div>
      </div>
 
@@ -800,7 +998,7 @@ const handleConfirmUserSelection = () => {
        open={showAddModal}
        onCancel={() => setShowAddModal(false)}
        footer={null}
-       title="Add Coupon"
+       title="Thêm mã giảm giá"
        width={800}
      >
        <Form layout="vertical" onSubmit={handleSubmit}>
@@ -815,12 +1013,12 @@ const handleConfirmUserSelection = () => {
          )}
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Code" required validateStatus={validationErrors.Code ? 'error' : ''} help={validationErrors.Code ? validationErrors.Code.join(', ') : ''}>
+             <Form.Item label="Mã" required validateStatus={validationErrors.Code ? 'error' : ''} help={validationErrors.Code ? validationErrors.Code.join(', ') : ''}>
                <Input
                  name="code"
                  value={formData.code}
                  onChange={handleChange}
-                 placeholder="Enter coupon code (max 30 characters)"
+                 placeholder="Nhập mã giảm giá (tối đa 30 ký tự)"
                  required
                  style={{ 
                    borderColor: formData.code.length > 30 ? '#ff4d4f' : '#d9d9d9',
@@ -830,7 +1028,7 @@ const handleConfirmUserSelection = () => {
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="Type" required validateStatus={validationErrors.Type ? 'error' : ''} help={validationErrors.Type ? validationErrors.Type.join(', ') : ''}>
+             <Form.Item label="Phân loại" required validateStatus={validationErrors.Type ? 'error' : ''} help={validationErrors.Type ? validationErrors.Type.join(', ') : ''}>
                <Select
                  placeholder="Type"
                  name="type"
@@ -845,7 +1043,7 @@ const handleConfirmUserSelection = () => {
            </Col>
          </Row>
 
-         <Form.Item label="Description" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
+         <Form.Item label="Mô tả" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
            <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '8px' }}>
              <div style={{ marginBottom: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                <Select
@@ -897,7 +1095,7 @@ const handleConfirmUserSelection = () => {
                  onClick={() => handleImageUpload()}
                  icon={<i className="ti ti-photo"></i>}
                >
-                 Add Image
+                 Thêm ảnh
                </Button>
              </div>
              <Input.TextArea
@@ -905,7 +1103,7 @@ const handleConfirmUserSelection = () => {
                value={formData.description}
                onChange={handleChange}
                rows={4}
-               placeholder="Enter description with rich formatting..."
+               placeholder="Nhập các mô tả cho mã giảm giá..."
                required
                style={{
                  fontFamily: formData.fontFamily || 'Arial',
@@ -922,25 +1120,25 @@ const handleConfirmUserSelection = () => {
            {formData.type === 'PERCENT' && (
              <>
                <Col span={12}>
-                 <Form.Item label="Value (%)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
+                 <Form.Item label="Giá trị (%)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
                    <InputNumber
                      name="value"
                      value={formData.value}
                      onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
                      style={{ width: '100%' }}
-                     placeholder="Enter percentage"
+                     placeholder="Nhập phần trăm giảm giá"
                    />
                  </Form.Item>
                </Col>
                <Col span={12}>
-                 <Form.Item label="Max Discount (VND)" required validateStatus={validationErrors.MaxDiscount ? 'error' : ''} help={validationErrors.MaxDiscount ? validationErrors.MaxDiscount.join(', ') : ''}>
+                 <Form.Item label="Giảm tối đa (VND)" required validateStatus={validationErrors.MaxDiscount ? 'error' : ''} help={validationErrors.MaxDiscount ? validationErrors.MaxDiscount.join(', ') : ''}>
                    <InputNumber
                      name="maxDiscount"
                      value={formData.maxDiscount}
                      onChange={(value) => handleChange({ target: { name: 'maxDiscount', value: value?.toString() || '' } })}
                      min={1}
                      style={{ width: '100%' }}
-                     placeholder="Enter max discount"
+                     placeholder="Nhập số tiền giảm tối đa"
                    />
                  </Form.Item>
                </Col>
@@ -948,14 +1146,14 @@ const handleConfirmUserSelection = () => {
            )}
            {formData.type === 'FIXED' && (
              <Col span={12}>
-               <Form.Item label="Value (VND)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
+               <Form.Item label="Giá trị (VND)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
                  <InputNumber
                    name="value"
                    value={formData.value}
                    onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
                    min={1}
                    style={{ width: '100%' }}
-                   placeholder="Enter fixed amount"
+                   placeholder="Nhập sô tiền giảm"
                  />
                </Form.Item>
              </Col>
@@ -964,26 +1162,26 @@ const handleConfirmUserSelection = () => {
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Min Order Value" required validateStatus={validationErrors.MinOrderValue ? 'error' : ''} help={validationErrors.MinOrderValue ? validationErrors.MinOrderValue.join(', ') : ''}>
+             <Form.Item label="Giá trị đơn hàng tối thiểu" required validateStatus={validationErrors.MinOrderValue ? 'error' : ''} help={validationErrors.MinOrderValue ? validationErrors.MinOrderValue.join(', ') : ''}>
                <InputNumber
                  name="minOrderValue"
                  value={formData.minOrderValue}
                  onChange={(value) => handleChange({ target: { name: 'minOrderValue', value: value?.toString() || '' } })}
                  min={0}
                  style={{ width: '100%' }}
-                 placeholder="Enter min order value"
+                 placeholder="Nhập giá trị đơn hàng tối thiểu"
                />
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="Total Usage Limit">
+             <Form.Item label="Số lượng mã giảm giá">
                <InputNumber
                  name="totalUsageLimit"
                  value={formData.totalUsageLimit}
                  onChange={(value) => handleChange({ target: { name: 'totalUsageLimit', value: value?.toString() || '' } })}
                  min={1}
                  style={{ width: '100%' }}
-                 placeholder="Enter usage limit"
+                 placeholder="Nhập số lượng mã giảm giá"
                />
              </Form.Item>
            </Col>
@@ -991,22 +1189,22 @@ const handleConfirmUserSelection = () => {
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Start Date" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
+             <Form.Item label="Ngày bắt đầu" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
                <DatePicker
                  value={formData.startDate ? dayjs(formData.startDate) : null}
                  onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
                  style={{ width: '100%' }}
-                 placeholder="Select start date"
+                 placeholder="Chọn ngày bắt đầu"
                />
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="End Date" required validateStatus={validationErrors.EndDate ? 'error' : ''} help={validationErrors.EndDate ? validationErrors.EndDate.join(', ') : ''}>
+             <Form.Item label="Ngày kết thúc" required validateStatus={validationErrors.EndDate ? 'error' : ''} help={validationErrors.EndDate ? validationErrors.EndDate.join(', ') : ''}>
                <DatePicker
                  value={formData.endDate ? dayjs(formData.endDate) : null}
                  onChange={(date, dateString) => handleChange({ target: { name: 'endDate', value: dateString } })}
                  style={{ width: '100%' }}
-                 placeholder="Select end date"
+                 placeholder="Chọn ngày kết thúc"
                />
              </Form.Item>
            </Col>
@@ -1014,7 +1212,7 @@ const handleConfirmUserSelection = () => {
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Audience" validateStatus={validationErrors.Audience ? 'error' : ''} help={validationErrors.Audience ? validationErrors.Audience.join(', ') : ''}>
+             <Form.Item label="Loại người dùng" validateStatus={validationErrors.Audience ? 'error' : ''} help={validationErrors.Audience ? validationErrors.Audience.join(', ') : ''}>
                <Select
                  name="audience"
                  value={formData.audience}
@@ -1028,7 +1226,7 @@ const handleConfirmUserSelection = () => {
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="Status">
+             <Form.Item label="Trạng thái">
                <Switch
                  name="isActive"
                  checked={formData.isActive}
@@ -1041,10 +1239,10 @@ const handleConfirmUserSelection = () => {
          </Row>
 
          {formData.audience === 'SPECIFIC_USERS' && (
-            <Form.Item label={<span>Select Users <Button icon={<FilterOutlined />} size="small" style={{ marginLeft: 8 }} onClick={handleOpenUserFilterModal}>Filter Users</Button></span>} required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
+            <Form.Item label={<span>Chọn người dùng <Button icon={<FilterOutlined />} size="small" style={{ marginLeft: 8 }} onClick={handleOpenUserFilterModal}>Lọc người dùng</Button></span>} required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
                 <Select
                     mode="multiple"
-                    placeholder="Search and select users"
+                    placeholder="Tìm kiếm người dùng"
                     value={formData.userIds}
                     onChange={handleUserSelect}
                     onSearch={handleUserSearch}
@@ -1066,10 +1264,10 @@ const handleConfirmUserSelection = () => {
 
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
-             Cancel
+             Hủy
            </Button>
            <Button type="primary" onClick={handleSubmit}>
-             Save
+             Thêm
            </Button>
          </div>
        </Form>
@@ -1080,7 +1278,7 @@ const handleConfirmUserSelection = () => {
        open={showEditModal}
        onCancel={() => setShowEditModal(false)}
        footer={null}
-       title="Update Coupon"
+       title="Cập nhật mã giảm giá"
        width={800}
      >
        <Form layout="vertical" onSubmit={handleSubmit}>
@@ -1089,17 +1287,17 @@ const handleConfirmUserSelection = () => {
          )}
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Code" required validateStatus={validationErrors.Code ? 'error' : ''} help={validationErrors.Code ? validationErrors.Code.join(', ') : ''}>
+             <Form.Item label="Mã" required validateStatus={validationErrors.Code ? 'error' : ''} help={validationErrors.Code ? validationErrors.Code.join(', ') : ''}>
                <Input
                  name="code"
                  value={formData.code}
                  onChange={handleChange}
-                 placeholder="Enter coupon code"
+                 placeholder="Nhập mã giảm giá (tối đa 30 ký tự)"
                />
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="Type" required validateStatus={validationErrors.Type ? 'error' : ''} help={validationErrors.Type ? validationErrors.Type.join(', ') : ''}>
+             <Form.Item label="Phân loại" required validateStatus={validationErrors.Type ? 'error' : ''} help={validationErrors.Type ? validationErrors.Type.join(', ') : ''}>
                <Select
                  name="type"
                  value={formData.type}
@@ -1112,7 +1310,7 @@ const handleConfirmUserSelection = () => {
            </Col>
          </Row>
 
-         <Form.Item label="Description" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
+         <Form.Item label="Mô tả" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
            <div style={{ border: '1px solid #d9d9d9', borderRadius: '6px', padding: '8px' }}>
              <div style={{ marginBottom: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                <Select
@@ -1164,7 +1362,7 @@ const handleConfirmUserSelection = () => {
                  onClick={() => handleImageUpload()}
                  icon={<i className="ti ti-photo"></i>}
                >
-                 Add Image
+                 Thêm ảnh
                </Button>
              </div>
              <Input.TextArea
@@ -1172,7 +1370,7 @@ const handleConfirmUserSelection = () => {
                value={formData.description}
                onChange={handleChange}
                rows={4}
-               placeholder="Enter description with rich formatting..."
+               placeholder="Nhập các mô tả cho mã giảm giá..."
                required
                style={{
                  fontFamily: formData.fontFamily || 'Arial',
@@ -1189,25 +1387,25 @@ const handleConfirmUserSelection = () => {
            {formData.type === 'PERCENT' && (
              <>
                <Col span={12}>
-                 <Form.Item label="Value (%)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
+                 <Form.Item label="Giá trị (%)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
                    <InputNumber
                      name="value"
                      value={formData.value}
                      onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
                      style={{ width: '100%' }}
-                     placeholder="Enter percentage"
+                     placeholder="Nhập phần trăm giảm giá"
                    />
                  </Form.Item>
                </Col>
                <Col span={12}>
-                 <Form.Item label="Max Discount (VND)" required validateStatus={validationErrors.MaxDiscount ? 'error' : ''} help={validationErrors.MaxDiscount ? validationErrors.MaxDiscount.join(', ') : ''}>
+                 <Form.Item label="Giảm tối đa (VND)" required validateStatus={validationErrors.MaxDiscount ? 'error' : ''} help={validationErrors.MaxDiscount ? validationErrors.MaxDiscount.join(', ') : ''}>
                    <InputNumber
                      name="maxDiscount"
                      value={formData.maxDiscount}
                      onChange={(value) => handleChange({ target: { name: 'maxDiscount', value: value?.toString() || '' } })}
                      min={1}
                      style={{ width: '100%' }}
-                     placeholder="Enter max discount"
+                     placeholder="Nhập số tiền giảm tối đa"
                    />
                  </Form.Item>
                </Col>
@@ -1215,14 +1413,14 @@ const handleConfirmUserSelection = () => {
            )}
            {formData.type === 'FIXED' && (
              <Col span={12}>
-               <Form.Item label="Value (VND)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
+               <Form.Item label="Giá trị (VND)" required validateStatus={validationErrors.Value ? 'error' : ''} help={validationErrors.Value ? validationErrors.Value.join(', ') : ''}>
                  <InputNumber
                    name="value"
                    value={formData.value}
                    onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
                    min={1}
                    style={{ width: '100%' }}
-                   placeholder="Enter fixed amount"
+                   placeholder="Nhập số tiền giảm"
                  />
                </Form.Item>
              </Col>
@@ -1231,26 +1429,26 @@ const handleConfirmUserSelection = () => {
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Min Order Value" required validateStatus={validationErrors.MinOrderValue ? 'error' : ''} help={validationErrors.MinOrderValue ? validationErrors.MinOrderValue.join(', ') : ''}>
+             <Form.Item label="Giá trị đơn hàng tối thiểu" required validateStatus={validationErrors.MinOrderValue ? 'error' : ''} help={validationErrors.MinOrderValue ? validationErrors.MinOrderValue.join(', ') : ''}>
                <InputNumber
                  name="minOrderValue"
                  value={formData.minOrderValue}
                  onChange={(value) => handleChange({ target: { name: 'minOrderValue', value: value?.toString() || '' } })}
                  min={0}
                  style={{ width: '100%' }}
-                 placeholder="Enter min order value"
+                 placeholder="Nhập giá trị đơn hàng tối thiểu"
                />
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="Total Usage Limit">
+             <Form.Item label="Số lượng mã giảm giá">
                <InputNumber
                  name="totalUsageLimit"
                  value={formData.totalUsageLimit}
                  onChange={(value) => handleChange({ target: { name: 'totalUsageLimit', value: value?.toString() || '' } })}
                  min={1}
                  style={{ width: '100%' }}
-                 placeholder="Enter usage limit"
+                 placeholder="Nhập số lượng mã giảm giá"
                />
              </Form.Item>
            </Col>
@@ -1258,22 +1456,22 @@ const handleConfirmUserSelection = () => {
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Start Date" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
+             <Form.Item label="Ngày bắt đầu" required validateStatus={validationErrors.StartDate ? 'error' : ''} help={validationErrors.StartDate ? validationErrors.StartDate.join(', ') : ''}>
                <DatePicker
                  value={formData.startDate ? dayjs(formData.startDate) : null}
                  onChange={(date, dateString) => handleChange({ target: { name: 'startDate', value: dateString } })}
                  style={{ width: '100%' }}
-                 placeholder="Select start date"
+                 placeholder="Chọn ngày bắt đầu"
                />
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="End Date" required validateStatus={validationErrors.EndDate ? 'error' : ''} help={validationErrors.EndDate ? validationErrors.EndDate.join(', ') : ''}>
+             <Form.Item label="Ngày kết thúc" required validateStatus={validationErrors.EndDate ? 'error' : ''} help={validationErrors.EndDate ? validationErrors.EndDate.join(', ') : ''}>
                <DatePicker
                  value={formData.endDate ? dayjs(formData.endDate) : null}
                  onChange={(date, dateString) => handleChange({ target: { name: 'endDate', value: dateString } })}
                  style={{ width: '100%' }}
-                 placeholder="Select end date"
+                 placeholder="Chọn ngày kết thúc"
                />
              </Form.Item>
            </Col>
@@ -1281,7 +1479,7 @@ const handleConfirmUserSelection = () => {
 
          <Row gutter={16}>
            <Col span={12}>
-             <Form.Item label="Audience" validateStatus={validationErrors.Audience ? 'error' : ''} help={validationErrors.Audience ? validationErrors.Audience.join(', ') : ''}>
+             <Form.Item label="Loại người dùng" validateStatus={validationErrors.Audience ? 'error' : ''} help={validationErrors.Audience ? validationErrors.Audience.join(', ') : ''}>
                <Select
                  name="audience"
                  value={formData.audience}
@@ -1295,7 +1493,7 @@ const handleConfirmUserSelection = () => {
              </Form.Item>
            </Col>
            <Col span={12}>
-             <Form.Item label="Status">
+             <Form.Item label="Trạng thái">
                <Switch
                  name="isActive"
                  checked={formData.isActive}
@@ -1308,10 +1506,10 @@ const handleConfirmUserSelection = () => {
          </Row>
 
          {formData.audience === 'SPECIFIC_USERS' && (
-            <Form.Item label={<span>Select Users <Button icon={<FilterOutlined />} size="small" style={{ marginLeft: 8 }} onClick={handleOpenUserFilterModal}>Filter Users</Button></span>} required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
+            <Form.Item label={<span>Chọn người dùng <Button icon={<FilterOutlined />} size="small" style={{ marginLeft: 8 }} onClick={handleOpenUserFilterModal}>Lọc người dùng</Button></span>} required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
                 <Select
                     mode="multiple"
-                    placeholder="Search and select users"
+                    placeholder="Tìm kiếm người dùng"
                     value={formData.userIds}
                     onChange={handleUserSelect}
                     onSearch={handleUserSearch}
@@ -1333,10 +1531,10 @@ const handleConfirmUserSelection = () => {
 
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
-             Cancel
+             Hủy
            </Button>
            <Button type="primary" onClick={handleSubmit}>
-             Save
+             Lưu
            </Button>
          </div>
        </Form>
@@ -1348,15 +1546,15 @@ const handleConfirmUserSelection = () => {
        open={showDeleteModal}
        onCancel={() => setShowDeleteModal(false)}
        footer={null}
-       title="Delete coupon"
+       title="Xóa mã giảm giá"
      >
        <div className="modal-body text-center">
          <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
-         <h4 className="mb-1">Delete coupon</h4>
+         <h4 className="mb-1">Xóa mã giảm giá</h4>
          <p className="mb-3">Bạn có chắc muốn xóa coupon này?</p>
          <div className="d-flex justify-content-center">
-           <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-           <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+           <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Hủy</button>
+           <button type="button" className="btn btn-danger" onClick={confirmDelete}>Xóa</button>
          </div>
        </div>
      </Modal>
@@ -1367,17 +1565,17 @@ const handleConfirmUserSelection = () => {
        open={showRestoreModal}
        onCancel={() => setShowRestoreModal(false)}
        footer={null}
-       title="Restore coupon"
+       title="Khôi phục mã giảm giá"
        width={800}
      >
        <div className="custom-datatable-filter table-responsive">
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
-               <th>CODE</th>
-               <th>TYPE</th>
-               <th>VALUE</th>
-               <th>ACTION</th>
+               <th>Mã</th>
+               <th>Phân loại</th>
+               <th>Giá trị</th>
+               <th>Hành động</th>
              </tr>
            </thead>
            <tbody>
@@ -1388,7 +1586,7 @@ const handleConfirmUserSelection = () => {
                  <td>{coupon.value}</td>
                  <td>
                    <Button size="small" type="primary" onClick={() => handleRestoreCoupon(coupon.id)}>
-                     Restore
+                     Khôi phục
                    </Button>
                  </td>
                </tr>
@@ -1397,7 +1595,7 @@ const handleConfirmUserSelection = () => {
          </table>
        </div>
        <div className="d-flex justify-content-end mt-3">
-         <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
+         <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Đóng</button>
        </div>
      </Modal>
 
@@ -1405,15 +1603,15 @@ const handleConfirmUserSelection = () => {
      <Modal
     open={showUserFilterModal}
     onCancel={() => setShowUserFilterModal(false)}
-    title="Filter Users"
+    title="Lọc người dùng"
     width={900}
     zIndex={2000}
     footer={[
         <Button key="back" onClick={() => setShowUserFilterModal(false)}>
-            Cancel
+            Hủy
         </Button>,
         <Button key="submit" type="primary" loading={loadingFilteredUsers} onClick={handleConfirmUserSelection}>
-            Confirm Selection
+            Xác nhận
         </Button>,
     ]}
 >
@@ -1432,7 +1630,7 @@ const handleConfirmUserSelection = () => {
             </Col>
             <Col span={6}>
                 <div className="switch-label-group">
-                    <label>New User</label>
+                    <label>Người dùng mới</label>
                     <Switch
                         checked={userFilterCriteria.isNewUser}
                         onChange={checked => handleUserFilterChange({ target: { name: 'isNewUser', type: 'checkbox', checked } })}
@@ -1441,7 +1639,7 @@ const handleConfirmUserSelection = () => {
             </Col>
             <Col span={6}>
                 <div className="switch-label-group">
-                    <label>Intermission User</label>
+                    <label>Người dùng cũ</label>
                     <Switch
                         checked={userFilterCriteria.isIntermissionUser}
                         onChange={checked => handleUserFilterChange({ target: { name: 'isIntermissionUser', type: 'checkbox', checked } })}
@@ -1450,17 +1648,17 @@ const handleConfirmUserSelection = () => {
             </Col>
             <Col span={6}>
                 <div className="switch-label-group">
-                    <label>Rank</label>
+                    <label>Xếp hạng</label>
                     <Select
-                        placeholder="Chọn rank"
+                        placeholder="Chọn hạng người dùng"
                         style={{ minWidth: 120 }}
                         value={userFilterCriteria.rank}
                         onChange={value => handleUserFilterChange({ target: { name: 'rank', value } })}
                         allowClear
                     >
-                        <Select.Option value="Silver">Silver</Select.Option>
-                        <Select.Option value="Gold">Gold</Select.Option>
-                        <Select.Option value="Diamond">Diamond</Select.Option>
+                        <Select.Option value="Silver">Bạc</Select.Option>
+                        <Select.Option value="Gold">Vàng</Select.Option>
+                        <Select.Option value="Diamond">Kim cương</Select.Option>
                         <Select.Option value="VIP">VIP</Select.Option>
                     </Select>
                 </div>
@@ -1468,18 +1666,18 @@ const handleConfirmUserSelection = () => {
         </Row>
         <Row gutter={16} style={{ marginTop: 12 }}>
             <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Min Total Booking Value</label>
+                <label style={{ fontWeight: 500 }}>Giá trị đơn hàng tối thiểu</label>
                 <InputNumber
-                    placeholder="Tối thiểu"
+                    placeholder="Nhập giá trị tối thiểu"
                     style={{ width: '100%' }}
                     value={userFilterCriteria.minTotalBookingValue}
                     onChange={value => handleUserFilterChange({ target: { name: 'minTotalBookingValue', value } })}
                 />
             </Col>
             <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Max Total Booking Value</label>
+                <label style={{ fontWeight: 500 }}>Giá trị đơn hàng tối đa</label>
                 <InputNumber
-                    placeholder="Tối đa"
+                    placeholder="Nhập giá trị tối đa"
                     style={{ width: '100%' }}
                     value={userFilterCriteria.maxTotalBookingValue}
                     onChange={value => handleUserFilterChange({ target: { name: 'maxTotalBookingValue', value } })}
@@ -1530,18 +1728,18 @@ const handleConfirmUserSelection = () => {
                 />
             </Col> */}
             <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Min Booking Count (month)</label>
+                <label style={{ fontWeight: 500 }}>Số đơn tối thiểu (tháng)</label>
                 <InputNumber
-                    placeholder="Tối thiểu"
+                    placeholder="Nhập số đơn tối thiểu"
                     style={{ width: '100%' }}
                     value={userFilterCriteria.minBookingCountInMonth}
                     onChange={value => handleUserFilterChange({ target: { name: 'minBookingCountInMonth', value } })}
                 />
             </Col>
             <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Max Booking Count (month)</label>
+                <label style={{ fontWeight: 500 }}>Số đơn tối đa (tháng)</label>
                 <InputNumber
-                    placeholder="Tối đa"
+                    placeholder="Nhập số đơn tối đa"
                     style={{ width: '100%' }}
                     value={userFilterCriteria.maxBookingCountInMonth}
                     onChange={value => handleUserFilterChange({ target: { name: 'maxBookingCountInMonth', value } })}
@@ -1552,7 +1750,7 @@ const handleConfirmUserSelection = () => {
     <Table
         rowKey="id"
         columns={[
-            { title: 'Họ tên', dataIndex: 'fullName' },
+            { title: 'Họ và tên', dataIndex: 'fullName' },
             { title: 'Email', dataIndex: 'email' },
         ]}
         dataSource={filteredUsers}
@@ -1565,10 +1763,154 @@ const handleConfirmUserSelection = () => {
         size="middle"
     />
     <div style={{ marginTop: 8 }}>
-        <b>Đã chọn:</b> {selectedFilteredUserIds.length} user
+        <b>Đã chọn:</b> {selectedFilteredUserIds.length} người dùng
     </div>
 </Modal>
-   </div>
+
+   {/* Detail Modal */}
+   <Modal
+     open={showDetailModal}
+     onCancel={() => setShowDetailModal(false)}
+     footer={null}
+     title="Chi tiết mã giảm giá"
+     width={800}
+   >
+     {selectedCoupon && (
+       <div>
+         <Row gutter={16}>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Mã:</label>
+               <div style={{ fontSize: 16, fontWeight: 500, color: '#1890ff' }}>{selectedCoupon.code}</div>
+             </div>
+           </Col>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Phân loại:</label>
+               <div style={{ fontSize: 16 }}>{selectedCoupon.type}</div>
+             </div>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Giá trị:</label>
+               <div style={{ fontSize: 16 }}>
+                 {selectedCoupon.type === 'PERCENT' ? `${selectedCoupon.value}%` : `${formatCurrency(selectedCoupon.value)}`}
+               </div>
+             </div>
+           </Col>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Giảm tối đa:</label>
+               <div style={{ fontSize: 16 }}>{formatCurrency(selectedCoupon.maxDiscount)}</div>
+             </div>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Giá trị đơn hàng tối thiểu:</label>
+               <div style={{ fontSize: 16 }}>{formatCurrency(selectedCoupon.minOrderValue)}</div>
+             </div>
+           </Col>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Loại người dùng:</label>
+               <div style={{ fontSize: 16 }}>{selectedCoupon.audience}</div>
+             </div>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Số lần sử dụng:</label>
+               <div style={{ fontSize: 16 }}>
+                 <span className={`badge ${(selectedCoupon.usedCount || 0) >= (selectedCoupon.totalUsageLimit || 1) ? 'bg-warning-transparent' : 'bg-info-transparent'} text-dark`} style={{ fontSize: 14 }}>
+                   {selectedCoupon.usedCount || 0}
+                 </span>
+               </div>
+             </div>
+           </Col>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Giới hạn sử dụng:</label>
+               <div style={{ fontSize: 16 }}>{selectedCoupon.totalUsageLimit || 0}</div>
+             </div>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Ngày bắt đầu:</label>
+               <div style={{ fontSize: 16 }}>{formatDateTime(selectedCoupon.startDate)}</div>
+             </div>
+           </Col>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Ngày kết thúc:</label>
+               <div style={{ fontSize: 16 }}>{formatDateTime(selectedCoupon.endDate)}</div>
+             </div>
+           </Col>
+         </Row>
+
+         <Row gutter={16}>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Trạng thái:</label>
+               <div style={{ fontSize: 16 }}>
+                 <span className={`badge ${selectedCoupon.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
+                   {selectedCoupon.isActive ? 'ACTIVE' : 'INACTIVE'}
+                 </span>
+               </div>
+             </div>
+           </Col>
+           <Col span={12}>
+             <div style={{ marginBottom: 16 }}>
+               <label style={{ fontWeight: 600, color: '#666' }}>Thời gian tạo:</label>
+               <div style={{ fontSize: 16 }}>{formatDateTime(selectedCoupon.createdAt)}</div>
+             </div>
+           </Col>
+         </Row>
+
+         <div style={{ marginBottom: 16 }}>
+           <label style={{ fontWeight: 600, color: '#666' }}>Mô tả:</label>
+           <div 
+             style={{ 
+               border: '1px solid #f0f0f0', 
+               borderRadius: 6, 
+               padding: 12, 
+               backgroundColor: '#fafafa',
+               fontFamily: selectedCoupon.fontFamily || 'Arial',
+               fontSize: `${selectedCoupon.fontSize || 14}px`,
+               textAlign: selectedCoupon.textAlign || 'left'
+             }}
+             dangerouslySetInnerHTML={{ 
+               __html: renderFormattedDescription(selectedCoupon.description) 
+             }}
+           />
+         </div>
+
+         {selectedCoupon.audience === 'SPECIFIC_USERS' && selectedCoupon.userIds && selectedCoupon.userIds.length > 0 && (
+           <div style={{ marginBottom: 16 }}>
+             <label style={{ fontWeight: 600, color: '#666' }}>Người dùng được chọn:</label>
+             <div style={{ fontSize: 16, color: '#666' }}>
+               {selectedCoupon.userIds.length} người dùng
+             </div>
+           </div>
+         )}
+
+         <div style={{ marginTop: 24, textAlign: 'center' }}>
+           <Button onClick={() => setShowDetailModal(false)}>Đóng</Button>
+         </div>
+       </div>
+     )}
+   </Modal>
+ </div>
  );
 };
 

@@ -24,6 +24,7 @@ import FeedbackAdmin from "../pages/management/FeedbackManagement";
 import UserDetail from "../pages/management/UserDetail";
 import TechnicianDetail from "../pages/management/TechnicianDetail";
 import CertificateAdmin from "../pages/management/CertificateManagement";
+import TechnicianSubscriptionAnalytics from "../pages/management/TechnicianSubscriptionAnalytics";
 
 //Định nghĩa các route, xác định trang nào sẽ render vào <Outlet /> của AdminLayout, quyết định trang nào là management page.
 export function AppRoutes() {
@@ -52,6 +53,7 @@ export function AppRoutes() {
         <Route path="package" element={<AdminPackagePage />} />
         <Route path="feedback" element={<FeedbackAdmin />} />
         <Route path="certificate" element={<CertificateAdmin />} />
+        <Route path="technician-subscription-analytics" element={<TechnicianSubscriptionAnalytics />} />
         <Route index element={<AdminDashboard />} /> {/* Trang mặc định */}
       </Route>
       <Route path="/admin/commission" element={

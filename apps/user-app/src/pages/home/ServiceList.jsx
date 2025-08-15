@@ -7,6 +7,7 @@ import Header from "../../components/common/Header";
 import { createNewBooking } from '../../features/bookings/bookingSlice';
 import ImageUploader from '../booking/common/ImageUploader';
 import { validateBookingData } from '../../validations/bookingValidation';
+import Footer from "../../components/common/Footer";
 
 // Hook lấy gợi ý địa chỉ từ HERE Maps
 function useHereAddressAutocomplete(query) {
@@ -59,7 +60,7 @@ function ServiceList() {
     const [currentPage, setCurrentPage] = useState(1);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedCategories, setSelectedCategories] = useState([]);
-    
+
     // State cho booking modal
     const [showBookingModal, setShowBookingModal] = useState(false);
     const [selectedService, setSelectedService] = useState(null);
@@ -74,7 +75,7 @@ function ServiceList() {
     const [formError, setFormError] = useState("");
     const [errors, setErrors] = useState({});
     const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
-    
+
     const locationInputRef = useRef();
     const { suggestions: addressSuggestions, loading: addressLoading, error: addressError } = useHereAddressAutocomplete(bookingLocation);
 
@@ -189,7 +190,7 @@ function ServiceList() {
             formData.append('serviceId', selectedService._id);
             formData.append('description', bookingDescription);
             formData.append('address', bookingLocation);
-            
+
             if (bookingType === 'scheduled') {
                 const startDateTime = new Date(`${bookingDate}T${bookingTime}`);
                 const endDateTime = new Date(`${bookingDate}T${bookingEndTime}`);
@@ -197,7 +198,7 @@ function ServiceList() {
                 formData.append('startTime', startDateTime.toISOString());
                 formData.append('endTime', endDateTime.toISOString());
             }
-            
+
             if (bookingImages && bookingImages.length > 0) {
                 bookingImages.forEach(file => {
                     formData.append('images', file);
@@ -206,7 +207,7 @@ function ServiceList() {
 
             const actionResult = await dispatch(createNewBooking(formData));
             const bookingResult = actionResult.payload;
-            
+
             if (bookingResult?.booking?._id) {
                 handleCloseBookingModal();
                 navigate(`/booking/choose-technician?bookingId=${bookingResult.booking._id}`);
@@ -296,8 +297,8 @@ function ServiceList() {
                                         <div key={service._id} className="col-xxl-4 col-lg-6 col-md-6 col-12 mb-4">
                                             <div className="service-list-card">
                                                 <div className="service-list-card-image">
-                                                    <img 
-                                                        src={service.icon} 
+                                                    <img
+                                                        src={service.icon}
                                                         alt={service.serviceName}
                                                         onError={(e) => {
                                                             e.target.style.display = 'none';
@@ -307,17 +308,17 @@ function ServiceList() {
                                                     <div className="service-list-card-fallback" style={{ display: 'none' }}>
                                                         <i className="bx bx-cog" style={{ fontSize: '60px', color: '#6c757d' }}></i>
                                                     </div>
-                                                    <div className="service-list-card-badge">
+                                                    {/* <div className="service-list-card-badge">
                                                         <i className="bx bx-star"></i>
-                                                        Popular
-                                                    </div>
+                                                        Phổ biến
+                                                    </div> */}
                                                 </div>
 
                                                 <div className="service-list-card-content">
                                                     <h3 className="service-list-card-title">
                                                         {service.serviceName}
                                                     </h3>
-                                                    
+
                                                     <p className="service-list-card-description">
                                                         {service.description}
                                                     </p>
@@ -329,14 +330,14 @@ function ServiceList() {
                                                     )}
 
                                                     <div className="service-list-card-buttons">
-                                                        <button 
+                                                        <button
                                                             className="service-list-card-btn service-list-card-btn-primary"
                                                             onClick={() => handleOpenBookingModal(service, 'scheduled')}
                                                         >
                                                             <i className="bx bx-calendar"></i>
                                                             Đặt Lịch
                                                         </button>
-                                                        <button 
+                                                        <button
                                                             className="service-list-card-btn service-list-card-btn-secondary"
                                                             onClick={() => handleOpenBookingModal(service, 'urgent')}
                                                         >
@@ -356,7 +357,7 @@ function ServiceList() {
                                     <nav>
                                         <ul className="pagination justify-content-center">
                                             <li className={`service-list-page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                                                <a 
+                                                <a
                                                     className={`service-list-page-link ${currentPage === 1 ? 'disabled' : ''}`}
                                                     onClick={() => handlePageChange(currentPage - 1)}
                                                     style={{ cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
@@ -378,7 +379,7 @@ function ServiceList() {
                                             ))}
 
                                             <li className={`service-list-page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                                                <a 
+                                                <a
                                                     className={`service-list-page-link ${currentPage === totalPages ? 'disabled' : ''}`}
                                                     onClick={() => handlePageChange(currentPage + 1)}
                                                     style={{ cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
@@ -434,7 +435,7 @@ function ServiceList() {
                         </div>
 
                         <div className="service-list-booking-cards">
-                            <div 
+                            <div
                                 className={`service-list-booking-card ${bookingType === 'urgent' ? 'selected' : ''}`}
                                 onClick={() => setBookingType('urgent')}
                             >
@@ -453,7 +454,7 @@ function ServiceList() {
                                 </div>
                             </div>
 
-                            <div 
+                            <div
                                 className={`service-list-booking-card ${bookingType === 'scheduled' ? 'selected' : ''}`}
                                 onClick={() => setBookingType('scheduled')}
                             >
@@ -499,7 +500,7 @@ function ServiceList() {
                                 ref={locationInputRef}
                                 required
                                 autoComplete="off"
-                                placeholder="Nhập địa chỉ, ví dụ: 105 Lê Duẩn, Đà Nẵng"
+                                placeholder="Nhập địa chỉ của bạn ( ví dụ: 105 Lê Duẩn, TP. Đà Nẵng )"
                             />
                             {addressLoading && <div className="service-list-form-loading">Đang tìm gợi ý...</div>}
                             {addressError && <div className="service-list-form-error">{addressError}</div>}
@@ -545,7 +546,7 @@ function ServiceList() {
                                     <i className="bx bx-time service-list-info-header-icon"></i>
                                     <span className="service-list-schedule-title">Thông tin lịch hẹn</span>
                                 </div>
-                                
+
                                 <div className="service-list-schedule-inputs">
                                     <div className="service-list-schedule-input-group">
                                         <label className="form-label service-list-form-label">
@@ -565,7 +566,7 @@ function ServiceList() {
                                 <div className="service-list-schedule-time-inputs">
                                     <div className="service-list-schedule-time-label">
                                         <label className="form-label service-list-form-label">
-                                            Thời gian mong muốn thợ đến sửa chữa <span className="text-danger">*</span>
+                                            Thời gian <span className="text-danger">*</span>
                                         </label>
                                     </div>
                                     <div className="service-list-schedule-time-inputs-row">
@@ -595,15 +596,21 @@ function ServiceList() {
                                             {errors.endTime && <div className="service-list-form-error">{errors.endTime}</div>}
                                         </div>
                                     </div>
+                                    <div className="banner-info-box">
+                                        <i className="bx bx-info-circle banner-info-icon"></i>
+                                        <span>
+                                            Lưu ý: Đây là khoảng thời gian bạn mong muốn thợ đến, không phải thời gian sửa chữa chính xác.
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         )}
 
                         {/* Upload ảnh */}
                         <div className="mb-3">
-                            <label className="form-label service-list-form-label">
+                            {/* <label className="form-label service-list-form-label">
                                 Hình ảnh (tùy chọn)
-                            </label>
+                            </label> */}
                             <ImageUploader onFilesSelect={handleBookingImages} />
                             {errors.images && <div className="service-list-form-error">{errors.images}</div>}
                         </div>
@@ -617,14 +624,14 @@ function ServiceList() {
                     </form>
                 </Modal.Body>
                 <Modal.Footer className="service-list-modal-footer">
-                    <button 
+                    <button
                         type="button"
                         onClick={handleCloseBookingModal}
                         className="service-list-btn-secondary"
                     >
                         Hủy
                     </button>
-                    <button 
+                    <button
                         type="submit"
                         onClick={handleSubmitBooking}
                         disabled={submitting}
@@ -634,6 +641,10 @@ function ServiceList() {
                     </button>
                 </Modal.Footer>
             </Modal>
+
+            <div style={{ marginTop: 25 }} className="footer-enhanced">
+                <Footer />
+            </div>
         </>
     );
 }
