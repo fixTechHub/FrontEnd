@@ -511,7 +511,7 @@
   width: 100%;
   max-width: 1200px;
   margin: 3rem auto 2rem auto;
-  z-index: 10;
+  z-index: 9999;
 }
 
 /* Hero Search Title */
@@ -575,10 +575,12 @@
     0 20px 60px rgba(0, 0, 0, 0.1),
     0 4px 16px rgba(0, 0, 0, 0.06),
     0 0 0 1px rgba(255, 255, 255, 0.05);
-  overflow: hidden;
+  overflow: visible;
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   border: 2px solid transparent;
   background-clip: padding-box;
+  /* Đảm bảo suggestions có thể hiển thị bên ngoài */
+  z-index: 1;
 }
 
 .search-box-enhanced::before {
@@ -668,6 +670,8 @@
 .search-input-wrapper {
   flex: 1;
   position: relative;
+  /* Đảm bảo positioning context cho suggestions */
+  z-index: 2;
 }
 
 .search-field-enhanced {

@@ -47,9 +47,10 @@ function ImageUploader({ onFilesSelect }) {
 
     return (
         <div className="input-block date-widget">
-            <label className="form-label">
-                Tải lên hình ảnh ({selectedFiles.length}/{MAX_FILES})<span className="text-danger">*</span>
+            <label className="form-label" style={{ fontSize: 16 }}>
+                Tải lên hình ảnh (tùy chọn) 
             </label>
+            {/* ({selectedFiles.length}/{MAX_FILES}) */}
 
             {selectedFiles.length < MAX_FILES && (
                 <label className="upload-div" htmlFor="file-input-component" style={{ cursor: 'pointer' }}>
@@ -99,17 +100,17 @@ function ImageUploader({ onFilesSelect }) {
                 </div>
             )}
 
-            <div className="upload-list mt-2">
+            {/* <div className="upload-list mt-2">
                 <ul style={{ fontSize: 11 }}>
                     Để đảm bảo ảnh của bạn được tải lên thành công, vui lòng lưu ý các điểm sau:
-                    {/* <li style={{ fontSize: 11, marginLeft: 15, marginTop: 5 }}>
+                    <li style={{ fontSize: 11, marginLeft: 15, marginTop: 5 }}>
                         Kích thước tối đa: Mỗi ảnh không quá 8 MB.
-                    </li> */}
+                    </li>
                     <li style={{ fontSize: 11, marginLeft: 15, marginTop: 5 }}>
                         Định dạng hỗ trợ: Vui lòng sử dụng các định dạng ảnh JPEG, JPG hoặc PNG.
                     </li>
                 </ul>
-            </div>
+            </div> */}
         </div>
     );
 }
