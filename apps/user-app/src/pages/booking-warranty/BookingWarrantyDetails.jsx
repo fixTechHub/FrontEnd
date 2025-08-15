@@ -48,7 +48,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const displayName = isCustomer
         ? warranty?.technicianId?.userId?.fullName || 'Không có dữ liệu'
         : warranty?.customerId?.fullName || 'Không có dữ liệu';
-    // console.log(warranty.bookingId.warrantyExpiresAt);
+    console.log(warranty);
     
     const styles = {
         modalHeader: {
@@ -264,7 +264,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                     <FaFileAlt className="booking-details-id-icon" />
                     <span>{warranty?.bookingId?.bookingCode || 'Không có mã đơn'}</span>
                     {/* Report icon next to code */}
-                    <BookingReportButton bookingId={warranty.bookingId?._id} warrantyId={warranty._id} reportedUserId={warranty.technicianId?._id} />
+                    <BookingReportButton bookingId={warranty.bookingId?._id} warrantyId={warranty._id} reportedUserId={warranty.technicianId?.userId?._id} />
                 </div>
                 <div className="booking-details-status-indicator d-flex align-items-center gap-2">
                     <FaCircle className={`booking-details-status-dot ${statusConfig.className}`} />
