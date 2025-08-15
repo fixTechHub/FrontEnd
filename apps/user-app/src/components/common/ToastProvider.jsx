@@ -7,12 +7,15 @@ const ToastProvider = () => {
       position="top-right"
       autoClose={5000}
       hideProgressBar={false}
-      newestOnTop={false}
-      closeOnClick
+      newestOnTop={true}  // Hiển thị toast mới ở trên
+      closeOnClick={true}
       rtl={false}
-      pauseOnFocusLoss
-      draggable
-      pauseOnHover
+      pauseOnFocusLoss={false}  // Không dừng khi mất focus
+      draggable={true}
+      pauseOnHover={true}
+      limit={3}  // Giới hạn tối đa 3 toast cùng lúc
+      enableMultiContainer={false}  // Tránh nhiều container
+      containerId="default"  // ID duy nhất
     />
   )
 }

@@ -38,17 +38,13 @@ export const checkAuthThunk = createAsyncThunk(
       
       // Kiểm tra nếu tài khoản bị vô hiệu hóa bởi admin
       if (result.user && result.user.status === 'INACTIVE_ADMIN') {
-        // Đăng xuất người dùng và hiển thị thông báo
-        toast.error("Tài khoản của bạn đã bị vô hiệu hóa bởi quản trị viên. Vui lòng liên hệ với quản trị viên để được hỗ trợ.");
-        // Có thể dispatch logout action ở đây nếu cần
+        // Đăng xuất người dùng - không hiển thị toast ở đây
+        // Component sẽ xử lý toast khi nhận error
         throw new Error("Tài khoản bị vô hiệu hóa bởi quản trị viên");
       }
       
       // Kiểm tra nếu tài khoản đang trong trạng thái chờ xóa
-      if (result.user && result.user.status === 'PENDING_DELETION') {
-        // Khôi phục tài khoản tự động
-        toast.success("Tài khoản của bạn đã được khôi phục thành công!");
-      }
+      // Không hiển thị toast ở đây - để component xử lý
       
       return result;
     } catch (error) {
@@ -63,13 +59,10 @@ export const loginThunk = createAsyncThunk(
     try {
       const result = await authAPI.login(credentials);
       
+      // Không hiển thị toast ở đây - để component xử lý
+      // Chỉ lưu wasReactivated vào sessionStorage nếu cần
       if (result.wasReactivated) {
         sessionStorage.setItem("wasReactivated", "true");
-        toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
-      } else if (result.user && result.user.status === 'PENDING_DELETION') {
-        toast.success("Tài khoản của bạn đã được khôi phục thành công! Việc xóa tài khoản đã được hủy bỏ.");
-      } else {
-        toast.success("Đăng nhập thành công!");
       }
       
       return result;
