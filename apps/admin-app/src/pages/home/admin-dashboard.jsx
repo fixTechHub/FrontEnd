@@ -336,7 +336,9 @@ const AdminDashboard = () => {
         
         const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
         const lastRevenueValue = revenueData[lastMonth] || 0;
-        const change = lastRevenueValue === 0 ? 0 : ((currentRevenue - lastRevenueValue) / lastRevenueValue) * 100;
+        const change = lastRevenueValue === 0 
+          ? (currentRevenue > 0 ? 100 : 0)
+          : ((currentRevenue - lastRevenueValue) / lastRevenueValue) * 100;
         setPercentRevenueChange(change);
       } catch (error) {
         console.error('Error fetching revenue data:', error);
@@ -544,7 +546,7 @@ const AdminDashboard = () => {
             </nav>
           </div>
           <div className="d-flex align-items-center gap-2">
-            <span className="text-muted small">Last updated: {new Date().toLocaleString()}</span>
+            <span className="text-muted small">Cập nhật: {new Date().toLocaleString()}</span>
           </div>
         </div>
 
@@ -572,7 +574,7 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Total Bookings of month</div>
+                  <div className="text-white-50 small mb-1">Tổng đơn hàng của tháng</div>
                   <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
                     {totalBookings.toLocaleString()}
                 </div>
@@ -588,7 +590,7 @@ const AdminDashboard = () => {
                       <span className="text-white-50 me-1">-</span>
                     )}
                     <span className={`small ${percentChange > 0 ? 'text-success' : percentChange < 0 ? 'text-danger' : 'text-white-50'}`}>
-                      {percentChange === 0 ? 'No change' : `${Math.abs(percentChange).toFixed(1)}% from last month`}
+                      {percentChange === 0 ? 'Không đổi' : `${Math.abs(percentChange).toFixed(1)}% so với tháng trước`}
                     </span>
               </div>
               </div>
@@ -621,7 +623,7 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Total Revenue of month</div>
+                  <div className="text-white-50 small mb-1">Tổng doanh thu của tháng</div>
                   <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
                     ${currentRevenue.toLocaleString()}
                 </div>
@@ -637,7 +639,7 @@ const AdminDashboard = () => {
                       <span className="text-white-50 me-1">-</span>
                     )}
                     <span className={`small ${percentRevenueChange > 0 ? 'text-success' : percentRevenueChange < 0 ? 'text-danger' : 'text-white-50'}`}>
-                      {percentRevenueChange === 0 ? 'No change' : `${Math.abs(percentRevenueChange).toFixed(1)}% from last month`}
+                      {percentRevenueChange === 0 ? 'Không đổi' : `${Math.abs(percentRevenueChange).toFixed(1)}% so với tháng trước`}
                     </span>
               </div>
               </div>
@@ -670,7 +672,7 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Technician's Registion of month</div>
+                  <div className="text-white-50 small mb-1">Kỹ thuật viên đăng ký tháng</div>
                   <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
                     {totalTechnicians.toLocaleString()}
                 </div>
@@ -686,7 +688,7 @@ const AdminDashboard = () => {
                       <span className="text-white-50 me-1">-</span>
                     )}
                     <span className={`small ${percentTechnicianChange > 0 ? 'text-success' : percentTechnicianChange < 0 ? 'text-danger' : 'text-white-50'}`}>
-                      {percentTechnicianChange === 0 ? 'No change' : `${Math.abs(percentTechnicianChange).toFixed(1)}% from last month`}
+                      {percentTechnicianChange === 0 ? 'Không đổi' : `${Math.abs(percentTechnicianChange).toFixed(1)}% so với tháng trước`}
                     </span>
               </div>
                 </div>
@@ -719,7 +721,7 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Total Users</div>
+                  <div className="text-white-50 small mb-1">Tổng số lượng người dùng</div>
                   <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
                     {dashboardStats.totalUsers.toLocaleString()}
                   </div>
@@ -728,7 +730,7 @@ const AdminDashboard = () => {
                   </div>
                   <div className="d-flex align-items-center mt-2">
                     <span className="small text-white-50">
-                      {dashboardStats.pendingBookings} pending bookings
+                      {dashboardStats.pendingBookings} đơn hàng chờ xác nhận
                     </span>
                   </div>
                 </div>
@@ -746,16 +748,9 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold">Revenue Analytics</span>
+                  <span className="fw-bold">Số liệu doanh thu</span>
                   <div className="d-flex align-items-center gap-2">
-                    <div className="d-flex align-items-center">
-                      <div style={{width: '12px', height: '12px', backgroundColor: '#4CAF50', borderRadius: '50%', marginRight: '6px'}}></div>
-                      <span className="small">This Year</span>
-                    </div>
-                    <div className="d-flex align-items-center">
-                      <div style={{width: '12px', height: '12px', backgroundColor: '#9E9E9E', borderRadius: '50%', marginRight: '6px'}}></div>
-                      <span className="small">Last Year</span>
-                    </div>
+                    
                   </div>
                 </div>
               }
@@ -816,14 +811,14 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold">Current figures Statistics</span>
+                  <span className="fw-bold">Thống kê số liệu hiện tại</span>
                   <Button 
                     type="link" 
                     size="small" 
                     onClick={() => navigate('/admin/technician-management')}
                     className="p-0"
                   >
-                    View All
+                    Xem tất cả
               </Button>
             </div>
               }
@@ -832,7 +827,7 @@ const AdminDashboard = () => {
               <div className="space-y-3">
                 <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
                   <div>
-                    <div className="text-muted small">Pending Bookings</div>
+                    <div className="text-muted small">Đơn hàng đang chờ</div>
                     <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.pendingBookings}</div>
             </div>
                   <ClockCircleOutlined style={{fontSize: '1.5rem', color: '#ff9800'}} />
@@ -840,7 +835,7 @@ const AdminDashboard = () => {
 
                 <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
                   <div>
-                    <div className="text-muted small">Done Bookings</div>
+                    <div className="text-muted small">Đơn hàng đã hoàn tất</div>
                     <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.completedBookings}</div>
                   </div>
                   <CheckCircleOutlined style={{fontSize: '1.5rem', color: '#4caf50'}} />
@@ -848,7 +843,7 @@ const AdminDashboard = () => {
 
                 <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
                   <div>
-                    <div className="text-muted small">Available Technicians</div>
+                    <div className="text-muted small">Kỹ thuật viên có sẵn</div>
                     <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.activeTechnicians}</div>
                   </div>
                   <ToolOutlined style={{fontSize: '1.5rem', color: '#2196f3'}} />
@@ -856,7 +851,7 @@ const AdminDashboard = () => {
 
                 <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
                   <div>
-                    <div className="text-muted small">Avg. Rating</div>
+                    <div className="text-muted small">Điểm đánh giá trung bình của kỹ thuật viên</div>
                     <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.averageRating.toFixed(1)}</div>
               </div>
                   <StarOutlined style={{fontSize: '1.5rem', color: '#ffc107'}} />
@@ -872,14 +867,14 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold">Recent Bookings</span>
+                  <span className="fw-bold">Đơn hàng gần đây</span>
                   <Button 
                     type="link" 
                     size="small" 
                     onClick={() => navigate('/admin/booking-management')}
                     className="p-0"
                   >
-                    View All
+                    Xem tất cả
               </Button>
                       </div>
               }
@@ -901,7 +896,7 @@ const AdminDashboard = () => {
                   ) : recentBookings.length === 0 ? (
                 <div className="text-center py-4 text-muted">
                   <CalendarOutlined style={{fontSize: '2rem', marginBottom: '1rem'}} />
-                  <div>No recent bookings</div>
+                  <div>Không có đơn hàng nào</div>
                 </div>
               ) : (
                 <div className="space-y-3" style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
@@ -988,14 +983,14 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold">Top Technicians</span>
+                  <span className="fw-bold">Xếp hạng kỹ thuật viên</span>
                   <Button 
                     type="link" 
                     size="small" 
                     onClick={() => navigate('/admin/technician-management')}
                     className="p-0"
                   >
-                    View All
+                    Xem tất cả
                   </Button>
                     </div>
               }
@@ -1017,7 +1012,7 @@ const AdminDashboard = () => {
               ) : topTechnicians.length === 0 ? (
                 <div className="text-center py-4 text-muted">
                   <ToolOutlined style={{fontSize: '2rem', marginBottom: '1rem'}} />
-                  <div>No technicians found</div>
+                  <div>Không có kỹ thuật viên nào</div>
                     </div>
               ) : (
                 <div className="space-y-3" style={{flex: 1, display: 'flex', flexDirection: 'column'}}>
@@ -1065,7 +1060,7 @@ const AdminDashboard = () => {
                           {tech.user?.fullName || 'Unknown Technician'}
                 </div>
                         <div className={`small ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
-                          Jobs: {tech.jobCompleted || 0}
+                          Số công việc đã thực hiện: {tech.jobCompleted || 0}
                       </div>
                     </div>
                       <div className="text-end">
@@ -1106,7 +1101,7 @@ const AdminDashboard = () => {
               }}>
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <div>
-                    <div style={{fontSize: 22, fontWeight: 700}}>Booking Details</div>
+                    <div style={{fontSize: 22, fontWeight: 700}}>Chi tiết đơn hàng</div>
                     <div style={{fontSize: 13, opacity: 0.9}}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
                       </div>
                   <div style={{textAlign: 'right'}}>
@@ -1123,19 +1118,19 @@ const AdminDashboard = () => {
                   {/* Overview */}
                   <Col span={12}>
                     <div style={{background: '#fafafa', padding: 16, borderRadius: 8}}>
-                      <div style={{fontWeight: 600, marginBottom: 12}}>Overview</div>
+                      <div style={{fontWeight: 600, marginBottom: 12}}>Tổng quan</div>
                       <Descriptions size="small" column={1} bordered={false}
                         items={[
-                          { key: 'service', label: 'Service', children: selectedBooking.service?.serviceName || 'N/A' },
-                          { key: 'location', label: 'Location', children: selectedBooking.location?.address || 'N/A' },
-                          { key: 'scheduledAt', label: 'Schedule', children: (
+                          { key: 'service', label: 'Dịch vụ', children: selectedBooking.service?.serviceName || 'N/A' },
+                          { key: 'location', label: 'Địa chỉ', children: selectedBooking.location?.address || 'N/A' },
+                          { key: 'scheduledAt', label: 'Lịch trình', children: (
                             selectedBooking.schedule?.startTime
                               ? `${dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}${selectedBooking.schedule?.endTime
                                   ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
                                   : (selectedBooking.schedule?.expectedEndTime
                                       ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
                                       : '')}`
-                              : 'Not scheduled'
+                              : 'Chưa có lịch trình'
                           ) },
                         ]}
                       />
@@ -1144,11 +1139,11 @@ const AdminDashboard = () => {
                   {/* People */}
                   <Col span={12}>
                     <div style={{background: '#fafafa', padding: 16, borderRadius: 8}}>
-                      <div style={{fontWeight: 600, marginBottom: 12}}>People</div>
+                      <div style={{fontWeight: 600, marginBottom: 12}}>Khách hàng & Kỹ thuật viên</div>
                       <Descriptions size="small" column={1} bordered={false}
                         items={[
-                          { key: 'customer', label: 'Customer', children: selectedBooking.user?.fullName || 'N/A' },
-                          { key: 'technician', label: 'Technician', children: (selectedBooking.technicianId && technicianMap[selectedBooking.technicianId]) || 'Not assigned' },
+                          { key: 'customer', label: 'Khách hàng', children: selectedBooking.user?.fullName || '' },
+                          { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking.technicianId && technicianMap[selectedBooking.technicianId]) || '' },
                         ]}
                       />
               </div>
@@ -1158,30 +1153,30 @@ const AdminDashboard = () => {
 
                 {/* Status & Flags */}
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontWeight: 600, marginBottom: 8 }}>Status & Payment</div>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>Trạng thái & Thanh toán</div>
                   <Row gutter={12}>
                     <Col span={6}>
                       <div style={{ textAlign: 'center', background: '#e6f7ff', padding: 12, borderRadius: 8 }}>
-                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Payment Status</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || 'N/A'}</div>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Trạng thái thanh toán</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || ''}</div>
             </div>
                     </Col>
                     <Col span={6}>
                       <div style={{ textAlign: 'center', background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
-                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Urgent</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888' }}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</div>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Loại đặt lịch</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888' }}>{selectedBooking.isUrgent ? 'Đặt lịch ngay' : 'Đặt lịch theo lịch trình'}</div>
                     </div>
                     </Col>
                     <Col span={6}>
                       <div style={{ textAlign: 'center', background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
-                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Customer Confirmed</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</div>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Khách hàng xác nhận</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.customerConfirmedDone ? 'Đã xác nhận' : 'Chưa xác nhận'}</div>
                 </div>
                     </Col>
                     <Col span={6}>
                       <div style={{ textAlign: 'center', background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
-                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Technician Confirmed</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</div>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Kỹ thuật viên xác nhận</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.technicianConfirmedDone ? 'Đã xác nhận' : 'Chưa xác nhận'}</div>
                     </div>
                     </Col>
                   </Row>
@@ -1191,8 +1186,8 @@ const AdminDashboard = () => {
 
                 {/* Description */}
                 <div style={{background: '#fafafa', padding: 16, borderRadius: 8, marginBottom: 16}}>
-                  <div style={{fontWeight: 600, marginBottom: 8}}>Description</div>
-                  <div style={{ color: '#333' }}>{selectedBooking.description || 'No description provided'}</div>
+                  <div style={{fontWeight: 600, marginBottom: 8}}>Mô tả</div>
+                  <div style={{ color: '#333' }}>{selectedBooking.description || ''}</div>
                   </div>
 
                 {/* Images */}

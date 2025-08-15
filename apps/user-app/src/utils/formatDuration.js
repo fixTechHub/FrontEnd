@@ -52,10 +52,10 @@ export const maskTransactionId = (transactionId) => {
     if (!transactionId) return '';
     
     if (transactionId.length <= 6) {
-      return transactionId[0] + 'XXX' + transactionId[transactionId.length - 1];
+      return transactionId[0] + '***' + transactionId[transactionId.length - 1];
     }
     
     const firstPart = transactionId.substring(0, 3);
     const lastPart = transactionId.substring(transactionId.length - 3);
-    return firstPart + 'XXX' + lastPart;
+    return firstPart + '***' + lastPart;
   };

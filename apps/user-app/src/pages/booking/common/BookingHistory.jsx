@@ -141,10 +141,11 @@ const BookingHistory = () => {
       for (const file of warrantyImages) {
         formData.append('images', file);
       }
-      await dispatch(requestWarrantyThunk(formData)).unwrap();
+      const warranty = await dispatch(requestWarrantyThunk(formData)).unwrap();
+
       toast.success('Yêu cầu bảo hành thành công, Vui lòng đợi trong vòng 24h để thợ phản hồi');
       handleWarrantyModalClose();
-      // navigate(`/warranty?bookingWarrantyId=${selectedWarrantyBookingId}`)
+      navigate(`/warranty?bookingWarrantyId=${warranty._id}`)
     } catch (err) {
       const errorMessage = err?.error || 'Đã xảy ra lỗi khi yêu cầu bảo hành';
       toast.error(errorMessage);
@@ -242,25 +243,25 @@ const BookingHistory = () => {
                             {isCustomer && (
                               <Dropdown.Item
                                 onClick={() => {
-                                  if (booking.status === 'PENDING') {
+                                  if (['PENDING', 'AWAITING_CONFIRM'].includes(booking.status)) {
                                     navigate(`/booking/choose-technician?bookingId=${booking._id}`);
                                   } else if (booking.status !== 'CANCELLED') {
-                                        navigate(`/booking/booking-processing?bookingId=${booking._id}`);
+                                    navigate(`/booking/booking-processing?bookingId=${booking._id}`);
                                   }
                                 }}
                                 className="text-primary"
                               >
-                                {booking.status === 'PENDING' && (
+                                {['PENDING', 'AWAITING_CONFIRM'].includes(booking.status) && (
                                   <>
                                     <FaUserCheck className="me-2" /> Chọn thợ
                                   </>
-                                ) }
-                                {booking.status !=='DONE' && booking.status !=='PENDING' && booking.status!=='CANCELLED'&& (
+                                )}
+                                {!['DONE', 'CANCELLED', 'PENDING', 'AWAITING_CONFIRM'].includes(booking.status) && (
                                   <>
                                     <FaSpinner className="me-2" /> Xem tiến trình
                                   </>
                                 )
-                                 
+
                                 }
                               </Dropdown.Item>
                             )}

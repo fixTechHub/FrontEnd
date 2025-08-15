@@ -1,0 +1,272 @@
+/* Analytics Dashboard Styles */
+.analytics-dashboard {
+  background: #f8f9fa;
+  min-height: 100vh;
+}
+
+.analytics-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.analytics-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.analytics-header p {
+  margin: 0.5rem 0 0 0;
+  opacity: 0.9;
+  font-size: 1.1rem;
+}
+
+.stats-card {
+  background: white;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+  border: none;
+  min-height: 100px;
+}
+
+.stats-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stats-card .ant-statistic-title {
+  color: #666;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  line-height: 1.2;
+}
+
+.stats-card .ant-statistic-content {
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Compact stats for small cards */
+.stats-card.ant-card-small .ant-statistic-title {
+  font-size: 0.75rem;
+  margin-bottom: 0.2rem;
+}
+
+.stats-card.ant-card-small .ant-statistic-content {
+  font-size: 1.2rem;
+}
+
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: none;
+  overflow: hidden;
+}
+
+.chart-card .ant-card-head {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+}
+
+.chart-card .ant-card-head-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.chart-card .ant-card-body {
+  padding: 1.5rem;
+}
+
+.chart-container {
+  position: relative;
+  height: 350px;
+}
+
+/* Optimize chart spacing */
+.chart-card {
+  margin-bottom: 1rem;
+}
+
+.chart-card .ant-card-body {
+  padding: 1rem;
+}
+
+/* Responsive chart heights */
+@media (max-width: 1200px) {
+  .chart-container {
+    height: 300px;
+  }
+}
+
+@media (max-width: 768px) {
+  .chart-container {
+    height: 250px;
+  }
+}
+
+.analytics-controls {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: none;
+}
+
+.analytics-controls .ant-select {
+  min-width: 120px;
+}
+
+.analytics-controls .ant-btn {
+  border-radius: 8px;
+  height: 40px;
+  font-weight: 500;
+}
+
+.table-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+  border: none;
+  overflow: hidden;
+}
+
+.table-card .ant-card-head {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  padding: 1rem 1.5rem;
+}
+
+.table-card .ant-card-head-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.table-card .ant-card-body {
+  padding: 0;
+}
+
+.analytics-table .ant-table-thead > tr > th {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  font-weight: 600;
+  color: #333;
+}
+
+.analytics-table .ant-table-tbody > tr:hover > td {
+  background: #f8f9fa;
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.progress-container .ant-progress {
+  flex: 1;
+}
+
+.progress-container .ant-typography {
+  min-width: 60px;
+  text-align: right;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .analytics-header {
+    padding: 1.5rem;
+    text-align: center;
+  }
+  
+  .analytics-header h1 {
+    font-size: 2rem;
+  }
+  
+  .stats-card {
+    margin-bottom: 1rem;
+  }
+  
+  .chart-container {
+    height: 300px;
+  }
+  
+  .analytics-controls {
+    text-align: center;
+  }
+  
+  .analytics-controls .ant-space {
+    justify-content: center;
+  }
+}
+
+/* Chart Customization */
+.chartjs-tooltip {
+  background: rgba(0, 0, 0, 0.8) !important;
+  border-radius: 8px !important;
+  border: none !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+.chartjs-tooltip .tooltip-content {
+  color: white !important;
+  font-weight: 500 !important;
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Custom Scrollbar */
+.analytics-dashboard ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.analytics-dashboard ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.analytics-dashboard ::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.analytics-dashboard ::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

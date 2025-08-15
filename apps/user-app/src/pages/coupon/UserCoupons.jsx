@@ -7,6 +7,7 @@ import { formatDate } from '../../utils/formatDate';
 const UserCoupons = ()=>{
   const dispatch = useDispatch();
   const { list:coupons, loading, error } = useSelector(state=>state.coupons);
+  const { user } = useSelector(state => state.auth);
 
   const [search,setSearch]=useState('');
   const [typeFilter,setTypeFilter]=useState('ALL');
@@ -14,7 +15,11 @@ const UserCoupons = ()=>{
   const[page,setPage]=useState(0);
   const limit=6;
 
-  useEffect(()=>{ dispatch(fetchUserCouponsThunk());},[dispatch]);
+  useEffect(()=>{ 
+    if (user?._id) {
+      dispatch(fetchUserCouponsThunk(user._id));
+    }
+  },[dispatch, user?._id]);
 
   const filtered = useMemo(()=>{
     const now= new Date();

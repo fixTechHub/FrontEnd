@@ -25,7 +25,7 @@ const CouponModal = ({ show, onHide, coupons, onSelectCoupon, subTotal }) => {
         if (coupon.type === 'PERCENT' && coupon.maxDiscount) {
             const potentialDiscount = subTotal * (coupon.value / 100);
             if (potentialDiscount > coupon.maxDiscount) {
-                return `Discount capped at ${formatCurrency(coupon.maxDiscount)} VND (original ${coupon.value}% would be ${formatCurrency(potentialDiscount)} VND)`;
+                return `Giảm giá không được vượt quá ${formatCurrency(coupon.maxDiscount)} VND (ban đầu ${coupon.value}% sẽ là ${formatCurrency(potentialDiscount)} VND)`;
             }
         }
         return null;
@@ -387,8 +387,8 @@ const CheckoutPage = () => {
                 discount1 = appliedCoupon.value;
             }
         }
-
-        const newFinalPrice = subTotal - discount1;
+        const VAT = subTotal*0.08
+        const newFinalPrice = subTotal + VAT - discount1;
         console.log(newFinalPrice);
         
         try {
@@ -445,7 +445,7 @@ const CheckoutPage = () => {
         return null;
     };
 
-    const estimatedTotal = subTotal - discount;
+    const estimatedTotal = subTotal + subTotal*0.08 - discount;
 
     if (bookingLoading ||  isAuthorize === false) {
         return null;
@@ -1179,6 +1179,7 @@ const CheckoutPage = () => {
                                                                 </p>
                                                             </li>
                                                         )}
+                                                        
                                                         <li style={{
                                                             display: 'flex',
                                                             justifyContent: 'space-between',
@@ -1188,10 +1189,10 @@ const CheckoutPage = () => {
                                                         }}>
                                                             <h6 style={{ color: '#2c3e50', fontSize: '15px', fontWeight: '600', margin: '0' }}>
                                                                 <i className="bx bx-cart" style={{ color: '#ff6200', marginRight: '8px' }}></i>
-                                                                Tổng Tiền
+                                                                Tổng Tiền (Bao gồm thuế)
                                                             </h6>
                                                             <p style={{ color: '#495057', fontSize: '14px', fontWeight: '600', margin: '0' }}>
-                                                                {formatCurrency(subTotal)} VND
+                                                                {formatCurrency(subTotal + subTotal*0.08)} VND
                                                             </p>
                                                         </li>
                                                         {appliedCoupon && (

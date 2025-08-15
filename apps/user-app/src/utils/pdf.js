@@ -64,6 +64,8 @@ const handlePrintPDF = (selectedReceipt) => {
               stack: [
                 { text: `Mã hóa đơn: ${selectedReceipt?.receiptCode || 'N/A'}`, margin: [0, 10, 0, 5] },
                 { text: `Mã đơn: ${selectedReceipt?.bookingId?.bookingCode || 'N/A'}`, margin: [0, 0, 0, 5] },
+                { text: `Mã số thuế: 8750740112`, margin: [0, 0, 0, 5] },
+
                 {
                   text: `Ngày: ${selectedReceipt?.issuedDate ? new Date(selectedReceipt.issuedDate).toLocaleDateString('vi-VN') : 'N/A'}`,
                   margin: [0, 0, 0, 5],
@@ -79,8 +81,8 @@ const handlePrintPDF = (selectedReceipt) => {
             {
               stack: [
                 { text: 'Khách Hàng', fontSize: 14, bold: true, margin: [0, 10, 0, 5] },
-                { text: selectedReceipt?.bookingId?.customerId?.fullName || 'Customer Name', margin: [0, 0, 0, 5] },
-                { text: selectedReceipt?.bookingId?.customerId?.phone || 'N/A', margin: [0, 0, 0, 5] },
+                { text: selectedReceipt?.customer?.fullName || 'Customer Name', margin: [0, 0, 0, 5] },
+                { text: selectedReceipt?.customer?.phone || 'N/A', margin: [0, 0, 0, 5] },
               ],
             },
             {
@@ -103,6 +105,7 @@ const handlePrintPDF = (selectedReceipt) => {
               text: `Mã Giao Dịch: ${selectedReceipt?.paymentGatewayTransactionId ? maskTransactionId(selectedReceipt.paymentGatewayTransactionId) : 'Tiền Mặt'}`,
               margin: [0, 0, 0, 5],
             },
+            
             { text: `Trạng Thái: ${selectedReceipt?.paymentStatus || 'N/A'}`, margin: [0, 0, 0, 5] },
           ],
         },
@@ -120,11 +123,6 @@ const handlePrintPDF = (selectedReceipt) => {
                     { text: 'Số Lượng', bold: true, fillColor: '#f8f9fa', alignment: 'center' },
                     { text: 'Giá', bold: true, fillColor: '#f8f9fa', alignment: 'right' },
                   ],
-                  [
-                    'Phí Kiểm Tra',
-                    '1',
-                    { text: formatCurrency(selectedReceipt?.bookingId?.technicianId?.inspectionFee || 0), alignment: 'right' },
-                  ],
                   ...(selectedReceipt?.bookingId?.quote?.items?.length > 0
                     ? selectedReceipt.bookingId.quote.items.map((item) => [
                         item.name,
@@ -133,6 +131,8 @@ const handlePrintPDF = (selectedReceipt) => {
                       ])
                     : []),
                   ['Phí Dịch Vụ', '1', { text: formatCurrency(selectedReceipt?.serviceAmount || 0), alignment: 'right' }],
+                  ['Thuế', '1', { text: formatCurrency(selectedReceipt?.bookingId?.quote?.totalAmount*0.08 || 0), alignment: 'right' }],
+
                   ['Giảm', '1', { text: `-${formatCurrency(selectedReceipt?.discountAmount || 0)}`, alignment: 'right' }],
                 ],
               },

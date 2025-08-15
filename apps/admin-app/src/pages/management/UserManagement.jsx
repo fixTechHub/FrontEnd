@@ -32,6 +32,8 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    const usersPerPage = 10;
    const [sortField, setSortField] = useState('createdAt');
    const [sortOrder, setSortOrder] = useState('desc');
+   const [filterRole, setFilterRole] = useState('');
+   const [filterStatus, setFilterStatus] = useState('');
 
 
    const indexOfLastUser = currentPage * usersPerPage;
@@ -77,20 +79,19 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    // Set export data và columns
    useEffect(() => {
      const exportColumns = [
-       { title: 'Full Name', dataIndex: 'fullName' },
+       { title: 'Họ và tên', dataIndex: 'fullName' },
        { title: 'Email', dataIndex: 'email' },
-       { title: 'Phone', dataIndex: 'phone' },
-       { title: 'Role', dataIndex: 'role' },
-       { title: 'Status', dataIndex: 'status' },
-       { title: 'Created At', dataIndex: 'createdAt' },
-       { title: 'Updated At', dataIndex: 'updatedAt' },
+       { title: 'SĐT', dataIndex: 'phone' },
+       { title: 'Vai trò', dataIndex: 'role' },
+       { title: 'Trạng thái', dataIndex: 'status' },
+       { title: 'Thời gian tạo', dataIndex: 'createdAt' },
      ];
 
      const exportData = sortedUsers.map(user => ({
        fullName: user.fullName,
        email: user.email,
        phone: user.phone,
-       role: roleMap[user.roleId] || user.roleId,
+       role: user.roleName || roleMap[user.role] || user.role || '',
        status: formatStatus(user.status),
        createdAt: formatDateTime(user.createdAt),
        updatedAt: formatDateTime(user.updatedAt),
@@ -126,7 +127,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
            dispatch(setUsers(usersData || []));
        } catch (err) {
            dispatch(setError(err.toString()));
-           message.error('Failed to load users.');
+           message.error('Tải các người dùng thất bại.');
        } finally {
            dispatch(setLoading(false));
        }
@@ -141,7 +142,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
            (rolesData || []).forEach(r => { map[r.id] = r.name; });
            setRoleMap(map);
        } catch (err) {
-           message.error('Failed to load roles.');
+           message.error('Tải các vai trò thất bại.');
        }
    };
 
@@ -150,6 +151,11 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
        fetchUsers();
        fetchRoles();
    }, [dispatch]);
+
+   // Reset to first page when filters change
+   useEffect(() => {
+       setCurrentPage(1);
+   }, [search, filterRole, filterStatus]);
 
 
    const handleEditUser = (user) => {
@@ -185,7 +191,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    const handleSubmit = async (e) => {
        e.preventDefault();
        if (formData.password && formData.password !== formData.confirmPassword) {
-           message.error("Passwords do not match!");
+           message.error("Mật khẩu không chính xác!");
            return;
        }
        try {
@@ -195,11 +201,11 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                delete userData.password;
            }
            await userAPI.update(selectedUser.id, { ...userData, role: formData.role, status: formData.status });
-           message.success('User updated successfully!');
+           message.success('Cập nhật thành công!');
            setShowEditModal(false);
            fetchUsers();
        } catch (err) {
-           const errorMessage = err.response?.data?.title || err.message || 'An operation failed.';
+           const errorMessage = err.response?.data?.title || err.message || 'Cập nhật thất bại.';
            dispatch(setError(errorMessage));
            message.error(errorMessage);
        } finally {
@@ -211,17 +217,17 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    const handleLockSubmit = async (e) => {
        e.preventDefault();
        if (!lockReason.trim()) {
-           message.error('Lock reason is required!');
+           message.error('Bắt buộc phải nhập ly do khóa!');
            return;
        }
        try {
            dispatch(setLoading(true));
            await userAPI.lockUser(selectedUser.id, { lockedReason: lockReason });
-           message.success('User locked successfully!');
+           message.success('Khóa người dùng thành công!');
            setShowLockModal(false);
            fetchUsers();
        } catch (err) {
-           const errorMessage = err.response?.data?.message || err.message || 'Failed to lock user.';
+           const errorMessage = err.response?.data?.message || err.message || 'Khóa người dùng thất bại.';
            dispatch(setError(errorMessage));
            message.error(errorMessage);
        } finally {
@@ -235,11 +241,11 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
        try {
            dispatch(setLoading(true));
            await userAPI.unlockUser(selectedUser.id);
-           message.success('User unlocked successfully!');
+           message.success('Mở khóa người dùng thành công!');
            setShowUnlockModal(false);
            fetchUsers();
        } catch (err) {
-           const errorMessage = err.response?.data?.message || err.message || 'Failed to unlock user.';
+           const errorMessage = err.response?.data?.message || err.message || 'Mở khóa người dùng thất bại.';
            dispatch(setError(errorMessage));
            message.error(errorMessage);
        } finally {
@@ -314,13 +320,13 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
            <div className="modern-content-card">
                <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
                    <div className="my-auto mb-2">
-                       <h4 className="mb-1">Users</h4>
+                       <h4 className="mb-1">Người dùng</h4>
                        <nav>
                            <ol className="breadcrumb mb-0">
                                <li className="breadcrumb-item">
-                                   <a href="/admin">Home</a>
+                                   <a href="/admin">Trang chủ</a>
                                </li>
-                               <li className="breadcrumb-item active" aria-current="page">Users</li>
+                               <li className="breadcrumb-item active" aria-current="page">Người dùng</li>
                            </ol>
                        </nav>
                    </div>
@@ -336,7 +342,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                <input
                                    type="text"
                                    className="form-control"
-                                   placeholder="Search name, email, phone"
+                                    placeholder="Tìm kiếm tên, mail, số điện thoại"
                                    value={search}
                                    onChange={e => dispatch(setFilters({ search: e.target.value }))}
                                />
@@ -345,17 +351,25 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                        {/* Role Filter */}
                        <Select
                            allowClear
-                           placeholder="Role"
+                           placeholder="Vai trò"
                            style={{ width: 130 }}
-                           onChange={value => dispatch(setFilters({ role: value }))}
+                           value={filterRole || undefined}
+                           onChange={value => {
+                             setFilterRole(value);
+                             dispatch(setFilters({ role: value }));
+                           }}
                            options={roles.map(role => ({ value: role.id, label: role.name }))}
                        />
                        {/* Status Filter */}
                        <Select
                            allowClear
-                           placeholder="Status"
+                           placeholder="Trạng thái"
                            style={{ width: 130 }}
-                           onChange={value => dispatch(setFilters({ status: value }))}
+                           value={filterStatus || undefined}
+                           onChange={value => {
+                             setFilterStatus(value);
+                             dispatch(setFilters({ status: value }));
+                           }}
                            options={[
                                { value: 'ACTIVE', label: 'ACTIVE' },
                                { value: 'INACTIVE', label: 'INACTIVE' },
@@ -363,24 +377,61 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                        />
                    </div>
                    <div className="d-flex align-items-center" style={{ gap: 12 }}>
-                       <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+                       <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
                        <Select
                            value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
                            style={{ width: 120 }}
                            onChange={handleSortChange}
                            options={[
-                               { value: 'lasted', label: 'Lasted' },
-                               { value: 'oldest', label: 'Oldest' },
+                               { value: 'lasted', label: 'Mới nhất' },
+                               { value: 'oldest', label: 'Cũ nhất' },
                            ]}
                        />
                    </div>
                </div>
+
+               {/* Filter Info */}
+               {(search || filterRole || filterStatus) && (
+                 <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+                   <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+                   {search && (
+                     <span className="badge bg-primary-transparent">
+                       <i className="ti ti-search me-1"></i>
+                       Tìm kiếm: "{search}"
+                     </span>
+                   )}
+                   {filterRole && (
+                     <span className="badge bg-info-transparent">
+                       <i className="ti ti-user me-1"></i>
+                       Vai trò: {roles.find(r => r.id === filterRole)?.name || filterRole}
+                     </span>
+                   )}
+                   {filterStatus && (
+                     <span className="badge bg-warning-transparent">
+                       <i className="ti ti-filter me-1"></i>
+                       Trạng thái: {filterStatus}
+                     </span>
+                   )}
+                   <button 
+                     className="btn btn-sm btn-outline-secondary"
+                     onClick={() => {
+                       dispatch(setFilters({ search: '', role: undefined, status: undefined }));
+                       setFilterRole('');
+                       setFilterStatus('');
+                     }}
+                   >
+                     <i className="ti ti-x me-1"></i>
+                     Xóa tất cả
+                   </button>
+                 </div>
+               )}
+
                <div className="custom-datatable-filter table-responsive">
                    <table className="table datatable">
                        <thead className="thead-light">
                            <tr>
                                <th style={{ cursor: 'pointer' }} onClick={handleSortByName}>
-                                   FULL NAME
+                                   Họ và tên
                                    {sortField === 'fullName' && (
                                        <span style={{ marginLeft: 4 }}>
                                            {sortOrder === 'asc' ? '▲' : '▼'}
@@ -388,7 +439,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                    )}
                                </th>
                                <th style={{ cursor: 'pointer' }} onClick={handleSortByEmail}>
-                                   EMAIL
+                                   Email
                                    {sortField === 'email' && (
                                        <span style={{ marginLeft: 4 }}>
                                            {sortOrder === 'asc' ? '▲' : '▼'}
@@ -396,22 +447,40 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                    )}
                                </th>
                                <th style={{ cursor: 'pointer' }} onClick={handleSortByPhone}>
-                                   PHONE
+                                   SĐT
                                    {sortField === 'phone' && (
                                        <span style={{ marginLeft: 4 }}>
                                            {sortOrder === 'asc' ? '▲' : '▼'}
                                        </span>
                                    )}
                                </th>
-                               <th>ROLE</th>
-                               <th>STATUS</th>
-                               <th>ACTION</th>
+                               <th>Vai trò</th>
+                               <th>Trạng thái</th>
+                               <th>Hành động</th>
                            </tr>
                        </thead>
                        <tbody>
                            {loading && filteredUsers.length === 0 ? (
                                <tr>
                                    <td colSpan={6} className="text-center"><Spin /></td>
+                               </tr>
+                           ) : filteredUsers.length === 0 ? (
+                               <tr>
+                                   <td colSpan={6} className="text-center text-muted py-4">
+                                       <div>
+                                           <i className="ti ti-users" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                                           <p className="mb-0">Không có người dùng nào</p>
+                                       </div>
+                                   </td>
+                               </tr>
+                           ) : currentUsers.length === 0 ? (
+                               <tr>
+                                   <td colSpan={6} className="text-center text-muted py-4">
+                                       <div>
+                                           <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                                           <p className="mb-0">Không tìm thấy người dùng nào phù hợp</p>
+                                       </div>
+                                   </td>
                                </tr>
                            ) : (
                                currentUsers.map(user => (
@@ -439,15 +508,15 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                                </button> */}
                                                {user.lockedReason ? (
                                                 <Button className="management-action-btn" size="middle" onClick={() => handleUnlockUser(user)} style={{ marginRight: 8 }}>
-                                                    <UnlockOutlined style={{ color: 'green', marginRight: 4 }} />Unlock
+                                                    <UnlockOutlined style={{ color: 'green', marginRight: 4 }} />Mở khóa
                                                 </Button>
                                                ) : (
                                                 <Button className="management-action-btn" size="middle" onClick={() => handleLockUser(user)} style={{ marginRight: 8 }}>
-                                                    <LockOutlined style={{ color: 'red', marginRight: 4 }} />Lock
+                                                    <LockOutlined style={{ color: 'red', marginRight: 4 }} />Khóa
                                                 </Button>
                                                )}
                                                 <Button className="management-action-btn" size="middle" onClick={() => navigate(`/admin/user-management/${user.id}`)}>
-                                                     <EyeOutlined style={{marginRight: 4}} />View Detail
+                                                     <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
                                                  </Button>
                                            </div>
                                        </td>
@@ -459,18 +528,99 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
 
 
                </div>
-               <div className="d-flex justify-content-end mt-3">
+               <div className="d-flex justify-content-between align-items-center mt-3">
+                   <div className="d-flex align-items-center gap-3">
+                       <div className="text-muted">
+                           Hiển thị {indexOfFirstUser + 1}-{Math.min(indexOfLastUser, filteredUsers.length)} trong tổng số {filteredUsers.length} người dùng
+                       </div>
+                   </div>
+                   {totalPages > 1 && (
                    <nav>
-                       <ul className="pagination mb-0">
-                           {[...Array(totalPages)].map((_, i) => (
-                               <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                                   <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                                       {i + 1}
+                           <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                                {/* Previous button */}
+                                <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                                    <button 
+                                        className="page-link" 
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        disabled={currentPage === 1}
+                                        style={{ 
+                                            border: '1px solid #dee2e6',
+                                            borderRadius: '6px',
+                                            padding: '8px 12px',
+                                            minWidth: '40px'
+                                        }}
+                                    >
+                                        <i className="ti ti-chevron-left"></i>
+                                    </button>
+                                </li>
+                                
+                                {/* Page numbers */}
+                                {[...Array(totalPages)].map((_, i) => {
+                                    const pageNumber = i + 1;
+                                    // Show first page, last page, current page, and pages around current page
+                                    if (
+                                        pageNumber === 1 || 
+                                        pageNumber === totalPages || 
+                                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                                    ) {
+                                        return (
+                                            <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                                                <button 
+                                                    className="page-link" 
+                                                    onClick={() => handlePageChange(pageNumber)}
+                                                    style={{ 
+                                                        border: '1px solid #dee2e6',
+                                                        borderRadius: '6px',
+                                                        padding: '8px 12px',
+                                                        minWidth: '40px',
+                                                        backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                                        color: currentPage === pageNumber ? 'white' : '#007bff',
+                                                        borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                                    }}
+                                                >
+                                                    {pageNumber}
+                                                </button>
+                                            </li>
+                                        );
+                                    } else if (
+                                        pageNumber === currentPage - 2 || 
+                                        pageNumber === currentPage + 2
+                                    ) {
+                                        return (
+                                            <li key={i} className="page-item disabled">
+                                                <span className="page-link" style={{ 
+                                                    border: '1px solid #dee2e6',
+                                                    borderRadius: '6px',
+                                                    padding: '8px 12px',
+                                                    minWidth: '40px',
+                                                    backgroundColor: '#f8f9fa',
+                                                    color: '#6c757d'
+                                                }}>...</span>
+                                            </li>
+                                        );
+                                    }
+                                    return null;
+                                })}
+                                
+                                {/* Next button */}
+                                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                                    <button 
+                                        className="page-link" 
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        disabled={currentPage === totalPages}
+                                        style={{ 
+                                            border: '1px solid #dee2e6',
+                                            borderRadius: '6px',
+                                            padding: '8px 12px',
+                                            minWidth: '40px'
+                                        }}
+                                    >
+                                        <i className="ti ti-chevron-right"></i>
                                    </button>
                                </li>
-                           ))}
                        </ul>
                    </nav>
+                    )}
                </div>
 
 
@@ -526,30 +676,30 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                            <div className="modal-content">
                                <form onSubmit={handleLockSubmit}>
                                    <div className="modal-header">
-                                       <h5 className="mb-0">Lock User</h5>
+                                       <h5 className="mb-0">Khóa người dùng</h5>
                                        <button type="button" className="btn-close" onClick={() => setShowLockModal(false)} aria-label="Close"></button>
                                    </div>
                                    <div className="modal-body pb-1">
                                        <div className="alert alert-warning">
                                            <i className="ti ti-alert-triangle me-2"></i>
-                                           Are you sure you want to lock <strong>{selectedUser?.fullName}</strong>?
+                                           Bạn có chắc chắn muốn khóa người dùng:  <strong>{selectedUser?.fullName}</strong>?
                                        </div>
                                        <div className="mb-3">
-                                           <label className="form-label">Lock Reason <span className="text-danger">*</span></label>
+                                           <label className="form-label">Lý do khóa<span className="text-danger">*</span></label>
                                            <textarea
                                                className="form-control"
                                                rows="3"
                                                value={lockReason}
                                                onChange={(e) => setLockReason(e.target.value)}
-                                               placeholder="Please provide a reason for locking this user..."
+                                               placeholder="Hãy cung cấp lý do để khóa người dùng..."
                                                required
                                            />
                                        </div>
                                    </div>
                                    <div className="modal-footer">
                                        <div className="d-flex justify-content-end w-100">
-                                           <button type="button" className="btn btn-light me-3" onClick={() => setShowLockModal(false)}>Cancel</button>
-                                           <button type="submit" className="btn btn-danger">Lock User</button>
+                                           <button type="button" className="btn btn-light me-3" onClick={() => setShowLockModal(false)}>Hủy</button>
+                                           <button type="submit" className="btn btn-danger">Xác nhận</button>
                                        </div>
                                    </div>
                                </form>
@@ -575,19 +725,19 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                            <div className="modal-content">
                                <form onSubmit={handleUnlockSubmit}>
                                    <div className="modal-header">
-                                       <h5 className="mb-0">Unlock User</h5>
+                                       <h5 className="mb-0">Mở khóa người dùng</h5>
                                        <button type="button" className="btn-close" onClick={() => setShowUnlockModal(false)} aria-label="Close"></button>
                                    </div>
                                    <div className="modal-body pb-1">
                                        <div className="alert alert-info">
                                            <i className="ti ti-info-circle me-2"></i>
-                                           Are you sure you want to unlock <strong>{selectedUser?.fullName}</strong>?
+                                           Bạn có chắc chắn muốn mở khóa người dùng: <strong>{selectedUser?.fullName}</strong>?
                                        </div>
                                    </div>
                                    <div className="modal-footer">
                                        <div className="d-flex justify-content-end w-100">
-                                           <button type="button" className="btn btn-light me-3" onClick={() => setShowUnlockModal(false)}>Cancel</button>
-                                           <button type="submit" className="btn btn-success">Unlock User</button>
+                                           <button type="button" className="btn btn-light me-3" onClick={() => setShowUnlockModal(false)}>Hủy</button>
+                                           <button type="submit" className="btn btn-success">Xác nhận</button>
                                        </div>
                                    </div>
                                </form>
@@ -598,7 +748,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
 
 
                {/* Modal View Detail */}
-               {showDetailModal && selectedUser && (
+               {/* {showDetailModal && selectedUser && (
                    <Modal
                        open={showDetailModal}
                        onCancel={() => setShowDetailModal(false)}
@@ -694,7 +844,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                        </div>
                      </div>
                    </Modal>
-               )}
+               )} */}
            </div>
        </div>
    );
