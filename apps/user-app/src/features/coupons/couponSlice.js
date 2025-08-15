@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { getUserCoupons } from './couponAPI';
 
-export const fetchUserCouponsThunk = createAsyncThunk('coupons/fetchUserCoupons', async (_, { rejectWithValue }) => {
+export const fetchUserCouponsThunk = createAsyncThunk('coupons/fetchUserCoupons', async (userId, { rejectWithValue }) => {
   try {
-    const res = await getUserCoupons();
+    const res = await getUserCoupons(userId);
     return res.data.coupons || [];
   } catch (error) {
     const msg = error.response?.data?.message || error.message || 'Đã xảy ra lỗi';

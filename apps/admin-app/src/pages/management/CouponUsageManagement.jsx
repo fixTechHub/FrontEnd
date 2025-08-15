@@ -21,8 +21,8 @@ const CouponUsageManagement = () => {
  const [showDetailModal, setShowDetailModal] = useState(false);
  const [selectedUsage, setSelectedUsage] = useState(null);
  const [currentPage, setCurrentPage] = useState(1);
- const couponsPerPage = 10;
- const [sortField, setSortField] = useState('');
+ const [couponsPerPage, setCouponsPerPage] = useState(10);
+ const [sortField, setSortField] = useState('usedAt');
 const [sortOrder, setSortOrder] = useState('desc');
 const [hasSorted, setHasSorted] = useState(false);
 const [isDataReady, setIsDataReady] = useState(false);
@@ -45,6 +45,12 @@ const [isDataReady, setIsDataReady] = useState(false);
      }
    };
    fetchBookings();
+   
+   // Reset sort state khi component mount
+   setHasSorted(false);
+   setSortField('usedAt');
+   setSortOrder('desc');
+   console.log('🚀 Component mounted, resetting sort state');
  }, [dispatch]);
 
 
@@ -52,6 +58,11 @@ const [isDataReady, setIsDataReady] = useState(false);
  useEffect(() => {
    setCurrentPage(1);
  }, [filters]);
+
+ // Reset to first page when search text changes
+ useEffect(() => {
+   setCurrentPage(1);
+ }, [filters.search, filters.user, filters.coupon, filters.bookingId]);
 
 
  // Lấy thông tin user + coupon
@@ -106,6 +117,17 @@ const [isDataReady, setIsDataReady] = useState(false);
    if (usages.length > 0) fetchDetails();
  }, [usages]);
 
+ // Đảm bảo sắp xếp mặc định khi dữ liệu được load
+ useEffect(() => {
+   if (usages.length > 0) {
+     // Force set sort state
+     setSortField('usedAt');
+     setSortOrder('desc');
+     setHasSorted(false);
+     console.log('🔧 FORCE setting default sort: usedAt desc');
+   }
+ }, [usages]);
+
 
  // Lọc dữ liệu
  const filteredUsages = usages.filter((usage) => {
@@ -127,7 +149,19 @@ const [isDataReady, setIsDataReady] = useState(false);
  // Phân trang
  const indexOfLast = currentPage * couponsPerPage;
  const indexOfFirst = indexOfLast - couponsPerPage;
+ // Force sắp xếp mới nhất trước theo usedAt
  const sortedUsages = [...filteredUsages].sort((a, b) => {
+  console.log(`🔍 Sorting: sortField=${sortField}, sortOrder=${sortOrder}`);
+  
+  // LUÔN sắp xếp theo usedAt mới nhất trước khi không có sortField cụ thể
+  if (!sortField || sortField === 'usedAt') {
+    const dateA = new Date(a.usedAt || 0);
+    const dateB = new Date(b.usedAt || 0);
+    console.log(`📅 FORCE sorting by usedAt DESC: ${dateA.toISOString()} vs ${dateB.toISOString()}`);
+    // Luôn trả về mới nhất trước, bỏ qua sortOrder
+    return dateB - dateA;
+  }
+  
   if (sortField === 'user') {
     const nameA = (userMap[a.userId] || '').toLowerCase();
     const nameB = (userMap[b.userId] || '').toLowerCase();
@@ -152,29 +186,24 @@ const [isDataReady, setIsDataReady] = useState(false);
     } else {
       return codeB.localeCompare(codeA);
     }
-  } else if (sortField === 'usedAt') {
-    const dateA = new Date(a.usedAt);
-    const dateB = new Date(b.usedAt);
-    if (sortOrder === 'asc') {
-      return dateA - dateB;
-    } else {
-      return dateB - dateA;
-    }
   }
-  return 0;
-});
+  
+  // Fallback: LUÔN sắp xếp theo thời gian sử dụng mới nhất trước
+  const dateA = new Date(a.usedAt || 0);
+  const dateB = new Date(b.usedAt || 0);
+  console.log(`📅 FORCE fallback sorting DESC: ${dateA.toISOString()} vs ${dateB.toISOString()}`);
+  return dateB - dateA;
+ });
 const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
 
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Coupon Code', dataIndex: 'couponCode' },
-    { title: 'User', dataIndex: 'userName' },
-    { title: 'Booking', dataIndex: 'bookingCode' },
-    { title: 'Discount Applied', dataIndex: 'discountApplied' },
-    { title: 'Used At', dataIndex: 'usedAt' },
-    { title: 'Created At', dataIndex: 'createdAt' },
-    { title: 'Updated At', dataIndex: 'updatedAt' },
+    { title: 'Mã giảm giá', dataIndex: 'couponCode' },
+    { title: 'Khách hàng', dataIndex: 'userName' },
+    { title: 'Đơn hàng', dataIndex: 'bookingCode' },
+    { title: 'Thời gian sử dụng', dataIndex: 'usedAt' },
+    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
   ];
 
   const exportData = sortedUsages.map(usage => ({
@@ -188,12 +217,26 @@ useEffect(() => {
   }));
 
   createExportData(exportData, exportColumns, 'coupon_usages_export', 'Coupon Usages');
-}, [sortedUsages, couponMap, userMap, bookingMap]);
-const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
+ }, [sortedUsages, couponMap, userMap, bookingMap]);
 
+ // Debug: Log dữ liệu sắp xếp
+ useEffect(() => {
+   if (sortedUsages.length > 0) {
+     console.log('🔍 Original usages:', usages.slice(0, 3).map(u => ({ id: u.id, usedAt: u.usedAt })));
+     console.log('🔍 Sorted usages:', sortedUsages.slice(0, 3).map(u => ({ id: u.id, usedAt: u.usedAt })));
+     console.log('🔍 Sort config:', { sortField, sortOrder });
+   }
+ }, [sortedUsages, sortField, sortOrder]);
 
- const handlePageChange = (pageNumber) => {
-   setCurrentPage(pageNumber);
+ // Force re-render khi sort state thay đổi
+ useEffect(() => {
+   console.log('🔄 Sort state changed:', { sortField, sortOrder, hasSorted });
+ }, [sortField, sortOrder, hasSorted]);
+
+ const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
+
+ const handlePageChange = (page) => {
+   setCurrentPage(page);
  };
 
 
@@ -257,11 +300,11 @@ const handleSortByUsedAt = () => {
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
-           <h4 className="mb-1">Coupon Usages</h4>
+           <h4 className="mb-1">Lịch sử sử dụng mã giảm giá</h4>
            <nav>
              <ol className="breadcrumb mb-0">
-               <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-               <li className="breadcrumb-item active">Coupon Usages</li>
+               <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+               <li className="breadcrumb-item active">Lịch sử sử dụng mã giảm giá</li>
              </ol>
            </nav>
          </div>
@@ -275,33 +318,53 @@ const handleSortByUsedAt = () => {
              <input
                type="text"
                className="form-control"
-               placeholder="Search user, coupon, code"
+               placeholder="Tìm kiếm đơn hàng, mã giảm giá, khách hàng..."
                value={filters.search || ''}
                onChange={handleSearchChange}
              />
            </div>
          </div>
          <div className="d-flex align-items-center">
-           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
-           <Select
-             value={sortField === 'usedAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
-             style={{ width: 120 }}
-             onChange={handleSortChange}
-             options={[
-               { value: 'lasted', label: 'Lasted' },
-               { value: 'oldest', label: 'Oldest' },
-             ]}
-           />
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
+                       <Select
+              value="lasted"
+              style={{ width: 120 }}
+              onChange={handleSortChange}
+              options={[
+                { value: 'lasted', label: 'Mới nhất' },
+                { value: 'oldest', label: 'Cũ nhất' },
+              ]}
+            />
          </div>
        </div>
 
+       {/* Filter Info */}
+       {filters.search && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           <span className="badge bg-primary-transparent">
+             <i className="ti ti-search me-1"></i>
+             Tìm kiếm: "{filters.search}"
+           </span>
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               dispatch(setFilters({ ...filters, search: '' }));
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
 
+       {/* Table */}
        <div className="custom-datatable-filter table-responsive">
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByUser}>
-                 USER
+                 Khách hàng
                  {sortField === 'user' && hasSorted && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -309,7 +372,7 @@ const handleSortByUsedAt = () => {
                  )}
                </th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByCoupon}>
-                 COUPON
+                 Mã giảm giá
                  {sortField === 'coupon' && hasSorted && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -317,7 +380,7 @@ const handleSortByUsedAt = () => {
                  )}
                </th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByBooking}>
-                 BOOKING CODE
+                 Mã đơn hàng
                  {sortField === 'booking' && hasSorted && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -325,31 +388,53 @@ const handleSortByUsedAt = () => {
                  )}
                </th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByUsedAt}>
-                 USED AT
+                 Thời gian sử dụng
                  {sortField === 'usedAt' && hasSorted && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
                    </span>
                  )}
                </th>
-               <th>ACTION</th>
+               <th>Hàng động</th>
              </tr>
            </thead>
            <tbody>
              {!isDataReady ? (
                <tr>
-                 <td><Spin /></td>
+                 <td colSpan={5} className="text-center">
+                   <div className="spinner-border text-primary" role="status">
+                     <span className="visually-hidden">Loading...</span>
+                   </div>
+                 </td>
+               </tr>
+             ) : filteredUsages.length === 0 ? (
+               <tr>
+                 <td colSpan={5} className="text-center text-muted py-4">
+                   <div>
+                     <i className="ti ti-ticket" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                     <p className="mb-0">Không có lịch sử sử dụng nào</p>
+                   </div>
+                 </td>
+               </tr>
+             ) : currentPageData.length === 0 ? (
+               <tr>
+                 <td colSpan={5} className="text-center text-muted py-4">
+                   <div>
+                     <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                     <p className="mb-0">Không tìm thấy lịch sử sử dụng nào phù hợp</p>
+                   </div>
+                 </td>
                </tr>
              ) : (
                currentPageData.map((usage) => (
                  <tr key={usage.id}>
-                   <td>{userMap[usage.userId] || usage.userId || "UNKNOWN"}</td>
+                   <td>{userMap[usage.userId] || usage.userId || ""}</td>
                    <td>{couponMap[usage.couponId]}</td>
                    <td>{bookingMap[usage.bookingId]}</td>
                    <td>{usage.usedAt ? new Date(usage.usedAt).toLocaleString() : ''}</td>
                    <td>
                      <Button className="management-action-btn" size="middle" onClick={() => { setSelectedUsage(usage); setShowDetailModal(true); }}>
-                       <EyeOutlined style={{marginRight: 4}} />View Detail
+                       <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
                      </Button>
                    </td>
                  </tr>
@@ -359,17 +444,123 @@ const handleSortByUsedAt = () => {
          </table>
        </div>
 
-
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, i) => (
-               <li key={i} className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}>
-                 <button className="page-link" onClick={() => handlePageChange(i + 1)}>{i + 1}</button>
+       {/* Pagination Info and Controls */}
+       <div className="d-flex justify-content-between align-items-center mt-3">
+         <div className="d-flex align-items-center gap-3">
+           <div className="text-muted">
+             Hiển thị {indexOfFirst + 1}-{Math.min(indexOfLast, filteredUsages.length)} trong tổng số {filteredUsages.length} lịch sử sử dụng
+           </div>
+         </div>
+         {filteredUsages.length > 0 && (
+           <nav>
+             <ul className="pagination mb-0" style={{ gap: '2px' }}>
+               {/* Previous button */}
+               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage - 1)}
+                   disabled={currentPage === 1}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-left"></i>
+                 </button>
                </li>
-             ))}
-           </ul>
-         </nav>
+               
+               {/* Page numbers */}
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNumber = i + 1;
+                 // Show all pages if total pages <= 7
+                 if (totalPages <= 7) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 }
+                 
+                 // Show first page, last page, current page, and pages around current page
+                 if (
+                   pageNumber === 1 || 
+                   pageNumber === totalPages || 
+                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                 ) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 } else if (
+                   pageNumber === currentPage - 2 || 
+                   pageNumber === currentPage + 2
+                 ) {
+                   return (
+                     <li key={i} className="page-item disabled">
+                       <span className="page-link" style={{ 
+                         border: '1px solid #dee2e6',
+                         borderRadius: '6px',
+                         padding: '8px 12px',
+                         minWidth: '40px',
+                         backgroundColor: '#f8f9fa',
+                         color: '#6c757d'
+                       }}>...</span>
+                     </li>
+                   );
+                 }
+                 return null;
+               })}
+               
+               {/* Next button */}
+               <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage + 1)}
+                   disabled={currentPage === totalPages}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-right"></i>
+                 </button>
+               </li>
+             </ul>
+           </nav>
+         )}
        </div>
      </div>
 
@@ -392,7 +583,7 @@ const handleSortByUsedAt = () => {
            }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <div style={{ fontSize: 20, fontWeight: 700 }}>
-                 COUPON USAGE DETAIL
+                 Chi tiết sử dụng mã giảm giá
                </div>
                <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
                  USED
@@ -400,7 +591,7 @@ const handleSortByUsedAt = () => {
              </div>
              {selectedUsage.id && (
                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>Usage ID: {selectedUsage.id}</span>
+                 <span style={{ fontFamily: 'monospace', fontSize: 15 }}>ID: {selectedUsage.id}</span>
                </div>
              )}
            </div>
@@ -415,14 +606,14 @@ const handleSortByUsedAt = () => {
                    padding: 16,
                    marginBottom: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Overview</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tỏng quan</div>
                    <div style={{ display: 'grid', rowGap: 10 }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Used At</span>
-                       <span style={{ fontWeight: 600 }}>{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : 'N/A'}</span>
+                       <span style={{ color: '#8c8c8c' }}>Thời gian sử dụng</span>
+                       <span style={{ fontWeight: 600 }}>{selectedUsage.usedAt ? new Date(selectedUsage.usedAt).toLocaleString() : ''}</span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Status</span>
+                       <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
                        <span style={{ fontWeight: 600, color: '#52c41a' }}>ACTIVE</span>
                      </div>
                    </div>
@@ -437,15 +628,15 @@ const handleSortByUsedAt = () => {
                    borderRadius: 12,
                    padding: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>People</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Thông tin</div>
                    <div style={{ display: 'grid', rowGap: 12 }}>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>User</span>
-                       <span style={{ fontWeight: 600 }}>{userMap[selectedUsage.userId] || selectedUsage.userId || 'UNKNOWN'}</span>
+                       <span style={{ color: '#8c8c8c' }}>Khách hàng</span>
+                       <span style={{ fontWeight: 600 }}>{userMap[selectedUsage.userId] || selectedUsage.userId || ''}</span>
                      </div>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Coupon</span>
-                       <span style={{ fontWeight: 600 }}>{couponMap[selectedUsage.couponId] || selectedUsage.couponId || 'N/A'}</span>
+                       <span style={{ color: '#8c8c8c' }}>Mã giảm giá</span>
+                       <span style={{ fontWeight: 600 }}>{couponMap[selectedUsage.couponId] || selectedUsage.couponId || ''}</span>
                      </div>
                    </div>
                  </div>
@@ -460,15 +651,15 @@ const handleSortByUsedAt = () => {
                    padding: 16,
                    marginBottom: 16,
                  }}>
-                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Booking Information</div>
+                   <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Thông tin đơn hàng</div>
                    <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                       <span style={{ color: '#8c8c8c' }}>Booking Code:</span>
-                       <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bookingMap[selectedUsage.bookingId] || 'N/A'}</span>
+                       <span style={{ color: '#8c8c8c' }}>Mã đơn hàng:</span>
+                       <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{bookingMap[selectedUsage.bookingId] || ''}</span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                       <span style={{ color: '#8c8c8c' }}>Coupon Applied:</span>
-                       <span style={{ fontWeight: 600, color: '#52c41a' }}>✓ Yes</span>
+                       <span style={{ color: '#8c8c8c' }}>Áp dụng:</span>
+                       <span style={{ fontWeight: 600, color: '#52c41a' }}>✓ Đã áp dụng</span>
                      </div>
                    </div>
                  </div>

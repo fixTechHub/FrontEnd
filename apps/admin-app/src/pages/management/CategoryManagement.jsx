@@ -35,7 +35,7 @@ const CategoryManagement = () => {
   const [formData, setFormData] = useState(initialFormState);
   const [searchText, setSearchText] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const categoriesPerPage = 10;
+  const [categoriesPerPage, setCategoriesPerPage] = useState(10);
   const [sortField, setSortField] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' | 'desc'
   const [filterStatus, setFilterStatus] = useState();
@@ -45,7 +45,6 @@ const CategoryManagement = () => {
  const handlePageChange = (page) => {
    setCurrentPage(page);
  };
-
 
  useEffect(() => {
    dispatch(fetchCategories());
@@ -98,11 +97,9 @@ const currentCategories = sortedCategories.slice(indexOfFirstCategory, indexOfLa
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Category Name', dataIndex: 'categoryName' },
-    { title: 'Icon', dataIndex: 'icon' },
-    { title: 'Status', dataIndex: 'status' },
-    { title: 'Created At', dataIndex: 'createdAt' },
-    { title: 'Updated At', dataIndex: 'updatedAt' },
+    { title: 'Tên danh mục', dataIndex: 'categoryName' },
+    { title: 'Trạng thái', dataIndex: 'status' },
+    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
   ];
 
   const exportData = sortedCategories.map(category => ({
@@ -117,6 +114,12 @@ useEffect(() => {
 }, [sortedCategories]);
 
 const totalPages = Math.ceil(filteredCategories.length / categoriesPerPage);
+
+// Reset to first page when filters change
+useEffect(() => {
+  setCurrentPage(1);
+}, [filteredCategories.length, searchText, filterStatus]);
+
  const handleChange = (e) => {
    const { name, value, type, checked } = e.target;
    setFormData(prev => ({
@@ -153,8 +156,8 @@ const handleSubmit = (e) => {
   
   // Validation for category name length
   if (formData.categoryName && formData.categoryName.length > 100) {
-    setValidationErrors({ CategoryName: ['Category name cannot exceed 100 characters'] });
-    message.error('Category name cannot exceed 100 characters');
+    setValidationErrors({ CategoryName: ['Tên danh mục không được vượt quá 100 ký tự'] });
+    message.error('Tên danh mục không được vượt quá 100 ký tự');
     return;
   }
   
@@ -249,17 +252,17 @@ const isDataReady = categories.length > 0;
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
-           <h4 className="mb-1">Category Management</h4>
+           <h4 className="mb-1">Quản lý danh mục</h4>
            <nav>
              <ol className="breadcrumb mb-0">
-               <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-               <li className="breadcrumb-item active">Categories</li>
+               <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+               <li className="breadcrumb-item active">Danh mục</li>
              </ol>
            </nav>
          </div>
          <div>
-           <Button type="primary" onClick={handleAddCategory}>Add Category</Button>
-           <Button type="default" onClick={handleOpenRestoreModal} style={{ marginLeft: 8 }}>Restore</Button>
+           <Button type="primary" onClick={handleAddCategory}>Thêm</Button>
+           <Button type="default" onClick={handleOpenRestoreModal} style={{ marginLeft: 8 }}>Khôi phục</Button>
          </div>
        </div>
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
@@ -272,14 +275,14 @@ const isDataReady = categories.length > 0;
                <input
                  type="text"
                  className="form-control"
-                 placeholder="Search name"
+                 placeholder="Tìm kiếm danh mục"
                  value={searchText}
                  onChange={e => setSearchText(e.target.value)}
                />
              </div>
            </div>
            <Select
-             placeholder="Status"
+             placeholder="Trạng thái"
              value={filterStatus || undefined}
              onChange={value => setFilterStatus(value)}
              style={{ width: 130 }}
@@ -290,41 +293,93 @@ const isDataReady = categories.length > 0;
            </Select>
          </div>
          <div className="d-flex align-items-center" style={{ gap: 12 }}>
-           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
            <Select
              value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
              style={{ width: 120 }}
              onChange={handleSortChange}
              options={[
-               { value: 'lasted', label: 'Lasted' },
-               { value: 'oldest', label: 'Oldest' },
+               { value: 'lasted', label: 'Mới nhất' },
+               { value: 'oldest', label: 'Cũ nhất' },
              ]}
            />
          </div>
        </div>
+
+       {/* Filter Info */}
+       {(searchText || filterStatus) && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           {searchText && (
+             <span className="badge bg-primary-transparent">
+               <i className="ti ti-search me-1"></i>
+               Tìm kiếm: "{searchText}"
+             </span>
+           )}
+           {filterStatus && (
+             <span className="badge bg-warning-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Trạng thái: {filterStatus}
+             </span>
+           )}
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               setSearchText('');
+               setFilterStatus(undefined);
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
+
        {loading ? <Spin /> : (
          <div className="custom-datatable-filter table-responsive">
            <table className="table datatable">
              <thead className="thead-light">
                <tr>
                  <th style={{ cursor: 'pointer' }} onClick={handleSortByName}>
-                   CATEGORY NAME
+                   Tên danh mục
                    {sortField === 'categoryName' && (
                      <span style={{ marginLeft: 4 }}>
                        {sortOrder === 'asc' ? '▲' : '▼'}
                      </span>
                    )}
                  </th>
-                 <th>ICON</th>
-                 <th>STATUS</th>
-                 <th>ACTION</th>
+                 <th>Ký hiệu</th>
+                 <th>Trạng thái</th>
+                 <th>Hành động</th>
                  
                </tr>
              </thead>
              <tbody>
-               {!isDataReady ? (
+               {loading ? (
                  <tr>
-                   <td colSpan={4} className="text-center">Loading...</td>
+                   <td colSpan={4} className="text-center">
+                     <div className="spinner-border text-primary" role="status">
+                       <span className="visually-hidden">Loading...</span>
+                     </div>
+                   </td>
+                 </tr>
+               ) : filteredCategories.length === 0 ? (
+                 <tr>
+                   <td colSpan={4} className="text-center text-muted py-4">
+                     <div>
+                       <i className="ti ti-category" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                       <p className="mb-0">Không có danh mục nào</p>
+                     </div>
+                   </td>
+                 </tr>
+               ) : currentCategories.length === 0 ? (
+                 <tr>
+                   <td colSpan={4} className="text-center text-muted py-4">
+                     <div>
+                       <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                       <p className="mb-0">Không tìm thấy danh mục nào phù hợp</p>
+                     </div>
+                   </td>
                  </tr>
                ) : (
                  currentCategories.map((cat) => (
@@ -340,9 +395,9 @@ const isDataReady = categories.length > 0;
                      </td>
                      <td>
                        <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => handleEditCategory(cat)} style={{ marginRight: 8 }}>
-                        Edit
+                        Chỉnh sửa
                       </Button>
-                       <Button className="management-action-btn" size="middle" danger onClick={() => handleDeleteCategory(cat)}>Delete</Button>
+                       <Button className="management-action-btn" size="middle" danger onClick={() => handleDeleteCategory(cat)}>Xóa</Button>
                      </td>
                    </tr>
                  ))
@@ -353,21 +408,122 @@ const isDataReady = categories.length > 0;
 
 
        )}
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, i) => (
-               <li
-                 key={i}
-                 className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}
-               >
-                 <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                   {i + 1}
+       <div className="d-flex justify-content-between align-items-center mt-3">
+         <div className="d-flex align-items-center gap-3">
+           <div className="text-muted">
+             Hiển thị {indexOfFirstCategory + 1}-{Math.min(indexOfLastCategory, filteredCategories.length)} trong tổng số {filteredCategories.length} danh mục
+           </div>
+         </div>
+         {filteredCategories.length > 0 && (
+           <nav>
+             <ul className="pagination mb-0" style={{ gap: '2px' }}>
+               {/* Previous button */}
+               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage - 1)}
+                   disabled={currentPage === 1}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-left"></i>
                  </button>
                </li>
-             ))}
-           </ul>
-         </nav>
+               
+               {/* Page numbers */}
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNumber = i + 1;
+                 // Show all pages if total pages <= 7
+                 if (totalPages <= 7) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 }
+                 
+                 // Show first page, last page, current page, and pages around current page
+                 if (
+                   pageNumber === 1 || 
+                   pageNumber === totalPages || 
+                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                 ) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 } else if (
+                   pageNumber === currentPage - 2 || 
+                   pageNumber === currentPage + 2
+                 ) {
+                   return (
+                     <li key={i} className="page-item disabled">
+                       <span className="page-link" style={{ 
+                         border: '1px solid #dee2e6',
+                         borderRadius: '6px',
+                         padding: '8px 12px',
+                         minWidth: '40px',
+                         backgroundColor: '#f8f9fa',
+                         color: '#6c757d'
+                       }}>...</span>
+                     </li>
+                   );
+                 }
+                 return null;
+               })}
+               
+               {/* Next button */}
+               <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage + 1)}
+                   disabled={currentPage === totalPages}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-right"></i>
+                 </button>
+               </li>
+             </ul>
+           </nav>
+         )}
        </div>
 
 
@@ -378,7 +534,7 @@ const isDataReady = categories.length > 0;
        open={showAddModal}
        onCancel={() => setShowAddModal(false)}
        footer={null}
-       title="Add Category"
+       title="Thêm danh mục"
        width={600}
      >
         <Form layout="vertical" onSubmit={handleSubmit}>
@@ -393,19 +549,19 @@ const isDataReady = categories.length > 0;
          )}
           <Row gutter={16}>
             <Col span={16}>
-              <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+              <Form.Item label="Tên danh mục" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
                 <Input
                   name="categoryName"
                   value={formData.categoryName}
                   onChange={handleChange}
-                  placeholder="Enter category name"
+                  placeholder="Nhập tên danh mục"
                   required
                   maxLength={100}
                 />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="Status">
+              <Form.Item label="Trạng thái">
                 <Switch
                   name="isActive"
                   checked={formData.isActive}
@@ -418,11 +574,11 @@ const isDataReady = categories.length > 0;
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+              <Form.Item label="Chọn ký hiệu" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
                 <IconUploader
                   value={formData.icon}
                   onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-                  placeholder="Upload icon image"
+                  placeholder="Đăng tải hình ảnh"
                 />
                 <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>PNG/SVG, kích thước đề xuất 64x64</div>
               </Form.Item>
@@ -430,10 +586,10 @@ const isDataReady = categories.length > 0;
           </Row>
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
-             Cancel
+             Hủy
            </Button>
            <Button type="primary" onClick={handleSubmit}>
-             Save
+             Thêm
            </Button>
          </div>
        </Form>
@@ -444,7 +600,7 @@ const isDataReady = categories.length > 0;
        open={showEditModal}
        onCancel={() => setShowEditModal(false)}
        footer={null}
-       title="Update Category"
+       title="Cập nhật danh mục"
        width={600}
      >
         <Form layout="vertical" onSubmit={handleSubmit}>
@@ -459,19 +615,19 @@ const isDataReady = categories.length > 0;
          )}
           <Row gutter={16}>
             <Col span={16}>
-              <Form.Item label="Category Name" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
+              <Form.Item label="Tên danh mục" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
                 <Input
                   name="categoryName"
                   value={formData.categoryName}
                   onChange={handleChange}
-                  placeholder="Enter category name"
+                  placeholder="Nhập tên danh mục"
                   required
                   maxLength={100}
                 />
               </Form.Item>
             </Col>
             <Col span={8}>
-              <Form.Item label="Status">
+              <Form.Item label="Trạng thái">
                 <Switch
                   name="isActive"
                   checked={formData.isActive}
@@ -484,11 +640,11 @@ const isDataReady = categories.length > 0;
           </Row>
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item label="Icon" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
+              <Form.Item label="Chọn ký hiệu" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
                 <IconUploader
                   value={formData.icon}
                   onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-                  placeholder="Upload icon image"
+                  placeholder="Đăng tải hình ảnh"
                 />
                 <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>PNG/SVG, kích thước đề xuất 64x64</div>
               </Form.Item>
@@ -497,10 +653,10 @@ const isDataReady = categories.length > 0;
           </Row>
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
-             Cancel
+             Hủy
            </Button>
            <Button type="primary" onClick={handleSubmit}>
-             Save
+             Lưu
            </Button>
          </div>
        </Form>
@@ -511,15 +667,15 @@ const isDataReady = categories.length > 0;
        open={showDeleteModal}
        onCancel={() => setShowDeleteModal(false)}
        footer={null}
-       title="Delete category"
+       title="Xóa danh mục"
      >
        <div className="modal-body text-center">
          <i className="ti ti-trash-x fs-26 text-danger mb-3 d-inline-block"></i>
-         <h4 className="mb-1">Delete category</h4>
+         <h4 className="mb-1">Xóa danh mục</h4>
          <p className="mb-3">Bạn có chắc muốn xóa danh mục này?</p>
          <div className="d-flex justify-content-center">
-           <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Cancel</button>
-           <button type="button" className="btn btn-danger" onClick={confirmDelete}>Delete</button>
+           <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Hủy</button>
+           <button type="button" className="btn btn-danger" onClick={confirmDelete}>Xóa</button>
          </div>
        </div>
      </Modal>
@@ -529,17 +685,17 @@ const isDataReady = categories.length > 0;
        open={showRestoreModal}
        onCancel={() => setShowRestoreModal(false)}
        footer={null}
-       title="Restore Category"
+       title="Khôi phục danh mục"
        width={800}
      >
        <div className="custom-datatable-filter table-responsive">
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
-               <th>NAME</th>
-               <th>ICON</th>
-               <th>STATUS</th>
-               <th>ACTION</th>
+               <th>Tên danh mục</th>
+               <th>Ký hiệu</th>
+               <th>Trạng thái</th>
+               <th>Hành động</th>
              </tr>
            </thead>
            <tbody>
@@ -556,7 +712,7 @@ const isDataReady = categories.length > 0;
                  </td>
                  <td>
                    <Button size="small" type="primary" onClick={() => handleRestoreCategory(cat.id)}>
-                     Restore
+                     Khôi phục
                    </Button>
                  </td>
                </tr>
@@ -565,7 +721,7 @@ const isDataReady = categories.length > 0;
          </table>
        </div>
        <div className="d-flex justify-content-end mt-3">
-         <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Close</button>
+         <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Đóng</button>
        </div>
      </Modal>
    </div>

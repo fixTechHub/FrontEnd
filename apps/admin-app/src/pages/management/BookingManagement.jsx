@@ -24,7 +24,7 @@ const BookingManagement = () => {
  const [showDetailModal, setShowDetailModal] = useState(false);
  const [selectedBooking, setSelectedBooking] = useState(null);
  const [currentPage, setCurrentPage] = useState(1);
- const bookingsPerPage = 10;
+ const [bookingsPerPage, setBookingsPerPage] = useState(10);
  const [sortField, setSortField] = useState('createdAt');
 const [sortOrder, setSortOrder] = useState('desc');
 const [filterService, setFilterService] = useState('');
@@ -90,7 +90,7 @@ const [error, setError] = useState(null);
 
 useEffect(() => {
   setCurrentPage(1);
-}, [filterService, filterStatus]);
+}, [filterService, filterStatus, searchText]);
 
 
  const filteredBookings = bookings.filter(b => {
@@ -156,14 +156,13 @@ const currentBookings = sortedBookings.slice(indexOfFirstBooking, indexOfLastBoo
  // Set export data và columns
  useEffect(() => {
   const exportColumns = [
-    { title: 'Booking Code', dataIndex: 'bookingCode' },
-    { title: 'Customer', dataIndex: 'customerName' },
-    { title: 'Service', dataIndex: 'serviceName' },
-    { title: 'Status', dataIndex: 'status' },
-    { title: 'Technician', dataIndex: 'technicianName' },
-    { title: 'Created At', dataIndex: 'createdAt' },
-    { title: 'Updated At', dataIndex: 'updatedAt' },
-    { title: 'Description', dataIndex: 'description' },
+    { title: 'Mã đơn hàng', dataIndex: 'bookingCode' },
+    { title: 'Khách hàng', dataIndex: 'customerName' },
+    { title: 'Dịch vụ', dataIndex: 'serviceName' },
+    { title: 'Trạng thái', dataIndex: 'status' },
+    { title: 'Kỹ thuật viên', dataIndex: 'technicianName' },
+    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+    { title: 'Mô tả', dataIndex: 'description' },
   ];
 
   const exportData = sortedBookings.map(b => ({
@@ -230,14 +229,13 @@ const isDataReady = isUserMapReady && isServiceMapReady;
 
  // Định nghĩa các cột export cho booking
  const exportColumns = [
-   { title: 'Booking Code', dataIndex: 'bookingCode' },
-   { title: 'Customer', dataIndex: 'customerName' },
-   { title: 'Service', dataIndex: 'serviceName' },
-   { title: 'Status', dataIndex: 'status' },
-   { title: 'Technician', dataIndex: 'technicianName' },
-   { title: 'Created At', dataIndex: 'createdAt' },
-   { title: 'Updated At', dataIndex: 'updatedAt' },
-   { title: 'Description', dataIndex: 'description' },
+   { title: 'Mã đơn hàng', dataIndex: 'bookingCode' },
+   { title: 'Khách hàng', dataIndex: 'customerName' },
+   { title: 'Dịch vụ', dataIndex: 'serviceName' },
+   { title: 'Trạng thái', dataIndex: 'status' },
+   { title: 'Kỹ thuật viên', dataIndex: 'technicianName' },
+   { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+   { title: 'Mô tả', dataIndex: 'description' },
  ];
 
  // Chuẩn hóa dữ liệu export (map id sang tên, format ngày...)
@@ -258,11 +256,11 @@ const isDataReady = isUserMapReady && isServiceMapReady;
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
-           <h4 className="mb-1">Bookings</h4>
+           <h4 className="mb-1">Đơn hàng</h4>
            <nav>
              <ol className="breadcrumb mb-0">
-               <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-               <li className="breadcrumb-item active">Bookings</li>
+               <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+               <li className="breadcrumb-item active">Đơn hàng</li>
              </ol>
            </nav>
          </div>
@@ -277,14 +275,14 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                <input
                  type="text"
                  className="form-control"
-                 placeholder="Search bookings"
+                 placeholder="Tìm kiếm đơn hàng..."
                  value={searchText}
                  onChange={e => setSearchText(e.target.value)}
                />
              </div>
            </div>
            <Select
-             placeholder="Service"
+             placeholder="Dịch vụ"
              value={filterService || undefined}
              onChange={value => setFilterService(value)}
              style={{ width: 150, marginRight: 8 }}
@@ -295,7 +293,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              ))}
            </Select>
            <Select
-             placeholder="Status"
+             placeholder="Trạng thái"
              value={filterStatus || undefined}
              onChange={value => setFilterStatus(value)}
              style={{ width: 130, marginRight: 8 }}
@@ -311,24 +309,62 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            </Select>
          </div>
          <div className="d-flex align-items-center">
-           <span style={{ marginRight: 8, fontWeight: 500 }}>Sort by:</span>
+           <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
            <Select
              value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
              style={{ width: 120 }}
              onChange={handleSortChange}
              options={[
-               { value: 'lasted', label: 'Lasted' },
-               { value: 'oldest', label: 'Oldest' },
+               { value: 'lasted', label: 'Mới nhất' },
+               { value: 'oldest', label: 'Cũ nhất' },
              ]}
            />
          </div>
        </div>
+
+       {/* Filter Info */}
+       {(searchText || filterService || filterStatus) && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           {searchText && (
+             <span className="badge bg-primary-transparent">
+               <i className="ti ti-search me-1"></i>
+               Tìm kiếm: "{searchText}"
+             </span>
+           )}
+           {filterService && (
+             <span className="badge bg-info-transparent">
+               <i className="ti ti-tools me-1"></i>
+               Dịch vụ: {serviceMap[filterService] || filterService}
+             </span>
+           )}
+           {filterStatus && (
+             <span className="badge bg-warning-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Trạng thái: {filterStatus.replace(/_/g, ' ')}
+             </span>
+           )}
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               setSearchText('');
+               setFilterService('');
+               setFilterStatus('');
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
+
+       {/* Table */}
        <div className="custom-datatable-filter table-responsive">
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
                <th style={{ cursor: 'pointer' }} onClick={handleSortById}>
-                 BOOKING CODE
+                 Mã đơn hàng
                  {sortField === 'id' && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -336,7 +372,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                  )}
                </th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByCustomer}>
-                 CUSTOMER
+                 Khách hàng
                  {sortField === 'customer' && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
@@ -344,25 +380,47 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                  )}
                </th>
                <th style={{ cursor: 'pointer' }} onClick={handleSortByService}>
-                 SERVICE
+                 Dịch vụ
                  {sortField === 'service' && (
                    <span style={{ marginLeft: 4 }}>
                      {sortOrder === 'asc' ? '▲' : '▼'}
                    </span>
                  )}
                </th>
-               <th>STATUS</th>
-               <th>ACTION</th>
+               <th>Trạng thái</th>
+               <th>Hành động</th>
              </tr>
            </thead>
            <tbody>
              {loading ? (
                <tr>
-                 <td><Spin /></td>
+                 <td colSpan={5} className="text-center">
+                   <div className="spinner-border text-primary" role="status">
+                     <span className="visually-hidden">Loading...</span>
+                   </div>
+                 </td>
                </tr>
              ) : error ? (
                <tr>
-                 <td colSpan={6} style={{ color: 'red' }}>{error.message || 'Failed to fetch bookings.'}</td>
+                 <td colSpan={5} style={{ color: 'red' }}>{error.message || 'Không thể tải các đơn hàng.'}</td>
+               </tr>
+             ) : filteredBookings.length === 0 ? (
+               <tr>
+                 <td colSpan={5} className="text-center text-muted py-4">
+                   <div>
+                     <i className="ti ti-calendar" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                     <p className="mb-0">Không có đơn hàng nào</p>
+                   </div>
+                 </td>
+               </tr>
+             ) : currentBookings.length === 0 ? (
+               <tr>
+                 <td colSpan={5} className="text-center text-muted py-4">
+                   <div>
+                     <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
+                     <p className="mb-0">Không tìm thấy đơn hàng nào phù hợp</p>
+                   </div>
+                 </td>
                </tr>
              ) : (
                currentBookings.map(b => (
@@ -384,7 +442,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                     </td> */}
                    <td>
                      <Button className="management-action-btn" size="middle" onClick={() => { setSelectedBooking(b); setShowDetailModal(true); }}>
-                       <EyeOutlined style={{marginRight: 4}} />View Detail
+                       <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
                      </Button>
                    </td>
                  </tr>
@@ -393,24 +451,128 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            </tbody>
          </table>
        </div>
-       <div className="d-flex justify-content-end mt-3">
-         <nav>
-           <ul className="pagination mb-0">
-             {[...Array(totalPages)].map((_, i) => (
-               <li
-                 key={i}
-                 className={`page-item ${currentPage === i + 1 ? 'active' : ''}`}
-               >
-                 <button className="page-link" onClick={() => handlePageChange(i + 1)}>
-                   {i + 1}
+
+       {/* Pagination Info and Controls */}
+       <div className="d-flex justify-content-between align-items-center mt-3">
+         <div className="d-flex align-items-center gap-3">
+           <div className="text-muted">
+             Hiển thị {indexOfFirstBooking + 1}-{Math.min(indexOfLastBooking, filteredBookings.length)} trong tổng số {filteredBookings.length} đơn hàng
+           </div>
+         </div>
+         {filteredBookings.length > 0 && (
+           <nav>
+             <ul className="pagination mb-0" style={{ gap: '2px' }}>
+               {/* Previous button */}
+               <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage - 1)}
+                   disabled={currentPage === 1}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-left"></i>
                  </button>
                </li>
-             ))}
-           </ul>
-         </nav>
+               
+               {/* Page numbers */}
+               {[...Array(totalPages)].map((_, i) => {
+                 const pageNumber = i + 1;
+                 // Show all pages if total pages <= 7
+                 if (totalPages <= 7) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 }
+                 
+                 // Show first page, last page, current page, and pages around current page
+                 if (
+                   pageNumber === 1 || 
+                   pageNumber === totalPages || 
+                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                 ) {
+                   return (
+                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                       <button 
+                         className="page-link" 
+                         onClick={() => handlePageChange(pageNumber)}
+                         style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                           color: currentPage === pageNumber ? 'white' : '#007bff',
+                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                         }}
+                       >
+                         {pageNumber}
+                       </button>
+                     </li>
+                   );
+                 } else if (
+                   pageNumber === currentPage - 2 || 
+                   pageNumber === currentPage + 2
+                 ) {
+                   return (
+                     <li key={i} className="page-item disabled">
+                       <span className="page-link" style={{ 
+                         border: '1px solid #dee2e6',
+                         borderRadius: '6px',
+                         padding: '8px 12px',
+                         minWidth: '40px',
+                         backgroundColor: '#f8f9fa',
+                         color: '#6c757d'
+                       }}>...</span>
+                     </li>
+                   );
+                 }
+                 return null;
+               })}
+               
+               {/* Next button */}
+               <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                 <button 
+                   className="page-link" 
+                   onClick={() => handlePageChange(currentPage + 1)}
+                   disabled={currentPage === totalPages}
+                   style={{ 
+                     border: '1px solid #dee2e6',
+                     borderRadius: '6px',
+                     padding: '8px 12px',
+                     minWidth: '40px'
+                   }}
+                 >
+                   <i className="ti ti-chevron-right"></i>
+                 </button>
+               </li>
+             </ul>
+           </nav>
+         )}
        </div>
      </div>
-      {showDetailModal && selectedBooking && (
+
+     {showDetailModal && selectedBooking && (
         <Modal
           open={showDetailModal}
           onCancel={() => setShowDetailModal(false)}
@@ -424,8 +586,8 @@ const isDataReady = isUserMapReady && isServiceMapReady;
             <div style={{ background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)', padding: 24, color: '#fff' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontSize: 22, fontWeight: 700 }}>Booking Details</div>
-                  <div style={{ fontSize: 13, opacity: 0.9 }}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
+                  <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết đơn hàng</div>
+                  <div style={{ fontSize: 13, opacity: 0.9 }}>Mã đơn hàng : {selectedBooking.bookingCode || selectedBooking.id}</div>
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <Tag color={getStatusColor(selectedBooking.status)} style={{ fontSize: 12, fontWeight: 600 }}>
@@ -441,19 +603,19 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                 {/* Overview */}
                 <Col span={12}>
                   <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 12 }}>Overview</div>
+                    <div style={{ fontWeight: 600, marginBottom: 12 }}>Tổng quan</div>
                     <Descriptions size="small" column={1} bordered={false}
                       items={[
-                        { key: 'service', label: 'Service', children: serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId },
-                        { key: 'location', label: 'Location', children: selectedBooking.location?.address || 'N/A' },
-                        { key: 'scheduledAt', label: 'Schedule', children: (
+                        { key: 'service', label: 'Dịch vụ', children: serviceMap[selectedBooking.serviceId] || selectedBooking.serviceId },
+                        { key: 'location', label: 'Địa chỉ', children: selectedBooking.location?.address || '' },
+                        { key: 'scheduledAt', label: 'Lịch trình', children: (
                           selectedBooking.schedule?.startTime
                             ? `${dayjs(selectedBooking.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}${selectedBooking.schedule?.endTime
                                 ? ` - ${dayjs(selectedBooking.schedule.endTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
                                 : (selectedBooking.schedule?.expectedEndTime
                                     ? ` - ${dayjs(selectedBooking.schedule.expectedEndTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')}`
                                     : '')}`
-                            : 'Not scheduled'
+                            : 'Chưa có lịch trình'
                         ) },
                       ]}
                     />
@@ -462,11 +624,11 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                 {/* People */}
                 <Col span={12}>
                   <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
-                    <div style={{ fontWeight: 600, marginBottom: 12 }}>People</div>
+                    <div style={{ fontWeight: 600, marginBottom: 12 }}>Khách hàng & Kỹ thuật viên</div>
                     <Descriptions size="small" column={1} bordered={false}
                       items={[
-                        { key: 'customer', label: 'Customer', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || 'UNKNOWN' },
-                        { key: 'technician', label: 'Technician', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : 'UNKNOWN') },
+                        { key: 'customer', label: 'Khách hàng', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || 'UNKNOWN' },
+                        { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : 'UNKNOWN') },
                       ]}
                     />
                   </div>
@@ -477,30 +639,30 @@ const isDataReady = isUserMapReady && isServiceMapReady;
 
               {/* Status & Flags */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Status & Payment</div>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Trạng thái & Thanh toán</div>
                 <Row gutter={12}>
                   <Col span={6}>
                     <div style={{ textAlign: 'center', background: '#e6f7ff', padding: 12, borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Payment Status</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || 'N/A'}</div>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Trạng thái thanh toán</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || ''}</div>
                     </div>
                   </Col>
                   <Col span={6}>
                     <div style={{ textAlign: 'center', background: selectedBooking.isUrgent ? '#fffbe6' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Urgent</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888' }}>{selectedBooking.isUrgent ? 'Yes' : 'No'}</div>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Loại đặt lịch</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.isUrgent ? '#faad14' : '#888' }}>{selectedBooking.isUrgent ? 'Đặt lịch ngay' : 'Đặt lịch theo lịch trình'}</div>
                     </div>
                   </Col>
                   <Col span={6}>
                     <div style={{ textAlign: 'center', background: selectedBooking.customerConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Customer Confirmed</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.customerConfirmedDone ? 'Yes' : 'No'}</div>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Khách hàng xác nhận</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.customerConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.customerConfirmedDone ? 'Đã xác nhận' : 'Chưa xác nhận'}</div>
                     </div>
                   </Col>
                   <Col span={6}>
                     <div style={{ textAlign: 'center', background: selectedBooking.technicianConfirmedDone ? '#f6ffed' : '#f0f0f0', padding: 12, borderRadius: 8 }}>
-                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Technician Confirmed</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.technicianConfirmedDone ? 'Yes' : 'No'}</div>
+                      <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Kỹ thuật viên xác nhận</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: selectedBooking.technicianConfirmedDone ? '#52c41a' : '#888' }}>{selectedBooking.technicianConfirmedDone ? 'Đã xác nhận' : 'Chưa xác nhận'}</div>
                     </div>
                   </Col>
                 </Row>
@@ -510,13 +672,13 @@ const isDataReady = isUserMapReady && isServiceMapReady;
 
               {/* Description */}
               <div style={{ background: '#fafafa', padding: 16, borderRadius: 8, marginBottom: 16 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Description</div>
-                <div style={{ color: '#333' }}>{selectedBooking.description || 'No description provided'}</div>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Mô tả</div>
+                <div style={{ color: '#333' }}>{selectedBooking.description || 'Chưa cung cấp mô tả'}</div>
               </div>
 
               {/* Images */}
               <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
-                <div style={{ fontWeight: 600, marginBottom: 8 }}>Images</div>
+                <div style={{ fontWeight: 600, marginBottom: 8 }}>Hình ảnh</div>
                 {selectedBooking.images && selectedBooking.images.length > 0 ? (
                   <Image.PreviewGroup>
                     <Row gutter={[8, 8]}>
@@ -528,7 +690,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                     </Row>
                   </Image.PreviewGroup>
                 ) : (
-                  <div style={{ color: '#999', fontSize: 14, textAlign: 'center', padding: 20 }}>No images available</div>
+                  <div style={{ color: '#999', fontSize: 14, textAlign: 'center', padding: 20 }}>Chưa có hình ảnh</div>
                 )}
               </div>
             </div>

@@ -7,7 +7,9 @@ import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { userAPI } from '../../features/users/userAPI';
 import { categoryAPI } from '../../features/categories/categoryAPI';
+import { financialReportAPI } from '../../features/financialReport/financialReportAPI';
 import { createExportData, formatDateTime } from '../../utils/exportUtils';
+import { formatCurrency } from '../../utils/formatCurrency';
 
 const statusTag = (status) => {
   const colorMap = {
@@ -38,6 +40,8 @@ export default function TechnicianDetail() {
   const [error, setError] = useState(null);
   const [serviceMap, setServiceMap] = useState({});
   const [categories, setCategories] = useState([]);
+  const [financialData, setFinancialData] = useState(null);
+  const [financialLoading, setFinancialLoading] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -51,7 +55,7 @@ export default function TechnicianDetail() {
           categoryAPI.getAll(),
         ]);
         if (!t) {
-          message.error('Technician not found');
+          message.error('Không tìm thấy kỹ thuật viên');
           navigate('/admin/technician-management');
           return;
         }
@@ -73,7 +77,7 @@ export default function TechnicianDetail() {
         setCategories(categories);
       } catch (e) {
         setError(e);
-        message.error('Failed to load technician detail');
+        message.error('Không thể tải thông tin chi tiết');
       } finally {
         setLoading(false);
       }
@@ -83,18 +87,47 @@ export default function TechnicianDetail() {
 
   const bookingColumns = useMemo(
     () => [
-      { title: 'Booking Code', dataIndex: 'bookingCode', key: 'bookingCode' },
+      { title: 'Mã đơn hàng', dataIndex: 'bookingCode', key: 'bookingCode' },
       {
-        title: 'Service',
+        title: 'Dịch vụ',
         dataIndex: 'serviceName',
         key: 'serviceName',
         render: (_, r) => serviceMap[r.serviceId] || r.serviceName || r.serviceId,
       },
-      { title: 'Status', dataIndex: 'status', key: 'status', render: (s) => <Tag>{formatStatusLabel(s)}</Tag> },
-      { title: 'Created At', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
+      { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => <Tag>{formatStatusLabel(s)}</Tag> },
+      { title: 'Thời gian tạo đơn hàng', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
     ],
     [serviceMap]
   );
+
+  // Load financial data for technician
+  useEffect(() => {
+    const loadFinancialData = async () => {
+      if (!technician?.id) return;
+      
+      try {
+        setFinancialLoading(true);
+        const [technicianDetails, technicianBookings] = await Promise.all([
+          financialReportAPI.getTechnicianFinancialDetails(technician.id),
+          financialReportAPI.getBookingsByTechnicianId(technician.id)
+        ]);
+        
+        if (technicianDetails) {
+          setFinancialData({
+            ...technicianDetails,
+            bookings: technicianBookings || []
+          });
+        }
+      } catch (error) {
+        console.error('Error loading financial data:', error);
+        // Don't show error message for financial data as it's not critical
+      } finally {
+        setFinancialLoading(false);
+      }
+    };
+
+    loadFinancialData();
+  }, [technician?.id]);
 
   useEffect(() => {
     if (!bookings || bookings.length === 0) return;
@@ -120,8 +153,8 @@ export default function TechnicianDetail() {
     return (
       <div className="container-fluid">
         <Card>
-          <div style={{ color: 'red' }}>Failed to load technician detail.</div>
-          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
+          <div style={{ color: 'red' }}>Không thể tải thông tin chi tiết.</div>
+          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
         </Card>
       </div>
     );
@@ -138,32 +171,36 @@ export default function TechnicianDetail() {
               <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
             </Space>
 
-            <Card title="Technician Profile" bordered={false} style={{ borderRadius: 12 }}>
+            <Card title="Thông tin kỹ thuật viên" bordered={false} style={{ borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 16 }}>
                 <Avatar size={80} src={technician.avatar || user?.avatar || `https://i.pravatar.cc/150?u=${technician.id}`} style={{ flexShrink: 0 }}>
                   {(technician.fullName || user?.fullName || 'T').charAt(0).toUpperCase()}
                 </Avatar>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 20, fontWeight: 600 }}>{technician.fullName || user?.fullName || 'N/A'}</div>
+                  <div style={{ fontSize: 20, fontWeight: 600 }}>{technician.fullName || user?.fullName || ''}</div>
                   <div style={{ color: '#888', marginTop: 4 }}>ID: {technician.id}</div>
+                  <br></br>
+
+                  {/* Thêm cảnh cáo ở dưới*/}
+
                 </div>
               </div>
 
               <Descriptions column={2} bordered>
-                <Descriptions.Item label="Full Name">{technician.fullName || user?.fullName || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Email">{technician.email || user?.email || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Phone">{technician.phone || user?.phone || 'N/A'}</Descriptions.Item>
-                <Descriptions.Item label="Status">{statusTag(technician.status)}</Descriptions.Item>
-                <Descriptions.Item label="Availability">{availabilityTag(technician.availability)}</Descriptions.Item>
-                <Descriptions.Item label="Rating">{technician.ratingAverage ?? 0}</Descriptions.Item>
-                <Descriptions.Item label="Jobs Completed">{technician.jobCompleted ?? 0}</Descriptions.Item>
-                <Descriptions.Item label="Experience Years">{technician.experienceYears || 0} năm</Descriptions.Item>
+                <Descriptions.Item label="Họ và tên">{technician.fullName || user?.fullName || ''}</Descriptions.Item>
+                <Descriptions.Item label="Email">{technician.email || user?.email || ''}</Descriptions.Item>
+                <Descriptions.Item label="SĐT">{technician.phone || user?.phone || ''}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">{statusTag(technician.status)}</Descriptions.Item>
+                <Descriptions.Item label="Tình trạng">{availabilityTag(technician.availability)}</Descriptions.Item>
+                <Descriptions.Item label="Đánh giá">{technician.ratingAverage ?? 0}</Descriptions.Item>
+                <Descriptions.Item label="Số công việc hoàn thành">{technician.jobCompleted ?? 0}</Descriptions.Item>
+                <Descriptions.Item label="Năm kinh nghiệm">{technician.experienceYears || 0} năm</Descriptions.Item>
               </Descriptions>
 
               {/* Specialties Section */}
               <div style={{ marginTop: 24 }}>
                 <div style={{ fontSize: 16, fontWeight: 600, color: '#333', marginBottom: 16 }}>
-                  Chuyên Ngành (Specialties)
+                  Chuyên Ngành
                 </div>
                 <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
                   {technician.specialtiesCategories && technician.specialtiesCategories.length > 0 ? (
@@ -200,11 +237,54 @@ export default function TechnicianDetail() {
                items={[
                  {
                    key: 'profile',
-                   label: 'Thông Tin Chi Tiết',
+                   label: 'Thông Tin Tài Khoản',
                    children: (
                      <Card bordered={false} style={{ borderRadius: 12 }}>
                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
                          
+
+                         {/* Location Information */}
+                         <div>
+                           <h4 style={{ marginBottom: 16, color: '#333' }}>Vị Trí</h4>
+                           <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
+                             {technician.currentLocation && technician.currentLocation.coordinates && technician.currentLocation.coordinates.length >= 2 ? (
+                               <>
+                                 <div style={{ marginBottom: 12 }}>
+                                   <strong>Vĩ độ:</strong> {technician.currentLocation.coordinates[1]?.toFixed(6) || 'N/A'}
+                                 </div>
+                                 <div style={{ marginBottom: 12 }}>
+                                   <strong>Kinh độ:</strong> {technician.currentLocation.coordinates[0]?.toFixed(6) || 'N/A'}
+                                 </div>
+                                 <div style={{ marginBottom: 12 }}>
+                                   <strong>Loại vị trí:</strong> {technician.currentLocation.type || 'Point'}
+                                 </div>
+                                 <div style={{ marginBottom: 8 }}>
+                                   <strong>Google Maps: </strong>
+                                    <a 
+                                    href={`https://www.google.com/maps?q=${technician.currentLocation.coordinates[1]},${technician.currentLocation.coordinates[0]}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ 
+                                      color: '#1890ff', 
+                                      textDecoration: 'none',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                  >
+                                    <i className="ti ti-map-pin" style={{ fontSize: '16px' }}></i>
+                                    Xem trên Google Maps
+                                  </a>
+                                 </div>
+                                 
+                               </>
+                             ) : (
+                               <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
+                                 Chưa cập nhật vị trí
+                               </div>
+                             )}
+                           </div>
+                         </div>
 
                          {/* Bank Information */}
                          <div>
@@ -388,6 +468,117 @@ export default function TechnicianDetail() {
                        columns={bookingColumns}
                        pagination={{ pageSize: 10 }}
                      />
+                   ),
+                 },
+                 {
+                   key: 'financial',
+                   label: 'Tài Chính & Thu Nhập',
+                   children: (
+                     <Card bordered={false} style={{ borderRadius: 12 }}>
+                       {financialLoading ? (
+                         <div style={{ textAlign: 'center', padding: '50px' }}>
+                           <Spin size="large" />
+                         </div>
+                       ) : financialData ? (
+                         <Space direction="vertical" size={24} style={{ width: '100%' }}>
+                           {/* Financial Summary */}
+                           <div>
+                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+                               <Card size="small">
+                                 <div style={{ textAlign: 'center' }}>
+                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#52c41a', marginBottom: 8 }}>
+                                     {formatCurrency(financialData.totalEarning || 0)}
+                                   </div>
+                                   <div style={{ color: '#666', fontSize: '14px' }}>Tổng Thu Nhập</div>
+                                 </div>
+                               </Card>
+                               <Card size="small">
+                                 <div style={{ textAlign: 'center' }}>
+                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#1890ff', marginBottom: 8 }}>
+                                     {formatCurrency(financialData.totalCommissionPaid || 0)}
+                                   </div>
+                                   <div style={{ color: '#666', fontSize: '14px' }}>Hoa Hồng Đã Trả</div>
+                                 </div>
+                               </Card>
+                               <Card size="small">
+                                 <div style={{ textAlign: 'center' }}>
+                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#faad14', marginBottom: 8 }}>
+                                     {formatCurrency(financialData.totalHoldingAmount || 0)}
+                                   </div>
+                                   <div style={{ color: '#666', fontSize: '14px' }}>Số Tiền Đang Giữ</div>
+                                 </div>
+                               </Card>
+                               <Card size="small">
+                                 <div style={{ textAlign: 'center' }}>
+                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#722ed1', marginBottom: 8 }}>
+                                     {formatCurrency(financialData.totalWithdrawn || 0)}
+                                   </div>
+                                   <div style={{ color: '#666', fontSize: '14px' }}>Đã Rút Tiền</div>
+                                 </div>
+                               </Card>
+                             </div>
+                           </div>
+
+                           {/* Financial Bookings Table */}
+                           {financialData.bookings && financialData.bookings.length > 0 && (
+                             <div>
+                               <Table
+                                 dataSource={financialData.bookings}
+                                 columns={[
+                                   {
+                                     title: 'Mã đơn hàng',
+                                     dataIndex: 'bookingCode',
+                                     key: 'bookingCode',
+                                   },
+                                   {
+                                     title: 'Giá cuối',
+                                     dataIndex: 'finalPrice',
+                                     key: 'finalPrice',
+                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                                   },
+                                   {
+                                     title: 'Số tiền giữ',
+                                     dataIndex: 'holdingAmount',
+                                     key: 'holdingAmount',
+                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                                   },
+                                   {
+                                     title: 'Hoa hồng',
+                                     dataIndex: 'commissionAmount',
+                                     key: 'commissionAmount',
+                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                                   },
+                                   {
+                                     title: 'Thu nhập',
+                                     dataIndex: 'technicianEarning',
+                                     key: 'technicianEarning',
+                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                                   },
+                                   {
+                                     title: 'Thanh toán',
+                                     dataIndex: 'paymentStatus',
+                                     key: 'paymentStatus',
+                                     render: (status) => <Tag color={status === 'PAID' ? 'green' : 'orange'}>{status}</Tag>,
+                                   },
+                                   {
+                                     title: 'Ngày tạo',
+                                     dataIndex: 'createdAt',
+                                     key: 'createdAt',
+                                     render: (date) => formatDateTime(date),
+                                   },
+                                 ]}
+                                 pagination={{ pageSize: 10 }}
+                                 size="small"
+                               />
+                             </div>
+                           )}
+                         </Space>
+                       ) : (
+                         <div style={{ textAlign: 'center', padding: '50px', color: '#999' }}>
+                           Không có dữ liệu tài chính
+                         </div>
+                       )}
+                     </Card>
                    ),
                  },
                ]}
