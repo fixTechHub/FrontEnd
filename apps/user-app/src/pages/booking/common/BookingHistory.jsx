@@ -282,7 +282,7 @@ const BookingHistory = () => {
               </Pagination.Prev>
               <Pagination.Next
                 onClick={() => handlePageChange(page + 1)}
-                disabled={bookingHistories?.length < limit}
+                disabled={bookingHistories?.length < limit-1}
               >
                 Trang Sau
               </Pagination.Next>
