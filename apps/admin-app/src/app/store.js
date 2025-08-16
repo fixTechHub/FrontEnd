@@ -19,6 +19,7 @@ import packageReducer from '../features/packages/packageSlice';
 import feedbackReducer from '../features/feedback/feedbackSlice';
 import notificationReducer from '../features/notifications/notificationsSlice'
 import adminCertificateReducer from '../features/certificates/certificateSlice';
+import adminWithdrawReducer from '../features/withdraw/withdrawSlice';
 import technicianSubscriptionReducer from '../features/technicianSubscription/technicianSubscriptionSlice';
 
 const store = configureStore({
@@ -43,6 +44,7 @@ const store = configureStore({
     adminPackages: packageReducer,
     adminFeedback: feedbackReducer,
     adminCertificate: adminCertificateReducer,
+    adminWithdraw : adminWithdrawReducer,
     technicianSubscription: technicianSubscriptionReducer,
   },
   middleware: (getDefaultMiddleware) =>

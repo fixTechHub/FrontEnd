@@ -323,6 +323,22 @@ const Sidebar = () => {
               </li>
             </ul>
           </li>
+          <li className="text-uppercase text-muted px-4 pt-3 pb-2 mt-2" style={{fontSize: '12px', letterSpacing: '1px'}}>
+            <span>Quản lí tài chính</span>
+          </li>
+          <li>
+            <ul className="list-unstyled m-0 p-0">
+              <li>
+                <Link to="/admin/withdraw" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/booking-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/withdraw" ? customStyles.activeMenuItem : {}}>
+                  <FaCalendar className="me-3" style={{width: '20px', ...(currentPath === "/admin/withdraw" ? customStyles.activeIcon : {})}} />
+                  <span>Tài chính</span>
+                </Link>
+              </li>
+
+            </ul>
+            
+          </li>
          
          
           {/* Add more menu sections as needed */}

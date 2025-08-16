@@ -5,6 +5,7 @@ import {
   submitFeedbackReply,
   getFeedbacksByTechnician,
   getFeedbackStatsByTechnician,
+  getFeedbacksByFromUser
 } from './feedbackAPI';
 
 // =============== THUNK: Submit feedback của booking ===============
@@ -65,6 +66,33 @@ export const fetchFeedbackStatsByTechnician = createAsyncThunk(
       return await getFeedbackStatsByTechnician(technicianId);
     } catch (err) {
       return thunkAPI.rejectWithValue(err?.response?.data?.message || 'Fetch stats failed');
+    }
+  }
+);
+
+export const fetchFeedbacksByFromUser = createAsyncThunk(
+  'feedback/fetchByFromUser',
+  async ({ userId, page = 1, limit = 10 }, thunkAPI) => {
+    try {
+      return await getFeedbacksByFromUser(userId, { page, limit });
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err?.response?.data?.message || 'Fetch feedback failed'
+      );
+    }
+  }
+);
+
+export const fetchFeedbacksByBooking = createAsyncThunk(
+  'bookingFeedback/fetchByBooking',
+  async (bookingId, thunkAPI) => {
+    try {
+      const data = await getFeedbacksByBooking(bookingId); // { items, total }
+      return { bookingId, ...data };
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err?.response?.data?.message || 'Fetch feedback by booking failed'
+      );
     }
   }
 );
@@ -179,6 +207,37 @@ const feedbackSlice = createSlice({
       .addCase(fetchFeedbackStatsByTechnician.rejected, (state, action) => {
         state.statsLoading = false;
         state.statsError = action.payload;
+      })
+
+       .addCase(fetchFeedbacksByFromUser.pending, (state) => {
+      state.loading = true;
+      state.errorMessage = '';
+    })
+    .addCase(fetchFeedbacksByFromUser.fulfilled, (state, action) => {
+      state.loading = false;
+      state.items = action.payload.items || [];
+      state.page = action.payload.page;
+      state.limit = action.payload.limit;
+      state.total = action.payload.total;
+      state.totalPages = action.payload.totalPages;
+    })
+    .addCase(fetchFeedbacksByFromUser.rejected, (state, action) => {
+      state.loading = false;
+      state.errorMessage = action.payload;
+    })
+
+     .addCase(fetchFeedbacksByBooking.pending, (state) => {
+        state.loading = true;
+        state.errorMessage = null;
+      })
+      .addCase(fetchFeedbacksByBooking.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.items || [];
+        state.total = action.payload.total || 0;
+      })
+      .addCase(fetchFeedbacksByBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.errorMessage = action.payload;
       });
   },
 });
