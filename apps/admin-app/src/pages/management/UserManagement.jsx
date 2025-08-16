@@ -490,7 +490,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                                <p className="avatar me-2 flex-shrink-0">
                                                    <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} className="rounded-circle" alt="" />
                                                </p>
-                                               <h6><p className="fs-14 fw-semibold">{user.fullName || "UNKNOWN"}</p></h6>
+                                               <h6><p className="fs-14 fw-semibold">{user.fullName || ""}</p></h6>
                                            </div>
                                        </td>
                                        <td><p className="text-gray-9">{user.email}</p></td>

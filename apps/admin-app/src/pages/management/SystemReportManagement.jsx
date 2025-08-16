@@ -328,7 +328,7 @@ const SystemReportManagement = () => {
      render: (userId) => (
        <Space>
          <UserOutlined />
-         <span>{userMap[userId] || userId || "UNKNOWN"}</span>
+         <span>{userMap[userId] || userId || "ss"}</span>
        </Space>
      ),
    },

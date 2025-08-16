@@ -469,11 +469,11 @@ const ReportManagement = () => {
                       <div style={{ display: 'grid', rowGap: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Người báo cáo</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reporterId] || selectedReport.reporterId || 'UNKNOWN'}</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reporterId] || selectedReport.reporterId || ''}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Người bị báo cáo</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId || 'UNKNOWN'}</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId || ''}</span>
                         </div>
                         
                       </div>

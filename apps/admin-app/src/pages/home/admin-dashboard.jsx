@@ -157,49 +157,75 @@ const AdminDashboard = () => {
         position: 'top',
         align: 'end',
         labels: {
-          boxWidth: 12,
-          padding: 15,
-          font: { size: 11, weight: '500' },
-          usePointStyle: true
+          boxWidth: 16,
+          padding: 20,
+          font: { size: 12, weight: '600' },
+          usePointStyle: true,
+          color: '#374151'
         }
       },
       tooltip: {
         enabled: true,
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: 'rgba(17, 24, 39, 0.95)',
         titleColor: '#fff',
         bodyColor: '#fff',
-        borderColor: '#4CAF50',
-        borderWidth: 1,
-        bodyFont: { size: 11 },
-        titleFont: { size: 12 }
+        borderColor: '#3B82F6',
+        borderWidth: 2,
+        cornerRadius: 8,
+        padding: 12,
+        bodyFont: { size: 13, weight: '500' },
+        titleFont: { size: 14, weight: '600' },
+        displayColors: true,
+        callbacks: {
+          label: function(context) {
+            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} VNĐ`;
+          }
+        }
       }
     },
     scales: {
       x: {
-        grid: { display: false },
+        grid: { 
+          display: true,
+          color: 'rgba(156, 163, 175, 0.1)',
+          lineWidth: 1
+        },
         ticks: {
           display: true,
-          font: { size: 10, weight: '500' },
-          color: '#666',
-          maxRotation: 0
+          font: { size: 11, weight: '600' },
+          color: '#6B7280',
+          maxRotation: 0,
+          padding: 8
+        },
+        border: {
+          display: true,
+          color: 'rgba(156, 163, 175, 0.2)',
+          width: 1
         }
       },
       y: {
         beginAtZero: true,
         grid: {
-          borderDash: [3, 3],
-          color: 'rgba(0,0,0,0.05)',
+          borderDash: [4, 4],
+          color: 'rgba(156, 163, 175, 0.1)',
+          lineWidth: 1
         },
         ticks: {
           display: true,
-          font: { size: 10, weight: '500' },
-          color: '#666',
+          font: { size: 11, weight: '600' },
+          color: '#6B7280',
+          padding: 8,
           callback: function(value) {
             return value >= 1000 ? (value/1000).toFixed(1) + 'k' : value;
           }
+        },
+        border: {
+          display: true,
+          color: 'rgba(156, 163, 175, 0.2)',
+          width: 1
         }
-      },
-    },
+      }
+    }
   };
 
   // Calculate totals
@@ -748,15 +774,20 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold">Số liệu doanh thu</span>
+                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Số liệu doanh thu</span>
                   <div className="d-flex align-items-center gap-2">
                     
                   </div>
                 </div>
               }
-              style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}
+              style={{
+                borderRadius: '16px', 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(156, 163, 175, 0.1)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+              }}
             >
-              <div style={{height: '300px', position: 'relative'}}>
+              <div style={{height: '320px', position: 'relative'}}>
                 <Bar
                   data={{
                   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -764,22 +795,28 @@ const AdminDashboard = () => {
                     {
                         label: `${currentYear}`,
                         data: revenueThisYear,
-                        backgroundColor: '#4CAF50',
-                        borderColor: '#4CAF50',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        barPercentage: 0.7,
-                        categoryPercentage: 0.8,
+                        backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9,
+                        hoverBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        hoverBorderColor: 'rgba(59, 130, 246, 1)',
+                        hoverBorderWidth: 3,
                       },
                       {
                         label: `${lastYear}`,
                         data: revenueLastYear,
-                        backgroundColor: '#9E9E9E',
-                        borderColor: '#9E9E9E',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        barPercentage: 0.7,
-                        categoryPercentage: 0.8,
+                        backgroundColor: 'rgba(156, 163, 175, 0.8)',
+                        borderColor: 'rgba(156, 163, 175, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9,
+                        hoverBackgroundColor: 'rgba(156, 163, 175, 1)',
+                        hoverBorderColor: 'rgba(156, 163, 175, 1)',
+                        hoverBorderWidth: 3,
                       },
                     ],
                   }}
@@ -811,50 +848,71 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold">Thống kê số liệu hiện tại</span>
-                  <Button 
-                    type="link" 
-                    size="small" 
-                    onClick={() => navigate('/admin/technician-management')}
-                    className="p-0"
-                  >
-                    Xem tất cả
-              </Button>
-            </div>
+                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Thống kê số liệu hiện tại</span>
+                </div>
               }
-              style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}
+              style={{
+                borderRadius: '16px', 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(156, 163, 175, 0.1)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+              }}
             >
-              <div className="space-y-3">
-                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
+              <div className="d-flex flex-column justify-content-between" style={{height: '320px'}}>
+                <div className="d-flex align-items-center justify-content-between p-3" style={{
+                  background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(251, 146, 60, 0.2)',
+                  transition: 'all 0.3s ease',
+                  height: '70px'
+                }}>
                   <div>
-                    <div className="text-muted small">Đơn hàng đang chờ</div>
-                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.pendingBookings}</div>
-            </div>
-                  <ClockCircleOutlined style={{fontSize: '1.5rem', color: '#ff9800'}} />
-        </div>
-
-                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
-                  <div>
-                    <div className="text-muted small">Đơn hàng đã hoàn tất</div>
-                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.completedBookings}</div>
+                    <div className="small" style={{color: '#ea580c', fontWeight: '600', fontSize: '12px'}}>Đơn hàng đang chờ</div>
+                    <div className="fw-bold" style={{fontSize: '1.3rem', color: '#ea580c'}}>{dashboardStats.pendingBookings}</div>
                   </div>
-                  <CheckCircleOutlined style={{fontSize: '1.5rem', color: '#4caf50'}} />
-                    </div>
-
-                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
-                  <div>
-                    <div className="text-muted small">Kỹ thuật viên có sẵn</div>
-                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.activeTechnicians}</div>
-                  </div>
-                  <ToolOutlined style={{fontSize: '1.5rem', color: '#2196f3'}} />
+                  <ClockCircleOutlined style={{fontSize: '1.6rem', color: '#f97316'}} />
                 </div>
 
-                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
+                <div className="d-flex align-items-center justify-content-between p-3" style={{
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(34, 197, 94, 0.2)',
+                  transition: 'all 0.3s ease',
+                  height: '70px'
+                }}>
                   <div>
-                    <div className="text-muted small">Điểm đánh giá trung bình của kỹ thuật viên</div>
-                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.averageRating.toFixed(1)}</div>
-              </div>
-                  <StarOutlined style={{fontSize: '1.5rem', color: '#ffc107'}} />
+                    <div className="small" style={{color: '#16a34a', fontWeight: '600', fontSize: '12px'}}>Đơn hàng đã hoàn tất</div>
+                    <div className="fw-bold" style={{fontSize: '1.3rem', color: '#16a34a'}}>{dashboardStats.completedBookings}</div>
+                  </div>
+                  <CheckCircleOutlined style={{fontSize: '1.6rem', color: '#22c55e'}} />
+                </div>
+
+                <div className="d-flex align-items-center justify-content-between p-3" style={{
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  transition: 'all 0.3s ease',
+                  height: '70px'
+                }}>
+                  <div>
+                    <div className="small" style={{color: '#2563eb', fontWeight: '600', fontSize: '12px'}}>Kỹ thuật viên có sẵn</div>
+                    <div className="fw-bold" style={{fontSize: '1.3rem', color: '#2563eb'}}>{dashboardStats.activeTechnicians}</div>
+                  </div>
+                  <ToolOutlined style={{fontSize: '1.6rem', color: '#3b82f6'}} />
+                </div>
+
+                <div className="d-flex align-items-center justify-content-between p-3" style={{
+                  background: 'linear-gradient(135deg, #fefce8 0%, #fde68a 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(245, 158, 11, 0.2)',
+                  transition: 'all 0.3s ease',
+                  height: '70px'
+                }}>
+                  <div>
+                    <div className="small" style={{color: '#d97706', fontWeight: '600', fontSize: '12px'}}>Điểm đánh giá trung bình của kỹ thuật viên</div>
+                    <div className="fw-bold" style={{fontSize: '1.3rem', color: '#d97706'}}>{dashboardStats.averageRating.toFixed(1)}</div>
+                  </div>
+                  <StarOutlined style={{fontSize: '1.6rem', color: '#f59e0b'}} />
                 </div>
               </div>
             </Card>

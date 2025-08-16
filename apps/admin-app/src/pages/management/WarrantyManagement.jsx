@@ -681,11 +681,11 @@ const handleSortByTechnician = () => {
                    <div style={{ display: 'grid', rowGap: 12 }}>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                        <span style={{ color: '#8c8c8c' }}>Khách hàng</span>
-                       <span style={{ fontWeight: 600 }}>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId || 'UNKNOWN'}</span>
+                       <span style={{ fontWeight: 600 }}>{userNames[selectedWarranty.customerId] || selectedWarranty.customerId || ''}</span>
                      </div>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                        <span style={{ color: '#8c8c8c' }}>Kỹ thuật viên</span>
-                       <span style={{ fontWeight: 600 }}>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId || 'UNKNOWN'}</span>
+                       <span style={{ fontWeight: 600 }}>{technicianNames[selectedWarranty.technicianId] || selectedWarranty.technicianId || ''}</span>
                      </div>
                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                        <span style={{ color: '#8c8c8c' }}>Mã đơn hàng</span>

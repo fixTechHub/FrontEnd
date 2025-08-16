@@ -582,7 +582,7 @@ const TechnicianManagement = () => {
                             style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                           />
                         </p>
-                        <h6><p className="fs-14 fw-semibold">{tech.fullName || "UNKNOWN"}</p></h6>
+                        <h6><p className="fs-14 fw-semibold">{tech.fullName || ""}</p></h6>
                       </div>
                     </td>
                     <td>{tech.email}</td>
@@ -768,7 +768,7 @@ const TechnicianManagement = () => {
           <hr></hr>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px' }}>
-              Họ và tên: {selectedTechnician.fullName || 'Unknown'}
+              Họ và tên: {selectedTechnician.fullName || ''}
             </div>
             <div style={{ fontSize: '14px', color: '#666' }}>
               Tình trạng hiện tại: {getTechnicianStatus(selectedTechnician.status)}

@@ -627,8 +627,8 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                     <div style={{ fontWeight: 600, marginBottom: 12 }}>Khách hàng & Kỹ thuật viên</div>
                     <Descriptions size="small" column={1} bordered={false}
                       items={[
-                        { key: 'customer', label: 'Khách hàng', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || 'UNKNOWN' },
-                        { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : 'UNKNOWN') },
+                        { key: 'customer', label: 'Khách hàng', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || '' },
+                        { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : '') },
                       ]}
                     />
                   </div>
