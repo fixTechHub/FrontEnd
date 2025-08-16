@@ -15,9 +15,9 @@ export const sendNotificationsThunk = createAsyncThunk(
 );
 export const fetchNotificationsThunk = createAsyncThunk(
     'notifications/fetchNotifications',
-    async (_, { rejectWithValue }) => {
+    async (userId, { rejectWithValue }) => {
         try {
-            const response = await notificationAPI.getUserNotifications();
+            const response = await notificationAPI.getUserNotifications(userId);
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to fetch notifications');
@@ -39,9 +39,9 @@ export const markNotificationAsReadThunk = createAsyncThunk(
 
 export const clearAllNotificationsThunk = createAsyncThunk(
     'notifications/clearAll',
-    async (_, { rejectWithValue }) => {
+    async (userId, { rejectWithValue }) => {
         try {
-            await notificationAPI.clearAllNotifications();
+            await notificationAPI.clearAllNotifications(userId);
             return;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Failed to clear notifications');
