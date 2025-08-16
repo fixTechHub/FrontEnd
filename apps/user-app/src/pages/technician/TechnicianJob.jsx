@@ -1,305 +1,3 @@
-// import { useDispatch, useSelector } from 'react-redux';
-// import { useEffect } from 'react';
-// import { useParams } from 'react-router-dom';
-// import React from 'react';
-// import { Link } from 'react-router-dom';
-// import { fetchTechnicianJobs, fetchTechnicianJobDetails } from '../../features/technicians/technicianSlice';
-// import Header from '../../components/common/Header';
-// import BreadcrumbBar from '../../components/common/BreadcrumbBar';
-
-// const TechnicianJobList = () => {
-//     const dispatch = useDispatch();
-//     const { profile, bookings, loading, error } = useSelector((state) => state.technician);
-//     const { technician } = useSelector((state) => state.auth);
-
-//     const technicianId = technician._id;
-//     console.log(technicianId);
-
-//     useEffect(() => {
-//         if (technicianId) {
-//             dispatch(fetchTechnicianJobs(technicianId));
-//         }
-//     }, [technicianId, dispatch]);
-
-//     if (loading) return <p>Loading bookings...</p>;
-//     if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
-
-//     const handleViewDetails = (technicianId, bookingId) => {
-//         dispatch(fetchTechnicianJobDetails({ technicianId, bookingId }));
-//     };
-
-//     return (
-//         <>
-//             <div className="main-wrapper">
-//                 <Header />
-
-//                 <BreadcrumbBar />
-
-//                 <div className="dashboard-section">
-//                     <div className="container">
-//                         <div className="row">
-//                             <div className="col-lg-12">
-//                                 <div className="dashboard-menu">
-//                                     <ul>
-//                                         <li>
-//                                             <Link to={`/technician`}>
-//                                                 <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
-//                                                 <span>Dashboard</span>
-//                                             </Link>
-//                                         </li>
-//                                         <li>
-//                                             <Link to={`/technician/booking`} className="active">
-//                                                 <img src="/img/icons/booking-icon.svg" alt="Icon" />
-//                                                 <span>My Bookings</span>
-//                                             </Link>
-//                                         </li>
-//                                         <li>
-//                                             <Link to="/technician/feedback" >
-//                                                 <img src="/img/icons/review-icon.svg" alt="Icon" />
-//                                                 <span>Reviews</span>
-//                                             </Link>
-//                                         </li>
-//                                         <li>
-//                                             <Link to="/user-wishlist">
-//                                                 <img src="/img/icons/wishlist-icon.svg" alt="Icon" />
-//                                                 <span>Wishlist</span>
-//                                             </Link>
-//                                         </li>
-//                                         <li>
-//                                             <Link to="/user-messages">
-//                                                 <img src="/img/icons/message-icon.svg" alt="Icon" />
-//                                                 <span>Messages</span>
-//                                             </Link>
-//                                         </li>
-//                                         <li>
-//                                             <Link to="/technician/deposit">
-//                                                 <img src="/img/icons/wallet-icon.svg" alt="Icon" />
-//                                                 <span>My Wallet</span>
-//                                             </Link>
-//                                         </li>
-//                                         <li>
-//                                             <Link to={`/technician/earning`} >
-//                                                 <img src="/img/icons/payment-icon.svg" alt="Icon" />
-//                                                 <span>My Earnings</span>
-//                                             </Link>
-//                                         </li>
-//                                         <li>
-//                                             <Link to={`/technician/profile/${technicianId}`}>
-//                                                 <img src="/img/icons/settings-icon.svg" alt="Icon" />
-//                                                 <span>Settings</span>
-//                                             </Link>
-//                                         </li>
-//                                     </ul>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </div>
-
-//                 <div className="content">
-//                     <div className="container">
-//                         <div className="content-header d-flex align-items-center justify-content-between">
-//                             <h4>My Bookings</h4>
-//                             <ul className="booking-nav">
-//                                 <li>
-//                                     <a href="user-bookings.html" className="active">
-//                                         <i className="fa-solid fa-list"></i>
-//                                     </a>
-//                                 </li>
-//                                 <li>
-//                                     <a href="bookings-calendar.html">
-//                                         <i className="fa-solid fa-calendar-days"></i>
-//                                     </a>
-//                                 </li>
-//                             </ul>
-//                         </div>
-
-//                         <div className="row">
-//                             <div className="col-lg-12">
-//                                 <div className="sorting-info">
-//                                     <div className="row d-flex align-items-center">
-//                                         <div className="col-xl-7 col-lg-8 col-sm-12 col-12">
-//                                             <div className="booking-lists">
-//                                                 <ul className="nav">
-//                                                     <li><a className="active" href="user-bookings.html">All Bookings</a></li>
-//                                                     <li><a href="user-booking-upcoming.html">Upcoming</a></li>
-//                                                     <li><a href="user-booking-inprogress.html">Inprogress</a></li>
-//                                                     <li><a href="user-booking-complete.html">Completed</a></li>
-//                                                     <li><a href="user-booking-cancelled.html">Cancelled</a></li>
-//                                                 </ul>
-//                                             </div>
-//                                         </div>
-//                                         <div className="col-xl-5 col-lg-4 col-sm-12 col-12">
-//                                             <div className="filter-group">
-//                                                 <div className="sort-week sort">
-//                                                     <div className="dropdown dropdown-action">
-//                                                         <a
-//                                                             href=""
-//                                                             className="dropdown-toggle"
-//                                                             data-bs-toggle="dropdown"
-//                                                             aria-expanded="false"
-//                                                         >
-//                                                             This Week <i className="fas fa-chevron-down"></i>
-//                                                         </a>
-//                                                         <div className="dropdown-menu dropdown-menu-end">
-//                                                             <a className="dropdown-item" href="">
-//                                                                 This Week
-//                                                             </a>
-//                                                             <a className="dropdown-item" href="">
-//                                                                 This Month
-//                                                             </a>
-//                                                             <a className="dropdown-item" href="">
-//                                                                 Last 30 Days
-//                                                             </a>
-//                                                             <a
-//                                                                 className="dropdown-item"
-//                                                                 href=""
-//                                                                 data-bs-toggle="modal"
-//                                                                 data-bs-target="#custom_date"
-//                                                             >
-//                                                                 Custom
-//                                                             </a>
-//                                                         </div>
-//                                                     </div>
-//                                                 </div>
-//                                                 <div className="sort-relevance sort">
-//                                                     <div className="dropdown dropdown-action">
-//                                                         <a
-//                                                             href=""
-//                                                             className="dropdown-toggle"
-//                                                             data-bs-toggle="dropdown"
-//                                                             aria-expanded="false"
-//                                                         >
-//                                                             Sort By Relevance <i className="fas fa-chevron-down"></i>
-//                                                         </a>
-//                                                         <div className="dropdown-menu dropdown-menu-end">
-//                                                             <a className="dropdown-item" href="">
-//                                                                 Sort By Relevance
-//                                                             </a>
-//                                                             <a className="dropdown-item" href="">
-//                                                                 Sort By Ascending
-//                                                             </a>
-//                                                             <a className="dropdown-item" href="">
-//                                                                 Sort By Descending
-//                                                             </a>
-//                                                             <a className="dropdown-item" href="">
-//                                                                 Sort By Alphabet
-//                                                             </a>
-//                                                         </div>
-//                                                     </div>
-//                                                 </div>
-//                                             </div>
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                         <div class="card-body">
-//                             <div class="table-responsive dashboard-table">
-//                                 <table className="table datatable">
-//                                     <thead className="thead-light">
-//                                         <tr>
-//                                             <th>
-//                                                 Mã đơn
-//                                             </th>
-//                                             <th>Tên Khách Hàng</th>
-//                                             <th>Dịch vụ</th>
-//                                             <th>Địa chỉ</th>
-//                                             <th>Thời gian đến</th>
-//                                             <th>Trạng thái</th>
-
-//                                         </tr>
-//                                     </thead>
-//                                     <tbody>
-//                                         {Array.isArray(bookings) && bookings.map((b) => {
-//                                             const id = b.bookingId || b._id;
-//                                             console.log(bookings);
-
-//                                             console.log("bôking" + id);
-
-//                                             return (
-//                                                 <tr key={id}>
-//                                                     <td>{b.bookingCode}</td>
-//                                                     <td>{b.customerName}</td>
-//                                                     <td>{b.serviceName}</td>
-//                                                     <td>{b.address}</td>
-//                                                     <td>
-                                                        
-//                                                         {new Date(b.schedule.startTime).toLocaleTimeString('vi-VN', {
-//                                                             hour: '2-digit',
-//                                                             minute: '2-digit'
-//                                                         })}{" "}
-//                                                         {new Date(b.schedule.startTime).toLocaleDateString('vi-VN', {
-//                                                             day: '2-digit',
-//                                                             month: '2-digit',
-//                                                             year: 'numeric'
-//                                                         })}{" "}
-//                                                         -{" "}
-//                                                         {new Date(b.schedule.expectedEndTime).toLocaleTimeString('vi-VN', {
-//                                                             hour: '2-digit',
-//                                                             minute: '2-digit'
-//                                                         })}{" "}
-//                                                         {new Date(b.schedule.expectedEndTime).toLocaleDateString('vi-VN', {
-//                                                             day: '2-digit',
-//                                                             month: '2-digit',
-//                                                             year: 'numeric'
-//                                                         })}
-//                                                     </td>
-//                                                     <td>
-//                                                         <span
-//                                                             className={
-//                                                                 b.status === 'DONE'
-//                                                                     ? 'badge badge-light-success'
-//                                                                     : b.status === 'CANCELLED'
-//                                                                         ? 'badge badge-light-danger'
-//                                                                         : 'badge badge-light-warning'
-//                                                             }>
-//                                                             {b.status}
-//                                                         </span>
-//                                                     </td>
-//                                                     <td className="text-end">
-//                                                         <div className="dropdown dropdown-action">
-//                                                             <a href="#" className="dropdown-toggle" data-bs-toggle="dropdown">
-//                                                                 <i className="fas fa-ellipsis-vertical"></i>
-//                                                             </a>
-//                                                             <div className="dropdown-menu dropdown-menu-end">
-//                                                                 <Link
-//                                                                     to={`/technician/booking/${id}`}
-//                                                                     className="dropdown-item"
-//                                                                 >
-//                                                                     <i className="feather-eye"></i> View
-//                                                                 </Link>
-//                                                                 <button className="dropdown-item">
-//                                                                     <i className="feather-trash-2"></i> Delete
-//                                                                 </button>
-//                                                             </div>
-//                                                         </div>
-//                                                     </td>
-//                                                 </tr>
-//                                             );
-//                                         })}
-//                                     </tbody>
-//                                 </table>
-//                             </div>
-
-//                         </div>
-
-
-
-//                     </div>
-//                 </div>
-//             </div>
-
-
-//         </>
-//     );
-// }
-
-// export default TechnicianJobList;
-
-
-
-
 import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import React from 'react';
@@ -365,9 +63,9 @@ const TechnicianJobList = () => {
     const itemsPerPage = 5;
 
     // ==== FILTER & SORT STATES ====
-    const [timeRange, setTimeRange] = useState("week"); // week | month | 30d | all | custom
+    const [timeRange, setTimeRange] = useState("all"); // week | month | 30d | all | custom
     const [customRange, setCustomRange] = useState({ from: "", to: "" }); // yyyy-mm-dd
-    const [sortBy, setSortBy] = useState("relevance"); // relevance | timeAsc | timeDesc | alpha
+    const [sortBy, setSortBy] = useState("timeDesc"); // relevance | timeAsc | timeDesc | alpha
     const [statusFilter, setStatusFilter] = useState("all");
 
     // ==== FILTER LOGIC ====
@@ -459,10 +157,6 @@ const TechnicianJobList = () => {
         return copy;
     };
 
-    // ==== APPLY FILTER & SORT TRƯỚC KHI PHÂN TRANG ====
-    // const filteredSorted = sortBookings(
-    //     (allBookings || []).filter((b) => inRange(new Date(b?.schedule?.startTime).getTime()))
-    // );
     // Filter thêm theo status
     const filteredSorted = sortBookings(
         (allBookings || [])
@@ -512,13 +206,6 @@ const TechnicianJobList = () => {
         document.addEventListener('mousedown', onDocClick);
         return () => document.removeEventListener('mousedown', onDocClick);
     }, []);
-
-
-    // Tính toán dữ liệu cho trang hiện tại
-    //   const totalPages = Math.max(1, Math.ceil(allBookings.length / itemsPerPage));
-    //   const startIndex = (currentPage - 1) * itemsPerPage;
-    //   const endIndex = startIndex + itemsPerPage;
-    //   const currentBookings = allBookings.slice(startIndex, endIndex);
 
     const handlePrevPage = () => currentPage > 1 && setCurrentPage(currentPage - 1);
     const handleNextPage = () => currentPage < totalPages && setCurrentPage(currentPage + 1);
@@ -601,12 +288,12 @@ const TechnicianJobList = () => {
                                                 <span>Ví của tôi</span>
                                             </Link>
                                         </li>
-                                        {/* <li>
+                                        <li>
                                             <Link to={`/technician/earning`}>
                                                 <img src="/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>Thu nhập</span>
                                             </Link>
-                                        </li> */}
+                                        </li>
                                         {/* <li>
                                             <Link to={`/profile`}>
                                                 <img src="/img/icons/settings-icon.svg" alt="Icon" />
@@ -658,8 +345,8 @@ const TechnicianJobList = () => {
                                                         Đã lên lịch
                                                     </button>
                                                     <button
-                                                        className={statusFilter === "INPROGRESS" ? "active" : ""}
-                                                        onClick={() => setStatusFilter("INPROGRESS")}
+                                                        className={statusFilter === "IN_PROGRESS" ? "active" : ""}
+                                                        onClick={() => setStatusFilter("IN_PROGRESS")}
                                                     >
                                                         Đang xử lí
                                                     </button>
@@ -802,7 +489,7 @@ const TechnicianJobList = () => {
                                                     <tr key={id}>
                                                         <td className="mono">{b.bookingCode}</td>
                                                         <td>{b.serviceName}</td>
-                                                        <td>{b.address}</td>
+                                                        <td >{b?.address?.split(",")[0]}</td>
                                                         <td className="mono">
                                                             {new Date(b.schedule.startTime).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}{" "}
                                                             {new Date(b.schedule.startTime).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}{" "}
@@ -833,9 +520,7 @@ const TechnicianJobList = () => {
                                                                     <Link to={`/technician/booking/${id}`} className="dropdown-item">
                                                                         <i className="feather-eye"></i> View
                                                                     </Link>
-                                                                    <button className="dropdown-item">
-                                                                        <i className="feather-trash-2"></i> Delete
-                                                                    </button>
+                                                                    
                                                                 </div>
                                                             </div>
                                                         </td>
@@ -897,68 +582,118 @@ const TechnicianJobList = () => {
 
             {/* CSS NHÚNG – KHÔNG THANH KÉO NGANG, CHO PHÉP XUỐNG DÒNG */}
             <style>{`
-        /* Cho phép xuống dòng trong bảng (ghi đè mọi nowrap) */
-        .table-modern th,
-        .table-modern td,
-        .table.datatable th,
-        .table.datatable td {
-          white-space: normal !important;
-          word-break: break-word;
-          overflow-wrap: anywhere;
-        }
-
-        /* Cột mã/chuỗi liền không có dấu cách vẫn bẻ dòng */
-        .mono { word-break: break-all; }
-
-        /* Tránh bảng tự giãn vô hạn gây tràn ngang */
-        .table-modern {
-          table-layout: fixed;
-          width: 100%;
-        }
-
-        /* Tắt kéo ngang của Bootstrap wrapper */
-        .table-responsive {
-          overflow-x: visible !important;
-        }
-
-        /* (Tuỳ chọn) đặt tỉ lệ cột để wrap hợp lý hơn */
-        .table-modern th:nth-child(1),
-        .table-modern td:nth-child(1) { width: 18ch; }   /* Mã đơn */
-        .table-modern th:nth-child(2),
-        .table-modern td:nth-child(2) { width: 22%; }    /* Dịch vụ */
-        .table-modern th:nth-child(3),
-        .table-modern td:nth-child(3) { width: 38%; }    /* Địa chỉ */
-        .table-modern th:nth-child(4),
-        .table-modern td:nth-child(4) { width: 22%; }    /* Thời gian đến */
-        .table-modern th:nth-child(5),
-        .table-modern td:nth-child(5) { width: 10%; }    /* Trạng thái */
-        .table-modern th:nth-child(6),
-        .table-modern td:nth-child(6) { width: 10%; }    /* Thao tác */
-        .status-filter {
-  display: flex;
-  gap: 10px;
+       /* ====== BẢNG CÂN ĐỐI & DỄ ĐỌC ====== */
+.table-modern {
+  table-layout: fixed;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
 }
 
+.table-modern thead th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #343a40;
+  border-bottom: 1px solid #e9ecef;
+  padding: 14px 16px;
+  vertical-align: middle;
+}
+
+.table-modern tbody td {
+  padding: 14px 16px;
+  vertical-align: middle;             /* ✅ căn giữa theo trục dọc */
+  border-top: 1px solid #f1f3f5;
+  color: #343a40;
+}
+
+/* Zebra + hover nhẹ để mắt bám dòng tốt hơn */
+.table-modern tbody tr:nth-child(even) { background: #fcfcfd; }
+.table-modern tbody tr:hover { background: #f6fbff; }
+
+/* Bẻ dòng an toàn, ưu tiên không tràn ngang */
+.table-modern th,
+.table-modern td {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Chuỗi dài (mã đơn…) vẫn bẻ dòng khi cần */
+.mono { word-break: break-all; }
+
+/* Căn cột: ID gọn, dịch vụ vừa, địa chỉ rộng nhất, thời gian vừa, trạng thái & thao tác hẹp */
+.table-modern th:nth-child(1),
+.table-modern td:nth-child(1) { width: 12ch; }     /* Mã đơn */
+.table-modern th:nth-child(2),
+.table-modern td:nth-child(2) { width: 20%; }      /* Dịch vụ */
+.table-modern th:nth-child(3),
+.table-modern td:nth-child(3) { width: 20%; }      /* Địa chỉ (rộng nhất) */
+.table-modern th:nth-child(4),
+.table-modern td:nth-child(4) { width: 20%; }      /* Thời gian đến */
+.table-modern th:nth-child(5),
+.table-modern td:nth-child(5) { width: 14%; }       /* Trạng thái */
+.table-modern th:nth-child(6),
+.table-modern td:nth-child(6) { width: 6%; text-align: center; } /* Thao tác */
+
+/* Nút 3 chấm đứng giữa ô */
+td .dropdown.dropdown-action { display: inline-flex; align-items: center; justify-content: center; }
+
+/* ====== CHIP TRẠNG THÁI NHẤT QUÁN ====== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* map màu (giữ class bạn đang dùng) */
+.badge-light-success { background: #e6f7f0; color: #1e8e5a; border: 1px solid #c4eddc; }
+.badge-light-warning { background: #fff7e6; color: #b77400; border: 1px solid #ffe2b8; }
+.badge-light-danger  { background: #fdecee; color: #c23c43; border: 1px solid #f7c7cd; }
+
+/* ====== BỘ LỌC TRẠNG THÁI ====== */
+.status-filter { display: flex; gap: 10px; flex-wrap: wrap; }
 .status-filter button {
-  border: 1px solid #ccc;
-  background-color: white;
+  border: 1px solid #d7dee3;
+  background: #fff;
   padding: 6px 16px;
   border-radius: 6px;
   font-size: 15px;
   cursor: pointer;
-  color: #333;
-  transition: all 0.2s ease;
+  color: #334155;
+  transition: all .2s;
+}
+.status-filter button:hover { background: #f6f8fa; }
+.status-filter button.active { background: #197d87; color: #fff; border-color: #197d87; }
+
+/* ====== BẢNG RESPONSIVE ====== */
+/* Desktop: giữ vững, Mobile: cho phép kéo ngang thay vì phá layout */
+.table-responsive { overflow-x: auto !important; }
+
+/* Màn hình < 992px: thu hẹp cột ít quan trọng, ưu tiên đọc nội dung chính */
+@media (max-width: 991.98px) {
+  .table-modern th:nth-child(2),
+  .table-modern td:nth-child(2) { width: 26%; }   /* Dịch vụ nhỉnh hơn chút */
+  .table-modern th:nth-child(3),
+  .table-modern td:nth-child(3) { width: 44%; }   /* Địa chỉ vẫn rộng nhất */
+  .table-modern th:nth-child(4),
+  .table-modern td:nth-child(4) { width: 24%; }
+  .table-modern th:nth-child(5),
+  .table-modern td:nth-child(5) { width: 12%; }
+  .badge { min-width: 100px; font-size: 12px; height: 26px; }
 }
 
-.status-filter button:hover {
-  background-color: #f5f5f5;
+/* Màn hình rất nhỏ: co padding để hiển thị được nhiều hơn */
+@media (max-width: 575.98px) {
+  .table-modern thead th,
+  .table-modern tbody td { padding: 10px 12px; }
 }
 
-.status-filter button.active {
-  background-color: #197d87;
-  color: white;
-  border-color: #197d87;
-}
 
       `}</style>
         </>

@@ -19,6 +19,7 @@ export const verifyCertificateThunk = createAsyncThunk(
   async ({ id, status, reason }, thunkAPI) => {
     try {
       return await verifyCertificate({ id, status, reason });
+      
     } catch (err) {
       return thunkAPI.rejectWithValue(
         err?.response?.data?.message || 'Verify certificate failed'

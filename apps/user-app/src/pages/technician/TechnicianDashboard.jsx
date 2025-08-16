@@ -2,7 +2,7 @@ import Header from "../../components/common/Header";
 import Footer from "../../components/common/Footer";
 import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import React from "react";
 import { fetchEarningAndCommission, fetchTechnicianJobs, fetchTechnicianJobDetails, fetchTechnicianAvailability, changeTechnicianAvailability } from '../../features/technicians/technicianSlice';
 import { Link } from 'react-router-dom';
@@ -59,35 +59,104 @@ const WidgetItem = ({ icon, title, value, color, link }) => (
 // ---------- Widgets Row -----------
 const WidgetsRow = () => {
     const dispatch = useDispatch();
-    const bookings = useSelector((state) => state.technician.bookings);
+    const bookingsState = useSelector((state) => state.technician.bookings);
     const { technician } = useSelector((state) => state.auth);
-    // console.log("tech", technician);
-    // console.log(bookings);
 
+    // 1) Chuẩn hoá bookings về mảng (BE có thể trả {success, data})
+    const bookings = useMemo(() => {
+        return Array.isArray(bookingsState)
+            ? bookingsState
+            : (Array.isArray(bookingsState?.data) ? bookingsState.data : []);
+    }, [bookingsState]);
 
-    // useEffect(() => {
+    // 2) Tổng số booking
+    const bookingCount = bookings.length;
 
-    //     if (!technician?._id) return;
-    //     dispatch(fetchTechnicianJobs(technician?._id));
-    // }, [dispatch, technician?._id]);
+    // 3) Đếm số đánh giá
+    // - Ưu tiên số đếm sẵn từ backend (nếu có), ví dụ: technician.ratingCount
+    // - Nếu không có, lấy từ slice feedback (nếu bạn có) hoặc 0
+    const feedbackItems = useSelector((s) => s.feedback?.items) || [];
+    const reviewCount = Number(
+        (technician && technician.ratingCount) != null
+            ? technician.ratingCount
+            : (Array.isArray(feedbackItems) ? feedbackItems.length : 0)
+    );
 
-    const bookingCount = Array.isArray(bookings) ? bookings.length : 0;
-    console.log("boking", bookingCount);
+    // 4) Thu nhập hôm nay = tổng technicianEarning của booking hoàn thành trong ngày
+    const isSameDate = (d1, d2) => {
+        const a = new Date(d1), b = new Date(d2);
+        return a.getFullYear() === b.getFullYear()
+            && a.getMonth() === b.getMonth()
+            && a.getDate() === b.getDate();
+    };
 
+    const todayIncomeNumber = useMemo(() => {
+        const today = new Date();
+        const done = new Set(['DONE', 'COMPLETED']); // trạng thái hoàn thành
 
+        return bookings.reduce((sum, b) => {
+            const status = String(b?.status || '').toUpperCase();
+            const when = b?.schedule?.startTime || b?.createdAt;
+            if (!when || !done.has(status)) return sum;
 
-    // const bookingCount = bookings?.length ?? 0;
+            if (isSameDate(when, today)) {
+                // Ưu tiên field technicianEarning nếu có.
+                // Fallback: nếu có finalPrice & commissionRate => tính; nếu không, dùng finalPrice.
+                const earning =
+                    (b?.technicianEarning != null ? Number(b.technicianEarning) : null) ??
+                    (b?.finalPrice != null && b?.quote?.commissionRate != null
+                        ? Number(b.finalPrice) * (1 - Number(b.quote.commissionRate))
+                        : (b?.finalPrice != null ? Number(b.finalPrice) : 0));
+
+                return sum + (Number.isFinite(earning) ? earning : 0);
+            }
+            return sum;
+        }, 0);
+    }, [bookings]);
+
     const walletBalance = technician?.balance != null
         ? technician.balance.toLocaleString('vi-VN')
         : '0';
 
+    const walletBalanceStr = `${walletBalance.toLocaleString('vi-VN')}\u00A0VND`; // \u00A0 = space không ngắt dòng
+    const todayIncomeStr = `${todayIncomeNumber.toLocaleString('vi-VN')}\u00A0VND`;
+
     return (
+         <>
         <div className="row">
             <WidgetItem icon="book" title="Đơn hàng của tôi" value={bookingCount} link="/technician/booking" />
-            <WidgetItem icon="balance" title="Tài khoản" value={`${walletBalance} VND`} link="/technician/deposit" />
-            <WidgetItem icon="transaction" title="Đánh giá" value="20" color="success" link="/technician/feedback" />
-            <WidgetItem icon="cars" title="Thu nhập hôm nay" value="240.000 VNĐ" link="/technician/earning" />
+            <WidgetItem
+                icon="balance"
+                title="Tài khoản"
+                value={<span className="kpi-amount" title={walletBalanceStr}>{walletBalanceStr}</span>}
+                link="/technician/deposit"
+            />
+            <WidgetItem icon="transaction" title="Đánh giá" value={reviewCount} color="success" link="/technician/feedback" />
+            <WidgetItem
+                icon="cars"
+                title="Thu nhập hôm nay"
+                value={<span className="kpi-amount" title={todayIncomeStr}>{todayIncomeStr}</span>}
+                link="/technician/earning"
+            />
         </div>
+        {/* CSS thêm để không xuống dòng & không nở card */}
+      <style>{`
+        .kpi-amount {
+          display: inline-block;
+          white-space: nowrap;             /* giữ 1 dòng */
+          max-width: calc(100% - 72px);    /* chừa chỗ cho icon góc phải (tùy kích thước icon của bạn) */
+          overflow: hidden;
+          text-overflow: ellipsis;         /* dài quá thì … */
+          vertical-align: bottom;
+          word-break: keep-all;            /* không tách từ */
+        }
+
+        /* (Tùy chọn) đảm bảo mọi card cao bằng nhau nếu layout bị lệch chiều cao */
+        .widget-card {
+          min-height: 152px;               /* chỉnh lại theo UI của bạn */
+        }
+      `}</style>
+      </>
     );
 };
 
@@ -99,8 +168,8 @@ function ViewEarningAndCommission() {
     // const technicianId = technician._id;
 
     const { earnings, loading, error } = useSelector((state) => state.technician);
-    console.log(earnings);
-    
+    // console.log("earnings:", JSON.stringify(earnings, null, 2));
+
     useEffect(() => {
         if (technician) {
             dispatch(fetchEarningAndCommission(technician?._id));
@@ -137,7 +206,7 @@ function ViewEarningAndCommission() {
                                                         <th>
                                                             Khách hàng
                                                         </th>
-                                                        <th>Dịch vụ</th>                                                      
+                                                        <th>Dịch vụ</th>
                                                         <th>Tiền giữ lại</th>
                                                         <th>Thu nhập</th>
                                                         <th>Tổng tiền</th>
@@ -301,34 +370,58 @@ const AvailabilitySwitch = () => {
 const TechnicianJobList = () => {
     const dispatch = useDispatch();
     const technician = useSelector((state) => state.auth.technician);
-    // const technicianId = technician._id;
     const { bookings, loading, error } = useSelector((state) => state.technician);
-    console.log(technician?._id);
+
     const STATUS_SHORT = {
-        WAITING_CUSTOMER_CONFIRM_ADDITIONAL: "Đợi xác nhận",
-        CONFIRM_ADDITIONAL: "Đã xác nhận",
-        AWAITING_DONE: "Đợi hoàn thành",
-        IN_PROGRESS: "Đang thực hiện",
-        DONE: "Đã hoàn thành",
-        CANCELLED: "Đã hủy",
-        PENDING: "Đang xử lí"
-        // …bổ sung nếu cần
+        WAITING_CUSTOMER_CONFIRM_ADDITIONAL: 'Đợi xác nhận',
+        CONFIRM_ADDITIONAL: 'Đã xác nhận',
+        AWAITING_DONE: 'Đợi hoàn thành',
+        IN_PROGRESS: 'Đang thực hiện',
+        DONE: 'Đã hoàn thành',
+        CANCELLED: 'Đã hủy',
+        PENDING: 'Đang xử lí',
     };
-    const prettyStatus = (raw = "") => {
+    const prettyStatus = (raw = '') => {
         const key = String(raw).toUpperCase().trim();
         if (STATUS_SHORT[key]) return STATUS_SHORT[key];
-        // fallback: SNAKE_CASE -> Title Case gọn
-        return key
-            .toLowerCase()
-            .replace(/_/g, " ")
-            .replace(/\s+/g, " ")
-            .replace(/\b\w/g, c => c.toUpperCase());
+        return key.toLowerCase().replace(/_/g, ' ').replace(/\s+/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
     };
+
+    const formatDateOnly = (ts) =>
+        ts ? new Date(ts).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '';
+
     useEffect(() => {
         if (technician?._id) {
-            dispatch(fetchTechnicianJobs(technician?._id));
+            dispatch(fetchTechnicianJobs(technician._id));
         }
     }, [technician?._id, dispatch]);
+
+    // ==== CHUẨN HÓA + SORT + LẤY 5 MỚI NHẤT (mới → cũ) ====
+    const list = useMemo(() => {
+        return Array.isArray(bookings) ? bookings : Array.isArray(bookings?.data) ? bookings.data : [];
+    }, [bookings]);
+
+    const toTime = (x) => (x ? new Date(x).getTime() : 0);
+
+    const statusChipClass = (s = '') => {
+        const x = String(s).toUpperCase();
+        if (x === 'DONE' || x === 'COMPLETED') return 'chip chip--success';
+        if (x.includes('CANCEL')) return 'chip chip--danger';
+        if (x.includes('IN_PROGRESS')) return 'chip chip--warning';
+        // mặc định: warning/đang xử lý
+        return 'chip chip--warning';
+    };
+
+    const top5Newest = useMemo(() => {
+        return list
+            .slice()
+            .sort((a, b) => {
+                const ta = toTime(a?.schedule?.startTime) || toTime(a?.createdAt);
+                const tb = toTime(b?.schedule?.startTime) || toTime(b?.createdAt);
+                return tb - ta; // desc: mới → cũ
+            })
+            .slice(0, 5);
+    }, [list]);
 
     if (loading) return <p>Loading bookings...</p>;
     if (error) return <p style={{ color: 'red' }}>Error: {error}</p>;
@@ -346,151 +439,80 @@ const TechnicianJobList = () => {
                                             <h4>Danh sách đơn hàng của tôi</h4>
                                         </div>
                                     </div>
-                                    <div className="col-xl-5 col-lg-4 col-sm-12 col-12">
-                                        <div className="filter-group">
-                                            <div className="sort-week sort">
-                                                <div className="dropdown dropdown-action">
-                                                    <a
-                                                        href="javascript:void(0);"
-                                                        className="dropdown-toggle"
-                                                        data-bs-toggle="dropdown"
-                                                        aria-expanded="false"
-                                                    >
-                                                        Tuần này <i className="fas fa-chevron-down"></i>
-                                                    </a>
-                                                    <div className="dropdown-menu dropdown-menu-end">
-                                                        <a className="dropdown-item" href="javascript:void(0);">
-                                                            Tuần này
-                                                        </a>
-                                                        <a className="dropdown-item" href="javascript:void(0);">
-                                                            Tháng này
-                                                        </a>
-                                                        <a className="dropdown-item" href="javascript:void(0);">
-                                                            30 ngày gần nhất
-                                                        </a>
-                                                        <a
-                                                            className="dropdown-item"
-                                                            href="javascript:void(0);"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#custom_date"
-                                                        >
-
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="sort-relevance sort">
-                                                <div className="dropdown dropdown-action">
-                                                    <a
-                                                        href="javascript:void(0);"
-                                                        className="dropdown-toggle"
-                                                        data-bs-toggle="dropdown"
-                                                        aria-expanded="false"
-                                                    >
-                                                        Tăng dần <i className="fas fa-chevron-down"></i>
-                                                    </a>
-                                                    <div className="dropdown-menu dropdown-menu-end">
-
-                                                        <a className="dropdown-item" href="javascript:void(0);">
-                                                            Tăng dần
-                                                        </a>
-                                                        <a className="dropdown-item" href="javascript:void(0);">
-                                                            Giảm giần
-                                                        </a>
-                                                        <a className="dropdown-item" href="javascript:void(0);">
-                                                            Sắp xếp theo bảng chữ cái
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive dashboard-table">
+
+                    <div className="card-body">
+                        <div className="table-responsive dashboard-table">
                             <table className="table datatable">
                                 <thead className="thead-light">
                                     <tr>
-                                        <th>
-                                            Mã đơn
-                                        </th>
+                                        <th>Mã đơn</th>
                                         <th>Tên Khách Hàng</th>
                                         <th>Dịch vụ</th>
                                         <th>Địa chỉ</th>
                                         <th>Thời gian</th>
                                         <th>Trạng thái</th>
-                                        <th>Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {loading ? (
+                                    {top5Newest.length === 0 ? (
                                         <tr>
-                                            <td colSpan="7" className="text-center">Đang tải...</td>
-                                        </tr>
-                                    ) : error ? (
-                                        <tr>
-                                            <td colSpan="7" className="text-center text-danger">{error}</td>
-                                        </tr>
-                                    ) : !Array.isArray(bookings) || bookings.length === 0 ? (
-                                        <tr>
-                                            <td colSpan="7" className="text-center">Không có đơn đặt lịch nào</td>
+                                            <td colSpan="7" className="text-center">
+                                                Không có đơn đặt lịch nào
+                                            </td>
                                         </tr>
                                     ) : (
-                                        bookings
-                                            .slice(0, 5)
-                                            .map((b) => (
-                                                <tr key={b?.bookingId || b._id}>
-                                                    <td>{b?.bookingCode}</td>
-                                                    <td>{b?.customerName}</td>
-                                                    <td>{b?.serviceName}</td>
-                                                    <td>{b?.address?.split(",")[0]}</td>
-                                                    <td>
-                                                        {formatDateOnly(b?.schedule.startTime)}
-                                                    </td>
-                                                    <td >
-                                                        <span
-                                                            className={
-                                                                b.status === 'DONE'
-                                                                    ? 'badge badge-light-success'
-                                                                    : b.status === 'CANCELLED'
-                                                                        ? 'badge badge-light-danger'
-                                                                        : 'badge badge-light-warning'
-                                                            }>{prettyStatus(b.status)}</span></td>
-                                                    <td className="text-end">
-                                                        <div className="dropdown dropdown-action">
-                                                            <a
-                                                                href="javascript:void(0);"
-                                                                className="dropdown-toggle"
-                                                                data-bs-toggle="dropdown"
-                                                                aria-expanded="false"
-                                                            >
-                                                                <i className="fas fa-ellipsis-vertical"></i>
-                                                            </a>
-
-                                                        </div>
-                                                    </td>
-
-                                                </tr>
-                                            ))
+                                        top5Newest.map((b) => (
+                                            <tr key={b?.bookingId || b?._id}>
+                                                <td>{b?.bookingCode}</td>
+                                                <td>{b?.customerName}</td>
+                                                <td>{b?.serviceName}</td>
+                                                <td>{b?.address?.split(',')[0]}</td>
+                                                <td>{formatDateOnly(b?.schedule?.startTime || b?.createdAt)}</td>
+                                                <td>
+                                                    <span className={statusChipClass(b?.status)}>
+                                                        {prettyStatus(b?.status)}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        ))
                                     )}
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
-            </div>
+                <style>{`
+        /* Chip trạng thái đồng bộ kích thước */
+.chip{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:120px;    /* ✅ chiều rộng đồng đều */
+  height:28px;        /* ✅ chiều cao đồng đều */
+  padding:0 10px;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:600;
+}
 
-            {/* <Footer /> */}
+/* Màu rõ ràng cho từng trạng thái */
+.chip--success{ background:#e6f7f0; color:#1e8e5a; border:1px solid #c4eddc; }
+.chip--warning{ background:#fff7e6; color:#b77400; border:1px solid #ffe2b8; }
+.chip--danger { background:#fdecee; color:#c23c43; border:1px solid #f7c7cd; }
+
+      `}</style>
+            </div>
         </>
     );
-}
+};
 
 const CardsRow = () => (
     <div className="row">
-        {/* <ViewEarningAndCommission /> */}
+        <ViewEarningAndCommission />
 
     </div>
 );
@@ -550,7 +572,7 @@ function TechnicianDashboard() {
                                         </li>
                                         <li>
                                             <Link to={`/technician/${technicianId}/certificate`}>
-                                                <img style={{height: '28px'}} src="/img/cer.png" alt="Icon" />
+                                                <img style={{ height: '28px' }} src="/img/cer.png" alt="Icon" />
                                                 <span>Chứng chỉ</span>
                                             </Link>
                                         </li>
@@ -566,12 +588,12 @@ function TechnicianDashboard() {
                                                 <span>Ví của tôi</span>
                                             </Link>
                                         </li>
-                                        {/* <li>
+                                        <li>
                                             <Link to={`/technician/earning`}>
                                                 <img src="/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>Thu nhập</span>
                                             </Link>
-                                        </li> */}
+                                        </li>
                                         {/* <li>
                                             <Link to={`/profile`}>
                                                 <img src="/img/icons/settings-icon.svg" alt="Icon" />
@@ -589,7 +611,7 @@ function TechnicianDashboard() {
                     <div className="container">
 
                         <div className="content-header d-flex align-items-center justify-content-between">
-                            <h4>Dashboard</h4>
+                            <h4>Bảng điều khiển</h4>
                             <AvailabilitySwitch />
                         </div>
                         <WidgetsRow />

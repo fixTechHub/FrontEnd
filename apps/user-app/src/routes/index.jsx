@@ -47,6 +47,7 @@ import UploadCertificateForm from "../pages/technician/UploadCer";
 import SubmitFeedback from "../pages/feedback/SubmitFeedback";
 import ServiceList from "../pages/home/ServiceList";
 import TechnicianScheduleComponent from "../pages/technician/TechnicianSchedule";
+import FeedbackList from "../pages/feedback/CustomerFeedback";
 
 export default function AppRoutes() {
   const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
@@ -104,6 +105,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route path="/reviews" element={<FeedbackList />} />
       <Route path="/technician" element={<TechnicianDashboard />} />
       <Route path="/technician/earning" element={<ViewEarningAndCommission />} />
       <Route path="/technician/booking" element={< TechnicianJobList/>} />

@@ -63,21 +63,21 @@ const PackageManagement = () => {
 
 
   const handleEditPackage = (service) => {
-  
-
-  setFormData({
-    id: service._id,  // ✅ id phải có
-    name: service.name,
-    price: service.price,
-    description: service.description,
-    benefit: service.benefits || [],
-    isActive: service.isActive,
-  });
 
 
+    setFormData({
+      id: service._id,  // ✅ id phải có
+      name: service.name,
+      price: service.price,
+      description: service.description,
+      benefit: service.benefits || [],
+      isActive: service.isActive,
+    });
 
-  setShowEditModal(true);
-};
+
+
+    setShowEditModal(true);
+  };
 
   const handleDeletePackage = (pkg) => {
     setSelectedPackage(pkg);
@@ -106,15 +106,15 @@ const PackageManagement = () => {
   const handleSubmit = () => {
 
 
-  if (showAddModal) {
-    dispatch(createNewPackage(formData));
-  } else if (showEditModal) {
-    dispatch(editPackage(formData)); // ✅ check formData có id không
-  }
+    if (showAddModal) {
+      dispatch(createNewPackage(formData));
+    } else if (showEditModal) {
+      dispatch(editPackage(formData)); // ✅ check formData có id không
+    }
 
-  setShowAddModal(false);
-  setShowEditModal(false);
-};
+    setShowAddModal(false);
+    setShowEditModal(false);
+  };
 
   const handleSortChange = (value) => {
     if (value === "lasted") {
@@ -236,7 +236,7 @@ const PackageManagement = () => {
                 Trạng thái: {filterStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
               </span>
             )}
-            <button 
+            <button
               className="btn btn-sm btn-outline-secondary"
               onClick={() => {
                 setSearchText('');
@@ -349,11 +349,11 @@ const PackageManagement = () => {
               <ul className="pagination mb-0" style={{ gap: '2px' }}>
                 {/* Previous button */}
                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                  <button 
-                    className="page-link" 
+                  <button
+                    className="page-link"
                     onClick={() => handlePageChange(currentPage - 1)}
                     disabled={currentPage === 1}
-                    style={{ 
+                    style={{
                       border: '1px solid #dee2e6',
                       borderRadius: '6px',
                       padding: '8px 12px',
@@ -363,7 +363,7 @@ const PackageManagement = () => {
                     <i className="ti ti-chevron-left"></i>
                   </button>
                 </li>
-                
+
                 {/* Page numbers */}
                 {[...Array(totalPages)].map((_, i) => {
                   const pageNumber = i + 1;
@@ -371,10 +371,10 @@ const PackageManagement = () => {
                   if (totalPages <= 7) {
                     return (
                       <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                        <button 
-                          className="page-link" 
+                        <button
+                          className="page-link"
                           onClick={() => handlePageChange(pageNumber)}
-                          style={{ 
+                          style={{
                             border: '1px solid #dee2e6',
                             borderRadius: '6px',
                             padding: '8px 12px',
@@ -389,19 +389,19 @@ const PackageManagement = () => {
                       </li>
                     );
                   }
-                  
+
                   // Show first page, last page, current page, and pages around current page
                   if (
-                    pageNumber === 1 || 
-                    pageNumber === totalPages || 
+                    pageNumber === 1 ||
+                    pageNumber === totalPages ||
                     (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
                   ) {
                     return (
                       <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                        <button 
-                          className="page-link" 
+                        <button
+                          className="page-link"
                           onClick={() => handlePageChange(pageNumber)}
-                          style={{ 
+                          style={{
                             border: '1px solid #dee2e6',
                             borderRadius: '6px',
                             padding: '8px 12px',
@@ -416,12 +416,12 @@ const PackageManagement = () => {
                       </li>
                     );
                   } else if (
-                    pageNumber === currentPage - 2 || 
+                    pageNumber === currentPage - 2 ||
                     pageNumber === currentPage + 2
                   ) {
                     return (
                       <li key={i} className="page-item disabled">
-                        <span className="page-link" style={{ 
+                        <span className="page-link" style={{
                           border: '1px solid #dee2e6',
                           borderRadius: '6px',
                           padding: '8px 12px',
@@ -434,14 +434,14 @@ const PackageManagement = () => {
                   }
                   return null;
                 })}
-                
+
                 {/* Next button */}
                 <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                  <button 
-                    className="page-link" 
+                  <button
+                    className="page-link"
                     onClick={() => handlePageChange(currentPage + 1)}
                     disabled={currentPage === totalPages}
-                    style={{ 
+                    style={{
                       border: '1px solid #dee2e6',
                       borderRadius: '6px',
                       padding: '8px 12px',
@@ -477,6 +477,18 @@ const PackageManagement = () => {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Nhập tên gói"
             />
+          </Form.Item>
+
+          <Form.Item label="Loại gói" required>
+            <Select
+              value={formData.type}
+              onChange={(value) => setFormData({ ...formData, type: value })}
+              placeholder="Chọn loại gói"
+            >
+              <Select.Option value="BASIC">BASIC</Select.Option>
+              <Select.Option value="STANDARD">STANDARD</Select.Option>
+              <Select.Option value="PREMIUM">PREMIUM</Select.Option>
+            </Select>
           </Form.Item>
 
           {/* Giá */}

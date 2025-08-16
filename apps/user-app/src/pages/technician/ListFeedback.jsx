@@ -181,12 +181,12 @@ const ListFeedback = () => {
                                                 <span>Ví của tôi</span>
                                             </Link>
                                         </li>
-                                        {/* <li>
+                                        <li>
                                             <Link to={`/technician/earning`}>
                                                 <img src="/img/icons/payment-icon.svg" alt="Icon" />
                                                 <span>Thu nhập</span>
                                             </Link>
-                                        </li> */}
+                                        </li>
                                         {/* <li>
                                             <Link to={`/profile`}>
                                                 <img src="/img/icons/settings-icon.svg" alt="Icon" />

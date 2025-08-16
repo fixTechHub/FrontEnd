@@ -51,7 +51,7 @@ const DashboardMenu = ({ activeTab, onSelect }) => (
 								{ icon: "tool", text: "Bảo hành", iconPath: "/img/icons/service-07.svg", section: 'WARRANTY' },
 								{ icon: "wishlist", text: "KTV yêu thích", section: 'FAVORITES' },
 								{ icon: "payment", text: "Phiếu giảm giá", section: 'COUPONS' },
-								{ icon: "wallet", text: "Hoá đơn", section: 'PAYMENTS' },
+								{ icon: "wallet", text: "Hoá đơn", section: 'PAYMENTS' },	
 								{ icon: "bell", text: "Thông báo", section: 'NOTIFICATIONS' },
 
 							].map((item) => (

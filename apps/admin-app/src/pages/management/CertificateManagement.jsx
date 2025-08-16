@@ -5,7 +5,7 @@ import {
     verifyCertificateThunk,
     setCertQuery,
 } from '../../features/certificates/certificateSlice';
-import { Button, Select, Spin, Modal, Input } from 'antd';
+import { Button, Select, Spin, Modal, Input, message  } from 'antd';
 
 export default function CertificateAdmin() {
     const dispatch = useDispatch();
@@ -30,9 +30,15 @@ export default function CertificateAdmin() {
         dispatch(fetchAllCertificatesThunk(query));
     };
 
-    const approve = (id) =>
-        dispatch(verifyCertificateThunk({ id, status: 'APPROVED' }))
-            .then(() => refetch());
+    const approve = async (id) => {
+        try {
+            await dispatch(verifyCertificateThunk({ id, status: 'APPROVED' })).unwrap();
+            message.success('Đã duyệt chứng chỉ');
+            refetch(); // nếu đang lọc theo PENDING thì refetch để biến mất khỏi list
+        } catch (e) {
+            message.error(e || 'Duyệt thất bại');
+        }
+    };
 
     const openReject = (id) => {
         setRejectId(id);

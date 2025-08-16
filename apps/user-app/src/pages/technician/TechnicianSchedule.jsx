@@ -285,7 +285,7 @@ const TechnicianScheduleComponent = () => {
                                 </li>
                                 <li><Link to="/technician/schedule" className="active"><img src="/img/icons/booking-icon.svg" alt="Icon" /><span>Lịch trình</span></Link></li>
                                 <li><Link to="/technician/deposit"><img src="/img/icons/wallet-icon.svg" alt="Icon" /><span>Ví của tôi</span></Link></li>
-                                {/* <li><Link to={`/technician/earning`}><img src="/img/icons/payment-icon.svg" alt="Icon" /><span>Thu nhập</span></Link></li> */}
+                                <li><Link to={`/technician/earning`}><img src="/img/icons/payment-icon.svg" alt="Icon" /><span>Thu nhập</span></Link></li>
                                 {/* <li><Link to={`/profile`}><img src="/img/icons/settings-icon.svg" alt="Icon" /><span>Cài đặt</span></Link></li> */}
                             </ul>
                         </div>
