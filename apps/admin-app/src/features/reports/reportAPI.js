@@ -1,4 +1,5 @@
 import ApiBE from '../../services/ApiBE';
+import apiClient from '../../services/apiClient';
 
 export const reportAPI = {
     // Get all reports
@@ -21,5 +22,10 @@ export const reportAPI = {
             console.error('Get report by ID error:', error);
             throw error;
         }
-    },
+    },  
 };
+
+export const getReportCounts = async (technicianId) => {
+    const response = await apiClient.get(`/reports/${technicianId}/count-report`);
+    return response.data;
+}
