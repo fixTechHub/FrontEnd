@@ -4,7 +4,7 @@ import { fetchSuggestServices } from '../../features/services/serviceSlice';
 import { createNewBooking } from '../../features/bookings/bookingSlice';
 import { fetchPopularDescriptions, searchDescriptions, clearSearchResults } from '../../features/suggestions/suggestionSlice';
 import { useNavigate } from 'react-router-dom';
-import { Button, Modal, Spinner } from 'react-bootstrap';
+import { Modal } from 'react-bootstrap';
 import ImageUploader from '../../pages/booking/common/ImageUploader';
 import { validateBookingData } from '../../validations/bookingValidation';
 

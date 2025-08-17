@@ -1,4 +1,5 @@
 import ApiBE from '../../services/ApiBE';
+import apiClient from '../../services/apiClient';
 
 export const reportAPI = {
     // Get all reports
@@ -21,6 +22,7 @@ export const reportAPI = {
             console.error('Get report by ID error:', error);
             throw error;
         }
+
     },
 
     // Update report status

@@ -618,7 +618,7 @@ body {
 
 /* Modal Styles */
 .banner-modal-header {
-  background: #3498db;
+  background: linear-gradient(135deg, #ff6b6b, #ffa500, #ff6b6b);
   color: #fff;
   border-bottom: none;
   border-radius: 8px 8px 0 0;
@@ -682,7 +682,7 @@ body {
 }
 
 .banner-service-card.selected {
-  border: 2px solid #3498db;
+  border: 2px solid #ffa500;
   background: #f8f9ff;
 }
 
@@ -709,7 +709,7 @@ body {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: #f39c12;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
   padding: 4px 8px;
   border-radius: 12px;
@@ -735,8 +735,8 @@ body {
 }
 
 .banner-service-radio.selected {
-  border: 2px solid #3498db;
-  background: #3498db;
+  border: 2px solid #ffa500;
+  background: #ffa500;
 }
 
 .banner-service-radio-dot {
@@ -816,7 +816,7 @@ body {
 }
 
 .banner-booking-card.selected {
-  border: 2px solid #3498db;
+  border: 2px solid #ffa500;
   background: #f8f9ff;
 }
 
@@ -840,7 +840,7 @@ body {
 }
 
 .banner-booking-icon-scheduled {
-  background: #3498db;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
 .banner-booking-content {
@@ -864,7 +864,7 @@ body {
 
 /* Selected Service Card */
 .banner-selected-service {
-  background: #3498db;
+  background: linear-gradient(135deg, #ff6b6b, #ffa500, #ff6b6b);
   color: #fff;
   padding: 16px;
   border-radius: 8px;
@@ -996,7 +996,7 @@ body {
 /* Button Styles */
 .banner-btn-outline {
   background: #fff;
-  color: #3498db;
+  color: #764ba2;
   border: 1px solid #3498db;
   padding: 8px 16px;
   border-radius: 6px;
@@ -1007,12 +1007,12 @@ body {
 }
 
 .banner-btn-outline:hover {
-  background: #3498db;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
 }
 
 .banner-btn-primary {
-  background: #3498db;
+  background: linear-gradient(135deg, #ff6b6b, #ffa500, #ff6b6b);
   color: #fff;
   border: none;
   padding: 8px 16px;
@@ -1102,7 +1102,7 @@ body {
   top: 100%;
   left: 0;
   right: 0;
-  z-index: 1000;
+  z-index: 99999;
   background: #fff;
   border: 1px solid #e0e0e0;
   border-radius: 8px;
@@ -1110,6 +1110,16 @@ body {
   max-height: 350px;
   overflow-y: auto;
   margin-top: 4px;
+  /* Đảm bảo hiển thị trên cùng */
+  pointer-events: auto;
+  isolation: isolate;
+  transform: translateZ(0);
+  /* Thêm các thuộc tính để đảm bảo hiển thị đúng */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  /* Đảm bảo không bị che phủ bởi các phần tử khác */
+  contain: layout style paint;
 }
 
 .banner-search-header {
@@ -1122,6 +1132,9 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Đảm bảo header cũng hiển thị đúng */
+  position: relative;
+  z-index: 1;
 }
 
 .banner-search-header-blue {
@@ -1129,7 +1142,7 @@ body {
 }
 
 .banner-search-header-pink {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #ff6b6b, #ffa500, #ff6b6b);
 }
 
 .banner-search-item {
@@ -1140,6 +1153,9 @@ body {
   align-items: center;
   gap: 12px;
   transition: all 0.2s ease;
+  /* Đảm bảo item hiển thị đúng */
+  position: relative;
+  z-index: 1;
 }
 
 .banner-search-item:hover {
@@ -1163,7 +1179,7 @@ body {
 }
 
 .banner-search-avatar-pink {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  background: linear-gradient(135deg, #ff6b6b, #ffa500, #ff6b6b);
 }
 
 .banner-search-content {
@@ -1752,7 +1768,7 @@ body {
 
 /* ServiceList Pagination Improvements */
 .service-list-pagination {
-  margin-top: 40px;
+  margin-top: 20px;
 }
 
 .service-list-page-item {
