@@ -34,10 +34,7 @@ import {
   Spin, 
   message,
   Tooltip,
-  Typography,
-  Statistic,
-  Divider,
-  Badge
+  Typography
 } from 'antd';
 import { 
   SearchOutlined, 
@@ -47,11 +44,7 @@ import {
   ClearOutlined,
   CalendarOutlined,
   UserOutlined,
-  BookOutlined,
-  ClockCircleOutlined,
-  HistoryOutlined,
-  TrendingUpOutlined,
-  BarChartOutlined
+  BookOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import "../../styles/ManagementTableStyle.css";
@@ -115,22 +108,6 @@ const BookingStatusLogManagement = () => {
   const formatStatusDisplay = (status) => {
     if (!status) return '';
     return status.replace(/_/g, ' ').toUpperCase();
-  };
-
-  // Calculate statistics
-  const getStats = () => {
-    const totalLogs = logs.length;
-    const todayLogs = logs.filter(log => 
-      dayjs(log.createdAt).isSame(dayjs(), 'day')
-    ).length;
-    const thisWeekLogs = logs.filter(log => 
-      dayjs(log.createdAt).isAfter(dayjs().subtract(7, 'day'))
-    ).length;
-    const thisMonthLogs = logs.filter(log => 
-      dayjs(log.createdAt).isAfter(dayjs().subtract(30, 'day'))
-    ).length;
-
-    return { totalLogs, todayLogs, thisWeekLogs, thisMonthLogs };
   };
 
   useEffect(() => {
@@ -227,91 +204,62 @@ const BookingStatusLogManagement = () => {
       title: 'Mã đơn hàng',
       dataIndex: 'bookingCode',
       key: 'bookingCode',
-      width: 120,
-      render: (text) => (
-        <Text code style={{ fontSize: '12px', fontWeight: 600 }}>
-          {text}
-        </Text>
-      ),
+      width: 100,
     },
     {
-      title: 'Thay đổi trạng thái',
+      title: 'Trạng thái',
       key: 'statusChange',
-      width: 220,
-      render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Tag color={getStatusColor(record.fromStatus)} style={{ margin: 0 }}>
-            {formatStatusDisplay(record.fromStatus)}
-          </Tag>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'center', 
-            color: '#8c8c8c',
-            fontSize: '12px'
-          }}>
-            <TrendingUpOutlined style={{ marginRight: 4 }} />
-            →
-          </div>
-          <Tag color={getStatusColor(record.toStatus)} style={{ margin: 0 }}>
-            {formatStatusDisplay(record.toStatus)}
-          </Tag>
-        </div>
-      )
+      width: 200,
+             render: (_, record) => (
+         <Space direction="vertical" size="small">
+           <Tag color={getStatusColor(record.fromStatus)}>
+             {formatStatusDisplay(record.fromStatus)}
+           </Tag>
+           <span>→</span>
+           <Tag color={getStatusColor(record.toStatus)}>
+             {formatStatusDisplay(record.toStatus)}
+           </Tag>
+         </Space>
+       )
     },
     {
       title: 'Người thay đổi',
       key: 'changedBy',
-      width: 180,
+      width: 150,
       render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Tag color={getRoleColor(record.role)} style={{ margin: 0 }}>
-            <UserOutlined style={{ marginRight: 4 }} />
+        <Space direction="vertical" size="small">
+          <Tag color={getRoleColor(record.role)} icon={<UserOutlined />}>
             {record.role || ''}
           </Tag>
-          <Text style={{ fontSize: '12px' }}>
-            {record.changedByUserName || record.changedBy || ''}
-          </Text>
-        </div>
+          <Text>{record.changedByUserName || record.changedBy || ''}</Text>
+        </Space>
       )
     },
     {
       title: 'Thời gian thay đổi',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      width: 160,
+      width: 150,
       sorter: true,
       render: (createdAt) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <ClockCircleOutlined style={{ color: '#8c8c8c', fontSize: '12px' }} />
-          <Text style={{ fontSize: '12px' }}>
-            {dayjs(createdAt).format('DD/MM/YYYY HH:mm')}
-          </Text>
-        </div>
+        <span>{dayjs(createdAt).format('DD/MM/YYYY HH:mm')}</span>
+            
       )
     },
     {
       title: 'Hành động',
       key: 'actions',
-      width: 120,
+      width: 100,
       render: (_, record) => (
-        <Button 
-          type="primary" 
-          size="small"
-          icon={<EyeOutlined />}  
-          onClick={() => showLogDetail(record)}
-          style={{ 
-            borderRadius: '6px',
-            height: '28px',
-            fontSize: '12px'
-          }}
-        >
-          Chi tiết
-        </Button>
+        <Space>
+            <Button className="management-action-btn" size="middle"
+              icon={<EyeOutlined />}  
+              onClick={() => showLogDetail(record)}
+            > Xem chi tiết</Button>
+        </Space>
       )
     }
   ];
-
-  const stats = getStats();
 
   if (error) {
     return (
@@ -328,161 +276,24 @@ const BookingStatusLogManagement = () => {
 
   return (
     <div className="management-container">
-      {/* Hero Header */}
-      <div style={{
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        borderRadius: '16px',
-        padding: '32px 24px',
-        marginBottom: '24px',
-        color: 'white',
-        position: 'relative',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          position: 'absolute',
-          top: '-50%',
-          right: '-20%',
-          width: '200px',
-          height: '200px',
-          background: 'rgba(255, 255, 255, 0.1)',
-          borderRadius: '50%',
-          zIndex: 1
-        }} />
-        <div style={{
-          position: 'absolute',
-          bottom: '-30%',
-          left: '-10%',
-          width: '150px',
-          height: '150px',
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: '50%',
-          zIndex: 1
-        }} />
-        
-        <div style={{ position: 'relative', zIndex: 2 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.2)',
-              borderRadius: '12px',
-              padding: '12px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <HistoryOutlined style={{ fontSize: '24px' }} />
-            </div>
-            <div>
-              <Title level={2} style={{ color: 'white', margin: 0 }}>
-                Lịch sử trạng thái đơn hàng
-              </Title>
-              <Text style={{ color: 'rgba(255, 255, 255, 0.8)', fontSize: '16px' }}>
-                Theo dõi và quản lý tất cả thay đổi trạng thái đơn hàng
-              </Text>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Statistics Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
-        <Col xs={24} sm={12} md={6}>
-          <Card 
-            style={{ 
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-            }}
-            bodyStyle={{ padding: '20px' }}
-          >
-            <Statistic
-              title="Tổng số lịch sử"
-              value={stats.totalLogs}
-              prefix={<BarChartOutlined style={{ color: '#1890ff' }} />}
-              valueStyle={{ color: '#1890ff', fontSize: '24px', fontWeight: 600 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card 
-            style={{ 
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-            }}
-            bodyStyle={{ padding: '20px' }}
-          >
-            <Statistic
-              title="Hôm nay"
-              value={stats.todayLogs}
-              prefix={<ClockCircleOutlined style={{ color: '#52c41a' }} />}
-              valueStyle={{ color: '#52c41a', fontSize: '24px', fontWeight: 600 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card 
-            style={{ 
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-            }}
-            bodyStyle={{ padding: '20px' }}
-          >
-            <Statistic
-              title="Tuần này"
-              value={stats.thisWeekLogs}
-              prefix={<TrendingUpOutlined style={{ color: '#fa8c16' }} />}
-              valueStyle={{ color: '#fa8c16', fontSize: '24px', fontWeight: 600 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} md={6}>
-          <Card 
-            style={{ 
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)'
-            }}
-            bodyStyle={{ padding: '20px' }}
-          >
-            <Statistic
-              title="Tháng này"
-              value={stats.thisMonthLogs}
-              prefix={<CalendarOutlined style={{ color: '#722ed1' }} />}
-              valueStyle={{ color: '#722ed1', fontSize: '24px', fontWeight: 600 }}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Main Content Card */}
-      <Card 
-        className="management-card"
-        style={{ 
-          borderRadius: '16px',
-          border: 'none',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
-        }}
-        bodyStyle={{ padding: '24px' }}
-      >
+      <Card title="Lịch sử trạng thái đơn hàng" className="management-card">
         {/* Header Actions */}
-        <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+        <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={12} md={8} lg={6}>
             <Search
-              placeholder="Tìm kiếm lịch sử..."
+              placeholder="Tìm kiếm lịch sử"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}
               onSearch={handleSearch}
               enterButton={<SearchOutlined />}
               allowClear
-              style={{ borderRadius: '8px' }}
             />
           </Col>
           <Col xs={24} sm={12} md={8} lg={6}>
             <RangePicker
               placeholder={['Từ ngày', 'Đến ngày']}
               onChange={handleDateRangeFilter}
-              style={{ width: '100%', borderRadius: '8px' }}
+              style={{ width: '100%' }}
             />
           </Col>
           <Col xs={24} sm={12} md={8} lg={6}>
@@ -490,11 +301,7 @@ const BookingStatusLogManagement = () => {
               type="primary"
               icon={<FilterOutlined />}
               onClick={() => setFilterModalVisible(true)}
-              style={{ 
-                width: '100%',
-                borderRadius: '8px',
-                height: '40px'
-              }}
+              style={{ width: '100%' }}
             >
               Bộ lọc nâng cao
             </Button>
@@ -505,132 +312,148 @@ const BookingStatusLogManagement = () => {
                 icon={<ReloadOutlined />}
                 onClick={fetchData}
                 loading={loading}
-                style={{ borderRadius: '8px', height: '40px' }}
               >
                 Làm mới
               </Button>
               <Button
                 icon={<ClearOutlined />}
                 onClick={handleClearFilters}
-                style={{ borderRadius: '8px', height: '40px' }}
               >
-                Xóa lọc
+                Xóa
               </Button>
             </Space>
           </Col>
         </Row>
 
-        {/* Table */}
-        <div style={{ 
-          background: '#fafafa', 
-          borderRadius: '12px', 
-          padding: '16px',
-          marginBottom: '24px'
-        }}>
-          <Table
-            columns={columns}
-            dataSource={currentLogs}
-            rowKey="id"
-            loading={loading}
-            pagination={false}
-            size="middle"
-            style={{ background: 'transparent' }}
-            rowClassName={(record, index) => 
-              index % 2 === 0 ? 'table-row-light' : 'table-row-dark'
-            }
-          />
-        </div>
+                 {/* Table */}
+         <Table
+           columns={columns}
+           dataSource={currentLogs}
+           rowKey="id"
+           loading={loading}
+           pagination={false}
+                  />
 
-        {/* Custom Pagination */}
-        <div style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center',
-          padding: '16px 0',
-          borderTop: '1px solid #f0f0f0'
-        }}>
-          <div style={{ color: '#8c8c8c', fontSize: '14px' }}>
-            Hiển thị {indexOfFirstLog + 1}-{Math.min(indexOfLastLog, logs.length)} trong tổng số {logs.length} lịch sử trạng thái
-          </div>
-          
-          {/* Pagination Controls */}
-          {logs.length > 0 && (
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <Button 
-                size="small"
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-                style={{ borderRadius: '6px' }}
-              >
-                Trước
-              </Button>
-              
-              {[...Array(totalPages)].map((_, i) => {
-                const pageNumber = i + 1;
-                if (totalPages <= 7) {
-                  return (
-                    <Button
-                      key={i}
-                      size="small"
-                      type={currentPage === pageNumber ? 'primary' : 'default'}
-                      onClick={() => handlePageChange(pageNumber)}
-                      style={{ 
-                        borderRadius: '6px',
-                        minWidth: '32px'
-                      }}
-                    >
-                      {pageNumber}
-                    </Button>
-                  );
-                }
-                
-                if (
-                  pageNumber === 1 || 
-                  pageNumber === totalPages || 
-                  (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                ) {
-                  return (
-                    <Button
-                      key={i}
-                      size="small"
-                      type={currentPage === pageNumber ? 'primary' : 'default'}
-                      onClick={() => handlePageChange(pageNumber)}
-                      style={{ 
-                        borderRadius: '6px',
-                        minWidth: '32px'
-                      }}
-                    >
-                      {pageNumber}
-                    </Button>
-                  );
-                } else if (
-                  pageNumber === currentPage - 2 || 
-                  pageNumber === currentPage + 2
-                ) {
-                  return (
-                    <span key={i} style={{ 
-                      padding: '4px 8px',
-                      color: '#8c8c8c'
-                    }}>
-                      ...
-                    </span>
-                  );
-                }
-                return null;
-              })}
-              
-              <Button 
-                size="small"
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                style={{ borderRadius: '6px' }}
-              >
-                Sau
-              </Button>
-            </div>
-          )}
-        </div>
-      </Card>
+         {/* Custom Pagination */}
+         <div className="d-flex justify-content-between align-items-center mt-3">
+           <div className="d-flex align-items-center gap-3">
+             <div className="text-muted">
+               Hiển thị {indexOfFirstLog + 1}-{Math.min(indexOfLastLog, logs.length)} trong tổng số {logs.length} lịch sử trạng thái
+             </div>
+           </div>
+           {/* Pagination Controls - Always show if there are logs */}
+           {logs.length > 0 && (
+             <nav>
+               <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                 {/* Previous button */}
+                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                   <button 
+                     className="page-link" 
+                     onClick={() => handlePageChange(currentPage - 1)}
+                     disabled={currentPage === 1}
+                     style={{ 
+                       border: '1px solid #dee2e6',
+                       borderRadius: '6px',
+                       padding: '8px 12px',
+                       minWidth: '40px'
+                     }}
+                   >
+                     <i className="ti ti-chevron-left"></i>
+                   </button>
+                 </li>
+                 
+                 {/* Page numbers */}
+                 {[...Array(totalPages)].map((_, i) => {
+                   const pageNumber = i + 1;
+                   // Show all pages if total pages <= 7
+                   if (totalPages <= 7) {
+                     return (
+                       <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                         <button 
+                           className="page-link" 
+                           onClick={() => handlePageChange(pageNumber)}
+                           style={{ 
+                             border: '1px solid #dee2e6',
+                             borderRadius: '6px',
+                             padding: '8px 12px',
+                             minWidth: '40px',
+                             backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                             color: currentPage === pageNumber ? 'white' : '#007bff',
+                             borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                           }}
+                         >
+                           {pageNumber}
+                         </button>
+                       </li>
+                     );
+                   }
+                   
+                   // Show first page, last page, current page, and pages around current page
+                   if (
+                     pageNumber === 1 || 
+                     pageNumber === totalPages || 
+                     (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                   ) {
+                     return (
+                       <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                         <button 
+                           className="page-link" 
+                           onClick={() => handlePageChange(pageNumber)}
+                           style={{ 
+                             border: '1px solid #dee2e6',
+                             borderRadius: '6px',
+                             padding: '8px 12px',
+                             minWidth: '40px',
+                             backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                             color: currentPage === pageNumber ? 'white' : '#007bff',
+                             borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                           }}
+                         >
+                           {pageNumber}
+                         </button>
+                       </li>
+                     );
+                   } else if (
+                     pageNumber === currentPage - 2 || 
+                     pageNumber === currentPage + 2
+                   ) {
+                     return (
+                       <li key={i} className="page-item disabled">
+                         <span className="page-link" style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: '#f8f9fa',
+                           color: '#6c757d'
+                         }}>...</span>
+                       </li>
+                     );
+                   }
+                   return null;
+                 })}
+                 
+                 {/* Next button */}
+                 <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                   <button 
+                     className="page-link" 
+                     onClick={() => handlePageChange(currentPage + 1)}
+                     disabled={currentPage === totalPages}
+                     style={{ 
+                       border: '1px solid #dee2e6',
+                       borderRadius: '6px',
+                       padding: '8px 12px',
+                       minWidth: '40px'
+                     }}
+                   >
+                     <i className="ti ti-chevron-right"></i>
+                   </button>
+                 </li>
+               </ul>
+             </nav>
+           )}
+         </div>
+       </Card>
 
       {/* Detail Modal */}
       {showDetailModal && selectedLog && (
@@ -645,81 +468,66 @@ const BookingStatusLogManagement = () => {
           <div style={{ background: '#fff', borderRadius: 16 }}>
             <div style={{
               background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
-              padding: '24px',
+              padding: '20px 24px',
               color: '#fff'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ fontSize: '24px', fontWeight: 700 }}>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>
                   Chi tiết lịch sử trạng thái
                 </div>
-                <Badge 
-                  count={selectedLog.id} 
-                  style={{ 
-                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    color: 'white',
-                    fontSize: '12px'
-                  }}
-                />
               </div>
+              {selectedLog.id && (
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: 'monospace', fontSize: 15 }}>ID: {selectedLog.id}</span>
+                </div>
+              )}
             </div>
-            
-            <div style={{ padding: '24px' }}>
-              <Row gutter={[24, 24]}>
+            <div style={{ padding: 24 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
                 {/* Overview */}
-                <Col span={12}>
-                  <Card
-                    title="Tổng quan"
-                    style={{ 
-                      borderRadius: '12px',
-                      border: '1px solid #f0f0f0'
-                    }}
-                    headStyle={{ 
-                      borderBottom: '1px solid #f0f0f0',
-                      fontSize: '14px',
-                      fontWeight: 600
-                    }}
-                  >
-                    <div style={{ display: 'grid', rowGap: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{
+                    background: '#ffffff',
+                    border: '1px solid #f0f0f0',
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 16,
+                  }}>
+                    <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tổng quan</div>
+                    <div style={{ display: 'grid', rowGap: 10 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: '#8c8c8c' }}>Mã đơn hàng</span>
-                        <Text code style={{ fontSize: '14px', fontWeight: 600 }}>
-                          {selectedLog.bookingCode || ''}
-                        </Text>
+                        <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{selectedLog.bookingCode || ''}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{ color: '#8c8c8c' }}>Từ trạng thái</span>
-                        <Tag color={getStatusColor(selectedLog.fromStatus)} style={{ fontSize: '12px', fontWeight: 600 }}>
+                        <Tag color={getStatusColor(selectedLog.fromStatus)} style={{ fontSize: 12, fontWeight: 600 }}>
                           {formatStatusDisplay(selectedLog.fromStatus) || ''}
                         </Tag>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{ color: '#8c8c8c' }}>Đến trạng thái</span>
-                        <Tag color={getStatusColor(selectedLog.toStatus)} style={{ fontSize: '12px', fontWeight: 600 }}>
+                        <Tag color={getStatusColor(selectedLog.toStatus)} style={{ fontSize: 12, fontWeight: 600 }}>
                           {formatStatusDisplay(selectedLog.toStatus) || 'N/A'}
                         </Tag>
                       </div>
                     </div>
-                  </Card>
-                </Col>
+                  </div>
+                </div>
 
                 {/* Status Change */}
-                <Col span={12}>
-                  <Card
-                    title="Thay đổi trạng thái"
-                    style={{ 
-                      borderRadius: '12px',
-                      border: '1px solid #f0f0f0'
-                    }}
-                    headStyle={{ 
-                      borderBottom: '1px solid #f0f0f0',
-                      fontSize: '14px',
-                      fontWeight: 600
-                    }}
-                  >
-                    <div style={{ display: 'grid', rowGap: '16px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{
+                    background: '#ffffff',
+                    border: '1px solid #f0f0f0',
+                    borderRadius: 12,
+                    padding: 16,
+                  }}>
+                    <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Thay đổi trạng thái</div>
+                    <div style={{ display: 'grid', rowGap: 12 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: '#8c8c8c' }}>Vai trò</span>
-                        <Tag color={getRoleColor(selectedLog.role)} style={{ fontSize: '12px', fontWeight: 600 }}>
+                        <Tag color={getRoleColor(selectedLog.role)} style={{ fontSize: 12, fontWeight: 600 }}>
                           {selectedLog.role}
                         </Tag>
                       </div>
@@ -727,50 +535,40 @@ const BookingStatusLogManagement = () => {
                         <span style={{ color: '#8c8c8c' }}>Người thay đổi</span>
                         <span style={{ fontWeight: 600 }}>{selectedLog.changedByUserName || selectedLog.changedBy || 'N/A'}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: '#8c8c8c' }}>Thời gian thay đổi</span>
                         <span style={{ fontWeight: 600 }}>{dayjs(selectedLog.createdAt).format('DD/MM/YYYY HH:mm:ss')}</span>
                       </div>
+                      
                     </div>
-                  </Card>
-                </Col>
+                  </div>
+                </div>
 
                 {/* Note Details full width */}
-                <Col span={24}>
-                  <Card
-                    title="Ghi chú thay đổi"
-                    style={{ 
-                      borderRadius: '12px',
-                      border: '1px solid #f0f0f0'
-                    }}
-                    headStyle={{ 
-                      borderBottom: '1px solid #f0f0f0',
-                      fontSize: '14px',
-                      fontWeight: 600
-                    }}
-                  >
-                    <div style={{ 
-                      background: '#fafafa', 
-                      borderRadius: '8px', 
-                      padding: '16px',
-                      lineHeight: 1.6 
-                    }}>
-                      <div style={{ marginBottom: '16px' }}>
-                        <div style={{ fontWeight: 600, marginBottom: '8px', color: '#262626' }}>Ghi chú:</div>
-                        <div style={{ color: '#595959' }}>
-                          {selectedLog.note || 'Không có ghi chú'}
-                        </div>
+                <div style={{ gridColumn: '1 / span 2' }}>
+                  <div style={{
+                    background: '#ffffff',
+                    border: '1px solid #f0f0f0',
+                    borderRadius: 12,
+                    padding: 16,
+                    marginBottom: 16,
+                  }}>
+                    <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Ghi chú thay đổi</div>
+                    <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
+                      <div style={{ marginBottom: 12 }}>
+                        <div style={{ fontWeight: 600, marginBottom: 4 }}>Ghi chú:</div>
+                        <div style={{ color: '#262626' }}>{selectedLog.note || 'Không có ghi chú'}</div>
                       </div>
                       {selectedLog.bookingDescription && (
                         <div>
-                          <div style={{ fontWeight: 600, marginBottom: '8px', color: '#262626' }}>Mô tả đơn hàng:</div>
-                          <div style={{ color: '#595959' }}>{selectedLog.bookingDescription}</div>
+                          <div style={{ fontWeight: 600, marginBottom: 4 }}>Mô tả đơn hàng:</div>
+                          <div style={{ color: '#262626' }}>{selectedLog.bookingDescription}</div>
                         </div>
                       )}
                     </div>
-                  </Card>
-                </Col>
-              </Row>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </Modal>
@@ -778,49 +576,37 @@ const BookingStatusLogManagement = () => {
 
       {/* Filter Modal */}
       <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <FilterOutlined style={{ color: '#1890ff' }} />
-            Bộ lọc nâng cao
-          </div>
-        }
+        title="Advanced Filters"
         open={filterModalVisible}
         onCancel={() => setFilterModalVisible(false)}
         onOk={handleFilter}
-        width={700}
-        okText="Áp dụng"
-        cancelText="Hủy"
-        okButtonProps={{ style: { borderRadius: '8px' } }}
-        cancelButtonProps={{ style: { borderRadius: '8px' } }}
+        width={600}
       >
         <Row gutter={[16, 16]}>
           <Col span={12}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Mã đơn hàng:</label>
+            <label>Booking ID:</label>
             <Input
-              placeholder="Nhập mã đơn hàng"
+              placeholder="Enter booking ID"
               value={filters.bookingId}
               onChange={(e) => dispatch(setFilters({ bookingId: e.target.value }))}
-              style={{ borderRadius: '6px' }}
             />
           </Col>
           <Col span={12}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Người thay đổi:</label>
+            <label>Changed By:</label>
             <Input
-              placeholder="Nhập ID người dùng"
+              placeholder="Enter user ID"
               value={filters.changedBy}
               onChange={(e) => dispatch(setFilters({ changedBy: e.target.value }))}
-              style={{ borderRadius: '6px' }}
             />
           </Col>
           <Col span={12}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Vai trò:</label>
+            <label>Role:</label>
             <Select
-              placeholder="Chọn vai trò"
+              placeholder="Select role"
               value={filters.role}
               onChange={(value) => dispatch(setFilters({ role: value }))}
               allowClear
               style={{ width: '100%' }}
-              dropdownStyle={{ borderRadius: '8px' }}
             >
               <Option value="ADMINADMIN">Admin</Option>
               <Option value="TECHNICIAN">Technician</Option>
@@ -828,14 +614,13 @@ const BookingStatusLogManagement = () => {
             </Select>
           </Col>
           <Col span={12}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Từ trạng thái:</label>
+            <label>From Status:</label>
             <Select
-              placeholder="Chọn trạng thái"
+              placeholder="Select status"
               value={filters.fromStatus}
               onChange={(value) => dispatch(setFilters({ fromStatus: value }))}
               allowClear
               style={{ width: '100%' }}
-              dropdownStyle={{ borderRadius: '8px' }}
             >
               <Option value="PENDING">PENDING</Option>
               <Option value="CONFIRMED">CONFIRMED</Option>
@@ -851,14 +636,13 @@ const BookingStatusLogManagement = () => {
             </Select>
           </Col>
           <Col span={12}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Đến trạng thái:</label>
+            <label>To Status:</label>
             <Select
-              placeholder="Chọn trạng thái"
+              placeholder="Select status"
               value={filters.toStatus}
               onChange={(value) => dispatch(setFilters({ toStatus: value }))}
               allowClear
               style={{ width: '100%' }}
-              dropdownStyle={{ borderRadius: '8px' }}
             >
               <Option value="PENDING">PENDING</Option>
               <Option value="CONFIRMED">CONFIRMED</Option>
@@ -874,7 +658,7 @@ const BookingStatusLogManagement = () => {
             </Select>
           </Col>
           <Col span={12}>
-            <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Khoảng thời gian:</label>
+            <label>Date Range:</label>
             <RangePicker
               value={filters.fromDate && filters.toDate ? [
                 dayjs(filters.fromDate),
@@ -890,7 +674,7 @@ const BookingStatusLogManagement = () => {
                   dispatch(setFilters({ fromDate: null, toDate: null }));
                 }
               }}
-              style={{ width: '100%', borderRadius: '6px' }}
+              style={{ width: '100%' }}
             />
           </Col>
         </Row>

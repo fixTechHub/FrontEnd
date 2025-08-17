@@ -1,17 +1,17 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  Card,
-  Row,
-  Col,
-  Statistic,
-  Spin,
-  Select,
-  Space,
-  Tag,
-  Button,
-  Table,
-  Progress,
+ Card,
+ Row,
+ Col,
+ Statistic,
+ Spin,
+ Select,
+ Space,
+ Tag,
+ Button,
+ Table,
+ Progress,
   Typography,
   Tabs,
   DatePicker,
@@ -26,23 +26,21 @@ import {
   InputNumber,
   Collapse
 } from 'antd';
-import { Line, Bar, Doughnut, Pie, Radar, Area } from 'react-chartjs-2';
+import { Line, Bar, Doughnut, Pie } from 'react-chartjs-2';
 import {
-  UserOutlined,
-  DollarOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  RiseOutlined,
+ UserOutlined,
+ DollarOutlined,
+ CheckCircleOutlined,
+ ClockCircleOutlined,
+ RiseOutlined,
   ReloadOutlined,
   BarChartOutlined,
   PieChartOutlined,
   LineChartOutlined,
-  AreaChartOutlined,
   DownloadOutlined,
   FilterOutlined,
   CalendarOutlined,
-  TrendingUpOutlined,
-  TrendingDownOutlined,
+  DownOutlined,
   EyeOutlined,
   SettingOutlined,
   InfoCircleOutlined,
@@ -52,52 +50,47 @@ import {
   RocketOutlined
 } from '@ant-design/icons';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  BarElement,
-  ArcElement,
-  RadialLinearScale,
-  Filler,
-  AreaElement
+ Chart as ChartJS,
+ CategoryScale,
+ LinearScale,
+ PointElement,
+ LineElement,
+  Title as ChartTitle,
+ Tooltip as ChartTooltip,
+ Legend,
+ BarElement,
+ ArcElement,
+  Filler
 } from 'chart.js';
 import { fetchAllSubscriptions, fetchSubscriptionStats } from '../../features/technicianSubscription/technicianSubscriptionSlice';
 import { formatCurrency } from '../../utils/formatCurrency';
 import '../../styles/analytics.css';
 
-const { Title: AntTitle, Text, Paragraph } = Typography;
+const { Title: AntTitle, Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
-const { TabPane } = Tabs;
 const { Panel } = Collapse;
 
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  BarElement,
-  ArcElement,
-  RadialLinearScale,
-  Filler,
-  AreaElement
+ CategoryScale,
+ LinearScale,
+ PointElement,
+ LineElement,
+  ChartTitle,
+ ChartTooltip,
+ Legend,
+ BarElement,
+ ArcElement,
+  Filler
 );
 
 const TechnicianSubscriptionAnalytics = () => {
-  const dispatch = useDispatch();
-  const { subscriptions, stats, loading } = useSelector((state) => state.technicianSubscription);
+ const dispatch = useDispatch();
+ const { subscriptions, stats, loading } = useSelector((state) => state.technicianSubscription);
 
   // State management
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [timeRange, setTimeRange] = useState('year');
+ const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+ const [timeRange, setTimeRange] = useState('year');
   const [selectedPeriod, setSelectedPeriod] = useState('revenue');
   const [chartType, setChartType] = useState('line');
   const [showTrends, setShowTrends] = useState(true);
@@ -109,13 +102,13 @@ const TechnicianSubscriptionAnalytics = () => {
 
   // Calculate comprehensive stats
   const analyticsData = useMemo(() => {
-    const totalSubscriptions = subscriptions.length;
-    const activeSubscriptions = stats.activeCount || 0;
-    const expiredSubscriptions = subscriptions.filter(s => s.status === 'EXPIRED').length;
-    const totalRevenue = stats.totalRevenue || 0;
-    const pendingSubscriptions = subscriptions.filter(s => s.status === 'PENDING').length;
-    const cancelledSubscriptions = subscriptions.filter(s => s.status === 'CANCELLED').length;
-    
+ const totalSubscriptions = subscriptions.length;
+ const activeSubscriptions = stats.activeCount || 0;
+ const expiredSubscriptions = subscriptions.filter(s => s.status === 'EXPIRED').length;
+ const totalRevenue = stats.totalRevenue || 0;
+ const pendingSubscriptions = subscriptions.filter(s => s.status === 'PENDING').length;
+ const cancelledSubscriptions = subscriptions.filter(s => s.status === 'CANCELLED').length;
+
     // Calculate growth rates
     const currentMonthRevenue = stats.yearlyRevenue?.monthlyRevenue?.[new Date().getMonth()]?.revenue || 0;
     const lastMonthRevenue = stats.yearlyRevenue?.monthlyRevenue?.[new Date().getMonth() - 1]?.revenue || 0;
@@ -162,20 +155,20 @@ const TechnicianSubscriptionAnalytics = () => {
         conversion: monthSubscriptions > 0 ? (monthActive / monthSubscriptions * 100).toFixed(1) : 0
       };
     });
-    return data;
+   return data;
   }, [subscriptions, stats]);
 
   // Quarterly data with enhanced metrics
-  const quarterlyData = useMemo(() => {
-    const quarters = [
+ const quarterlyData = useMemo(() => {
+   const quarters = [
       { name: 'Q1', months: [0, 1, 2], color: '#ff6384' },
       { name: 'Q2', months: [3, 4, 5], color: '#36a2eb' },
       { name: 'Q3', months: [6, 7, 8], color: '#ffce56' },
       { name: 'Q4', months: [9, 10, 11], color: '#4bc0c0' }
     ];
 
-    return quarters.map(quarter => ({
-      name: quarter.name,
+   return quarters.map(quarter => ({
+     name: quarter.name,
       color: quarter.color,
       revenue: quarter.months.reduce((sum, month) => sum + monthlyData[month].revenue, 0),
       subscriptions: quarter.months.reduce((sum, month) => sum + monthlyData[month].subscriptions, 0),
@@ -209,7 +202,7 @@ const TechnicianSubscriptionAnalytics = () => {
     });
 
     return Object.entries(packageData).map(([name, data]) => ({
-      name,
+     name,
       ...data,
       avgPrice: data.count > 0 ? data.revenue / data.count : 0,
       percentage: (data.count / analyticsData.totalSubscriptions * 100).toFixed(1),
@@ -220,8 +213,8 @@ const TechnicianSubscriptionAnalytics = () => {
   // Status distribution with enhanced metrics
   const statusAnalysis = useMemo(() => {
     const statusData = {};
-    subscriptions.forEach(sub => {
-      const status = sub.status || 'UNKNOWN';
+   subscriptions.forEach(sub => {
+     const status = sub.status || 'UNKNOWN';
       if (!statusData[status]) {
         statusData[status] = {
           count: 0,
@@ -234,7 +227,7 @@ const TechnicianSubscriptionAnalytics = () => {
     });
 
     return Object.entries(statusData).map(([status, data]) => ({
-      status,
+     status,
       ...data,
       percentage: (data.count / analyticsData.totalSubscriptions * 100).toFixed(1),
       avgRevenue: data.count > 0 ? data.revenue / data.count : 0
@@ -242,52 +235,52 @@ const TechnicianSubscriptionAnalytics = () => {
   }, [subscriptions, analyticsData.totalSubscriptions]);
 
   // Chart configurations
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'top',
+ const chartOptions = {
+   responsive: true,
+   maintainAspectRatio: false,
+   plugins: {
+     legend: {
+       position: 'top',
         labels: {
           usePointStyle: true,
           padding: 20,
           font: { size: 12 }
         }
-      },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
+     },
+     tooltip: {
+       mode: 'index',
+       intersect: false,
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
         titleColor: '#fff',
         bodyColor: '#fff',
         borderColor: '#1890ff',
         borderWidth: 1,
         cornerRadius: 8,
-        callbacks: {
-          label: function (context) {
-            if (context.dataset.label.includes('Doanh thu')) {
-              return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
-            }
-            return `${context.dataset.label}: ${context.parsed.y}`;
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
+       callbacks: {
+         label: function (context) {
+           if (context.dataset.label.includes('Doanh thu')) {
+             return `${context.dataset.label}: ${formatCurrency(context.parsed.y)}`;
+           }
+           return `${context.dataset.label}: ${context.parsed.y}`;
+         }
+       }
+     }
+   },
+   scales: {
+     y: {
+       beginAtZero: true,
         grid: {
           color: 'rgba(0, 0, 0, 0.05)',
           drawBorder: false
         },
-        ticks: {
-          callback: function (value) {
-            if (this.getLabelForValue(value).includes('Doanh thu')) {
-              return formatCurrency(value);
-            }
-            return value;
-          }
-        }
+       ticks: {
+         callback: function (value) {
+           if (this.getLabelForValue(value).includes('Doanh thu')) {
+             return formatCurrency(value);
+           }
+           return value;
+         }
+       }
       },
       x: {
         grid: {
@@ -366,10 +359,10 @@ const TechnicianSubscriptionAnalytics = () => {
     dispatch(fetchSubscriptionStats(currentYear));
   }, [dispatch, currentYear]);
 
-  const handleRefresh = () => {
-    dispatch(fetchAllSubscriptions());
-    dispatch(fetchSubscriptionStats(currentYear));
-  };
+ const handleRefresh = () => {
+   dispatch(fetchAllSubscriptions());
+   dispatch(fetchSubscriptionStats(currentYear));
+ };
 
   const handleExport = () => {
     // Export functionality
@@ -382,8 +375,8 @@ const TechnicianSubscriptionAnalytics = () => {
     link.click();
   };
 
-  if (loading) {
-    return (
+ if (loading) {
+   return (
       <div style={{ 
         display: 'flex', 
         justifyContent: 'center', 
@@ -397,16 +390,16 @@ const TechnicianSubscriptionAnalytics = () => {
           textAlign: 'center',
           boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)'
         }}>
-          <Spin size="large" />
+       <Spin size="large" />
           <div style={{ marginTop: '20px', color: '#1890ff' }}>
             <Text style={{ fontSize: '18px' }}>Đang tải dữ liệu phân tích...</Text>
           </div>
         </Card>
-      </div>
-    );
-  }
+     </div>
+   );
+ }
 
-  return (
+ return (
     <div className="analytics-dashboard" style={{ padding: '24px', background: '#f5f7fa' }}>
       {/* Hero Header */}
       <div style={{
@@ -440,8 +433,8 @@ const TechnicianSubscriptionAnalytics = () => {
         }} />
         
         <div style={{ position: 'relative', zIndex: 2 }}>
-          <Row justify="space-between" align="middle">
-            <Col>
+           <Row justify="space-between" align="middle">
+             <Col>
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
                 <div style={{
                   background: 'rgba(255, 255, 255, 0.2)',
@@ -454,16 +447,16 @@ const TechnicianSubscriptionAnalytics = () => {
                   <BarChartOutlined style={{ fontSize: '32px' }} />
                 </div>
                 <div>
-                  <Title level={1} style={{ color: 'white', margin: 0 }}>
+                  <AntTitle level={1} style={{ color: 'white', margin: 0 }}>
                     Analytics Dashboard
-                  </Title>
+                  </AntTitle>
                   <Text style={{ color: 'rgba(255, 255, 255, 0.9)', fontSize: '18px' }}>
                     Phân tích toàn diện gói đăng ký kỹ thuật viên
                   </Text>
                 </div>
               </div>
-            </Col>
-            <Col>
+             </Col>
+             <Col>
               <Space size="middle">
                 <Switch
                   checked={autoRefresh}
@@ -507,33 +500,33 @@ const TechnicianSubscriptionAnalytics = () => {
           <Col xs={24} sm={12} md={6}>
             <div>
               <Text strong>Thời gian:</Text>
-              <Select
-                value={timeRange}
-                onChange={setTimeRange}
+                 <Select
+                   value={timeRange}
+                   onChange={setTimeRange}
                 style={{ width: '100%', marginTop: '8px' }}
                 size="large"
-              >
-                <Option value="year">Theo năm</Option>
-                <Option value="quarter">Theo quý</Option>
-                <Option value="month">Theo tháng</Option>
-              </Select>
+                 >
+                   <Option value="year">Theo năm</Option>
+                   <Option value="quarter">Theo quý</Option>
+                   <Option value="month">Theo tháng</Option>
+                 </Select>
             </div>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <div>
               <Text strong>Năm:</Text>
-              <Select
-                value={currentYear}
-                onChange={setCurrentYear}
+                 <Select
+                   value={currentYear}
+                   onChange={setCurrentYear}
                 style={{ width: '100%', marginTop: '8px' }}
                 size="large"
-              >
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                  <Option key={year} value={year}>{year}</Option>
-                ))}
-              </Select>
-            </div>
-          </Col>
+                 >
+                   {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                     <Option key={year} value={year}>{year}</Option>
+                   ))}
+                 </Select>
+         </div>
+       </Col>
           <Col xs={24} sm={12} md={6}>
             <div>
               <Text strong>Loại biểu đồ:</Text>
@@ -543,12 +536,11 @@ const TechnicianSubscriptionAnalytics = () => {
                 style={{ width: '100%', marginTop: '8px' }}
                 size="large"
               >
-                <Option value="line">Đường</Option>
-                <Option value="bar">Cột</Option>
-                <Option value="area">Vùng</Option>
+                                 <Option value="line">Đường</Option>
+                 <Option value="bar">Cột</Option>
               </Select>
-            </div>
-          </Col>
+         </div>
+       </Col>
           <Col xs={24} sm={12} md={6}>
             <div>
               <Text strong>Chế độ xem:</Text>
@@ -562,10 +554,10 @@ const TechnicianSubscriptionAnalytics = () => {
                 <Option value="detailed">Chi tiết</Option>
                 <Option value="comparison">So sánh</Option>
               </Select>
-            </div>
-          </Col>
-        </Row>
-      </Card>
+         </div>
+       </Col>
+     </Row>
+   </Card>
 
       {/* Key Metrics Cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
@@ -590,10 +582,10 @@ const TechnicianSubscriptionAnalytics = () => {
               </Tag>
               <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
                 so với tháng trước
-              </Text>
+         </Text>
             </div>
-          </Card>
-        </Col>
+   </Card>
+ </Col>
         
         <Col xs={24} sm={12} md={6}>
           <Card style={{ 
@@ -614,11 +606,11 @@ const TechnicianSubscriptionAnalytics = () => {
               </Tag>
               <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
                 tỷ lệ chuyển đổi
-              </Text>
+         </Text>
             </div>
-          </Card>
-        </Col>
-        
+   </Card>
+ </Col>
+
         <Col xs={24} sm={12} md={6}>
           <Card style={{ 
             borderRadius: '16px',
@@ -638,11 +630,11 @@ const TechnicianSubscriptionAnalytics = () => {
               </Tag>
               <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
                 trung bình/gói
-              </Text>
+         </Text>
             </div>
-          </Card>
-        </Col>
-        
+   </Card>
+ </Col>
+
         <Col xs={24} sm={12} md={6}>
           <Card style={{ 
             borderRadius: '16px',
@@ -655,8 +647,8 @@ const TechnicianSubscriptionAnalytics = () => {
               value={analyticsData.churnRate}
               precision={1}
               valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
-              prefix={<TrendingDownOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
-              suffix="%"
+                                            prefix={<DownOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
+               suffix="%"
             />
             <div style={{ marginTop: '8px' }}>
               <Tag color="orange" style={{ color: 'white' }}>
@@ -664,11 +656,11 @@ const TechnicianSubscriptionAnalytics = () => {
               </Tag>
               <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
                 đang chờ xử lý
-              </Text>
+         </Text>
             </div>
-          </Card>
-        </Col>
-      </Row>
+   </Card>
+ </Col>
+</Row>
 
       {/* Main Analytics Content */}
       <Tabs
@@ -706,13 +698,13 @@ const TechnicianSubscriptionAnalytics = () => {
                             <Radio.Button value="conversion">Tỷ lệ chuyển đổi</Radio.Button>
                           </Radio.Group>
                         </Space>
-                      </div>
+                   </div>
                     }
                     style={{ borderRadius: '16px' }}
                   >
                     <div style={{ height: '400px' }}>
                       {(() => {
-                        const ChartComponent = chartType === 'line' ? Line : chartType === 'bar' ? Bar : Area;
+                                                 const ChartComponent = chartType === 'line' ? Line : chartType === 'bar' ? Bar : Line;
                         return (
                           <ChartComponent
                             data={getChartData(chartType, selectedPeriod)}
@@ -720,12 +712,12 @@ const TechnicianSubscriptionAnalytics = () => {
                           />
                         );
                       })()}
-                    </div>
-                  </Card>
-                </Col>
+                   </div>
+                 </Card>
+               </Col>
 
                 {/* Package Distribution */}
-                <Col xs={24} lg={12}>
+               <Col xs={24} lg={12}>
                   <Card
                     title="Phân bố gói đăng ký"
                     style={{ borderRadius: '16px' }}
@@ -766,11 +758,11 @@ const TechnicianSubscriptionAnalytics = () => {
                         }}
                       />
                     </div>
-                  </Card>
-                </Col>
+                 </Card>
+               </Col>
 
                 {/* Status Analysis */}
-                <Col xs={24} lg={12}>
+               <Col xs={24} lg={12}>
                   <Card
                     title="Phân tích trạng thái"
                     style={{ borderRadius: '16px' }}
@@ -810,8 +802,8 @@ const TechnicianSubscriptionAnalytics = () => {
                         }}
                       />
                     </div>
-                  </Card>
-                </Col>
+                 </Card>
+               </Col>
               </Row>
             )
           },
@@ -878,10 +870,10 @@ const TechnicianSubscriptionAnalytics = () => {
                             <Text type="secondary" style={{ fontSize: '12px' }}>
                               Tỷ lệ chuyển đổi: {quarter.conversion.toFixed(1)}%
                             </Text>
-                          </Card>
-                        </Col>
+                 </Card>
+               </Col>
                       ))}
-                    </Row>
+         </Row>
                   </Card>
                 </Col>
 
@@ -891,19 +883,19 @@ const TechnicianSubscriptionAnalytics = () => {
                     title="Hiệu suất gói đăng ký"
                     style={{ borderRadius: '16px' }}
                   >
-                    <Table
+             <Table
                       dataSource={packageAnalysis}
-                      columns={[
-                        {
-                          title: 'Tên gói',
-                          dataIndex: 'name',
-                          key: 'name',
+               columns={[
+                 {
+                   title: 'Tên gói',
+                   dataIndex: 'name',
+                   key: 'name',
                           render: (text) => <Text strong>{text}</Text>
-                        },
-                        {
-                          title: 'Số lượng',
-                          dataIndex: 'count',
-                          key: 'count',
+                 },
+                 {
+                   title: 'Số lượng',
+                   dataIndex: 'count',
+                   key: 'count',
                           render: (value) => <Badge count={value} style={{ backgroundColor: '#1890ff' }} />
                         },
                         {
@@ -923,9 +915,9 @@ const TechnicianSubscriptionAnalytics = () => {
                           dataIndex: 'conversion',
                           key: 'conversion',
                           render: (value) => (
-                            <Progress
+                       <Progress
                               percent={parseFloat(value)}
-                              size="small"
+                         size="small"
                               strokeColor={parseFloat(value) > 70 ? '#52c41a' : parseFloat(value) > 40 ? '#faad14' : '#f5222d'}
                             />
                           )
@@ -936,11 +928,11 @@ const TechnicianSubscriptionAnalytics = () => {
                           key: 'percentage',
                           render: (value) => <Tag color="blue">{value}%</Tag>
                         }
-                      ]}
-                      pagination={false}
-                      size="small"
-                    />
-                  </Card>
+               ]}
+               pagination={false}
+               size="small"
+             />
+         </Card>
                 </Col>
               </Row>
             )
@@ -1021,7 +1013,7 @@ const TechnicianSubscriptionAnalytics = () => {
                           }
                         }}
                       />
-                    </div>
+                   </div>
                   </Card>
                 </Col>
 
@@ -1034,9 +1026,9 @@ const TechnicianSubscriptionAnalytics = () => {
                     <Row gutter={[16, 16]}>
                       <Col xs={24} sm={12} md={8}>
                         <Card style={{ textAlign: 'center', borderRadius: '12px' }}>
-                          <div style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }}>
-                            <TrendingUpOutlined />
-                          </div>
+                                                     <div style={{ fontSize: '48px', color: '#1890ff', marginBottom: '16px' }}>
+                             <RiseOutlined />
+                           </div>
                           <Statistic
                             title="Tăng trưởng doanh thu"
                             value={analyticsData.revenueGrowth}
@@ -1114,7 +1106,7 @@ const TechnicianSubscriptionAnalytics = () => {
                   style={{ width: '100%', marginTop: '8px' }}
                   disabled={!autoRefresh}
                 />
-              </div>
+     </div>
             </Col>
             <Col xs={24} sm={12} md={6}>
               <div>
@@ -1152,8 +1144,8 @@ const TechnicianSubscriptionAnalytics = () => {
           </Row>
         </Panel>
       </Collapse>
-    </div>
-  );
+   </div>
+ );
 };
 
 export default TechnicianSubscriptionAnalytics;

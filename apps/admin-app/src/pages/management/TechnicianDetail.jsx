@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Tag, Space, Button, Spin, message, Tabs, Table, Avatar, Select } from 'antd';
+import { Card, Descriptions, Tag, Space, Button, Spin, message, Tabs, Table, Avatar, Select, Input, Modal } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
