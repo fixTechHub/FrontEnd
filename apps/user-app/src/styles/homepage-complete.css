@@ -23,6 +23,76 @@
   font-family: "bootstrap-icons" !important;
 }
 
+/* Journey Grid Responsive */
+@media (max-width: 1024px) {
+  .journey-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.5rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .journey-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* Team Members Grid Responsive */
+@media (max-width: 1200px) {
+  .team-members-grid {
+    grid-template-columns: repeat(2, minmax(260px, 1fr)) !important;
+    gap: 1.5rem !important;
+    max-width: 800px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .team-members-grid {
+    grid-template-columns: repeat(2, minmax(240px, 1fr)) !important;
+    gap: 1rem !important;
+    max-width: 600px !important;
+  }
+}
+
+@media (max-width: 580px) {
+  .team-members-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+    max-width: 300px !important;
+  }
+}
+
+/* Why Choose Grid Responsive */
+@media (max-width: 1024px) {
+  .why-choose-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.5rem !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .why-choose-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+/* Promise Grid Responsive */
+@media (max-width: 768px) {
+  .promise-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 1.5rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .promise-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
 * {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif !important;
 }

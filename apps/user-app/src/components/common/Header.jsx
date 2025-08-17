@@ -209,11 +209,11 @@ function Header() {
                                 </li>
 
                                 <li>
-                                    <Link to="/forum">DIỄN ĐÀN</Link>
+                                    <Link to="/about" onClick={() => window.scrollTo(0, 0)}>VỀ CHÚNG TÔI</Link>
                                 </li>
 
                                 <li>
-                                    <Link to="/support">HỖ TRỢ</Link>
+                                    <Link to="/contact" onClick={() => window.scrollTo(0, 0)}>LIÊN HỆ</Link>
                                 </li>
                             </ul>
                         </div>

@@ -47,6 +47,8 @@ import UploadCertificateForm from "../pages/technician/UploadCer";
 import SubmitFeedback from "../pages/feedback/SubmitFeedback";
 import ServiceList from "../pages/home/ServiceList";
 import TechnicianScheduleComponent from "../pages/technician/TechnicianSchedule";
+import AboutPage from "../pages/AboutPage";
+import ContactPage from "../pages/ContactPage";
 
 export default function AppRoutes() {
   const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
@@ -61,6 +63,8 @@ export default function AppRoutes() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/technician/profile/:id" element={<ViewTechnicianProfile />} />
       <Route path="/services" element={<ServiceList />} />
+      <Route path="/about" element={<AboutPage />} />
+      <Route path="/contact" element={<ContactPage />} />
 
 
       {/* ================= VERIFICATION ROUTES ================= */}
