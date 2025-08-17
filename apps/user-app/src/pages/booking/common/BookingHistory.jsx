@@ -243,7 +243,7 @@ const BookingHistory = () => {
                             {isCustomer && (
                               <Dropdown.Item
                                 onClick={() => {
-                                  if (booking.status === 'PENDING') {
+                                  if (['PENDING', 'AWAITING_CONFIRM'].includes(booking.status)) {
                                     navigate(`/booking/choose-technician?bookingId=${booking._id}`);
                                   } else if (booking.status !== 'CANCELLED') {
                                     navigate(`/booking/booking-processing?bookingId=${booking._id}`);
@@ -251,12 +251,12 @@ const BookingHistory = () => {
                                 }}
                                 className="text-primary"
                               >
-                                {booking.status === 'PENDING' && (
+                                {['PENDING', 'AWAITING_CONFIRM'].includes(booking.status) && (
                                   <>
                                     <FaUserCheck className="me-2" /> Chọn thợ
                                   </>
                                 )}
-                                {booking.status !== 'DONE' && booking.status !== 'PENDING' && booking.status !== 'CANCELLED' && (
+                                {!['DONE', 'CANCELLED', 'PENDING', 'AWAITING_CONFIRM'].includes(booking.status) && (
                                   <>
                                     <FaSpinner className="me-2" /> Xem tiến trình
                                   </>
@@ -282,7 +282,7 @@ const BookingHistory = () => {
               </Pagination.Prev>
               <Pagination.Next
                 onClick={() => handlePageChange(page + 1)}
-                disabled={bookingHistories?.length < limit}
+                disabled={bookingHistories?.length < limit-1}
               >
                 Trang Sau
               </Pagination.Next>

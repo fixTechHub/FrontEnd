@@ -10,6 +10,10 @@ import { categoryAPI } from '../../features/categories/categoryAPI';
 import { financialReportAPI } from '../../features/financialReport/financialReportAPI';
 import { createExportData, formatDateTime } from '../../utils/exportUtils';
 import { formatCurrency } from '../../utils/formatCurrency';
+import { fetchReportCounts } from '../../features/reports/reportSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { sendNotificationsThunk } from '../../features/notifications/notificationsSlice';
+const { TextArea } = Input;
 
 const statusTag = (status) => {
   const colorMap = {
@@ -49,6 +53,10 @@ export default function TechnicianDetail() {
   const [financialSearchText, setFinancialSearchText] = useState('');
   const [financialFilterService, setFinancialFilterService] = useState('');
   const [financialFilterStatus, setFinancialFilterStatus] = useState('');
+  const dispatch = useDispatch();
+  const { reportCount, loading: reportLoading, error: reportError } = useSelector((state) => state.reports);
+  const [notificationContent, setNotificationContent] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -72,7 +80,7 @@ export default function TechnicianDetail() {
           try {
             const u = await userAPI.getById(t.userId);
             if (u) setUser(u);
-          } catch {}
+          } catch { }
         }
         const sm = {};
         (services || []).forEach((s) => {
@@ -107,6 +115,40 @@ export default function TechnicianDetail() {
     ],
     [serviceMap]
   );
+  //Load Number of times the technician has been reported 
+  useEffect(() => {
+    if (technician?.id) {
+      dispatch(fetchReportCounts(technician.id));
+    }
+  }, [technician?.id, dispatch]);
+
+  const handleSendWarningToUser = async () => {
+    if (!notificationContent.trim()) {
+      message.error('Please enter notification content');
+      return;
+    }
+    try {
+      const notificationData = {
+        userId: user.id,
+        title: 'Cảnh cáo tài khoản',
+        content: notificationContent,
+        referenceId: user.id,
+        referenceModel: 'User',
+
+        type: 'NEW_REQUEST'
+      }
+      // console.log(notifyData);
+
+      await dispatch(sendNotificationsThunk(notificationData)).unwrap();
+      message.success('Gửi cảnh cáo thành công!');
+      setIsModalOpen(false); // Đóng modal sau khi gửi thành công
+      setNotificationContent('');
+    } catch (error) {
+      console.log(error);
+      message.error('Gửi cảnh cáo thất bại!');
+    }
+  }
+
 
   // Logic filter cho bookings
   const filteredBookings = useMemo(() => {
@@ -130,14 +172,14 @@ export default function TechnicianDetail() {
   useEffect(() => {
     const loadFinancialData = async () => {
       if (!technician?.id) return;
-      
+
       try {
         setFinancialLoading(true);
         const [technicianDetails, technicianBookings] = await Promise.all([
           financialReportAPI.getTechnicianFinancialDetails(technician.id),
           financialReportAPI.getBookingsByTechnicianId(technician.id)
         ]);
-        
+
         if (technicianDetails) {
           setFinancialData({
             ...technicianDetails,
@@ -226,7 +268,10 @@ export default function TechnicianDetail() {
                   <div style={{ fontSize: 20, fontWeight: 600 }}>{technician.fullName || user?.fullName || ''}</div>
                   <div style={{ color: '#888', marginTop: 4 }}>ID: {technician.id}</div>
                   <br></br>
+                  <div>
+                    <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
 
+                  </div>
                   {/* Thêm cảnh cáo ở dưới*/}
 
                 </div>
@@ -292,6 +337,8 @@ export default function TechnicianDetail() {
                 </Descriptions.Item>
                 <Descriptions.Item label="Số công việc hoàn thành" span={1}>{technician.jobCompleted ?? 0}</Descriptions.Item>
                 <Descriptions.Item label="Năm kinh nghiệm" span={1}>{technician.experienceYears || 0} năm</Descriptions.Item>
+
+                  <Descriptions.Item label="Số lần bị báo cáo">{reportCount}</Descriptions.Item>
               </Descriptions>
 
               {/* Specialties Section */}
@@ -329,7 +376,6 @@ export default function TechnicianDetail() {
                 </div>
               </div>
             </Card>
-
                          <Tabs
                items={[
                  {
@@ -358,11 +404,12 @@ export default function TechnicianDetail() {
                                  <div style={{ marginBottom: 8 }}>
                                    <strong>Google Maps: </strong>
                                     <a 
+
                                     href={`https://www.google.com/maps?q=${technician.currentLocation.coordinates[1]},${technician.currentLocation.coordinates[0]}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    style={{ 
-                                      color: '#1890ff', 
+                                    style={{
+                                      color: '#1890ff',
                                       textDecoration: 'none',
                                       display: 'inline-flex',
                                       alignItems: 'center',
@@ -892,9 +939,28 @@ export default function TechnicianDetail() {
                  },
                ]}
              />
+
           </Space>
         </div>
       </div>
+      <Modal
+        title="Gửi Cảnh Cáo"
+        open={isModalOpen}
+        onOk={handleSendWarningToUser}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setNotificationContent('');
+        }}
+        okText="Gửi"
+        cancelText="Hủy"
+      >
+        <TextArea
+          rows={4}
+          value={notificationContent}
+          onChange={(e) => setNotificationContent(e.target.value)}
+          placeholder="Nhập nội dung cảnh cáo"
+        />
+      </Modal>
     </div>
   );
 }

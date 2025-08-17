@@ -216,15 +216,14 @@ export default function UserDetail() {
   if (!user) return null;
 
   return (
-   <>
-    <div className="modern-page- wrapper">
-      <div className="modern-content-card">
-        <div className="container-fluid">
-              <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
-                  <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
-                </Space>
-
+    <>
+      <div className="modern-page- wrapper">
+        <div className="modern-content-card">
+          <div className="container-fluid">
+            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+              <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
+                <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
+              </Space>
                 <Card title="Thông tin người dùng" variant="borderless" style={{ borderRadius: 12 }}>
                   <div style={{display:'flex', alignItems:'center', gap:24, marginBottom:16}}>
                     <Avatar
@@ -277,26 +276,27 @@ export default function UserDetail() {
                     
                   </Descriptions>
 
-                  {/* Locked Reason - Hiển thị riêng */}
-                  {user.lockedReason && (
-                    <div style={{ marginTop: 16 }}>
-                      <h4 style={{ marginBottom: 12, color: '#333', fontSize: '16px', fontWeight: '600' }}>
-                        Lý Do Khóa Tài Khoản
-                      </h4>
-                      <div style={{ 
-                        background: '#fff2f0', 
-                        border: '1px solid #ffccc7', 
-                        borderRadius: '8px', 
-                        padding: '16px',
-                        color: '#cf1322',
-                        fontSize: '14px',
-                        lineHeight: '1.5'
-                      }}>
-                        <strong>⚠️ Lý do:</strong> {user.lockedReason}
-                      </div>
+
+                {/* Locked Reason - Hiển thị riêng */}
+                {user.lockedReason && (
+                  <div style={{ marginTop: 16 }}>
+                    <h4 style={{ marginBottom: 12, color: '#333', fontSize: '16px', fontWeight: '600' }}>
+                      Lý Do Khóa Tài Khoản
+                    </h4>
+                    <div style={{
+                      background: '#fff2f0',
+                      border: '1px solid #ffccc7',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      color: '#cf1322',
+                      fontSize: '14px',
+                      lineHeight: '1.5'
+                    }}>
+                      <strong>⚠️ Lý do:</strong> {user.lockedReason}
                     </div>
-                  )}
-                </Card>
+                  </div>
+                )}
+              </Card>
 
                 <Tabs
                   items={[
@@ -534,6 +534,7 @@ export default function UserDetail() {
     </div>
   )}
    </>
+
   );
 }
 

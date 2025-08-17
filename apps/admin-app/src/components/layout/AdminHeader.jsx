@@ -228,7 +228,7 @@ const AdminHeader = () => {
                 userSelect: 'none'
               }}
             >
-              {(userInfo?.fullName || 'A').charAt(0).toUpperCase()}
+              {(userInfo?.fullName || '').charAt(0).toUpperCase()}
             </div>
           </Dropdown>
         </div>

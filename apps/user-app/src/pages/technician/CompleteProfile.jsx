@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -41,18 +41,47 @@ const CompleteProfile = () => {
     const [frontImage, setFrontImage] = useState(null);
     const [backImage, setBackImage] = useState(null);
     
+    // Track upload attempts to force OCR re-trigger
+    const [uploadCounter, setUploadCounter] = useState(0);
+    
     // Personal info states
     const [identification, setIdentification] = useState('');
     const [experienceYears, setExperienceYears] = useState('');
     const [currentStep, setCurrentStep] = useState(1); // Track current step
     const [cccdErrors, setCccdErrors] = useState('');
+    const [cccdOcrError, setCccdOcrError] = useState('');
+    
+    // OCR loading state
+    const [isOcrProcessing, setIsOcrProcessing] = useState(false);
+    
+    // Form interaction tracking
+    const [fieldTouched, setFieldTouched] = useState({
+        bankName: false,
+        accountNumber: false,
+        accountHolder: false,
+        address: false,
+        experienceYears: false
+    });
+
+    // Address & suggestion states
+    const [addressInput, setAddressInput] = useState('');
+    const [addressSuggestions, setAddressSuggestions] = useState([]);
+    const [addressLoading, setAddressLoading] = useState(false);
+    const [addressError, setAddressError] = useState('');
+    const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+    const locationInputRef = useRef(null);
+    const suggestControllerRef = useRef(null);
 
     // helper validation
     const isServiceDetailsValid = Object.keys(serviceDetails).length > 0 &&
         Object.values(serviceDetails).every(d => Number(d.price) > 0 && Number(d.warranty) >= 0);
     
     // Step validation
-    const isStep1Valid = identification.length > 0 && !cccdErrors && Number(experienceYears) > 0 && frontImage && backImage;
+    const hasValidCoordinates = Array.isArray(formData.currentLocation?.coordinates)
+        && formData.currentLocation.coordinates.length === 2
+        && Number(formData.currentLocation.coordinates[0]) !== 0
+        && Number(formData.currentLocation.coordinates[1]) !== 0;
+    const isStep1Valid = identification.length > 0 && !cccdErrors && !cccdOcrError && Number(experienceYears) > 0 && frontImage && backImage && addressInput.trim().length >= 3 && hasValidCoordinates;
     const isStep2Valid = selectedCategories.length > 0 && isServiceDetailsValid;
     const isStep3Valid = formData.bankAccount.bankName && formData.bankAccount.accountNumber && 
                         formData.bankAccount.accountHolder;
@@ -66,6 +95,96 @@ const CompleteProfile = () => {
         dispatch(fetchAllPublicCategories());
         dispatch(fetchAllPublicServices());
     }, [user, navigate, dispatch]);
+
+    // Debug: log upload counter changes
+    useEffect(() => {
+        console.log('[CCCD] Upload counter changed:', uploadCounter);
+    }, [uploadCounter]);
+
+    // Address autosuggest via HERE API
+    useEffect(() => {
+        const query = addressInput;
+        if (!query || query.trim().length < 3) {
+            setAddressSuggestions([]);
+            setAddressError('');
+            return;
+        }
+        setAddressLoading(true);
+        setAddressError('');
+        if (suggestControllerRef.current) suggestControllerRef.current.abort();
+        const controller = new AbortController();
+        suggestControllerRef.current = controller;
+        const fetchSuggestions = async () => {
+            try {
+                // Gọi API backend thay vì trực tiếp HERE API  
+                const url = `http://localhost:3000/api/services/address-suggestions?query=${encodeURIComponent(query)}`;
+                console.log('Calling API:', url); // Debug log
+                const res = await fetch(url, { 
+                    signal: controller.signal,
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                
+                if (!res.ok) {
+                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+                }
+                
+                const data = await res.json();
+                console.log('Address suggestions response:', data); // Debug log
+                
+                if (data.success && Array.isArray(data.data)) {
+                    setAddressSuggestions(data.data);
+                    setAddressError(''); // Clear any previous errors
+                } else {
+                    setAddressSuggestions([]);
+                    setAddressError(data.message || 'Không có gợi ý địa chỉ');
+                }
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Address suggestion error:', err);
+                    setAddressError(`Lỗi khi lấy gợi ý địa chỉ: ${err.message}`);
+                }
+                setAddressSuggestions([]);
+            } finally {
+                setAddressLoading(false);
+            }
+        };
+        fetchSuggestions();
+        return () => controller.abort();
+    }, [addressInput]);
+
+    // Geocode selected address to coordinates using backend API
+    const geocodeAddressToCoords = async (addrLabel) => {
+        try {
+            const response = await fetch('http://localhost:3000/api/services/geocode-address', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ address: addrLabel })
+            });
+            
+            const data = await response.json();
+            console.log('Geocode response:', data); // Debug log
+            
+            if (data.success && data.data?.coordinates) {
+                setFormData(prev => ({
+                    ...prev,
+                    currentLocation: data.data.coordinates
+                }));
+                console.log('Successfully set coordinates:', data.data.coordinates);
+                return true;
+            } else {
+                console.error('Geocoding failed:', data);
+                return false;
+            }
+        } catch (error) {
+            console.error('Geocoding error:', error);
+            return false;
+        }
+    };
 
     // CCCD Validation function
     const validateCCCD = (cccdNumber) => {
@@ -85,13 +204,19 @@ const CompleteProfile = () => {
             return 'Số CCCD không hợp lệ (không được toàn bộ cùng 1 số)';
         }
         
-        // Check for common invalid patterns
+        // Check for common invalid patterns (obvious fake numbers only)
         const invalidPatterns = [
             '123456789012', // Sequential fake number
             '000000000000', // All zeros
-            '111111111111', // All ones
+            '111111111111', // All ones  
             '123456789123', // Another common fake
-            '987654321098'  // Reverse sequential
+            '987654321098', // Reverse sequential
+            '123123123123', // Repeated pattern
+            '111222333444', // Simple pattern
+            '999999999999', // All nines
+            '012345678901', // Sequential with leading zero
+            '123456123456', // Repeated 6-digit pattern
+            '111222111222', // Repeated pattern
         ];
         
         if (invalidPatterns.includes(cleanNumber)) {
@@ -134,16 +259,76 @@ const CompleteProfile = () => {
         setIdentification(formattedValue);
         const error = validateCCCD(cleanValue);
         setCccdErrors(error);
+        
+        // Clear OCR error when user starts typing manually
+        if (cccdOcrError && value.length > 0) {
+            setCccdOcrError('');
+        }
+    };
+
+    // Handle file selection for front image (with OCR reset)
+    const handleFrontImageSelect = (file) => {
+        console.log('[CCCD] New front image selected:', file?.name);
+        
+        // Show notification if there was a previous CCCD number
+        if (identification.trim().length > 0) {
+            toast.info('🔄 Đang xử lý ảnh mới. Số CCCD cũ sẽ được thay thế.');
+        }
+        
+        setFrontImage(file);
+        // Reset OCR error when new image is selected
+        setCccdOcrError('');
+        // Start OCR loading state
+        setIsOcrProcessing(true);
+        // Don't clear identification immediately - let OCR process first
+        // setIdentification(''); // Moved to handleOCRResult
+        // setCccdErrors(''); // Moved to handleOCRResult
+        // Increment counter to force component re-render and OCR re-trigger
+        setUploadCounter(prev => prev + 1);
+    };
+
+    // Handle file selection for back image  
+    const handleBackImageSelect = (file) => {
+        console.log('[CCCD] New back image selected:', file?.name);
+        setBackImage(file);
+        // Reset OCR error when new image is selected (either front or back can trigger OCR)
+        setCccdOcrError('');
+        // Increment counter for consistency (though back image doesn't trigger OCR)
+        setUploadCounter(prev => prev + 1);
     };
 
     // Handle OCR result from CCCD images
     const handleOCRResult = (result) => {
+        console.log('[OCR] Processing result:', result);
+        
+        // Stop OCR loading state
+        setIsOcrProcessing(false);
+        
+        // Clear previous CCCD data when OCR starts processing (regardless of success/fail)
+        setIdentification('');
+        setCccdErrors('');
+        
         if (result && result.cccdNumber) {
             const detectedNumber = result.cccdNumber;
+            
+            // Auto-fill and validate the detected number
             handleCCCDChange(detectedNumber);
-            toast.success(`Đã nhận diện số CCCD: ${detectedNumber.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4')}`);
+            setCccdOcrError('');
+            
+            // Check if the detected number passes validation
+            const validationError = validateCCCD(detectedNumber);
+            if (validationError) {
+                setCccdOcrError(`Số CCCD nhận diện được không hợp lệ: ${validationError}`);
+                toast.error('Số CCCD nhận diện được không hợp lệ. Vui lòng kiểm tra và chỉnh sửa.');
+            } else {
+                toast.success(`✅ Đã nhận diện số CCCD: ${detectedNumber.replace(/(\d{3})(\d{3})(\d{3})(\d{3})/, '$1 $2 $3 $4')}`);
+            }
         } else {
-            toast.error('Không thể nhận diện số CCCD từ ảnh. Vui lòng nhập thủ công.');
+            // When OCR fails, keep the CCCD input empty and show guidance
+            setCccdOcrError('Không thể nhận diện số CCCD từ ảnh. Vui lòng nhập thủ công số CCCD vào ô bên dưới.');
+            toast.error('❌ Không nhận diện được CCCD. Vui lòng nhập thủ công.', {
+                autoClose: 3000,
+            });
         }
     };
 
@@ -181,19 +366,75 @@ const CompleteProfile = () => {
         });
     };
 
-    const handleServiceDetailChange = (serviceId, field, value) => {
+    // Helper function to format number with dots
+    const formatNumberWithDots = (value) => {
+        if (!value) return '';
+        const number = value.toString().replace(/[^\d]/g, '');
+        return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    // Helper function to parse formatted number back to integer
+    const parseFormattedNumber = (value) => {
+        if (!value) return 0;
+        return parseInt(value.toString().replace(/\./g, ''), 10) || 0;
+    };
+
+    // Helper function to extract only numbers (handles Vietnamese keyboard)
+    const extractNumbers = (value) => {
+        if (!value) return '';
+        // Convert to string and extract only digits, handling Unicode properly
+        const str = String(value);
+        const numbers = str.replace(/[^\d]/g, '');
+        return numbers;
+    };
+
+    // Price input handler with Vietnamese keyboard support
+    const handlePriceInput = (serviceId, event) => {
+        const rawValue = event.target.value;
+        const cleanValue = extractNumbers(rawValue);
+        
+        // Update the service details with clean numeric value
         setServiceDetails(prev => ({
             ...prev,
             [serviceId]: {
                 ...prev[serviceId],
-                [field]: value
+                price: cleanValue
+            }
+        }));
+        
+        // Validate immediately
+        setFieldErrors(prevErrs => {
+            const newErrs = { ...prevErrs };
+            const priceVal = Number(cleanValue);
+            if (priceVal <= 0 || isNaN(priceVal)) {
+                newErrs[`${serviceId}-price`] = 'Giá dịch vụ phải lớn hơn 0';
+            } else {
+                delete newErrs[`${serviceId}-price`];
+            }
+            return newErrs;
+        });
+    };
+
+    const handleServiceDetailChange = (serviceId, field, value) => {
+        let processedValue = value;
+        
+        // Format price fields with dots - handle Vietnamese keyboard input
+        if (field === 'price') {
+            processedValue = extractNumbers(value);
+        }
+
+        setServiceDetails(prev => ({
+            ...prev,
+            [serviceId]: {
+                ...prev[serviceId],
+                [field]: processedValue
             }
         }));
 
         // validate immediately
         setFieldErrors(prevErrs => {
             const newErrs = { ...prevErrs };
-            const priceVal = field === 'price' ? Number(value) : Number(serviceDetails[serviceId]?.price || 0);
+            const priceVal = field === 'price' ? Number(processedValue) : Number(serviceDetails[serviceId]?.price || 0);
             const warrVal = field === 'warranty' ? Number(value) : Number(serviceDetails[serviceId]?.warranty || 0);
             if (priceVal <= 0 || isNaN(priceVal)) {
                 newErrs[`${serviceId}-price`] = 'Giá phải > 0';
@@ -222,6 +463,15 @@ const CompleteProfile = () => {
             toast.error('Vui lòng nhập giá > 0 và bảo hành ≥ 0 cho tất cả dịch vụ');
             return;
         }
+        // validate address
+        if (!addressInput || addressInput.trim().length < 3) {
+            toast.error('Vui lòng nhập địa chỉ làm việc');
+            return;
+        }
+        if (!hasValidCoordinates) {
+            toast.error('Vui lòng chọn địa chỉ từ gợi ý để xác định tọa độ');
+            return;
+        }
         // Removed inspection fee validation
 
         try {
@@ -233,6 +483,10 @@ const CompleteProfile = () => {
             formDataAll.append('specialtiesCategories', JSON.stringify(selectedCategories));
             formDataAll.append('bankAccount', JSON.stringify(formData.bankAccount));
             formDataAll.append('serviceDetails', JSON.stringify(serviceDetails));
+            // Append location (GeoJSON Point)
+            formDataAll.append('currentLocation', JSON.stringify(formData.currentLocation));
+            // Append address string for User model
+            formDataAll.append('address', addressInput);
             // Removed inspectionFee
 
             // Append image files
@@ -249,6 +503,14 @@ const CompleteProfile = () => {
             });
 
             console.log('Submitting real data to API...');
+            console.log('FormData contents:', {
+                identification,
+                experienceYears,
+                addressInput,
+                currentLocation: formData.currentLocation,
+                selectedCategories,
+                serviceDetails
+            });
             
             // Call the Redux thunk to submit to backend
             const result = await dispatch(completeTechnicianProfileThunk(formDataAll));
@@ -554,26 +816,68 @@ const CompleteProfile = () => {
                                                                 <i className="bi bi-magic me-1"></i>
                                                                 Tự động nhận diện
                                                             </span>
+                                                            {isOcrProcessing && (
+                                                                <span className="ms-2 badge bg-warning text-dark">
+                                                                    <div className="spinner-border spinner-border-sm me-1" role="status">
+                                                                        <span className="visually-hidden">Loading...</span>
+                                                                    </div>
+                                                                    Đang nhận diện...
+                                                                </span>
+                                                            )}
                                                         </h6>
-                                                        <div className="row g-4">
+                                                <div className="row g-4">
                                                             <div className="col-md-6">
-                                                                <ImageDropZone
-                                                                    label="Mặt trước CCCD"
-                                                                    currentFile={frontImage}
-                                                                    onFileSelect={setFrontImage}
-                                                                    onRemove={() => setFrontImage(null)}
-                                                                    onOCRResult={handleOCRResult}
-                                                                    accept="image/*"
-                                                                    maxSize={10 * 1024 * 1024} // 10MB
-                                                                    showSelectButton={false}
-                                                                />
+                                                                <div className="position-relative">
+                                                                    <ImageDropZone
+                                                                        key={`front-${uploadCounter}-${frontImage ? frontImage.name + frontImage.size : 'empty'}`}
+                                                                        label="Mặt trước CCCD"
+                                                                        currentFile={frontImage}
+                                                                        onFileSelect={handleFrontImageSelect}
+                                                                        onRemove={() => {
+                                                                            // Show notification if there was a CCCD number
+                                                                            if (identification.trim().length > 0) {
+                                                                                toast.info('🗑️ Đã gỡ ảnh CCCD. Số CCCD đã được xóa.');
+                                                                            }
+                                                                            
+                                                                            setFrontImage(null);
+                                                                            setCccdOcrError(''); // Clear OCR error when removing image
+                                                                            setIdentification(''); // Clear CCCD number when removing image
+                                                                            setCccdErrors(''); // Clear validation errors
+                                                                            setIsOcrProcessing(false); // Stop OCR loading
+                                                                            setUploadCounter(prev => prev + 1);
+                                                                        }}
+                                                                        onOCRResult={handleOCRResult}
+                                                                        accept="image/*"
+                                                                        maxSize={10 * 1024 * 1024} // 10MB
+                                                                        showSelectButton={false}
+                                                                    />
+                                                                    {isOcrProcessing && (
+                                                                        <div className="position-absolute top-50 start-50 translate-middle">
+                                                                            <div className="bg-white rounded-3 p-3 shadow text-center" style={{minWidth: '200px'}}>
+                                                                                <div className="spinner-border text-primary mb-2" role="status">
+                                                                                    <span className="visually-hidden">Loading...</span>
+                                                                                </div>
+                                                                                <div className="small text-muted">
+                                                                                    <strong style={{color: '#667eea'}}>Đang nhận diện số CCCD...</strong><br/>
+                                                                                    <span style={{color: '#667eea'}} >Vui lòng đợi (tối đa 30 giây)</span>
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    )}
+                                                                </div>
                                                             </div>
                                                             <div className="col-md-6">
                                                                 <ImageDropZone
+                                                                    key={`back-${uploadCounter}-${backImage ? backImage.name + backImage.size : 'empty'}`}
                                                                     label="Mặt sau CCCD"
                                                                     currentFile={backImage}
-                                                                    onFileSelect={setBackImage}
-                                                                    onRemove={() => setBackImage(null)}
+                                                                    onFileSelect={handleBackImageSelect}
+                                                                    onRemove={() => {
+                                                                        setBackImage(null);
+                                                                        setCccdOcrError(''); // Clear OCR error when removing image  
+                                                                        setUploadCounter(prev => prev + 1);
+                                                                        toast.info('🗑️ Đã gỡ ảnh mặt sau CCCD.');
+                                                                    }}
                                                                     accept="image/*"
                                                                     maxSize={10 * 1024 * 1024} // 10MB
                                                                     showSelectButton={false}
@@ -583,10 +887,78 @@ const CompleteProfile = () => {
                                                     </div>
 
                                                     {/* Personal Details */}
-                                                    <div className="mb-5">
+                                            <div className="mb-5">
                                                         <h6 className="fw-semibold mb-3">Thông tin cá nhân</h6>
                                                         <div className="row g-4">
-                                        <div className="col-md-6">
+                                                    {/* Address input with suggestions */}
+                                                    <div className="col-12">
+                                                        <label className="form-label fw-medium">
+                                                            Địa chỉ làm việc
+                                                            <span className="text-danger ms-1">*</span>
+                                                        </label>
+                                                        <div style={{ position: 'relative' }}>
+                                                            <input
+                                                                type="text"
+                                                                className={`form-control ${
+                                                                    fieldTouched.address 
+                                                                        ? (addressInput.trim().length >= 3 && hasValidCoordinates ? 'is-valid' : 'is-invalid')
+                                                                        : ''
+                                                                }`}
+                                                                placeholder="Nhập địa chỉ, ví dụ: 105 Lê Duẩn, Đà Nẵng"
+                                                                value={addressInput}
+                                                                onChange={(e) => {
+                                                                    setAddressInput(e.target.value);
+                                                                    setFieldTouched(prev => ({ ...prev, address: true }));
+                                                                    if (e.target.value.trim().length >= 3) setShowAddressSuggestions(true);
+                                                                    else setShowAddressSuggestions(false);
+                                                                }}
+                                                                onFocus={() => { 
+                                                                    setFieldTouched(prev => ({ ...prev, address: true }));
+                                                                    if (addressInput.trim().length >= 3) setShowAddressSuggestions(true); 
+                                                                }}
+                                                                onBlur={() => setTimeout(() => setShowAddressSuggestions(false), 150)}
+                                                                ref={locationInputRef}
+                                                                autoComplete="off"
+                                                            />
+                                                            {addressLoading && <div className="small text-muted mt-1">Đang tìm gợi ý...</div>}
+                                                            {addressError && <div className="invalid-feedback d-block">{addressError}</div>}
+                                                            {showAddressSuggestions && addressSuggestions.length > 0 && (
+                                                                <ul className="list-group position-absolute w-100 shadow" style={{ zIndex: 1050, maxHeight: '220px', overflowY: 'auto' }}>
+                                                                    {addressSuggestions.map((s, idx) => (
+                                                                        <li
+                                                                            key={s.id || s.title + idx}
+                                                                            className="list-group-item list-group-item-action"
+                                                                            onMouseDown={async () => {
+                                                                                const label = s.address?.label || s.title;
+                                                                                setAddressInput(label);
+                                                                                setShowAddressSuggestions(false);
+                                                                                // Geocode to coords
+                                                                                const ok = await geocodeAddressToCoords(label);
+                                                                                if (!ok) {
+                                                                                    setAddressError('Không thể xác định toạ độ từ địa chỉ. Vui lòng thử địa chỉ khác.');
+                                                                                } else {
+                                                                                    setAddressError('');
+                                                                                }
+                                                                                setTimeout(() => locationInputRef.current?.blur(), 0);
+                                                                            }}
+                                                                        >
+                                                                            {s.address?.label || s.title}
+                                                                        </li>
+                                                                    ))}
+                                                                </ul>
+                                                            )}
+                                                            {fieldTouched.address && (!addressInput || !hasValidCoordinates) && (
+                                                                <div className="invalid-feedback d-block">Vui lòng nhập địa chỉ</div>
+                                                            )}
+                                                            {fieldTouched.address && addressInput && hasValidCoordinates && (
+                                                                <div className="valid-feedback d-block">
+                                                                    <i className="bi bi-check-circle me-1"></i>
+                                                                    Địa chỉ hợp lệ
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                    <div className="col-md-6">
                                                                 <label className="form-label fw-medium">
                                                                     Số CCCD
                                                                     <span className="text-danger ms-1">*</span>
@@ -608,7 +980,7 @@ const CompleteProfile = () => {
                                                                         value={identification}  
                                                                         onChange={(e) => handleCCCDChange(e.target.value)}
                                                                         maxLength="15" // 12 digits + 3 spaces
-                                                />
+                                                            />
                                             </div>
                                                                 {cccdErrors && (
                                                                     <div className="invalid-feedback d-block">{cccdErrors}</div>
@@ -619,6 +991,39 @@ const CompleteProfile = () => {
                                                                         Số CCCD hợp lệ
                                                                     </div>
                                                                 )}
+                                                        {/* Hướng dẫn re-upload khi OCR thất bại */}
+                                                        {cccdOcrError && (
+                                                            <div className="alert alert-warning mt-2 py-2" role="alert">
+                                                                <div className="d-flex align-items-start">
+                                                                    <i className="bi bi-exclamation-triangle me-2 mt-1"></i>
+                                                                    <div className="small">
+                                                                        <strong>Lỗi nhận diện CCCD:</strong><br/>
+                                                                        {cccdOcrError}
+                                                                        <br/><br/>
+                                                                        <strong>Giải pháp:</strong>
+                                                                        <ul className="mb-0 mt-1">
+                                                                            <li>Tải lại ảnh CCCD rõ nét, đầy đủ 4 góc</li>
+                                                                            <li>Đảm bảo ảnh không bị mờ, nghiêng hoặc che khuất</li>
+                                                                            <li>Hoặc nhập thủ công số CCCD vào ô bên trên</li>
+                                                                            <li>
+                                                                                <button 
+                                                                                    type="button"
+                                                                                    className="btn btn-sm btn-outline-warning mt-2"
+                                                                                    onClick={() => {
+                                                                                        setCccdOcrError('');
+                                                                                        setIsOcrProcessing(false);
+                                                                                        toast.info('Đã bỏ qua OCR. Vui lòng nhập thủ công số CCCD.');
+                                                                                    }}
+                                                                                >
+                                                                                    <i className="bi bi-skip-forward me-1"></i>
+                                                                                    Bỏ qua OCR - Nhập thủ công
+                                                                                </button>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
                                         </div>
                                         <div className="col-md-6">
                                                                 <label className="form-label fw-medium">
@@ -631,19 +1036,27 @@ const CompleteProfile = () => {
                                                                     </span>
                                                 <input
                                                     type="number"
-                                                                        className={`form-control ${experienceYears > 0 ? 'is-valid' : 'is-invalid'}`}
-                                                                        placeholder="Nhập số năm"
-                                                                        value={experienceYears || ''}
-                                                                        onChange={(e) => setExperienceYears(e.target.value === '' ? '' : Number(e.target.value))}
+                                                    className={`form-control ${
+                                                        fieldTouched.experienceYears 
+                                                            ? (experienceYears > 0 ? 'is-valid' : 'is-invalid')
+                                                            : ''
+                                                    }`}
+                                                    placeholder="Nhập số năm"
+                                                    value={experienceYears || ''}
+                                                    onChange={(e) => {
+                                                        setExperienceYears(e.target.value === '' ? '' : Number(e.target.value));
+                                                        setFieldTouched(prev => ({ ...prev, experienceYears: true }));
+                                                    }}
+                                                    onFocus={() => setFieldTouched(prev => ({ ...prev, experienceYears: true }))}
                                                     min="0"
-                                                                        max="50"
-                                                                    />
+                                                    max="50"
+                                                />
                                                                     <span className="input-group-text">năm</span>
                                                                 </div>
-                                                                {(experienceYears === '' || experienceYears <= 0) && (
+                                                                {fieldTouched.experienceYears && (experienceYears === '' || experienceYears <= 0) && (
                                                                     <div className="invalid-feedback d-block">Vui lòng nhập số năm kinh nghiệm</div>
                                                                 )}
-                                                                {experienceYears > 0 && (
+                                                                {fieldTouched.experienceYears && experienceYears > 0 && (
                                                                     <div className="valid-feedback d-block">
                                                                         <i className="bi bi-check-circle me-1"></i>
                                                                         {experienceYears} năm kinh nghiệm
@@ -656,13 +1069,34 @@ const CompleteProfile = () => {
                                                     {/* Next Button */}
                                                     <div className="d-flex justify-content-end">
                                                         <button 
-                                                            className="btn btn-primary btn-lg px-4"
-                                                            onClick={() => isStep1Valid && setCurrentStep(2)}
-                                                            disabled={!isStep1Valid}
+                                                            className={`btn btn-lg px-4 ${
+                                                                isStep1Valid && !isOcrProcessing
+                                                                    ? 'btn-primary' 
+                                                                    : 'btn-secondary'
+                                                            }`}
+                                                            onClick={() => (isStep1Valid && !isOcrProcessing) && setCurrentStep(2)}
+                                                            disabled={!isStep1Valid || isOcrProcessing}
                                                         >
-                                                            Tiếp tục <i className="bi bi-arrow-right ms-2"></i>
+                                                            {isOcrProcessing ? (
+                                                                <>
+                                                                    <div className="spinner-border spinner-border-sm me-2" role="status">
+                                                                        <span className="visually-hidden">Loading...</span>
+                                                                    </div>
+                                                                    Đang nhận diện CCCD...
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    Tiếp tục <i className="bi bi-arrow-right ms-2"></i>
+                                                                </>
+                                                            )}
                                                         </button>
                                                     </div>
+                                                    {cccdOcrError && (
+                                                        <div className="invalid-feedback d-block">
+                                                            <i className="bi bi-exclamation-triangle me-1"></i>
+                                                            {cccdOcrError}
+                                                        </div>
+                                                    )}
                                                 </>
                                             )}
 
@@ -809,14 +1243,15 @@ const CompleteProfile = () => {
                                                                                     <label className="form-label small fw-medium">Giá dịch vụ</label>
                                                                                     <div className="input-group input-group-modern">
                                                                                         <input
-                                                                                            type="number"
+                                                                                            type="text"
                                                                                             className={`form-control ${
                                                                                                 fieldErrors[`${serviceId}-price`] ? 'is-invalid' : ''
                                                                                             }`}
                                                                                             placeholder="0"
-                                                                                            value={serviceDetails[serviceId]?.price || ''}
-                                                                                            onChange={e => handleServiceDetailChange(serviceId, 'price', e.target.value)}
-                                                                                            min="0"
+                                                                                            value={formatNumberWithDots(serviceDetails[serviceId]?.price || '')}
+                                                                                            onChange={e => handlePriceInput(serviceId, e)}
+                                                                                            onCompositionEnd={e => handlePriceInput(serviceId, e)}
+                                                                                            inputMode="numeric"
                                                                                         />
                                                                                         <span className="input-group-text">VNĐ</span>
                                                                                     </div>
@@ -888,49 +1323,71 @@ const CompleteProfile = () => {
                                                 <label className="form-label">Tên ngân hàng</label>
                                                 <input
                                                     type="text"
-                                                                    className={`form-control ${formData.bankAccount.bankName ? 'is-valid' : 'is-invalid'}`}
-                                                                    placeholder="Ví dụ: Vietcombank"
+                                                    className={`form-control ${
+                                                        fieldTouched.bankName 
+                                                            ? (formData.bankAccount.bankName ? 'is-valid' : 'is-invalid')
+                                                            : ''
+                                                    }`}
+                                                    placeholder="Ví dụ: Vietcombank"
                                                     value={formData.bankAccount.bankName}
-                                                                    onChange={(e) => setFormData(prev => ({
-                                                                        ...prev,
-                                                                        bankAccount: { ...prev.bankAccount, bankName: e.target.value }
-                                                                    }))}
+                                                    onChange={(e) => {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            bankAccount: { ...prev.bankAccount, bankName: e.target.value }
+                                                        }));
+                                                        setFieldTouched(prev => ({ ...prev, bankName: true }));
+                                                    }}
                                                 />
-                                                                {!formData.bankAccount.bankName && (
-                                                                    <div className="invalid-feedback">Vui lòng nhập tên ngân hàng</div>
-                                                                )}
+                                                {fieldTouched.bankName && !formData.bankAccount.bankName && (
+                                                    <div className="invalid-feedback">Vui lòng nhập tên ngân hàng</div>
+                                                )}
                                         </div>
                                         <div className="col-md-6">
                                                 <label className="form-label">Số tài khoản</label>
                                                 <input
                                                     type="text"
-                                                                    className={`form-control ${formData.bankAccount.accountNumber ? 'is-valid' : 'is-invalid'}`}
-                                                                    placeholder="Nhập số tài khoản"
+                                                    className={`form-control ${
+                                                        fieldTouched.accountNumber 
+                                                            ? (formData.bankAccount.accountNumber ? 'is-valid' : 'is-invalid')
+                                                            : ''
+                                                    }`}
+                                                    placeholder="Nhập số tài khoản"
                                                     value={formData.bankAccount.accountNumber}
-                                                                    onChange={(e) => setFormData(prev => ({
-                                                                        ...prev,
-                                                                        bankAccount: { ...prev.bankAccount, accountNumber: e.target.value }
-                                                                    }))}
+                                                    onChange={(e) => {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            bankAccount: { ...prev.bankAccount, accountNumber: e.target.value }
+                                                        }));
+                                                        setBankFieldTouched(prev => ({ ...prev, accountNumber: true }));
+                                                    }}
                                                 />
-                                                                {!formData.bankAccount.accountNumber && (
-                                                                    <div className="invalid-feedback">Vui lòng nhập số tài khoản</div>
-                                                                )}
+                                                {fieldTouched.accountNumber && !formData.bankAccount.accountNumber && (
+                                                    <div className="invalid-feedback">Vui lòng nhập số tài khoản</div>
+                                                )}
                                         </div>
                                         <div className="col-md-6">
                                                 <label className="form-label">Chủ tài khoản</label>
                                                 <input
                                                     type="text"
-                                                                    className={`form-control ${formData.bankAccount.accountHolder ? 'is-valid' : 'is-invalid'}`}
-                                                                    placeholder="Họ và tên chủ tài khoản viết hoa không dấu"
+                                                    className={`form-control ${
+                                                        fieldTouched.accountHolder 
+                                                            ? (formData.bankAccount.accountHolder ? 'is-valid' : 'is-invalid')
+                                                            : ''
+                                                    }`}
+                                                    placeholder="Họ và tên chủ tài khoản viết không dấu"
+                                                    style={{ textTransform: 'uppercase' }}
                                                     value={formData.bankAccount.accountHolder}
-                                                                    onChange={(e) => setFormData(prev => ({
-                                                                        ...prev,
-                                                                        bankAccount: { ...prev.bankAccount, accountHolder: e.target.value }
-                                                                    }))}
+                                                    onChange={(e) => {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            bankAccount: { ...prev.bankAccount, accountHolder: e.target.value.toUpperCase() }
+                                                        }));
+                                                        setBankFieldTouched(prev => ({ ...prev, accountHolder: true }));
+                                                    }}
                                                 />
-                                                                {!formData.bankAccount.accountHolder && (
-                                                                    <div className="invalid-feedback">Vui lòng nhập tên chủ tài khoản</div>
-                                                                )}
+                                                {fieldTouched.accountHolder && !formData.bankAccount.accountHolder && (
+                                                    <div className="invalid-feedback">Vui lòng nhập tên chủ tài khoản</div>
+                                                )}
                                         </div>
                                         <div className="col-md-6">
                                                 <label className="form-label">Chi nhánh</label>
@@ -1064,7 +1521,7 @@ const CompleteProfile = () => {
                                                                                             <small className="text-truncate me-2">{svc?.serviceName}</small>
                                                                                             <small className="text-success fw-medium">
                                                                                                 {Number(detail.price) > 0 
-                                                                                                    ? Number(detail.price).toLocaleString('vi-VN') + ' VNĐ' 
+                                                                                                    ? formatNumberWithDots(detail.price) + ' VNĐ' 
                                                                                                     : 'Chưa nhập'
                                                                                                 }
                                                                                             </small>

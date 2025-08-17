@@ -16,12 +16,25 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
     // Tính toán quyền nếu prop isAllowed không truyền
     let computedAllowed = isAllowed;
     if (typeof isAllowed === 'undefined') {
-        const roleMatch = !requiredRole ? true : (
-            Array.isArray(requiredRole)
-                ? requiredRole.includes(user?.role?.name)
-                : user?.role?.name === requiredRole
-        );
-        computedAllowed = isAuthenticated && roleMatch;
+        // Xử lý đặc biệt cho trang complete-profile
+        if (location.pathname === '/technician/complete-profile' && requiredRole === 'TECHNICIAN') {
+            // Cho phép truy cập nếu:
+            // 1. User có role TECHNICIAN, HOẶC
+            // 2. Đang trong quá trình complete profile (verification status)
+            const isRequiredTechnician = user?.role?.name === 'TECHNICIAN';
+            const isInCompleteProfileFlow = verificationStatus?.step === 'COMPLETE_PROFILE' && 
+                                          verificationStatus?.redirectTo === '/technician/complete-profile';
+            
+            computedAllowed = isAuthenticated && (isRequiredTechnician || isInCompleteProfileFlow);
+        } else {
+            // Logic thông thường cho các route khác
+            const roleMatch = !requiredRole ? true : (
+                Array.isArray(requiredRole)
+                    ? requiredRole.includes(user?.role?.name)
+                    : user?.role?.name === requiredRole
+            );
+            computedAllowed = isAuthenticated && roleMatch;
+        }
     }
 
     const redirectInfo = useMemo(() => {
@@ -97,7 +110,14 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
     }
 
     if (redirectInfo) {
-        if (redirectInfo.message && redirectInfo.message !== lastToastMessageRef.current) {
+        // Chỉ hiển thị toast khi:
+        // 1. Có message mới (khác với message cuối)
+        // 2. Đã thay đổi trang (tránh spam khi re-render)
+        const shouldShowToast = redirectInfo.message && 
+                              redirectInfo.message !== lastToastMessageRef.current &&
+                              location.pathname !== prevPathRef.current;
+        
+        if (shouldShowToast) {
             // Xây nội dung toast kèm link hành động nhanh (nếu có)
             const defaultMsgs = ['Bạn không có quyền truy cập trang này','Vui lòng đăng nhập để tiếp tục'];
             const showActionLink = verificationStatus?.step && verificationStatus.step !== 'COMPLETED' && !defaultMsgs.includes(redirectInfo.message);
@@ -109,7 +129,10 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
                 </span>
             ) : redirectInfo.message;
 
-            toast.info(content, { autoClose: 5000 });
+            toast.info(content, { 
+                autoClose: 5000,
+                toastId: 'auth-redirect' // Prevent duplicate toasts with same ID
+            });
             lastToastMessageRef.current = redirectInfo.message;
         }
         return <Navigate to={redirectInfo.path} replace state={redirectInfo.state} />;

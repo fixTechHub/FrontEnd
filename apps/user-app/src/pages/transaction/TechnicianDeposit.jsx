@@ -8,9 +8,9 @@ import { toast } from 'react-toastify';
 import Header from '../../components/common/Header';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import { Link } from 'react-router-dom';
+import { Button } from 'react-bootstrap';
 
 const styles = {
-  // ===== Pagination =====
   pagination: {
     display: 'flex',
     justifyContent: 'center',
@@ -42,49 +42,126 @@ const styles = {
   disabledBtn: {
     opacity: 0.5,
     cursor: 'not-allowed',
-  }
+  },
+  modalBackdrop: {
+    background: 'rgba(15,23,42,.55)',
+    backdropFilter: 'blur(2px)',
+  },
+  modalContent: {
+    border: '1px solid #e6eaf2',
+    borderRadius: '16px',
+    overflow: 'hidden',
+    boxShadow: '0 30px 80px rgba(2,6,23,.25)',
+  },
+  modalHeader: {
+    background: 'linear-gradient(180deg, #fff, #f9fbff)',
+    borderBottom: '1px solid #edf0f6',
+  },
+  modalTitle: {
+    fontWeight: 800,
+    letterSpacing: '.2px',
+    color: '#0f172a',
+  },
+  modalClose: {
+    filter: 'grayscale(100%)',
+    opacity: 0.7,
+  },
+  modalCloseHover: {
+    opacity: 1,
+  },
+  modalBody: {
+    background: '#fff',
+  },
+  packageCard: {
+    minWidth: '220px',
+    maxWidth: '250px',
+    display: 'flex',
+    flexDirection: 'column',
+    borderColor: '#dbe4ff',
+  },
+  packageCardHover: {
+    transform: 'translateY(-2px)',
+    boxShadow: '0 14px 30px rgba(2,6,23,.12)',
+    borderColor: '#dbe4ff',
+  },
+  packageCardBody: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+  },
+  packageButton: {
+    width: '100px',
+  },
+  packageRibbon: {
+    position: 'absolute',
+    top: '10px',
+    right: '-12px',
+    background: '#111827',
+    color: '#fff',
+    fontWeight: 800,
+    fontSize: '12px',
+    padding: '6px 10px',
+    borderRadius: '999px',
+    boxShadow: '0 6px 16px rgba(0,0,0,.15)',
+  },
+  priceTag: {
+    display: 'inline-flex',
+    alignItems: 'baseline',
+    gap: '6px',
+    background: '#f4f7ff',
+    border: '1px solid #e3e9ff',
+    padding: '8px 12px',
+    borderRadius: '12px',
+  },
+  price: {
+    fontSize: '20px',
+    fontWeight: 900,
+    color: '#111827',
+  },
+  per: {
+    color: '#64748b',
+    fontWeight: 700,
+  },
+  btnUpgrade: {
+    background: '#111827',
+    color: '#fff',
+    border: '1px solid #111827',
+    borderRadius: '12px',
+    padding: '10px 14px',
+    fontWeight: 800,
+  },
+  btnUpgradeHover: {
+    background: '#0b1220',
+    color: '#fff',
+  },
 };
-
 
 const TechnicianDeposit = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const formatDate = (isoDate) => {
     const date = new Date(isoDate);
-    return date.toLocaleDateString('vi-VN'); // kết quả dạng dd/mm/yyyy
+    return date.toLocaleDateString('vi-VN');
   };
+
   const { loading: transactionLoading, error: transactionError, successMessage } = useSelector((state) => state.transaction);
   const { currentSubscription, status: subscriptionStatus, error: subscriptionError } = useSelector(
     (state) => state.technicianSubscription
   );
   const packages = useSelector((state) => state.technicianSubscription.all);
   const status = useSelector((state) => state.technicianSubscription.status);
-  console.log("package", currentSubscription);
-  console.log("pac", packages);
+  const { technician } = useSelector((state) => state.auth);
+  const technicianId = technician._id;
+  const { logs, loading, error, profile } = useSelector((state) => state.technician);
 
-
-  // States for Deposit
-  const [amount, setAmount] = useState('');
-  const [amountError, setAmountError] = useState(null);
-
-  // States for Withdraw
+  // State for Withdraw
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawAmountError, setWithdrawAmountError] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('BANK');
   const [months, setMonths] = useState(1);
-  const { technician } = useSelector((state) => state.auth);
-  const technicianId = technician._id;
-  console.log(technician);
-
   const [page, setPage] = useState(0);
   const limit = 5;
-  const { logs, loading, error, profile } = useSelector((state) => state.technician);
 
-  const [showPackages, setShowPackages] = useState(false);
-
-  // useEffect(() => {
-  //   dispatch(fetchTechnicianDepositLogs({ limit, skip: page * limit }));
-  //   dispatch(fetchCurrentSubscription(technicianId));
-  // }, [dispatch, page, technicianId]);
   useEffect(() => {
     if (technicianId) {
       dispatch(fetchTechnicianDepositLogs({ limit, skip: page * limit }));
@@ -97,15 +174,12 @@ const TechnicianDeposit = () => {
     console.log('Error:', error);
   }, [logs, error]);
 
-  // SỬAA LỖI: handleDepositSubmit - sử dụng đúng biến amount
-  const handleDepositSubmit = async (e) => {
-    e.preventDefault();
-    const parsedAmount = parseFloat(amount); // SỬA: từ withdrawAmount thành amount
+  const handleDepositSubmit = async () => {
+    const parsedAmount = parseFloat(technician.debBalance);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setAmountError('Hãy nhập số tiền hợp lệ');
+      toast.error('Số dư nợ không hợp lệ hoặc bằng 0');
       return;
     }
-    setAmountError(null);
 
     try {
       console.log('Submitting deposit with amount:', parsedAmount);
@@ -113,20 +187,12 @@ const TechnicianDeposit = () => {
       console.log('Deposit result:', resultAction);
       const depositURL = resultAction;
       if (depositURL) {
-        toast.success('Đang chuyển hướng đến cổng thanh toán...');
-        const modalElement = document.getElementById('deposit_modal');
-        const modal = window.bootstrap.Modal.getInstance(modalElement);
-        if (modal) {
-          modal.hide();
-        } else {
-          console.error('Bootstrap modal instance not found');
-        }
+        toast.success('Đang chuyển hướng đến cổng thanh toán PayOS...');
         console.log('Redirecting to:', depositURL);
         window.location.href = depositURL;
       } else {
         console.error('No deposit URL received');
         toast.error('Không thể lấy link thanh toán. Vui lòng thử lại.');
-        console.error('❌ Lỗi tạo link thanh toán gia hạn:', error);
       }
     } catch (err) {
       console.error('Deposit error:', err, {
@@ -136,7 +202,7 @@ const TechnicianDeposit = () => {
           data: err.response.data
         } : 'No response data'
       });
-      toast.error(err.message || 'Có lỗi xảy ra khi xử lý nạp tiền. Vui lòng thử lại.');
+      toast.error(err.message || 'Có lỗi xảy ra khi xử lý nạp tiền qua PayOS. Vui lòng thử lại.');
     }
   };
 
@@ -149,18 +215,14 @@ const TechnicianDeposit = () => {
     try {
       const packagePrice = selectedPackage.price;
       console.log('Submitting subscription with amount:', packagePrice);
-
-      // Gọi API qua Redux thunk hoặc trực tiếp axios/fetch
       const resultAction = await dispatch(subscriptionBalance({
         amount: packagePrice,
-        packageId: selectedPackage._id, // Gửi kèm ID gói!
+        packageId: selectedPackage._id,
       })).unwrap();
       const depositURL = resultAction;
 
       if (depositURL) {
         toast.success('Đang chuyển hướng đến cổng thanh toán...');
-
-        // Nếu đang ở trong modal, có thể đóng modal lại
         const modalElement = document.getElementById('upgradePackageModal');
         const modal = window.bootstrap.Modal.getInstance(modalElement);
         if (modal) {
@@ -168,7 +230,6 @@ const TechnicianDeposit = () => {
         } else {
           console.warn('Không tìm thấy instance của modal để đóng');
         }
-
         console.log('Redirecting to:', depositURL);
         window.location.href = depositURL;
       } else {
@@ -212,7 +273,6 @@ const TechnicianDeposit = () => {
         const modalElement = document.getElementById('extendPackageModal');
         const modal = window.bootstrap.Modal.getInstance(modalElement);
         if (modal) modal.hide();
-
         window.location.href = checkoutUrl;
       } else {
         toast.error('Không thể tạo link thanh toán');
@@ -229,29 +289,22 @@ const TechnicianDeposit = () => {
     modal.show();
   };
 
-
-  // SỬA LỖI: handleRequestWithdrawSubmit - sử dụng đúng biến withdrawAmount
   const handleRequestWithdrawSubmit = async (e) => {
     e.preventDefault();
-    const parsedAmount = parseFloat(withdrawAmount); // SỬA: từ amount thành withdrawAmount
+    const parsedAmount = parseFloat(withdrawAmount);
     if (isNaN(parsedAmount) || parsedAmount <= 0) {
-      setWithdrawAmountError('Hãy nhập số tiền hợp lệ'); // SỬA: setWithdrawAmountError
+      setWithdrawAmountError('Hãy nhập số tiền hợp lệ');
       return;
     }
-
-    // THÊM: Kiểm tra số dư
     if (parsedAmount > technician.balance) {
       setWithdrawAmountError('Số tiền rút không được vượt quá số dư khả dụng');
       return;
     }
-
     setWithdrawAmountError(null);
 
     try {
       console.log('Submitting withdraw request with amount:', parsedAmount);
       console.log("te", technicianId);
-
-
       const resultAction = await dispatch(withdrawBalance({
         technicianId: technicianId,
         amount: parsedAmount,
@@ -261,7 +314,6 @@ const TechnicianDeposit = () => {
       console.log('Withdraw request result:', resultAction);
       toast.success('Yêu cầu rút tiền đã được gửi đến admin');
 
-      // Đóng modal
       const modalElement = document.getElementById('withdraw_modal');
       const modal = window.bootstrap.Modal.getInstance(modalElement);
       if (modal) {
@@ -270,13 +322,9 @@ const TechnicianDeposit = () => {
         console.error('Bootstrap modal instance not found');
       }
 
-      // Reset input - SỬA: reset đúng các state
       setWithdrawAmount('');
       setPaymentMethod('BANK');
-
-      // THÊM: Refresh logs
       dispatch(fetchTechnicianDepositLogs({ limit, skip: page * limit }));
-
     } catch (err) {
       console.error('Withdraw request error:', err, {
         message: err.message,
@@ -289,12 +337,6 @@ const TechnicianDeposit = () => {
     }
   };
 
-  const handleAmountChange = (e) => {
-    setAmount(e.target.value);
-    setAmountError(null);
-  };
-
-  // THÊM: Handler cho withdraw amount
   const handleWithdrawAmountChange = (e) => {
     setWithdrawAmount(e.target.value);
     setWithdrawAmountError(null);
@@ -323,15 +365,12 @@ const TechnicianDeposit = () => {
 
   const handleUpgradeClick = () => {
     dispatch(getAllPackages());
-
-    const modal = new bootstrap.Modal(document.getElementById("upgradePackageModal"));
+    const modal = new window.bootstrap.Modal(document.getElementById("upgradePackageModal"));
     modal.show();
   };
 
-
-
   return (
-    <div className="main-wrapper"> {/* SỬA: className thay vì class */}
+    <div className="main-wrapper">
       <Header />
       <BreadcrumbBar />
 
@@ -343,52 +382,40 @@ const TechnicianDeposit = () => {
                 <ul>
                   <li>
                     <Link to={`/technician`} >
-                      <img src="/public/img/icons/dashboard-icon.svg" alt="Icon" />
-                      <span>Bảng điểu khiển</span>
+                      <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
+                      <span>Bảng điều khiển</span>
                     </Link>
                   </li>
                   <li>
                     <Link to={`/technician/booking`} >
-                      <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                      <img src="/img/icons/booking-icon.svg" alt="Icon" />
                       <span>Đơn hàng</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/technician/feedback">
-                      <img src="/public/img/icons/review-icon.svg" alt="Icon" />
+                      <img src="/img/icons/review-icon.svg" alt="Icon" />
                       <span>Đánh giá</span>
                     </Link>
                   </li>
                   <li>
                     <Link to={`/technician/${technicianId}/certificate`}>
-                      <img style={{ height: '28px' }} src="/public/img/cer.png" alt="Icon" />
+                      <img style={{ height: '28px' }} src="/img/cer.png" alt="Icon" />
                       <span>Chứng chỉ</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/technician/schedule">
-                      <img src="/public/img/icons/booking-icon.svg" alt="Icon" />
+                      <img src="/img/icons/booking-icon.svg" alt="Icon" />
                       <span>Lịch trình</span>
                     </Link>
                   </li>
                   <li>
                     <Link to="/technician/deposit" className="active">
-                      <img src="/public/img/icons/wallet-icon.svg" alt="Icon" />
+                      <img src="/img/icons/wallet-icon.svg" alt="Icon" />
                       <span>Ví của tôi</span>
                     </Link>
                   </li>
-                  {/* <li>
-                    <Link to={`/technician/earning`}>
-                      <img src="/public/img/icons/payment-icon.svg" alt="Icon" />
-                      <span>Thu nhập</span>
-                    </Link>
-                  </li> */}
-                  {/* <li>
-                    <Link to={`/profile`}>
-                      <img src="/public/img/icons/settings-icon.svg" alt="Icon" />
-                      <span>Cái đặt</span>
-                    </Link>
-                  </li> */}
                 </ul>
               </div>
             </div>
@@ -398,7 +425,7 @@ const TechnicianDeposit = () => {
 
       <div className="content">
         <div className="container">
-          <div className="content-header"> {/* SỬA: className thay vì class */}
+          <div className="content-header">
             <h4>Ví của tôi</h4>
           </div>
 
@@ -451,17 +478,22 @@ const TechnicianDeposit = () => {
                         Rút
                       </button>
                     </div>
-                    {/* <div className="wallet-btn">
-                      <a
-                        href="#deposit_modal"
+                    <div className="wallet-btn">
+                      <Button
                         className="btn"
-                        data-bs-toggle="modal"
-                        data-bs-target="#deposit_modal"
+                        onClick={handleDepositSubmit}
+                        disabled={transactionLoading || technician.debBalance <= 0}
                       >
-                        Nạp
-                      </a>
-                    </div> */}
+                        {transactionLoading ? 'Đang xử lý...' : 'Thanh toán nợ'}
+                      </Button>
+                    </div>
                   </div>
+                  {transactionError && (
+                    <small className="text-danger mt-2 d-block">{transactionError}</small>
+                  )}
+                  {successMessage && (
+                    <small className="text-success mt-2 d-block">{successMessage}</small>
+                  )}
                 </div>
               </div>
             </div>
@@ -504,8 +536,6 @@ const TechnicianDeposit = () => {
                 </div>
               </div>
             </div>
-
-
           </div>
 
           <div className="col-lg-12 d-flex">
@@ -618,86 +648,6 @@ const TechnicianDeposit = () => {
               </div>
             </div>
 
-            {/* Deposit Modal - SỬA LỖI */}
-            <div
-              className="modal new-modal fade"
-              id="deposit_modal"
-              data-bs-keyboard="false"
-              data-bs-backdrop="static"
-            >
-              <div className="modal-dialog modal-dialog-centered modal-md">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h4 className="modal-title">Khoản Giao Dịch</h4>
-                    <button
-                      type="button"
-                      className="close-btn"
-                      data-bs-dismiss="modal"
-                      onClick={() => {
-                        setAmount('');
-                        setAmountError(null);
-                        dispatch(clearTransactionState());
-                      }}
-                    >
-                      <span>×</span>
-                    </button>
-                  </div>
-                  <div className="modal-body">
-                    <form onSubmit={handleDepositSubmit}>
-                      <div className="row">
-                        <div className="col-md-12">
-                          <div className="modal-form-group">
-                            <label>
-                              Số tiền <span className="text-danger">*</span>
-                            </label>
-                            <input
-                              type="number"
-                              className="form-control"
-                              placeholder="Nhập số tiền"
-                              value={amount} // SỬA: từ withdrawAmount thành amount
-                              onChange={handleAmountChange} // SỬA: sử dụng đúng handler
-                              min="1"
-                            />
-                            {amountError && (
-                              <small className="text-danger">{amountError}</small>
-                            )}
-                            {transactionError && (
-                              <small className="text-danger">{transactionError}</small>
-                            )}
-                            {successMessage && (
-                              <small className="text-success">{successMessage}</small>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="modal-btn modal-btn-sm">
-                        <button
-                          type="button"
-                          className="btn btn-secondary"
-                          data-bs-dismiss="modal"
-                          onClick={() => {
-                            setAmount('');
-                            setAmountError(null);
-                            dispatch(clearTransactionState());
-                          }}
-                        >
-                          Thoát
-                        </button>
-                        <button
-                          type="submit"
-                          className="btn btn-primary"
-                          disabled={transactionLoading}
-                        >
-                          {transactionLoading ? 'Xử lý...' : 'Nạp'}
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Withdraw Modal - SỬA LỖI */}
             <div
               className="modal new-modal fade"
               id="withdraw_modal"
@@ -705,9 +655,9 @@ const TechnicianDeposit = () => {
               data-bs-backdrop="static"
             >
               <div className="modal-dialog modal-dialog-centered modal-md">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h4 className="modal-title">Yêu Cầu Rút Tiền</h4>
+                <div className="modal-content" style={styles.modalContent}>
+                  <div className="modal-header" style={styles.modalHeader}>
+                    <h4 className="modal-title" style={styles.modalTitle}>Yêu Cầu Rút Tiền</h4>
                     <button
                       type="button"
                       className="close-btn"
@@ -722,7 +672,7 @@ const TechnicianDeposit = () => {
                       <span>×</span>
                     </button>
                   </div>
-                  <div className="modal-body">
+                  <div className="modal-body" style={styles.modalBody}>
                     <form onSubmit={handleRequestWithdrawSubmit}>
                       <div className="row">
                         <div className="col-md-12">
@@ -742,7 +692,7 @@ const TechnicianDeposit = () => {
                               className="form-control"
                               placeholder="Nhập số tiền muốn rút"
                               value={withdrawAmount}
-                              onChange={handleWithdrawAmountChange} // SỬA: sử dụng đúng handler
+                              onChange={handleWithdrawAmountChange}
                               max={technician.balance}
                               min="1"
                             />
@@ -768,8 +718,6 @@ const TechnicianDeposit = () => {
                               onChange={(e) => setPaymentMethod(e.target.value)}
                             >
                               <option value="BANK">Chuyển khoản ngân hàng</option>
-                              {/* <option value="MOMO">Ví MoMo</option>
-                              <option value="ZALOPAY">ZaloPay</option> */}
                             </select>
                           </div>
                         </div>
@@ -802,7 +750,6 @@ const TechnicianDeposit = () => {
               </div>
             </div>
 
-            {/* View Deposit Modals */}
             {Array.isArray(logs) && logs.map((log) => (
               <div
                 key={log._id}
@@ -812,9 +759,9 @@ const TechnicianDeposit = () => {
                 data-bs-backdrop="static"
               >
                 <div className="modal-dialog modal-dialog-centered modal-md">
-                  <div className="modal-content">
-                    <div className="modal-header">
-                      <h4 className="modal-title">Chi tiết Giao Dịch</h4>
+                  <div className="modal-content" style={styles.modalContent}>
+                    <div className="modal-header" style={styles.modalHeader}>
+                      <h4 className="modal-title" style={styles.modalTitle}>Chi tiết Giao Dịch</h4>
                       <button
                         type="button"
                         className="close-btn"
@@ -823,7 +770,7 @@ const TechnicianDeposit = () => {
                         <span>×</span>
                       </button>
                     </div>
-                    <div className="modal-body">
+                    <div className="modal-body" style={styles.modalBody}>
                       <div className="row">
                         <div className="col-md-12">
                           <p>
@@ -833,7 +780,7 @@ const TechnicianDeposit = () => {
                             <strong>Loại:</strong> {log.type}
                           </p>
                           <p>
-                            <strong>Số tiền:</strong> {log.amount.toLocaleString('vi-VN')} VND {/* SỬA: format VND */}
+                            <strong>Số tiền:</strong> {log.amount.toLocaleString('vi-VN')} VND
                           </p>
                           <p>
                             <strong>Trạng thái:</strong> {log.status}
@@ -842,12 +789,12 @@ const TechnicianDeposit = () => {
                             <strong>Cách thức:</strong> {log.paymentMethod || 'N/A'}
                           </p>
                           <p>
-                            <strong>Trước giao dịch:</strong> {log.balanceBefore.toLocaleString('vi-VN')} VND {/* SỬA: format VND */}
+                            <strong>Trước giao dịch:</strong> {log.balanceBefore.toLocaleString('vi-VN')} VND
                           </p>
                           <p>
                             <strong>Sau giao dịch:</strong>{' '}
                             {log.balanceAfter
-                              ? `${log.balanceAfter.toLocaleString('vi-VN')} VND` /* SỬA: format VND */
+                              ? `${log.balanceAfter.toLocaleString('vi-VN')} VND`
                               : 'N/A'}
                           </p>
                           <p>
@@ -873,7 +820,6 @@ const TechnicianDeposit = () => {
               </div>
             ))}
 
-            {/* ✅ MODAL NÂNG CẤP GÓI */}
             <div
               className="modal fade"
               id="upgradePackageModal"
@@ -882,9 +828,9 @@ const TechnicianDeposit = () => {
               aria-hidden="true"
             >
               <div className="modal-dialog modal-xl modal-dialog-scrollable">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title" id="upgradeModalLabel">
+                <div className="modal-content" style={styles.modalContent}>
+                  <div className="modal-header" style={styles.modalHeader}>
+                    <h5 className="modal-title" id="upgradeModalLabel" style={styles.modalTitle}>
                       Chọn gói nâng cấp
                     </h5>
                     <button
@@ -894,21 +840,24 @@ const TechnicianDeposit = () => {
                       aria-label="Close"
                     />
                   </div>
-                  <div className="modal-body">
+                  <div className="modal-body" style={styles.modalBody}>
                     <div className="d-flex flex-wrap gap-3 justify-content-center">
                       {packages.map((item) => (
                         <div
                           key={item._id}
                           className="card flex-fill text-center shadow-sm package-card"
+                          style={styles.packageCard}
                         >
-                          <div className="card-body d-flex flex-column">
+                          <div className="card-body" style={styles.packageCardBody}>
                             <h5 className="card-title">{item.name}</h5>
                             <p className="card-text flex-grow-1">{item.description}</p>
-                            <p className="text-warning fw-bold mb-3">
-                              {item.price.toLocaleString()}đ / tháng
+                            <p className="text-warning fw-bold mb-3" style={styles.priceTag}>
+                              <span style={styles.price}>{item.price.toLocaleString()}đ</span>
+                              <span style={styles.per}>/ tháng</span>
                             </p>
                             <button
                               className="btn btn-success mt-auto align-self-center"
+                              style={{ ...styles.btnUpgrade, ...styles.packageButton }}
                               onClick={() => handleSubscriptionSubmit(item)}
                             >
                               Chọn gói
@@ -922,16 +871,14 @@ const TechnicianDeposit = () => {
               </div>
             </div>
 
-
-
             <div className="modal fade" id="extendPackageModal" tabIndex="-1" aria-hidden="true">
               <div className="modal-dialog">
-                <div className="modal-content">
-                  <div className="modal-header">
-                    <h5 className="modal-title">Gia hạn gói dịch vụ</h5>
+                <div className="modal-content" style={styles.modalContent}>
+                  <div className="modal-header" style={styles.modalHeader}>
+                    <h5 className="modal-title" style={styles.modalTitle}>Gia hạn gói dịch vụ</h5>
                     <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
                   </div>
-                  <div className="modal-body">
+                  <div className="modal-body" style={styles.modalBody}>
                     <label className="form-label">Chọn thời gian gia hạn:</label>
                     <select
                       className="form-select"
@@ -947,13 +894,12 @@ const TechnicianDeposit = () => {
                   <div className="modal-footer">
                     <button className="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                     <button
-                      type="button" // tránh submit form gây reload
+                      type="button"
                       className="btn btn-primary"
                       onClick={handleExtendSubmit}
                     >
                       Xác nhận thanh toán
                     </button>
-
                   </div>
                 </div>
               </div>
@@ -962,138 +908,40 @@ const TechnicianDeposit = () => {
         </div>
       </div>
 
-      <style>{`
-        /* Backdrop đẹp hơn một chút */
-.modal-backdrop.show{
-  background: rgba(15,23,42,.55);
-  backdrop-filter: blur(2px);
-}
-
-/* Khung modal */
-.upgrade-modal{
-  border: 1px solid #e6eaf2;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 30px 80px rgba(2,6,23,.25);
-}
-
-/* Header modal */
-.upgrade-modal__head{
-  background: linear-gradient(180deg, #fff, #f9fbff);
-  border-bottom: 1px solid #edf0f6;
-}
-.upgrade-modal__head .modal-title{
-  font-weight: 800;
-  letter-spacing: .2px;
-  color: #0f172a;
-}
-.upgrade-close{
-  filter: grayscale(100%);
-  opacity: .7;
-}
-.upgrade-close:hover{ opacity: 1; }
-
-/* Body modal */
-.upgrade-modal__body{
-  background: #fff;
-}
-
-/* Card gói */
-
-.package-card:hover{
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(2,6,23,.12);
-  border-color: #dbe4ff;
-}
-  .package-card {
-  min-width: 220px;
-  max-width: 250px;
-  display: flex;
-  flex-direction: column;
-}
-
-.package-card .card-body {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.package-card button {
-  width: 100px;
-}
-
-/* Ribbon “Phổ biến” */
-.package-ribbon{
-  position: absolute;
-  top: 10px; right: -12px;
-  background: #111827; color: #fff;
-  font-weight: 800; font-size: 12px;
-  padding: 6px 10px; border-radius: 999px;
-  box-shadow: 0 6px 16px rgba(0,0,0,.15);
-}
-.package-card.is-popular{ border-color: #111827; }
-
-/* Giá */
-.price-tag{
-  display: inline-flex; align-items: baseline; gap: 6px;
-  background: #f4f7ff; border: 1px solid #e3e9ff;
-  padding: 8px 12px; border-radius: 12px;
-}
-.price{ font-size: 20px; font-weight: 900; color: #111827; }
-.per{ color: #64748b; font-weight: 700; }
-
-/* Nút chọn gói */
-.btn-upgrade{
-  --btn-bg: #111827;
-  --btn-bg-hover: #0b1220;
-  --btn-border: #111827;
-  background: var(--btn-bg);
-  color: #fff; border: 1px solid var(--btn-border);
-  border-radius: 12px; padding: 10px 14px; font-weight: 800;
-}
-.btn-upgrade:hover{ background: var(--btn-bg-hover); color: #fff; }
-
-/* Responsive */
-@media (max-width: 576px){
-  .package-ribbon{ right: 10px; }
-  .price{ font-size: 18px; }
-} thêm phần css này vào 
-const styles = {
-  // ===== Pagination =====
-  pagination: {
-    display: 'flex',
-    justifyContent: 'center',
-    marginTop: '20px',
-    flexWrap: 'wrap',
-    gap: '6px',
-  },
-  paginationBtn: {
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #dee2e6',
-    borderRadius: '6px',
-    color: '#495057',
-    padding: '6px 12px',
-    fontSize: '14px',
-    fontWeight: '500',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  activeBtn: {
-    backgroundColor: '#0d6efd',
-    color: '#fff',
-    borderColor: '#0d6efd',
-    boxShadow: '0 2px 6px rgba(13,110,253,0.3)',
-  },
-  hoverBtn: {
-    backgroundColor: '#e9ecef',
-    borderColor: '#ced4da',
-  },
-  disabledBtn: {
-    opacity: 0.5,
-    cursor: 'not-allowed',
-  }
-};
-
+      <style jsx>{`
+        .modal-backdrop.show {
+          background: ${styles.modalBackdrop.background};
+          backdrop-filter: ${styles.modalBackdrop.backdropFilter};
+        }
+        .package-card:hover {
+          transform: ${styles.packageCardHover.transform};
+          box-shadow: ${styles.packageCardHover.boxShadow};
+          border-color: ${styles.packageCardHover.borderColor};
+        }
+        .package-ribbon {
+          position: ${styles.packageRibbon.position};
+          top: ${styles.packageRibbon.top};
+          right: ${styles.packageRibbon.right};
+          background: ${styles.packageRibbon.background};
+          color: ${styles.packageRibbon.color};
+          font-weight: ${styles.packageRibbon.fontWeight};
+          font-size: ${styles.packageRibbon.fontSize};
+          padding: ${styles.packageRibbon.padding};
+          border-radius: ${styles.packageRibbon.borderRadius};
+          box-shadow: ${styles.packageRibbon.boxShadow};
+        }
+        .btn-upgrade:hover {
+          background: ${styles.btnUpgradeHover.background};
+          color: ${styles.btnUpgradeHover.color};
+        }
+        @media (max-width: 576px) {
+          .package-ribbon {
+            right: 10px;
+          }
+          .price {
+            font-size: 18px;
+          }
+        }
       `}</style>
     </div>
   );

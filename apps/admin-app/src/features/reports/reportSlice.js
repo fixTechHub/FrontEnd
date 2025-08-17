@@ -1,5 +1,5 @@
-import { createSlice } from '@reduxjs/toolkit';
-
+import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { getReportCounts } from './reportAPI';
 const initialState = {
   reports: [],
   selectedReport: null,
@@ -10,12 +10,25 @@ const initialState = {
     type: '',
     status: '',
   },
+  count: 0,
   pagination: {
     currentPage: 1,
     pageSize: 10,
     total: 0,
   },
 };
+
+export const fetchReportCounts = createAsyncThunk(
+  'reports/fetchReportCounts',
+  async (technicianId, { rejectWithValue }) => {
+    try {
+      const response = await getReportCounts(technicianId);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Failed to fetch report counts');
+    }
+  }
+);
 
 const reportSlice = createSlice({
   name: 'reports',
@@ -54,6 +67,21 @@ const reportSlice = createSlice({
     removeReport: (state, action) => {
       state.reports = state.reports.filter(report => report.id !== action.payload);
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchReportCounts.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchReportCounts.fulfilled, (state, action) => {
+        state.loading = false;
+        state.reportCount = action.payload;
+      })
+      .addCase(fetchReportCounts.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      });
   },
 });
 

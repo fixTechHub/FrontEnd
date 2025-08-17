@@ -4,7 +4,7 @@ import { checkAuthThunk } from "../features/auth/authSlice";
 import React, { useEffect, useState } from 'react';
 import ProtectedRoute from "./access/PrivateRoute";
 import PrivateRoute from "./access/PrivateRoute";
-import HomePage from "../pages/home/HomePage";
+import NewHomePage from "../pages/home/NewHomePage";
 import LoginPage from "../pages/authentication/LogInPage";
 import RegisterPage from "../pages/authentication/RegisterPage";
 import ForgotPasswordPage from "../pages/authentication/ForgotPasswordPage";
@@ -54,7 +54,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       {/* ================= PUBLIC ROUTES ================= */}
-              <Route path="/" element={<HomePage />} />
+              <Route path="/" element={<NewHomePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
