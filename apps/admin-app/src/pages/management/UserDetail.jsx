@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, Descriptions, Tag, Space, Button, Spin, message, Tabs, Table, Avatar, Modal, Input, Select } from 'antd';
 const { TextArea } = Input;
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { ArrowLeftOutlined, LockOutlined, UnlockOutlined } from '@ant-design/icons';
 import { userAPI } from '../../features/users/userAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { serviceAPI } from '../../features/service/serviceAPI';
@@ -45,6 +45,10 @@ export default function UserDetail() {
   const [filterService, setFilterService] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [allServices, setAllServices] = useState([]);
+  const [isLockModalOpen, setIsLockModalOpen] = useState(false);
+  const [lockReason, setLockReason] = useState('');
+  const [isLocking, setIsLocking] = useState(false);
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
  
   useEffect(() => {
     const load = async () => {
@@ -149,6 +153,47 @@ export default function UserDetail() {
       message.error('Gửi cảnh cáo thất bại!');
     }
   }
+
+  const handleLockUser = async () => {
+    if (!lockReason.trim()) {
+      message.error('Vui lòng nhập lý do khóa tài khoản');
+      return;
+    }
+    
+    try {
+      setIsLocking(true);
+      await userAPI.lockUser(user.id, { lockedReason: lockReason });
+      message.success('Khóa tài khoản thành công!');
+      
+      // Reload user data to get updated status
+      const updatedUser = await userAPI.getById(id);
+      setUser(updatedUser);
+      
+      setIsLockModalOpen(false);
+      setLockReason('');
+    } catch (error) {
+      console.error('Lock user error:', error);
+      message.error('Khóa tài khoản thất bại!');
+    } finally {
+      setIsLocking(false);
+    }
+  };
+
+  const handleUnlockUser = async () => {
+    try {
+      await userAPI.unlockUser(user.id);
+      message.success('Mở khóa tài khoản thành công!');
+      
+      // Reload user data to get updated status
+      const updatedUser = await userAPI.getById(id);
+      setUser(updatedUser);
+      setShowUnlockModal(false);
+    } catch (error) {
+      console.error('Unlock user error:', error);
+      message.error('Mở khóa tài khoản thất bại!');
+    }
+  };
+
   if (loading) {
     return (
       <div className="container-fluid">
@@ -193,8 +238,29 @@ export default function UserDetail() {
                       <div style={{fontSize:20, fontWeight:600}}>{user.fullName || 'N/A'}</div>
                       <div style={{color:'#888', marginTop:4}}>ID: {user.id}</div>
                       <br></br>
-                      <div>
-                      <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
+                      <div style={{display:'flex', gap:12, flexWrap:'wrap'}}>
+                        <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
+                        
+                        {/* Lock/Unlock Button */}
+                        {user.lockedReason ? (
+                          <Button 
+                            type="primary" 
+                            style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                            icon={<UnlockOutlined />}
+                            onClick={() => setShowUnlockModal(true)}
+                          >
+                            Mở Khóa Tài Khoản
+                          </Button>
+                        ) : (
+                          <Button 
+                            type="primary" 
+                            danger 
+                            icon={<LockOutlined />}
+                            onClick={() => setIsLockModalOpen(true)}
+                          >
+                            Khóa Tài Khoản
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -380,6 +446,93 @@ export default function UserDetail() {
       placeholder="Nhập nội dung cảnh cáo"
     />
   </Modal>
+
+  {/* Lock User Modal */}
+  {isLockModalOpen && (
+    <div
+      className="modal fade show"
+      style={{
+        display: 'block',
+        zIndex: 2000,
+        background: 'rgba(0,0,0,0.2)',
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0
+      }}
+    >
+      <div className="modal-dialog modal-dialog-centered modal-md" style={{ zIndex: 2100 }}>
+        <div className="modal-content">
+          <form onSubmit={(e) => { e.preventDefault(); handleLockUser(); }}>
+            <div className="modal-header">
+              <h5 className="mb-0">Khóa người dùng</h5>
+              <button type="button" className="btn-close" onClick={() => setIsLockModalOpen(false)} aria-label="Close"></button>
+            </div>
+            <div className="modal-body pb-1">
+              <div className="alert alert-warning">
+                <i className="ti ti-alert-triangle me-2"></i>
+                Bạn có chắc chắn muốn khóa người dùng: <strong>{user?.fullName}</strong>?
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Lý do khóa<span className="text-danger">*</span></label>
+                <textarea
+                  className="form-control"
+                  rows="3"
+                  value={lockReason}
+                  onChange={(e) => setLockReason(e.target.value)}
+                  placeholder="Hãy cung cấp lý do để khóa người dùng..."
+                  required
+                />
+              </div>
+            </div>
+            <div className="modal-footer">
+              <div className="d-flex justify-content-end w-100">
+                <button type="button" className="btn btn-light me-3" onClick={() => setIsLockModalOpen(false)}>Hủy</button>
+                <button type="submit" className="btn btn-danger" disabled={isLocking}>
+                  {isLocking ? 'Đang xử lý...' : 'Xác nhận'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )}
+
+  {/* Unlock Modal */}
+  {showUnlockModal && (
+    <div
+      className="modal fade show"
+      style={{
+        display: 'block',
+        zIndex: 2000,
+        background: 'rgba(0,0,0,0.2)',
+        position: 'fixed',
+        top: 0, left: 0, right: 0, bottom: 0
+      }}
+    >
+      <div className="modal-dialog modal-dialog-centered modal-md" style={{ zIndex: 2100 }}>
+        <div className="modal-content">
+          <form onSubmit={(e) => { e.preventDefault(); handleUnlockUser(); }}>
+            <div className="modal-header">
+              <h5 className="mb-0">Mở khóa người dùng</h5>
+              <button type="button" className="btn-close" onClick={() => setShowUnlockModal(false)} aria-label="Close"></button>
+            </div>
+            <div className="modal-body pb-1">
+              <div className="alert alert-info">
+                <i className="ti ti-info-circle me-2"></i>
+                Bạn có chắc chắn muốn mở khóa người dùng: <strong>{user?.fullName}</strong>?
+              </div>
+            </div>
+            <div className="modal-footer">
+              <div className="d-flex justify-content-end w-100">
+                <button type="button" className="btn btn-light me-3" onClick={() => setShowUnlockModal(false)}>Hủy</button>
+                <button type="submit" className="btn btn-success">Xác nhận</button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )}
    </>
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
  Table,
  Button,
@@ -9,12 +10,14 @@ import {
  Row,
  Col,
  Tag,
- message,
+ message, 
  Space,
  Modal,
  Descriptions,
  Divider
 } from 'antd';
+
+const { TextArea } = Input;
 import {
  SearchOutlined,
  EyeOutlined,
@@ -22,7 +25,10 @@ import {
  UserOutlined,
  CalendarOutlined,
  ExclamationCircleOutlined,
- SafetyOutlined
+ SafetyOutlined,
+ EditOutlined,
+ CheckCircleOutlined,
+ CloseCircleOutlined
 } from '@ant-design/icons';
 import { reportAPI } from '../../features/reports/reportAPI';
 import { setReports, setSelectedReport, setFilters, clearFilters, setLoading, setError } from '../../features/reports/reportSlice';
@@ -36,13 +42,23 @@ const { Option } = Select;
 
 const ReportManagement = () => {
  const dispatch = useDispatch();
+ const navigate = useNavigate();
  const [selectedReport, setSelectedReport] = useState(null);
  const [isModalVisible, setIsModalVisible] = useState(false);
  const [userMap, setUserMap] = useState({});
+ const [selectedUser, setSelectedUser] = useState(null);
+ const [isUserModalVisible, setIsUserModalVisible] = useState(false);
  const [sortField, setSortField] = useState('createdAt');
  const [sortOrder, setSortOrder] = useState('desc');
  const [currentPage, setCurrentPage] = useState(1);
  const [reportsPerPage, setReportsPerPage] = useState(10);
+ const [isModalOpen, setIsModalOpen] = useState(false);
+ const [isLockModalOpen, setIsLockModalOpen] = useState(false);
+ const [lockReason, setLockReason] = useState('');
+ const [isLocking, setIsLocking] = useState(false);
+ const [showUnlockModal, setShowUnlockModal] = useState(false);
+ const [updatingStatus, setUpdatingStatus] = useState(false);
+
 
  // Redux selectors
  const filteredReports = useSelector(selectFilteredReports);
@@ -141,29 +157,128 @@ const ReportManagement = () => {
    setIsModalVisible(true);
  };
 
+ const handleViewUserDetails = (userId) => {
+   // Kiểm tra userId có hợp lệ không
+   if (!userId) {
+     message.error('Không có thông tin người dùng');
+     return;
+   }
+   
+   // Dẫn đến trang UserDetail - sử dụng route đúng
+   navigate(`/admin/user-management/${userId}`);
+ };
 
- const getStatusColor = (status) => {
-   switch (status) {
-     case 'pending':
-       return 'orange';
-     case 'resolved':
-       return 'green';
-     case 'rejected':
-       return 'red';
-     default:
-       return 'default';
+
+   const handleStatusAction = (reportId, status) => {
+    const actionText = status === 'RESOLVED' ? 'đồng ý' : 'từ chối';
+    Modal.confirm({
+      title: `Xác nhận ${actionText} báo cáo`,
+      content: `Bạn có chắc chắn muốn ${actionText} báo cáo này không?`,
+      okText: 'Xác nhận',
+      cancelText: 'Hủy bỏ',
+      okType: status === 'RESOLVED' ? 'primary' : 'danger',
+      onOk: () => {
+        // Tự động set status và ghi chú mặc định
+        const defaultNote = status === 'RESOLVED' 
+          ? 'Báo cáo đã được xử lý và giải quyết thành công.' 
+          : 'Báo cáo đã bị từ chối giải quyết.';
+        
+        handleUpdateStatus(reportId, status, defaultNote);
+      }
+    });
+  };
+
+ const handleUpdateStatus = async (reportId, status, note) => {
+   try {
+     setUpdatingStatus(true);
+     
+     // Tạo DTO theo đúng format Backend yêu cầu
+     const statusData = {
+       status: status,
+       resolvedBy: 'admin',
+       resolutionNote: note || 'Không có ghi chú'
+     };
+
+     console.log('Updating report status:', { reportId, status, statusData });
+     
+     // Sử dụng reportAPI thay vì fetch trực tiếp
+     const updatedReport = await reportAPI.updateStatus(reportId, statusData);
+     console.log('Updated report:', updatedReport);
+     
+     // Reload reports để cập nhật UI
+     const reports = await reportAPI.getAll();
+     dispatch(setReports(reports));
+     
+     message.success(`Cập nhật báo cáo thành công: ${status}`);
+     
+     // Nếu status là RESOLVED, hiển thị thông báo về việc kiểm tra khóa user
+     if (status === 'RESOLVED') {
+       message.info('Hệ thống sẽ tự động kiểm tra và khóa user nếu vi phạm nhiều lần');
+     }
+     
+   } catch (error) {
+     console.error('Update status error:', error);
+     
+     let errorMessage = 'Cập nhật báo cáo thất bại';
+     if (error.response?.data?.message) {
+       errorMessage = error.response.data.message;
+     } else if (error.message) {
+       errorMessage = `${errorMessage}: ${error.message}`;
+     }
+     
+     message.error(errorMessage);
+   } finally {
+     setUpdatingStatus(false);
    }
  };
 
 
  const getTypeColor = (type) => {
    switch (type) {
-     case 'REPORT':
+     case 'BOOKING':
        return 'blue';
      case 'VIOLATION':
        return 'red';
      case 'WARRANTY':
        return 'green';
+     default:
+       return 'default';
+   }
+ };
+
+ const getStatusColor = (status) => {
+   switch (status) {
+     case 'PENDING':
+       return 'orange';
+     case 'AWAITING_RESPONSE':
+       return 'blue';
+     case 'RESOLVED':
+       return 'green';
+     case 'REJECTED':
+       return 'red';
+     default:
+       return 'default';
+   }
+ };
+
+ const getTagColor = (tag) => {
+   switch (tag) {
+     case 'NO_SHOW':
+       return 'red';
+     case 'LATE':
+       return 'orange';
+     case 'RUDE':
+       return 'red';
+     case 'ISSUE':
+       return 'yellow';
+     case 'OTHER':
+       return 'default';
+     case 'WARRANTY_DENIED':
+       return 'red';
+     case 'WARRANTY_DELAY':
+       return 'orange';
+     case 'POOR_FIX':
+       return 'red';
      default:
        return 'default';
    }
@@ -177,7 +292,7 @@ const ReportManagement = () => {
      key: 'type',
      render: (type) => {
        let icon;
-       if (type === 'REPORT') {
+       if (type === 'BOOKING') {
          icon = <FileTextOutlined />;
        } else if (type === 'WARRANTY') {
          icon = <SafetyOutlined />;
@@ -190,6 +305,20 @@ const ReportManagement = () => {
        return (
          <Tag color={getTypeColor(type)} icon={icon}>
            {type}
+         </Tag>
+       );
+     },
+   },
+   {
+     title: 'Tag',
+     dataIndex: 'tag',
+     key: 'tag',
+     render: (tag) => {
+       if (!tag) return '-';
+       
+       return (
+         <Tag color={getTagColor(tag)}>
+           {tag.replace(/_/g, ' ')}
          </Tag>
        );
      },
@@ -210,7 +339,7 @@ const ReportManagement = () => {
      key: 'status',
      render: (status) => (
        <Tag color={getStatusColor(status)}>
-         {status?.toUpperCase()}
+         {status?.replace(/_/g, ' ').toUpperCase()}
        </Tag>
      ),
    },
@@ -230,10 +359,35 @@ const ReportManagement = () => {
      title: 'Hành động',
      key: 'actions',
      render: (_, record) => (
-     
-     <Button className="management-action-btn" size="middle" onClick={() => handleViewReportDetails(record)}>
-     <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
-   </Button>
+       <Space>
+        {record.status === 'PENDING' && (
+          <>
+            <Button 
+              type="primary" 
+              className="management-action-btn"
+              icon={<CheckCircleOutlined />}
+              onClick={() => handleStatusAction(record.id, 'RESOLVED')}
+              style={{ marginLeft: 8, backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+            >
+              Đồng ý
+            </Button>
+            <Button 
+              type="primary" 
+              className="management-action-btn"
+              icon={<CloseCircleOutlined />}
+              onClick={() => handleStatusAction(record.id, 'REJECTED')}
+              style={{ marginLeft: 8 }}
+              danger
+            >
+              Từ chối
+            </Button>
+          </>
+        )}
+         <Button className="management-action-btn" size="middle" onClick={() => handleViewReportDetails(record)}>
+           <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
+         </Button>
+         
+       </Space>
      ),
    },
  ];
@@ -248,20 +402,31 @@ const ReportManagement = () => {
      const exportColumns = [
        { title: 'ID', dataIndex: 'id', key: 'id' },
        { title: 'Loại báo cáo', dataIndex: 'type', key: 'type' },
+       { title: 'Tag', dataIndex: 'tag', key: 'tag' },
        { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
        { title: 'Người báo cáo', dataIndex: 'reporterId', key: 'reporterId' },
        { title: 'Người bị báo cáo', dataIndex: 'reportedUserId', key: 'reportedUserId' },
+       { title: 'Số lần bị report', dataIndex: 'reportCount', key: 'reportCount' },
        { title: 'Thời gian tạo', dataIndex: 'createdAt', key: 'createdAt' },
      ];
 
-     const exportData = sortedReports.map((report) => ({
-       id: report.id,
-       type: report.type || '',
-       status: report.status || '',
-       reporterId: userMap[report.reporterId] || report.reporterId || '',
-       reportedUserId: userMap[report.reportedUserId] || report.reportedUserId || '',
-       createdAt: formatDateTime(report.createdAt),
-     }));
+     const exportData = sortedReports.map((report) => {
+       // Đếm số lần user này bị report
+       const reportCount = filteredReports.filter(
+         r => r.reportedUserId === report.reportedUserId
+       ).length;
+       
+       return {
+         id: report.id,
+         type: report.type || '',
+         tag: report.tag || '',
+         status: report.status || '',
+         reporterId: userMap[report.reporterId] || report.reporterId || '',
+         reportedUserId: userMap[report.reportedUserId] || report.reportedUserId || '',
+         reportCount: reportCount,
+         createdAt: formatDateTime(report.createdAt),
+       };
+     });
 
      createExportData(exportData, exportColumns, 'reports', 'Reports');
    }
@@ -333,7 +498,7 @@ const ReportManagement = () => {
                style={{ width: 130 }}
                allowClear
              >
-               <Option value="REPORT">REPORT</Option>
+               <Option value="BOOKING">BOOKING</Option>
                <Option value="VIOLATION">VIOLATION</Option>
                <Option value="WARRANTY">WARRANTY</Option>
              </Select>
@@ -345,10 +510,9 @@ const ReportManagement = () => {
                allowClear
              >
                <Option value="PENDING">PENDING</Option>
+               <Option value="AWAITING_RESPONSE">AWAITING RESPONSE</Option>
                <Option value="RESOLVED">RESOLVED</Option>
                <Option value="REJECTED">REJECTED</Option>
-               <Option value="CONFIRMED">CONFIRMED</Option>
-               <Option value="CLOSED">CLOSED</Option>
              </Select>
            </div>
            <div className="d-flex align-items-center" style={{ gap: 12 }}>
@@ -384,7 +548,7 @@ const ReportManagement = () => {
              {filters.status && (
                <span className="badge bg-warning-transparent">
                  <i className="ti ti-filter me-1"></i>
-                 Trạng thái: {filters.status}
+                 Trạng thái: {filters.status?.replace(/_/g, ' ').toUpperCase()}
                </span>
              )}
              <button 
@@ -548,11 +712,13 @@ const ReportManagement = () => {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 700 }}>
-                    {selectedReport.type || 'REPORT'}
+                    {selectedReport.type || 'BÁO CÁO'}
                   </div>
-                  <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
-                    {selectedReport.status?.toUpperCase()}
-                  </Tag>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                      {selectedReport.status?.replace(/_/g, ' ').toUpperCase()}
+                      </Tag>
+                  </div>
                 </div>
                 {selectedReport.id && (
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -562,6 +728,28 @@ const ReportManagement = () => {
               </div>
               <div style={{ padding: 24 }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                  
+
+                        {/* Title and Description full width */}
+                  <div style={{ gridColumn: '1 / span 2' }}>
+                    {selectedReport.title && (
+                      <div style={{
+                        background: '#ffffff',
+                        border: '1px solid #f0f0f0',
+                        borderRadius: 12,
+                        padding: 16,
+                        marginBottom: 16,
+                      }}>
+                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tiêu đề</div>
+                        <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6, fontWeight: 600 }}>
+                          {selectedReport.title}
+                        </div>
+                      </div>
+                    )}
+                    
+                  </div>
+
+
                   {/* Overview */}
                   <div>
                     <div style={{
@@ -572,15 +760,27 @@ const ReportManagement = () => {
                       marginBottom: 16,
                     }}>
                       <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tổng quan</div>
-                      <div style={{ display: 'grid', rowGap: 10 }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Xử phạt</span>
-                          <span style={{ fontWeight: 600 }}>{selectedReport.penalty || ''}</span>
-                        </div>
+                        <div style={{ display: 'grid', rowGap: 10 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <span style={{ color: '#8c8c8c' }}>Tag</span>
+                            <span style={{ fontWeight: 600 }}>
+                              <Tag color={selectedReport.responseLocked ? 'green' : 'red'}>
+                                <span style={{ fontWeight: 600 }}>{selectedReport.tag?.replace(/_/g, ' ').toUpperCase() || ''}</span>
+                              </Tag>
+                            </span>
+                          </div>
+
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Thời gian tạo</span>
                           <span style={{ fontWeight: 600 }}>{formatDateTime(selectedReport.createdAt)}</span>
                         </div>
+                        
+                        {selectedReport.responseDeadline && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#8c8c8c' }}>Hạn phản hồi</span>
+                            <span style={{ fontWeight: 600 }}>{formatDateTime(selectedReport.responseDeadline)}</span>
+                          </div>
+                        )}
                         
                       </div>
                     </div>
@@ -595,24 +795,56 @@ const ReportManagement = () => {
                       borderRadius: 12,
                       padding: 16,
                     }}>
-                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Các bên liên quan</div>
+                      <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Thông tin liên quan</div>
                       <div style={{ display: 'grid', rowGap: 12 }}>
+                      {selectedReport.bookingCode && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#8c8c8c' }}>Mã đơn hàng</span>
+                            <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{selectedReport.bookingCode}</span>
+                          </div>
+                        )}
+                        {selectedReport.warrantyId && (
+                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                            <span style={{ color: '#8c8c8c' }}>Warranty ID</span>
+                            <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{selectedReport.warrantyId}</span>
+                          </div>
+                        )}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Người báo cáo</span>
                           <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reporterId] || selectedReport.reporterId || ''}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Người bị báo cáo</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedReport.reportedUserId] || selectedReport.reportedUserId || ''}</span>
+                          <span 
+                            style={{ 
+                              fontWeight: 600, 
+                              color: '#1890ff', 
+                              cursor: 'pointer',
+                              textDecoration: 'underline',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                            onClick={() => {
+                              if (selectedReport.reportedUserId) {
+                                handleViewUserDetails(selectedReport.reportedUserId);
+                              } else {
+                                message.error('Không có thông tin người bị báo cáo');
+                              }
+                            }}
+                            onMouseEnter={(e) => e.target.style.color = '#40a9ff'}
+                            onMouseLeave={(e) => e.target.style.color = '#1890ff'}
+                          >
+                            <UserOutlined style={{ fontSize: '12px' }} />
+                            {userMap[selectedReport.reportedUserId] || 'Không xác định'}
+                          </span>
                         </div>
-                        
                       </div>
                     </div>
                   </div>
 
-                  {/* Description full width */}
                   <div style={{ gridColumn: '1 / span 2' }}>
-                    <div style={{
+                  <div style={{
                       background: '#ffffff',
                       border: '1px solid #f0f0f0',
                       borderRadius: 12,
@@ -626,7 +858,26 @@ const ReportManagement = () => {
                     </div>
                   </div>
 
-                  {selectedReport.evidenceUrls && selectedReport.evidenceUrls.length > 0 && (
+                  {/* Resolution Note */}
+                  {selectedReport.resolutionNote && (
+                    <div style={{ gridColumn: '1 / span 2' }}>
+                      <div style={{
+                        background: '#ffffff',
+                        border: '1px solid #f0f0f0',
+                        borderRadius: 12,
+                        padding: 16,
+                        marginBottom: 16,
+                      }}>
+                        <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Ghi chú giải quyết</div>
+                        <div style={{ background: '#f0f8ff', borderRadius: 8, padding: 12, lineHeight: 1.6, borderLeft: '4px solid #1890ff' }}>
+                          {selectedReport.resolutionNote}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Evidences */}
+                  {selectedReport.evidences && selectedReport.evidences.length > 0 && (
                     <div style={{ gridColumn: '1 / span 2' }}>
                       <div style={{
                         background: '#ffffff',
@@ -636,8 +887,8 @@ const ReportManagement = () => {
                       }}>
                         <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Bằng chứng</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
-                          {selectedReport.evidenceUrls.map((url, idx) => (
-                            <a key={idx} href={url} target="_blank" rel="noreferrer">
+                          {selectedReport.evidences.map((url, idx) => (
+                            <a key={idx} href={url} target="_blank" rel="noopener noreferrer">
                               <img src={url} alt={`evidence-${idx}`} style={{ width: '100%', height: 100, objectFit: 'cover', borderRadius: 8 }} />
                             </a>
                           ))}
@@ -650,6 +901,115 @@ const ReportManagement = () => {
             </div>
           </Modal>
         )}
+
+       {/* User Details Modal */}
+       {isUserModalVisible && selectedUser && (
+         <Modal
+           open={isUserModalVisible}
+           onCancel={() => setIsUserModalVisible(false)}
+           footer={null}
+           title={null}
+           width={960}
+           styles={{ body: { padding: 0, borderRadius: 16, overflow: 'hidden' } }}
+         >
+           <div style={{ background: '#fff', borderRadius: 16 }}>
+             <div style={{
+               background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+               padding: '20px 24px',
+               color: '#fff'
+             }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                 <div style={{ fontSize: 20, fontWeight: 700 }}>
+                   Chi tiết người dùng
+                 </div>
+                 <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
+                   {selectedUser}
+                 </Tag>
+               </div>
+               {selectedUser && (
+                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                   <span style={{ fontFamily: 'monospace', fontSize: 15 }}>ID: {selectedUser}</span>
+                 </div>
+               )}
+             </div>
+             <div style={{ padding: 24 }}>
+               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+                 {/* User Info */}
+                 <div>
+                   <div style={{
+                     background: '#ffffff',
+                     border: '1px solid #f0f0f0',
+                     borderRadius: 12,
+                     padding: 16,
+                     marginBottom: 16,
+                   }}>
+                     <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Thông tin người dùng</div>
+                     <div style={{ display: 'grid', rowGap: 10 }}>
+                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                         <span style={{ color: '#8c8c8c' }}>Tên hiển thị</span>
+                         <span style={{ fontWeight: 600 }}>{userMap[selectedUser] || 'N/A'}</span>
+                       </div>
+                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                         <span style={{ color: '#8c8c8c' }}>User ID</span>
+                         <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{selectedUser}</span>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Actions */}
+                 <div>
+                   <div style={{
+                     background: '#ffffff',
+                     border: '1px solid #f0f0f0',
+                     borderRadius: 12,
+                     padding: 16,
+                   }}>
+                     <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Hành động</div>
+                     <div style={{ display: 'grid', rowGap: 12 }}>
+                       <Button 
+                         type="primary" 
+                         icon={<UserOutlined />}
+                         onClick={() => {
+                           if (selectedUser) {
+                             setIsUserModalVisible(false);
+                             navigate(`/admin/user-management/${selectedUser}`);
+                           } else {
+                             message.error('Không có thông tin người dùng');
+                           }
+                         }}
+                         style={{ width: '100%' }}
+                       >
+                         Xem chi tiết đầy đủ
+                       </Button>
+                       <Button 
+                         type="default"
+                         onClick={() => {
+                           if (selectedUser) {
+                             setIsUserModalVisible(false);
+                             navigate(`/admin/user-management/${selectedUser}`);
+                           } else {
+                             message.error('Không có thông tin người dùng');
+                           }
+                         }}
+                         style={{ width: '100%' }}
+                       >
+                         Mở User Detail
+                       </Button>
+                     </div>
+                   </div>
+                 </div>
+
+                
+               </div>
+             </div>
+           </div>
+         </Modal>
+       )}
+
+
+
+
      </div>
    </div>
  );

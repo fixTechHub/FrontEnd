@@ -475,9 +475,6 @@ const BookingStatusLogManagement = () => {
                 <div style={{ fontSize: 20, fontWeight: 700 }}>
                   Chi tiết lịch sử trạng thái
                 </div>
-                <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
-                  {selectedLog.id}
-                </Tag>
               </div>
               {selectedLog.id && (
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -500,12 +497,12 @@ const BookingStatusLogManagement = () => {
                     <div style={{ display: 'grid', rowGap: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                         <span style={{ color: '#8c8c8c' }}>Mã đơn hàng</span>
-                        <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{selectedLog.bookingCode || 'N/A'}</span>
+                        <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{selectedLog.bookingCode || ''}</span>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <span style={{ color: '#8c8c8c' }}>Từ trạng thái</span>
                         <Tag color={getStatusColor(selectedLog.fromStatus)} style={{ fontSize: 12, fontWeight: 600 }}>
-                          {formatStatusDisplay(selectedLog.fromStatus) || 'N/A'}
+                          {formatStatusDisplay(selectedLog.fromStatus) || ''}
                         </Tag>
                       </div>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
