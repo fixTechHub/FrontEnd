@@ -1,28 +1,61 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import apiClient from '../../services/apiClient';
-import { Table, Badge, Spinner, Alert, Form, Button, Dropdown } from 'react-bootstrap';
 import { formatDateOnly, formatTimeOnly } from '../../utils/formatDate';
-import { FaSpinner } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import {
+  RiShieldCheckFill as Shield,
+  RiTimeFill as Clock,
+  RiSearchLine as Search,
+  RiFilterLine as Filter,
+  RiCloseLine as Close,
+  RiEyeLine as Eye,
+  RiCalendarFill as Calendar,
+  RiFileListFill as FileList,
+  RiCheckboxCircleFill as Success,
+  RiCloseCircleFill as Denied,
+  RiTimeLine as Pending,
+  RiLoader4Line as Loading,
+  RiArrowLeftLine as ArrowLeft,
+  RiArrowRightLine as ArrowRight,
+  RiInboxLine as Empty
+} from 'react-icons/ri';
 
-const statusColorMap={
-  PENDING:'warning',
-  CONFIRMED:'info',
-  IN_PROGRESS:'primary',
-  RESOLVED:'success',
-  DENIED:'danger',
-  DONE:'success'
-};
-
-const statusLabel=(s)=>{
-  switch(s){
-    case 'PENDING':return 'Đang chờ';
-    case 'CONFIRMED':return 'Đã xác nhận';
-    case 'IN_PROGRESS':return 'Đang xử lý';
-    case 'RESOLVED':return 'Đã xử lý';
-    case 'DENIED':return 'Từ chối';
-    case 'DONE':return 'Hoàn tất';
-    default:return s;
+const statusConfig = {
+  PENDING: {
+    label: 'Đang chờ',
+    color: '#f59e0b',
+    bgColor: 'rgba(245, 158, 11, 0.1)',
+    icon: Pending
+  },
+  CONFIRMED: {
+    label: 'Đã xác nhận',
+    color: '#3b82f6',
+    bgColor: 'rgba(59, 130, 246, 0.1)',
+    icon: Success
+  },
+  IN_PROGRESS: {
+    label: 'Đang xử lý',
+    color: '#8b5cf6',
+    bgColor: 'rgba(139, 92, 246, 0.1)',
+    icon: Loading
+  },
+  RESOLVED: {
+    label: 'Đã xử lý',
+    color: '#10b981',
+    bgColor: 'rgba(16, 185, 129, 0.1)',
+    icon: Success
+  },
+  DENIED: {
+    label: 'Từ chối',
+    color: '#ef4444',
+    bgColor: 'rgba(239, 68, 68, 0.1)',
+    icon: Denied
+  },
+  DONE: {
+    label: 'Hoàn tất',
+    color: '#10b981',
+    bgColor: 'rgba(16, 185, 129, 0.1)',
+    icon: Success
   }
 };
 
@@ -33,7 +66,7 @@ const WarrantyList=()=>{
   const[list,setList]=useState([]);
 
   // filters
-  const[statusFilter]=useState('ALL');
+  const[statusFilter,setStatusFilter]=useState('ALL');
   const[page,setPage]=useState(0);
   const limit=6;
   const[fromDate,setFromDate]=useState('');
@@ -80,107 +113,587 @@ const WarrantyList=()=>{
   useEffect(()=>{setPage(0);},[filtered]);
 
   return(
-    <div className="content py-4">
+    <div className="warranty-list-modern">
+      <style jsx>{`
+        .warranty-list-modern {
+          padding: 2rem 0;
+          min-height: 100vh;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        
+        .warranty-header {
+          text-align: center;
+          margin-bottom: 3rem;
+        }
+        
+        .warranty-title {
+          font-size: 2.5rem;
+          font-weight: 900;
+          background: linear-gradient(135deg, #ff6b6b, #ffa500);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-bottom: 0.5rem;
+        }
+        
+        .warranty-subtitle {
+          color: #64748b;
+          font-size: 1.1rem;
+          font-weight: 500;
+        }
+        
+        .filters-section {
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 1rem;
+          margin-bottom: 1.5rem;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filters-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+          gap: 0.75rem;
+          align-items: end;
+        }
+        
+        .filter-group {
+          position: relative;
+        }
+        
+        .filter-label {
+          display: block;
+          font-weight: 500;
+          color: #374151;
+          margin-bottom: 0.375rem;
+          font-size: 0.75rem;
+        }
+        
+        .filter-input, .filter-select {
+          width: 100%;
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          transition: border-color 0.2s ease;
+          background: #ffffff;
+          color: #374151;
+        }
+        
+        .filter-input:focus, .filter-select:focus {
+          outline: none;
+          border-color: #ff6b6b;
+          box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+        
+        .search-wrapper {
+          position: relative;
+          min-width: 280px;
+          grid-column: span 2;
+        }
+        
+        .search-input {
+          width: 100%;
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          transition: border-color 0.2s ease;
+          background: #ffffff;
+          color: #374151;
+        }
+        
+        .search-input:focus {
+          outline: none;
+          border-color: #ff6b6b;
+          box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+        
+        .search-input::placeholder {
+          color: #9ca3af;
+        }
+        
+        .filter-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.25rem;
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #ef4444;
+          border-radius: 6px;
+          font-weight: 500;
+          font-size: 0.75rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          background: #ffffff;
+          color: #ef4444;
+          white-space: nowrap;
+        }
+        
+        .filter-btn:hover {
+          background: #ef4444;
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+        }
+        
+        .warranty-list {
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(20px);
+          border: 1px solid rgba(255, 107, 107, 0.1);
+          border-radius: 20px;
+          overflow: hidden;
+          margin-bottom: 3rem;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .warranty-list-header {
+          background: linear-gradient(135deg, #ff6b6b, #ffa500);
+          border-bottom: 2px solid #ff6b6b;
+          color: white;
+          padding: 1rem 1.5rem;
+          display: grid;
+          grid-template-columns: 2fr 2fr 2fr 1.5fr 1fr;
+          gap: 1rem;
+          font-weight: 600;
+          font-size: 0.875rem;
+          text-transform: uppercase;
+          letter-spacing: 0.025em;
+        }
+        
+        .warranty-item {
+          display: grid;
+          grid-template-columns: 2fr 2fr 2fr 1.5fr 1fr;
+          gap: 1rem;
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid #f3f4f6;
+          align-items: center;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+        
+        .warranty-item:last-child {
+          border-bottom: none;
+        }
+        
+        .warranty-item:hover {
+          background: #f9fafb;
+        }
+        
+        .warranty-item::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          bottom: 0;
+          width: 3px;
+          background: linear-gradient(135deg, #ff6b6b, #ffa500);
+          opacity: 0;
+          transition: opacity 0.2s ease;
+        }
+        
+        .warranty-item:hover::before {
+          opacity: 1;
+        }
+        
+        .warranty-code-section {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        
+        .warranty-code {
+          font-size: 1rem;
+          font-weight: 900;
+          color: #1f2937;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+        }
+        
+        .warranty-booking-section {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        
+        .warranty-booking {
+          font-size: 0.875rem;
+          color: #374151;
+          font-weight: 600;
+        }
+        
+        .warranty-date-section {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        
+        .warranty-date {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          color: #4b5563;
+          font-size: 0.875rem;
+          font-weight: 600;
+        }
+        
+        .warranty-time {
+          font-size: 0.75rem;
+          color: #9ca3af;
+          font-weight: 500;
+        }
+        
+        .warranty-status {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.5rem 1rem;
+          border-radius: 12px;
+          font-size: 0.8rem;
+          font-weight: 700;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          width: fit-content;
+        }
+        
+        .warranty-actions {
+          display: flex;
+          justify-content: center;
+        }
+        
+        .action-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.375rem;
+          padding: 0.5rem 0.875rem;
+          background: linear-gradient(135deg, #ff6b6b, #ffa500);
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-weight: 500;
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: none;
+          box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3);
+        }
+        
+        .action-btn:hover {
+          background: linear-gradient(135deg, #ffa500, #ff8500);
+          color: white;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 6px rgba(255, 107, 107, 0.4);
+        }
+        
+        .loading-state, .error-state, .empty-state {
+          text-align: center;
+          padding: 4rem 2rem;
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 20px;
+          margin: 2rem 0;
+        }
+        
+        .loading-spinner {
+          width: 48px;
+          height: 48px;
+          color: #ff6b6b;
+          animation: spin 1s linear infinite;
+          margin-bottom: 1rem;
+        }
+        
+        .error-icon, .empty-icon {
+          width: 64px;
+          height: 64px;
+          margin-bottom: 1.5rem;
+          color: #9ca3af;
+        }
+        
+        .pagination-section {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 1rem;
+          margin-top: 3rem;
+        }
+        
+        .pagination-btn {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          padding: 0.75rem 1.25rem;
+          background: rgba(255, 255, 255, 0.9);
+          border: 1px solid rgba(255, 107, 107, 0.2);
+          border-radius: 12px;
+          color: #374151;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+          background: rgba(255, 107, 107, 0.1);
+          border-color: #ff6b6b;
+          transform: translateY(-2px);
+        }
+        
+        .pagination-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .pagination-info {
+          font-weight: 700;
+          color: #374151;
+          padding: 0.75rem 1.5rem;
+          background: rgba(255, 107, 107, 0.1);
+          border-radius: 12px;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        @media (max-width: 768px) {
+          .warranty-title { font-size: 2rem; }
+          .filters-grid { grid-template-columns: 1fr; }
+          .filter-actions { flex-direction: column; }
+          
+          .warranty-list-header {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            text-align: center;
+          }
+          
+          .warranty-item {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            text-align: left;
+          }
+          
+          .warranty-item:hover {
+            transform: none;
+          }
+          
+          .warranty-actions {
+            justify-content: stretch;
+          }
+          
+          .action-btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+        
+        @media (max-width: 1024px) {
+          .warranty-list-header {
+            grid-template-columns: 2fr 2fr 1fr;
+            gap: 0.75rem;
+          }
+          
+          .warranty-item {
+            grid-template-columns: 2fr 2fr 1fr;
+            gap: 0.75rem;
+          }
+          
+          .warranty-date-section {
+            grid-column: 1 / -1;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 107, 107, 0.1);
+          }
+        }
+      `}</style>
+
       <div className="container-xl">
-        <h4 className="mb-4 fw-semibold">Yêu cầu bảo hành của tôi</h4>
-        {loading && <div className="text-center py-4"><Spinner animation="border"/></div>}
-        {error && <Alert variant="danger">{error}</Alert>}
+        {/* Header */}
+        <div className="warranty-header">
+          <h1 className="warranty-title">Yêu cầu bảo hành</h1>
+          <p className="warranty-subtitle">Quản lý và theo dõi tình trạng yêu cầu bảo hành của bạn</p>
+        </div>
+
+        {/* Filters */}
+        <div className="filters-section">
+          <div className="filters-grid">
+            <div className="filter-group">
+              <label className="filter-label">Trạng thái</label>
+              <select 
+                className="filter-select" 
+                value={statusFilter} 
+                onChange={e=>setStatusFilter(e.target.value)}
+              >
+                <option value="ALL">Tất cả</option>
+                {Object.entries(statusConfig).map(([key, config]) => (
+                  <option key={key} value={key}>{config.label}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="filter-group">
+              <label className="filter-label">Từ ngày</label>
+              <input 
+                type="date" 
+                className="filter-input"
+                value={fromDate} 
+                onChange={e=>setFromDate(e.target.value)} 
+              />
+            </div>
+            
+            <div className="filter-group">
+              <label className="filter-label">Đến ngày</label>
+              <input 
+                type="date" 
+                className="filter-input"
+                value={toDate} 
+                onChange={e=>setToDate(e.target.value)} 
+              />
+            </div>
+            
+            <div className="filter-group search-wrapper">
+              <label className="filter-label">Tìm kiếm</label>
+              <input 
+                type="text"
+                className="search-input"
+                placeholder="Mã bảo hành, mã đặt lịch..."
+                value={search} 
+                onChange={e=>setSearch(e.target.value)} 
+              />
+            </div>
+            
+            <div className="filter-group">
+              <label className="filter-label" style={{opacity: 0}}>Action</label>
+              <button 
+                className="filter-btn"
+                onClick={()=>{setStatusFilter('ALL');setFromDate('');setToDate('');setSearch('');}}
+              >
+                <Close size={12} />
+                Xóa lọc
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="loading-state">
+            <Loading size={48} className="loading-spinner" />
+            <h3>Đang tải dữ liệu...</h3>
+            <p>Vui lòng chờ trong giây lát</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="error-state">
+            <Denied size={64} className="error-icon" />
+            <h3>Có lỗi xảy ra</h3>
+            <p>{error}</p>
+          </div>
+        )}
+
+        {/* Content */}
         {!loading && !error && (
           <>
-          {/* Filters */}
-          <Form className="d-flex flex-wrap gap-3 align-items-end mb-4 p-3 shadow-sm bg-light rounded-3" style={{overflowX:'auto'}}>
-            <Form.Group style={{minWidth:'180px'}}>
-              <Form.Label>Trạng thái</Form.Label>
-              <Form.Select value={statusFilter} onChange={e=>setStatusFilter(e.target.value)}>
-                <option value="ALL">Tất cả</option>
-                {Object.keys(statusColorMap).map(s=>(<option key={s} value={s}>{statusLabel(s)}</option>))}
-              </Form.Select>
-            </Form.Group>
-            <Form.Group style={{minWidth:'160px'}}>
-              <Form.Label>Từ ngày</Form.Label>
-              <Form.Control type="date" value={fromDate} onChange={e=>setFromDate(e.target.value)} />
-            </Form.Group>
-            <Form.Group style={{minWidth:'160px'}}>
-              <Form.Label>Đến ngày</Form.Label>
-              <Form.Control type="date" value={toDate} onChange={e=>setToDate(e.target.value)} />
-            </Form.Group>
-            <Form.Group className="d-flex gap-2" style={{minWidth:'120px'}}>
-              <Button variant="outline-secondary" className="mt-4" onClick={()=>{setStatusFilter('ALL');setFromDate('');setToDate('');setSearch('');}}>Xoá lọc</Button>
-            </Form.Group>
-            <Form.Group className="flex-grow-1" style={{minWidth:'220px'}}>
-              <Form.Label>Tìm kiếm</Form.Label>
-              <div className="input-group">
-                <span className="input-group-text bg-white border-end-0"><i className="fa fa-search" style={{color:'#64748b'}}></i></span>
-                <Form.Control className="border-start-0" placeholder="Mã bảo hành / Mã đặt" value={search} onChange={e=>setSearch(e.target.value)} />
+            {/* Empty State */}
+            {filtered.length === 0 && (
+              <div className="empty-state">
+                <Empty size={64} className="empty-icon" />
+                <h3>Chưa có yêu cầu bảo hành</h3>
+                <p>Bạn chưa tạo yêu cầu bảo hành nào hoặc không có kết quả phù hợp với bộ lọc</p>
               </div>
-            </Form.Group>
-          </Form>
+            )}
 
-          <Table responsive hover bordered className="shadow-sm">
-            <thead className="table-light">
-              <tr>
-                <th>Mã</th>
-                <th>Đặt lịch</th>
-                <th>Ngày yêu cầu</th>
-                <th>Trạng thái</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length===0 && (
-                <tr><td colSpan={4} className="text-center fw-semibold" style={{color:'#64748b'}}>Chưa có yêu cầu bảo hành</td></tr>
-              )}
-              {paginated.map(w=>(
-                <tr key={w._id}>
-                  <td>{w.code||
-                  w._id
-                  .slice(-6)
-                  }
-                  </td>
-                  <td>{w.bookingId?.bookingCode||'N/A'}</td>
-                  <td>{formatDateOnly(w.createdAt)} {formatTimeOnly(w.createdAt)}</td>
-                  <td>
-                    <Badge bg={statusColorMap[w.status]||'secondary'}>{statusLabel(w.status)}</Badge>
-                  </td>
-                  <td>
-                  <Dropdown>
-                          <Dropdown.Toggle variant="link" className="p-0">
-                            <i className="fas fa-ellipsis-v"></i>
-                          </Dropdown.Toggle>
-                          <Dropdown.Menu align="end">
-                           
-
+            {/* Warranty List */}
+            {filtered.length > 0 && (
+              <div className="warranty-list">
+                <div className="warranty-list-header">
+                  <div>Mã bảo hành</div>
+                  <div>Đơn đặt lịch</div>
+                  <div>Ngày yêu cầu</div>
+                  <div>Trạng thái</div>
+                  <div>Thao tác</div>
+                </div>
+                
+                {paginated.map(warranty => {
+                  const config = statusConfig[warranty.status] || statusConfig.PENDING;
+                  const StatusIcon = config.icon;
+                  
+                  return (
+                    <div key={warranty._id} className="warranty-item">
+                      <div className="warranty-code-section">
+                        <div className="warranty-code">
+                          <Shield size={16} style={{ color: '#ff6b6b' }} />
+                          #{warranty.code || warranty._id.slice(-6)}
+                        </div>
+                      </div>
                       
-                              <Dropdown.Item
-                                onClick={() => {
-                                    console.log(w._id);
-                                    
-                                    navigate(`/warranty?bookingWarrantyId=${w._id}`);
-                                  
-                                }}
-                                className="text-primary"
-                              >
-                              
-                           
-                                  <>
-                                    <FaSpinner className="me-2" /> Xem tiến trình
-                                  </>
-                                
-                              </Dropdown.Item>
-                            
-                          </Dropdown.Menu>
-                        </Dropdown>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </Table>
+                      <div className="warranty-booking-section">
+                        <div className="warranty-booking">
+                          {warranty.bookingId?.bookingCode || 'N/A'}
+                        </div>
+                      </div>
+                      
+                      <div className="warranty-date-section">
+                        <div className="warranty-date">
+                          <Calendar size={14} style={{ color: '#ffa500' }} />
+                          {formatDateOnly(warranty.createdAt)}
+                        </div>
+                        <div className="warranty-time">
+                          <Clock size={12} style={{ color: '#ffa500' }} />
+                          {formatTimeOnly(warranty.createdAt)}
+                        </div>
+                      </div>
+                      
+                      <div 
+                        className="warranty-status"
+                        style={{
+                          backgroundColor: config.bgColor,
+                          color: config.color
+                        }}
+                      >
+                        <StatusIcon size={14} />
+                        {config.label}
+                      </div>
+                      
+                      <div className="warranty-actions">
+                        <button
+                          className="action-btn"
+                          onClick={() => navigate(`/warranty?bookingWarrantyId=${warranty._id}`)}
+                        >
+                          <Eye size={16} />
+                          Xem
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
-        {filtered.length>limit && (
-          <div className="d-flex justify-content-center mt-3 gap-2">
-            <Button size="sm" variant="outline-secondary" disabled={page===0} onClick={()=>setPage(p=>p-1)}>Trước</Button>
-            <span className="align-self-center">{page+1}/{Math.ceil(filtered.length/limit)}</span>
-            <Button size="sm" variant="outline-secondary" disabled={(page+1)*limit>=filtered.length} onClick={()=>setPage(p=>p+1)}>Sau</Button>
+            {/* Pagination */}
+            {filtered.length > limit && (
+              <div className="pagination-section">
+                <button 
+                  className="pagination-btn"
+                  disabled={page === 0}
+                  onClick={() => setPage(p => p - 1)}
+                >
+                  <ArrowLeft size={16} />
+                  Trước
+                </button>
+                
+                <div className="pagination-info">
+                  {page + 1} / {Math.ceil(filtered.length / limit)}
+                </div>
+                
+                <button 
+                  className="pagination-btn"
+                  disabled={(page + 1) * limit >= filtered.length}
+                  onClick={() => setPage(p => p + 1)}
+                >
+                  Sau
+                  <ArrowRight size={16} />
+                </button>
           </div>
         )}
         </>

@@ -535,8 +535,7 @@ function CustomerDashboard() {
 	const { list: favorites, loading: favLoading } = useSelector(state => state.favorites);
 	const { user } = useSelector(state => state.auth);
 	const [bookingsCount, setBookingsCount] = useState(0);
-	const warrantyState = useSelector(state => state.warranty);
-	const warrantyCount = warrantyState?.warranty ? 1 : 0; // Hiện tại chỉ có 1 bản ghi khi yêu cầu, sau này có thể thay bằng mảng
+	const [warrantyCount, setWarrantyCount] = useState(0);
 	const { list: userCoupons, loading: couponsLoading } = useSelector(state => state.coupons);
 	const couponsCount = userCoupons.length;
 
@@ -555,17 +554,35 @@ function CustomerDashboard() {
 		if (user?._id) {
 			dispatch(fetchUserCouponsThunk(user._id));
 		}
-		// fetch last 5 bookings
+
+		// Fetch counts và recent data
 		(async () => {
 			try {
-				const res = await apiClient.get('/bookings/user?limit=5');
-				const sorted = (res.data.bookings || []).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+				// 1. Lấy TOTAL bookings count
+				const totalBookingsRes = await apiClient.get('/bookings/user');
+				const totalBookings = totalBookingsRes.data.bookings || [];
+				setBookingsCount(totalBookings.length);
+
+				// 2. Lấy 5 recent bookings để hiển thị
+				const recentBookingsRes = await apiClient.get('/bookings/user?limit=5');
+				const sorted = (recentBookingsRes.data.bookings || []).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
 				setRecentBookings(sorted);
-				setBookingsCount(sorted.length);
+
+				// 3. Lấy warranty count 
+				try {
+					const warrantyRes = await apiClient.get('/warranties');
+					const warranties = warrantyRes.data || []; // Response trực tiếp là array, không có wrapper
+					setWarrantyCount(warranties.length);
+					console.log('Warranty count:', warranties.length, warranties);
+				} catch (warrantyErr) {
+					console.log('Warranty API error:', warrantyErr);
+					setWarrantyCount(0);
+				}
+
 			} catch (err) {
-				console.error('Fetch bookings error:', err);
-			} finally {
-				// setLoadingBookings(false); // This line is removed
+				console.error('Fetch dashboard data error:', err);
+				setBookingsCount(0);
+				setWarrantyCount(0);
 			}
 		})();
 

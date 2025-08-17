@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
+import { Link } from "react-router-dom"
 import { 
   RiSettings3Line as Wrench,
   RiFireLine as Zap,
@@ -46,9 +47,6 @@ import AnimatedCounter from "../../components/common/AnimatedCounter"
 import FAQSection from "../../components/common/FAQSection"
 import SearchComponent from "../../components/common/SearchComponent"
 import ServiceCardDark from "../../components/common/ServiceCardDark"
-import "../../styles/services-dark.css"
-import "../../styles/testimonials-swiper.css"
-import "../../styles/testimonials-modern.css"
 import "../../styles/homepage-complete.css"
 import { Swiper, SwiperSlide } from "swiper/react"
 import { Autoplay, Pagination } from "swiper/modules"
@@ -115,46 +113,46 @@ function NewHomePage() {
   const testimonials = [
     {
       name: "Minh Đức",
-      location: "84 Trần Văn HaiHai",
+      location: "Sơn Trà, Đà Nẵng",
       content:
-        "Dịch vụ tuyệt vời! Thợ đến đúng giờ, sửa tủ lạnh Samsung 650L trong vòng 2 tiếng. Giá cả minh bạch, không phát sinh chi phí. Đã giới thiệu cho 5 đối tác khác.",
+        "Tủ lạnh nhà em không lạnh, anh thợ đến sửa nhanh trong 1 tiếng. Giá cả hợp lý, làm việc sạch sẽ. Rất hài lòng!",
       rating: 5,
       avatar: "https://i.pravatar.cc/100?img=1",
       service: "Sửa tủ lạnh",
-      price: "320,000đ",
+      price: "180,000đ",
       verified: true,
     },
     {
       name: "Lan Anh",
-      location: "297 Võ Liên SơnSơn",
+      location: "Hải Châu, Đà Nẵng",
       content:
-        "Máy giặt công nghiệp 15kg bị hỏng nặng, tưởng phải thay mới hết 50 triệu. Nhưng team sửa được và bảo hành 1 năm. Tiết kiệm được rất nhiều chi phí!",
+        "Máy giặt kêu to, không vắt được. Thợ kiểm tra và sửa trong buổi sáng. Giá phù hợp với chất lượng dịch vụ!",
       rating: 5,
       avatar: "https://i.pravatar.cc/100?img=5",
-      service: "Máy giặt công nghiệp",
-      price: "2,500,000đ",
+      service: "Sửa máy giặt",
+      price: "120,000đ",
       verified: true,
     },
     {
       name: "Tuấn Vũ", 
-      location: "168 Núi Thành",
+      location: "Thanh Khê, Đà Nẵng",
       content:
-        "5 cái điều hòa trong quán không lạnh hết, khách phàn nàn liên tục. Gọi là có team đến ngay, sửa xong trong buổi sáng. Quán hoạt động bình thường buổi trưa. Cực kỳ hài lòng!",
+        "Điều hòa phòng khách không mát, thổi gió nóng. Anh thợ đến kiểm tra và sửa trong 2 tiếng. Giờ mát lạnh như mới!",
       rating: 5,
       avatar: "https://i.pravatar.cc/100?img=8",
-      service: "Điều hòa (5 máy)",
-      price: "1,800,000đ", 
+      service: "Sửa điều hòa",
+      price: "200,000đ", 
       verified: true,
     },
     {
       name: "Hoa Phương",
-      location: "67 Hàm Nghi",
+      location: "Liên Chiểu, Đà Nẵng",
       content:
-        "Lò vi sóng Panasonic dùng 3 năm bỗng không nóng được. Thợ kiểm tra và phát hiện magnetron bị hỏng. Thay linh kiện chính hãng, bảo hành 6 tháng. Như mới luôn!",
+        "Lò vi sóng không nóng được thức ăn. Thợ kiểm tra và thay linh kiện. Bảo hành 3 tháng, rất yên tâm!",
       rating: 5,
       avatar: "https://i.pravatar.cc/100?img=9",
-      service: "Lò vi sóng",
-      price: "450,000đ",
+      service: "Sửa lò vi sóng",
+      price: "150,000đ",
       verified: true,
     },
   ]
@@ -162,8 +160,8 @@ function NewHomePage() {
   const processSteps = [
     {
       icon: Phone,
-      title: "Gọi điện đặt lịch",
-      description: "Liên hệ hotline để được hướng dẫn hoặc đặt lịch online. Tư vấn miễn phí về tình trạng thiết bị.",
+      title: "Đặt lịch trên website",
+      description: "Truy cập website và đặt lịch tự động. Hotline hỗ trợ hướng dẫn sử dụng web khi cần thiết.",
     },
     {
       icon: MapPin,
@@ -177,32 +175,32 @@ function NewHomePage() {
     },
     {
       icon: CheckCircle,
-      title: "Sửa chữa & bảo hành",
-      description: "Tiến hành sửa chữa và bảo hành lên đến 6 tháng. Thanh toán sau khi hoàn thành.",
+      title: "Sửa chữa & thanh toán",
+      description: "Thợ tiến hành sửa chữa theo thỏa thuận. Thanh toán trực tiếp với thợ sau khi hoàn thành.",
     },
   ]
 
   return (
     <div style={{ minHeight: "100vh", background: "white", overflow: "hidden" }}>
       {/* Premium Floating Particles */}
-      <div className="floating-particles">
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
-        <div className="particle"></div>
+      <div className="nhp-floating-particles">
+        <div className="nhp-particle"></div>
+        <div className="nhp-particle"></div>
+        <div className="nhp-particle"></div>
+        <div className="nhp-particle"></div>
+        <div className="nhp-particle"></div>
+        <div className="nhp-particle"></div>
+        <div className="nhp-particle"></div>
+        <div className="nhp-particle"></div>
+        <div className="nhp-particle"></div>
       </div>
 
       {/* Animated Background Elements */}
-      <div className="bg-elements">
-        <div className="bg-element"></div>
-        <div className="bg-element"></div>
-        <div className="bg-element"></div>
-        <div className="bg-element"></div>
+      <div className="nhp-bg-elements">
+        <div className="nhp-bg-element"></div>
+        <div className="nhp-bg-element"></div>
+        <div className="nhp-bg-element"></div>
+        <div className="nhp-bg-element"></div>
       </div>
 
       {/* Header */}
@@ -212,44 +210,44 @@ function NewHomePage() {
       <HeroBanner />
 
       {/* Enhanced Stats Section */}
-      <section className="stats-section">
-        <div className="container">
+      <section className="nhp-stats-section">
+        <div className="nhp-container">
           {/* Enhanced Trust Badges */}
-          <div className="trust-badges-enhanced">
-            <div className="trust-badge-enhanced">
-              <Shield size={20} />
-              <span>Chứng nhận chất lượng quốc gia</span>
+          <div className="nhp-trust-badges-enhanced">
+            <div className="nhp-trust-badge-verified">
+              <Shield size={18} />
+              <span>Thợ xác thực chứng chỉ</span>
             </div>
-            <div className="social-proof-enhanced">
-              <Heart size={16} />
-              <span>2,500+ khách hàng tin tưởng</span>
+            <div className="nhp-trust-badge-customers">
+              <Heart size={18} />
+              <span>Platform đáng tin cậy</span>
             </div>
           </div>
 
-          <div className="stats-grid-enhanced">
+          <div className="nhp-stats-grid-enhanced">
             {[
-              { icon: Users, number: 2500, suffix: "+", label: "Khách hàng hài lòng", color: "#3b82f6", rgb: "59, 130, 246" },
-              { icon: Wrench, number: 150, suffix: "+", label: "Thợ chuyên nghiệp", color: "#ff6b6b", rgb: "255, 107, 107" },
-              { icon: Award, number: 99, suffix: "%", label: "Tỷ lệ thành công", color: "#10b981", rgb: "16, 185, 129" },
-              { icon: Clock, number: 24, suffix: "/7", label: "Hỗ trợ liên tục", color: "#8b5cf6", rgb: "139, 92, 246" },
+              { icon: MapPin, number: 6, suffix: " quận", label: "TP Đà Nẵng phủ sóng", color: "#3b82f6", rgb: "59, 130, 246" },
+              { icon: Wrench, number: 20, suffix: "+", label: "Loại thiết bị được sửa", color: "#ef4444", rgb: "239, 68, 68" },
+              { icon: Star, number: 4.8, suffix: "/5", label: "Sao đánh giá trung bình", color: "#10b981", rgb: "16, 185, 129" },
+              { icon: Clock, number: 24, suffix: "/7", label: "Hỗ trợ trực tiếp", color: "#8b5cf6", rgb: "139, 92, 246" },
             ].map((stat, index) => (
               <div 
                 key={index} 
-                className="stat-card-enhanced" 
+                className="nhp-stat-card-enhanced"
                 style={{ 
-                  '--card-color': stat.color,
-                  '--card-color-light': `${stat.color}CC`,
-                  '--card-color-rgb': stat.rgb,
+                  '--nhp-card-color': stat.color,
+                  '--nhp-card-color-light': `${stat.color}CC`,
+                  '--nhp-card-color-rgb': stat.rgb,
                   animationDelay: `${index * 0.2}s`
                 }}
               >
-                <div className="stat-icon-enhanced">
+                <div className="nhp-stat-icon-enhanced">
                   <stat.icon size={36} color="white" />
                 </div>
-                <div className="stat-number-enhanced">
+                <div className="nhp-stat-number-enhanced">
                   <AnimatedCounter end={stat.number} suffix={stat.suffix} />
                 </div>
-                <p className="stat-label-enhanced">{stat.label}</p>
+                <p className="nhp-stat-label-enhanced">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -257,23 +255,23 @@ function NewHomePage() {
       </section>
 
       {/* Enhanced Services Section */}
-      <section id="dich-vu" className="services-section-enhanced">
-        <div className="services-floating-bg"></div>
+      <section id="dich-vu" className="nhp-services-section-enhanced">
+        <div className="nhp-services-floating-bg"></div>
  
-        <div className="container">
-          <div className="section-header-enhanced">
-            <div className="section-badge-enhanced">
+        <div className="nhp-container">
+          <div className="nhp-section-header-enhanced">
+            <div className="nhp-section-badge-enhanced">
               <Tools size={20} />
               <span>DỊCH VỤ CHUYÊN NGHIỆP</span>
               <Medal size={20} />
             </div>
-            <h2 className="section-title-enhanced">Dịch vụ sửa chữa toàn diện</h2>
-            <p className="section-description-enhanced">
-              Chúng tôi cung cấp dịch vụ sửa chữa cho tất cả các loại thiết bị gia dụng với kỹ thuật tiên tiến nhất
+            <h2 className="nhp-section-title-enhanced">Kết nối với thợ chuyên nghiệp</h2>
+            <p className="nhp-section-description-enhanced">
+              Tìm kiếm và kết nối với các thợ sửa chữa thiết bị gia dụng có kinh nghiệm tại Đà Nẵng
             </p>
           </div>
 
-          <div className="services-grid" style={{ position: "relative", zIndex: 2 }}>
+          <div className="nhp-services-grid" style={{ position: "relative", zIndex: 2 }}>
             {[
               {
                 icon: Refrigerator,
@@ -392,39 +390,51 @@ function NewHomePage() {
           </div>
         </div>
           <div style={{textAlign:"center",marginTop:"2rem", position: "relative", zIndex: 2}}>
-            <button className="btn-orange" style={{
-              background: "rgba(255, 255, 255, 0.2)",
-              border: "2px solid rgba(255, 255, 255, 0.3)",
-              color: "white",
-              backdropFilter: "blur(20px)",
-              transition: "all 0.3s ease"
-            }}>Xem thêm dịch vụ</button>
+            <Link 
+              to="/services" 
+              className="nhp-btn-orange" 
+              onClick={() => {
+                // Scroll to top khi chuyển trang
+                window.scrollTo(0, 0);
+              }}
+              style={{
+                background: "rgba(255, 255, 255, 0.2)",
+                border: "2px solid rgba(255, 255, 255, 0.3)",
+                color: "white",
+                backdropFilter: "blur(20px)",
+                transition: "all 0.3s ease",
+                display: "inline-block",
+                textDecoration: "none"
+              }}
+            >
+              Xem tất cả dịch vụ
+            </Link>
           </div>
       </section>
 
       {/* Enhanced Process Section */}
-      <section className="process-section" id="quy-trinh">
-        <div className="container">
-          <div className="section-header-enhanced">
-            <div className="section-badge-enhanced">
+      <section className="nhp-process-section" id="quy-trinh">
+        <div className="nhp-container">
+          <div className="nhp-section-header-enhanced">
+            <div className="nhp-section-badge-enhanced">
               <Rocket size={20} />
               <span>QUY TRÌNH LÀM VIỆC</span>
               <Star size={20} />
             </div>
-            <h2 className="section-title-enhanced">4 bước đơn giản</h2>
-            <p className="section-description-enhanced">
+            <h2 className="nhp-section-title-enhanced">4 bước đơn giản</h2>
+            <p className="nhp-section-description-enhanced">
               Quy trình làm việc chuyên nghiệp, minh bạch từ khi nhận cuộc gọi đến khi hoàn thành dịch vụ
             </p>
           </div>
 
-          <div className="process-grid-enhanced">
+          <div className="nhp-process-grid-enhanced">
             {processSteps.map((step, index) => (
-              <div key={index} className="process-step-enhanced">
-                <div className="process-icon-enhanced">
+              <div key={index} className="nhp-process-step-enhanced">
+                <div className="nhp-process-icon-enhanced">
                   <step.icon size={32} color="#ff6b6b" />
                 </div>
-                <h3 className="process-title-enhanced">{step.title}</h3>
-                <p className="process-description-enhanced">{step.description}</p>
+                <h3 className="nhp-process-title-enhanced">{step.title}</h3>
+                <p className="nhp-process-description-enhanced">{step.description}</p>
               </div>
             ))}
           </div>
@@ -432,29 +442,29 @@ function NewHomePage() {
       </section>
 
       {/* Enhanced Testimonials Section */}
-      <section className="testimonials-section-enhanced" id="danh-gia">
-        <div className="testimonials-floating-particles">
+      <section className="nhp-testimonials-section-enhanced" id="danh-gia">
+        <div className="nhp-testimonials-floating-particles">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="testimonial-particle"></div>
+            <div key={i} className="nhp-testimonial-particle"></div>
           ))}
         </div>
         
-        <div className="container">
-          <div className="section-header-enhanced">
-            <div className="section-badge-enhanced">
+        <div className="nhp-container">
+          <div className="nhp-section-header-enhanced">
+            <div className="nhp-section-badge-enhanced">
               <Trophy size={20} />
               <span>KHÁCH HÀNG THỰC TẾ</span>
               <Heart size={20} />
             </div>
-            <h2 className="section-title-enhanced" style={{ color: "white" }}>
-              2,500+ khách hàng đã hài lòng
+            <h2 className="nhp-section-title-enhanced" style={{ color: "white" }}>
+              50+ khách hàng đầu tiên
             </h2>
-            <p className="section-description-enhanced" style={{ color: "#cbd5e0" }}>
-              Từ nhà riêng đến doanh nghiệp, miễn là thiết bị gia dụng, chúng tôi đều có thể sửa được
+            <p className="nhp-section-description-enhanced" style={{ color: "#cbd5e0" }}>
+              Từ những đơn hàng đầu tiên, chúng tôi đã tạo được lòng tin với chất lượng dịch vụ
             </p>
           </div>
 
-          <div className="testi-swiper-wrapper">
+          <div className="nhp-testi-swiper-wrapper">
             <Swiper
               modules={[Autoplay, Pagination]}
               loop={true}
@@ -470,51 +480,53 @@ function NewHomePage() {
                 1024: { slidesPerView: 3 },
               }}
               pagination={{ clickable: true }}
-              className="testi-swiper"
+              className="nhp-testi-swiper"
               autoHeight={true}
             >
             {testimonials.map((testimonial, index) => (
               <SwiperSlide key={index}>
-                <div className="testi-card-enhanced">
-                  <div className="testi-header-enhanced">
-                    <div className="testi-badges">
-                      <div className="service-badge-enhanced">{testimonial.service}</div>
-                      <div className="price-badge-enhanced">{testimonial.price}</div>
+                <div className="nhp-testi-card-enhanced">
+                  <div className="nhp-testi-header-enhanced">
+                    <div className="nhp-testi-badges">
+                      <div className="nhp-service-badge-enhanced">{testimonial.service}</div>
+                      <div className="nhp-price-badge-enhanced">{testimonial.price}</div>
+                    </div>
+                  </div>
+                  
+                  <p className="nhp-testi-content-enhanced">
+                    "{testimonial.content}"
+                  </p>
+                
+                  <div className="nhp-testi-footer-enhanced">
+                    <div className="nhp-testi-author-enhanced">
+                      <img className="nhp-testi-avatar-enhanced" 
+                        src={testimonial.avatar} 
+                        alt={testimonial.name}
+                      />
+                      <div className="nhp-testi-info">
+                        <h4 className="nhp-testi-name">{testimonial.name}</h4>
+                        <p className="nhp-testi-location">{testimonial.location}</p>
+                        <div className="nhp-testi-stars">
+                          {[...Array(testimonial.rating)].map((_, i) => (
+                            <Star 
+                              key={i} 
+                              size={16} 
+                              color="#fbbf24" 
+                              fill="#fbbf24"
+                            />
+                          ))}
+                          <span className="nhp-testi-rating-text">
+                            {testimonial.rating}.0
+                          </span>
+                        </div>
+                      </div>
                     </div>
                     {testimonial.verified && (
-                      <div className="verified-badge">
+                      <div className="nhp-verified-badge">
                         <Verified size={16} />
                         <span>Xác thực</span>
                       </div>
                     )}
-                  </div>
-                  
-                  <p className="testi-content-enhanced">
-                    "{testimonial.content}"
-                  </p>
-                
-                  <div className="testi-author-enhanced">
-                    <img className="testi-avatar-enhanced" 
-                      src={testimonial.avatar} 
-                      alt={testimonial.name}
-                    />
-                    <div className="testi-info">
-                      <h4 className="testi-name">{testimonial.name}</h4>
-                      <p className="testi-location">{testimonial.location}</p>
-                      <div className="testi-stars">
-                        {[...Array(testimonial.rating)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            size={14} 
-                            color="#fbbf24" 
-                            fill="#fbbf24"
-                          />
-                        ))}
-                        <span className="testi-rating-text">
-                          {testimonial.rating}.0
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </SwiperSlide>
@@ -522,33 +534,33 @@ function NewHomePage() {
             </Swiper>
           </div>
           {/* <div style={{ textAlign: "center", marginTop: "2rem" }}>
-            <button className="btn-orange">Đọc thêm đánh giá</button>
+            <button className="nhp-btn-orange">Đọc thêm đánh giá</button>
           </div> */}
           
           {/* Real-time Social Proof */}
           <div style={{ textAlign: "center", marginTop: "3rem" }}>
-            <div className="social-proof" style={{ fontSize: "1rem", padding: "1rem 2rem" }}>
+            <div className="nhp-social-proof" style={{ fontSize: "1rem", padding: "1rem 2rem" }}>
               <Alarm size={20} style={{ animation: "bounce 2s ease-in-out infinite" }} />
-              <span>Vừa có <strong className="counter-enhanced">12</strong> khách hàng đặt lịch trong 30 phút qua!</span>
+              <span>Vừa có <strong className="nhp-counter-enhanced">2</strong> khách hàng đặt lịch hôm nay!</span>
             </div>
           </div>
         </div>
       </section>
 
       {/* Enhanced FAQ Section */}
-      <div className="faq-section-enhanced">
+      <div className="nhp-faq-section-enhanced">
         <FAQSection />
       </div>
 
       {/* Enhanced Footer */}
-      <div className="footer-enhanced">
+      <div className="nhp-footer-enhanced">
         <Footer />
       </div>
 
       {/* Premium Floating Chat Button */}
       <div style={{ position: "fixed", bottom: "3rem", right: "3.5rem", zIndex: 100 }}>
         <div style={{ position: "relative", width: "4rem", height: "4rem" }}>
-          <button className="btn-morph floating-chat" style={{ 
+          <button className="nhp-btn-morph nhp-floating-chat" style={{ 
             width: "4rem", 
             height: "4rem", 
             borderRadius: "50%",
@@ -567,25 +579,7 @@ function NewHomePage() {
 
       </div>
 
-      {/* Scroll to Top Button */}
-      <button 
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="btn-liquid"
-        style={{
-          position: "fixed",
-          bottom: "2rem",
-          left: "2rem",
-          zIndex: 100,
-          width: "3rem",
-          height: "3rem",
-          borderRadius: "50%",
-          display: isVisible ? "flex" : "none",
-          alignItems: "center",
-          justifyContent: "center"
-        }}
-      >
-        <ArrowRight size={20} style={{ transform: "rotate(-90deg)" }} />
-      </button>
+
     </div>
   )
 }
