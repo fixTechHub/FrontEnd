@@ -190,9 +190,7 @@ const AdminHeader = () => {
         <button className="btn" style={{ background: '#f5f5f5', border: 'none', borderRadius: 6, padding: 8 }} onClick={handleExportExcel}>
           <FaDownload /> Export
         </button>
-        <Notifications
-        // style={{ fontSize: 22, color: '#FFA726', marginLeft: 8, cursor: 'pointer' }}
-        />
+        <Notifications userId={userInfo?.id}/>
         <Dropdown menu={{ items: userMenuItems, onClick: onUserMenuClick }} trigger={["click"]} placement="bottomRight">
           <FaUserCircle className="icon" style={{ fontSize: 28, color: '#888', marginLeft: 8, cursor: 'pointer' }} />
         </Dropdown>
