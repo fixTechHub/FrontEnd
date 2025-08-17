@@ -764,7 +764,7 @@ const ReportManagement = () => {
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                               <span style={{ color: '#8c8c8c' }}>Tag</span>
                             <span style={{ fontWeight: 600 }}>
-                              <Tag color={selectedReport.responseLocked ? 'green' : 'red'}>
+                              <Tag color={selectedReport.tag ? 'green' : 'red'}>
                                 <span style={{ fontWeight: 600 }}>{selectedReport.tag?.replace(/_/g, ' ').toUpperCase() || ''}</span>
                               </Tag>
                             </span>

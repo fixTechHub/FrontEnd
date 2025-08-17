@@ -49,7 +49,10 @@ export default function TechnicianDetail() {
   const [financialSearchText, setFinancialSearchText] = useState('');
   const [financialFilterService, setFinancialFilterService] = useState('');
   const [financialFilterStatus, setFinancialFilterStatus] = useState('');
-
+  const dispatch = useDispatch();
+  const { reportCount, loading: reportLoading, error: reportError } = useSelector((state) => state.reports);
+  const [notificationContent, setNotificationContent] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   useEffect(() => {
     const load = async () => {
       try {
@@ -292,6 +295,7 @@ export default function TechnicianDetail() {
                 </Descriptions.Item>
                 <Descriptions.Item label="Số công việc hoàn thành" span={1}>{technician.jobCompleted ?? 0}</Descriptions.Item>
                 <Descriptions.Item label="Năm kinh nghiệm" span={1}>{technician.experienceYears || 0} năm</Descriptions.Item>
+                <Descriptions.Item label="Số lần bị báo cáo">{reportCount}</Descriptions.Item>
               </Descriptions>
 
               {/* Specialties Section */}

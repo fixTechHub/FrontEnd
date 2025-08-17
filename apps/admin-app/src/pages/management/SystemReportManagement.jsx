@@ -712,13 +712,14 @@ const SystemReportManagement = () => {
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 700 }}>
-                    {selectedSystemReport.title || 'SYSTEM REPORT'}
+                    {selectedSystemReport?.title || 'SYSTEM REPORT'}
                   </div>
                   <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
-                    {selectedSystemReport.tag?.toUpperCase()}
+                    
+                    {(selectedSystemReport?.status ? String(selectedSystemReport.status).replace(/_/g, ' ').toUpperCase() : 'N/A')}
                   </Tag>
                 </div>
-                {selectedSystemReport.id && (
+                {selectedSystemReport?.id && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontFamily: 'monospace', fontSize: 14 }}>ID: {selectedSystemReport.id}</span>
                   </div>
@@ -738,12 +739,16 @@ const SystemReportManagement = () => {
                       <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tổng quan</div>
                       <div style={{ display: 'grid', rowGap: 10 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
-                          <span style={{ fontWeight: 600 }}>{(selectedSystemReport.status ? String(selectedSystemReport.status).replace(/_/g, ' ').toUpperCase() : 'N/A')}</span>
+                          <span style={{ color: '#8c8c8c' }}>Phân loại</span>
+                          <span style={{ fontWeight: 600 }}>
+                                                            <Tag color={getTagColor(selectedSystemReport?.tag)}>
+                                <span style={{ fontWeight: 600 }}>{selectedSystemReport?.tag?.toUpperCase()}</span>
+                              </Tag>
+                            </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Thời gian tạo</span>
-                          <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport.createdAt)}</span>
+                          <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport?.createdAt)}</span>
                         </div>
                       </div>
                     </div>
@@ -760,11 +765,11 @@ const SystemReportManagement = () => {
                       <div style={{ display: 'grid', rowGap: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Người báo cáo</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || ''}</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport?.submittedBy] || selectedSystemReport?.submittedBy || ''}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Người xử lý</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.resolvedBy] || selectedSystemReport.resolvedBy || ''}</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport?.resolvedBy] || selectedSystemReport?.resolvedBy || ''}</span>
                         </div>
                       </div>
                     </div>
@@ -780,12 +785,12 @@ const SystemReportManagement = () => {
                     }}>
                       <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Mô tả</div>
                       <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
-                        {selectedSystemReport.description || 'No description'}
+                        {selectedSystemReport?.description || 'No description'}
                       </div>
                     </div>
                   </div>
                   {/* Resolution Note full width if any */}
-                  {selectedSystemReport.resolutionNote && (
+                  {selectedSystemReport?.resolutionNote && (
                     <div style={{ gridColumn: '1 / span 2' }}>
                       <div style={{
                         background: '#ffffff',
@@ -795,7 +800,7 @@ const SystemReportManagement = () => {
                       }}>
                         <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Ghi chú</div>
                         <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
-                          {selectedSystemReport.resolutionNote}
+                          {selectedSystemReport?.resolutionNote}
                         </div>
                       </div>
                     </div>
@@ -847,7 +852,7 @@ const SystemReportManagement = () => {
           
           okText={isSubmitting ? "Đang xử lý..." : "Lưu thay đổi"}
           cancelText="Hủy bỏ"
-          width={800}
+          width={850}
           okButtonProps={{
             disabled: !statusValue || 
               (statusValue === 'RESOLVED' && (!resolvedBy || !resolutionNote.trim())) ||
@@ -875,15 +880,15 @@ const SystemReportManagement = () => {
           }}
           styles={{
             body: { 
-              padding: '20px 16px',
+              padding: '12px 12px 0px 12px',
               background: '#fafafa'
             },
             header: {
-              padding: '16px 16px 12px 16px',
+              padding: '12px 12px 8px 12px',
               borderBottom: 'none'
             },
             footer: {
-              padding: '12px 16px 16px 16px',
+              padding: '8px 12px 12px 12px',
               borderTop: '1px solid #f0f0f0',
               background: '#ffffff'
             }
@@ -893,28 +898,28 @@ const SystemReportManagement = () => {
           
           
           {/* Admin and Resolution Note Section */}
-          <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Row gutter={12} style={{ marginBottom: 12 }}>
             {/* Admin Selection Card */}
             
             <Col span={12}>
             <div style={{
             background: '#ffffff',
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 16,
+            borderRadius: 8,
+            padding: 12,
+            marginBottom: 12,
             border: '1px solid #f0f0f0',
             boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
             height: '100%',
             display: 'flex',
             flexDirection: 'column'
           }}>
-            <div style={{ marginBottom: 16, flex: 1 }}>
+            <div style={{ marginBottom: 12, flex: 1 }}>
               <label style={{ 
                 display: 'block', 
                 fontSize: 14,
                 fontWeight: 600,
                 color: '#1a1a1a',
-                marginBottom: 8
+                marginBottom: 6
               }}>
                 Trạng thái xử lý <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>
               </label>
@@ -982,8 +987,8 @@ const SystemReportManagement = () => {
               <div style={{
                 background: '#ffffff',
                 border: '1px solid #f0f0f0',
-                borderRadius: 12,
-                padding: 16,
+                borderRadius: 8,
+                padding: 12,
                 height: '100%',
                 opacity: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? 1 : 0.6,
                 transition: 'all 0.3s ease',
@@ -1005,13 +1010,13 @@ const SystemReportManagement = () => {
                   }} />
                 )}
                 
-                <div style={{ marginBottom: 16, flex: 1 }}>
+                <div style={{ marginBottom: 12, flex: 1 }}>
                   <label style={{ 
                     display: 'block', 
                     fontSize: 14,
                     fontWeight: 600,
                     color: '#1a1a1a',
-                    marginBottom: 8
+                    marginBottom: 6
                   }}>
                     <UserOutlined style={{ marginRight: 6, color: '#1890ff', fontSize: 14 }} />
                     Người xử lý (Admin)
@@ -1074,11 +1079,11 @@ const SystemReportManagement = () => {
                     <div style={{ 
                       color: '#ff4d4f', 
                       fontSize: 12, 
-                      marginTop: 8,
+                      marginTop: 6,
                       display: 'flex',
                       alignItems: 'center',
                       gap: 4,
-                      padding: '6px 8px',
+                      padding: '4px 6px',
                       background: '#fff2f0',
                       borderRadius: 4,
                       border: '1px solid #ffccc7'
@@ -1096,9 +1101,9 @@ const SystemReportManagement = () => {
           <div style={{
             background: '#ffffff',
             border: '1px solid #f0f0f0',
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 16,
+            borderRadius: 8,
+            padding: 12,
+            marginBottom: 12,
             opacity: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? 1 : 0.6,
             transition: 'all 0.3s ease',
             transform: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? 'translateY(0)' : 'translateY(-3px)',
@@ -1117,13 +1122,13 @@ const SystemReportManagement = () => {
               }} />
             )}
             
-            <div style={{ marginBottom: 16 }}>
+            <div style={{ marginBottom: 12 }}>
               <label style={{ 
                 display: 'block', 
                 fontSize: 14,
                 fontWeight: 600,
                 color: '#1a1a1a',
-                marginBottom: 8
+                marginBottom: 6
               }}>
                 <FileTextOutlined style={{ marginRight: 6, color: '#1890ff', fontSize: 14 }} />
                 Ghi chú xử lý
@@ -1268,11 +1273,11 @@ const SystemReportManagement = () => {
                 <div style={{ 
                   color: '#ff4d4f', 
                   fontSize: 12, 
-                  marginTop: 8,
+                  marginTop: 6,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 4,
-                  padding: '6px 8px',
+                  padding: '4px 6px',
                   background: '#fff2f0',
                   borderRadius: 4,
                   border: '1px solid #ffccc7'
@@ -1285,11 +1290,11 @@ const SystemReportManagement = () => {
                 <div style={{ 
                   color: '#ff4d4f', 
                   fontSize: 12, 
-                  marginTop: 8,
+                  marginTop: 6,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 4,
-                  padding: '6px 8px',
+                  padding: '4px 6px',
                   background: '#fff2f0',
                   borderRadius: 4,
                   border: '1px solid #ffccc7'
@@ -1298,135 +1303,8 @@ const SystemReportManagement = () => {
                   Hãy nhập lý do từ chối giải quyết
                 </div>
               )}
-              {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && resolutionNote.trim() && (
-                <div style={{ 
-                  color: '#52c41a', 
-                  fontSize: 12, 
-                  marginTop: 8,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 4,
-                  padding: '6px 8px',
-                  background: '#f6ffed',
-                  borderRadius: 4,
-                  border: '1px solid #b7eb8f'
-                }}>
-                  <CheckCircleOutlined style={{ fontSize: 12 }} />
-                  Ghi chú đã được nhập
-                </div>
-              )}
             </div>
           </div>
-
-           {/* Summary and Progress in Row */}
-           <Row gutter={24} style={{ marginBottom: 24 }}>
-             {/* Summary Card */}
-             <Col span={12}>
-               {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && (
-                 <div style={{
-                   background: 'linear-gradient(135deg, #f6ffed 0%, #f0f9ff 100%)',
-                   border: '1px solid #b7eb8f',
-                   borderRadius: 12,
-                   padding: 16,
-                   height: '100%',
-                   animation: 'slideInUp 0.3s ease-out'
-                 }}>
-                   <div style={{ 
-                     display: 'flex', 
-                     alignItems: 'center', 
-                     gap: 8, 
-                     marginBottom: 12,
-                     color: '#52c41a',
-                     fontWeight: 600
-                   }}>
-                     <CheckCircleOutlined />
-                     Tóm tắt thay đổi
-                   </div>
-                   <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
-                     Báo cáo sẽ được chuyển sang trạng thái <strong>{statusValue}</strong>
-                     {resolvedBy && ` và được xử lý bởi ${adminUsers.find(u => u.id === resolvedBy)?.fullName || 'Admin'}`}.
-                     {resolutionNote.trim() && ' Ghi chú đã được thêm vào hệ thống.'}
-                   </div>
-                 </div>
-               )}
-             </Col>
-
-             {/* Progress Indicator */}
-             <Col span={12}>
-               <div style={{
-                 background: '#fafafa',
-                 border: '1px solid #f0f0f0',
-                 borderRadius: 12,
-                 padding: 16,
-                 height: '100%'
-               }}>
-                 <div style={{ 
-                   display: 'flex', 
-                   alignItems: 'center', 
-                   gap: 8, 
-                   marginBottom: 12,
-                   color: '#8c8c8c',
-                   fontWeight: 500,
-                   fontSize: 13
-                 }}>
-                   <span>📋</span>
-                   Tiến độ hoàn thành
-                 </div>
-                 <div style={{ 
-                   display: 'flex', 
-                   alignItems: 'center', 
-                   gap: 8,
-                   marginBottom: 8
-                 }}>
-                   <div style={{ 
-                     flex: 1, 
-                     height: 6, 
-                     background: '#f0f0f0', 
-                     borderRadius: 3,
-                     overflow: 'hidden'
-                   }}>
-                     <div style={{
-                       width: `${(() => {
-                         if (statusValue === 'PENDING') return 25;
-                         if (statusValue === 'IN_PROGRESS') return 50;
-                         if (statusValue === 'RESOLVED') return 100;
-                         if (statusValue === 'REJECTED') return 100;
-                         return 0;
-                       })()}%`,
-                       height: '100%',
-                       background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
-                       borderRadius: 3,
-                       transition: 'width 0.3s ease'
-                     }} />
-                   </div>
-                   <span style={{ 
-                     fontSize: 12, 
-                     color: '#8c8c8c',
-                     fontWeight: 500,
-                     minWidth: 60,
-                     textAlign: 'right'
-                   }}>
-                     {(() => {
-                       if (statusValue === 'PENDING') return '25%';
-                       if (statusValue === 'IN_PROGRESS') return '50%';
-                       if (statusValue === 'RESOLVED') return '100%';
-                       if (statusValue === 'REJECTED') return '100%';
-                       return '0%';
-                     })()}
-                   </span>
-                 </div>
-                 <div style={{ fontSize: 12, color: '#8c8c8c' }}>
-                   {(() => {
-                     if (statusValue === 'PENDING') return 'Báo cáo đang chờ xử lý';
-                     if (statusValue === 'IN_PROGRESS') return 'Báo cáo đang được xử lý';
-                     if (statusValue === 'RESOLVED') return 'Báo cáo đã được giải quyết thành công';
-                     if (statusValue === 'REJECTED') return 'Báo cáo đã bị từ chối';
-                     return 'Chưa chọn trạng thái';
-                   })()}
-                 </div>
-               </div>
-             </Col>
-           </Row>
          </Modal>
      </div>
    </div>

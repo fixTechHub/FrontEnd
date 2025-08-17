@@ -33,4 +33,10 @@ export const reportAPI = {
             throw error;
         }
     },
+    
 };
+
+export const getReportCounts = async (technicianId) => {
+    const response = await apiClient.get(`/reports/${technicianId}/count-report`);
+    return response.data;
+}
