@@ -278,12 +278,12 @@ export default function TechnicianDetail() {
               </div>
 
               <Descriptions column={2} bordered>
-                <Descriptions.Item label="Họ và tên" span={1}>{technician.fullName || user?.fullName || ''}</Descriptions.Item>
-                <Descriptions.Item label="Email" span={1}>{technician.email || user?.email || ''}</Descriptions.Item>
-                <Descriptions.Item label="SĐT" span={1}>{technician.phone || user?.phone || ''}</Descriptions.Item>
-                <Descriptions.Item label="Trạng thái" span={1}>{statusTag(technician.status)}</Descriptions.Item>
-                <Descriptions.Item label="Tình trạng" span={1}>{availabilityTag(technician.availability)}</Descriptions.Item>
-                <Descriptions.Item label="Đánh giá" span={1}>
+                <Descriptions.Item label="Họ và tên">{technician.fullName || user?.fullName || ''}</Descriptions.Item>
+                <Descriptions.Item label="Email">{technician.email || user?.email || ''}</Descriptions.Item>
+                <Descriptions.Item label="SĐT">{technician.phone || user?.phone || ''}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">{statusTag(technician.status)}</Descriptions.Item>
+                <Descriptions.Item label="Tình trạng">{availabilityTag(technician.availability)}</Descriptions.Item>
+                <Descriptions.Item label="Đánh giá">
                   <div className="d-flex align-items-center gap-2">
                     <span className={`badge text-white ${
                       (technician.ratingAverage || 0) >= 4 ? 'bg-success' : 
@@ -335,8 +335,8 @@ export default function TechnicianDetail() {
                     </div>
                   </div>
                 </Descriptions.Item>
-                <Descriptions.Item label="Số công việc hoàn thành" span={1}>{technician.jobCompleted ?? 0}</Descriptions.Item>
-                <Descriptions.Item label="Năm kinh nghiệm" span={1}>{technician.experienceYears || 0} năm</Descriptions.Item>
+                <Descriptions.Item label="Số công việc hoàn thành">{technician.jobCompleted ?? 0}</Descriptions.Item>
+                <Descriptions.Item label="Năm kinh nghiệm">{technician.experienceYears || 0} năm</Descriptions.Item>
                 <Descriptions.Item label="Số lần bị báo cáo">{reportCount}</Descriptions.Item>
               </Descriptions>
 

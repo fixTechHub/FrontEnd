@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, DatePicker, InputNumber, Table } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, DatePicker, InputNumber, Table, Space } from 'antd';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -1087,7 +1087,7 @@ const handleConfirmUserSelection = () => {
                  <Select.Option value="18">18px</Select.Option>
                  <Select.Option value="20">20px</Select.Option>
                </Select>
-               <Button.Group size="small">
+               <Space.Compact size="small">
                  <Button 
                    type={formData.textAlign === 'left' ? 'primary' : 'default'}
                    onClick={() => handleFontChange('textAlign', 'left')}
@@ -1106,7 +1106,7 @@ const handleConfirmUserSelection = () => {
                  >
                    <i className="ti ti-align-right"></i>
                  </Button>
-               </Button.Group>
+               </Space.Compact>
                <Button 
                  size="small"
                  onClick={() => handleImageUpload()}
@@ -1364,7 +1364,7 @@ const handleConfirmUserSelection = () => {
                  <Select.Option value="18">18px</Select.Option>
                  <Select.Option value="20">20px</Select.Option>
                </Select>
-               <Button.Group size="small">
+               <Space.Compact size="small">
                  <Button 
                    type={formData.textAlign === 'left' ? 'primary' : 'default'}
                    onClick={() => handleFontChange('textAlign', 'left')}
@@ -1383,7 +1383,7 @@ const handleConfirmUserSelection = () => {
                  >
                    <i className="ti ti-align-right"></i>
                  </Button>
-               </Button.Group>
+               </Space.Compact>
                <Button 
                  size="small"
                  onClick={() => handleImageUpload()}

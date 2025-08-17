@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchAllWarranties, updateWarrantyStatus, updateWarrantyDetails } from '../../features/warranty/warrantySlice';
-import { Modal, Button, Select, Switch, message, Descriptions, Spin, Form, Input, Row, Col, Tag } from 'antd';
+import { Modal, Button, Select, Switch, message, Descriptions, Spin, Form, Input, Row, Col, Tag, Space } from 'antd';
 import { userAPI } from "../../features/users/userAPI";
 import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
@@ -945,7 +945,7 @@ const handleSortByTechnician = () => {
                       <Select.Option value="18">18px</Select.Option>
                       <Select.Option value="20">20px</Select.Option>
                     </Select>
-                    <Button.Group size="small">
+                    <Space.Compact size="small">
                       <Button 
                         type="default"
                         onClick={() => {
@@ -979,7 +979,7 @@ const handleSortByTechnician = () => {
                       >
                         <i className="ti ti-align-right"></i>
                       </Button>
-                    </Button.Group>
+                    </Space.Compact>
                     <Button 
                       size="small"
                       onClick={() => {
@@ -1149,7 +1149,7 @@ const handleSortByTechnician = () => {
                       <Select.Option value="18">18px</Select.Option>
                       <Select.Option value="20">20px</Select.Option>
                     </Select>
-                    <Button.Group size="small">
+                    <Space.Compact size="small">
                       <Button 
                         type="default"
                         onClick={() => {
@@ -1183,7 +1183,7 @@ const handleSortByTechnician = () => {
                       >
                         <i className="ti ti-align-right"></i>
                       </Button>
-                    </Button.Group>
+                    </Space.Compact>
                     <Button 
                       size="small"
                       onClick={() => {

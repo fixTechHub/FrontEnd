@@ -1176,7 +1176,7 @@ const SystemReportManagement = () => {
                         <Select.Option value="18">18px</Select.Option>
                         <Select.Option value="20">20px</Select.Option>
                       </Select>
-                      <Button.Group size="small">
+                      <Space.Compact size="small">
                         <Button 
                           type="default"
                           onClick={() => {
@@ -1210,7 +1210,7 @@ const SystemReportManagement = () => {
                         >
                           <i className="ti ti-align-right"></i>
                         </Button>
-                      </Button.Group>
+                      </Space.Compact>
                       <Button 
                         size="small"
                         onClick={() => {

@@ -264,16 +264,14 @@ export default function UserDetail() {
                     </div>
                   </div>
                   <Descriptions column={2} bordered>
-                    <Descriptions.Item label="Họ và tên" span={1}>{user.fullName || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Email" span={1}>{user.email}</Descriptions.Item>
-                    <Descriptions.Item label="SĐT" span={1}>{user.phone || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Vai trò" span={1}>{user.roleName || user.role || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Mã người dùng" span={1}>{user.userCode || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Trạng thái" span={1}>{statusTag(user.status)}</Descriptions.Item>
-                    <Descriptions.Item label="Thời gian tạo" span={1}>{formatDateTime(user.createdAt)}</Descriptions.Item>
-                    
-                      <Descriptions.Item label="Địa chỉ" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
-                    
+                    <Descriptions.Item label="Họ và tên">{user.fullName || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+                    <Descriptions.Item label="SĐT">{user.phone || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Vai trò">{user.roleName || user.role || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Mã người dùng">{user.userCode || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Trạng thái">{statusTag(user.status)}</Descriptions.Item>
+                    <Descriptions.Item label="Thời gian tạo">{formatDateTime(user.createdAt)}</Descriptions.Item>
+                    <Descriptions.Item label="Địa chỉ" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
                   </Descriptions>
 
 

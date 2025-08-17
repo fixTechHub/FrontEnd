@@ -69,7 +69,6 @@ import '../../styles/analytics.css';
 const { Title: AntTitle, Text } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
-const { Panel } = Collapse;
 
 ChartJS.register(
  CategoryScale,
@@ -286,10 +285,10 @@ const TechnicianSubscriptionAnalytics = () => {
         grid: {
           color: 'rgba(0, 0, 0, 0.05)',
           drawBorder: false
-        }
-      }
-    }
-  };
+       }
+     }
+   }
+ };
 
   // Enhanced chart data
   const getChartData = useCallback((type, metric) => {
@@ -1084,66 +1083,68 @@ const TechnicianSubscriptionAnalytics = () => {
           marginTop: '24px',
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)'
         }}
-      >
-        <Panel
-          header={
-            <span>
-              <SettingOutlined />
-              Cài đặt nâng cao
-            </span>
+        items={[
+          {
+            key: '1',
+            label: (
+              <span>
+                <SettingOutlined />
+                Cài đặt nâng cao
+              </span>
+            ),
+            children: (
+              <Row gutter={[16, 16]}>
+                <Col xs={24} sm={12} md={6}>
+                  <div>
+                    <Text strong>Auto-refresh interval (giây):</Text>
+                    <InputNumber
+                      min={10}
+                      max={300}
+                      value={refreshInterval}
+                      onChange={setRefreshInterval}
+                      style={{ width: '100%', marginTop: '8px' }}
+                      disabled={!autoRefresh}
+                    />
+                  </div>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <div>
+                    <Text strong>Gói được chọn:</Text>
+                    <Select
+                      mode="multiple"
+                      placeholder="Chọn gói để phân tích"
+                      value={selectedPackages}
+                      onChange={setSelectedPackages}
+                      style={{ width: '100%', marginTop: '8px' }}
+                      options={packageAnalysis.map(p => ({ label: p.name, value: p.name }))}
+                    />
+                  </div>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <div>
+                    <Text strong>Khoảng thời gian:</Text>
+                    <RangePicker
+                      value={dateRange}
+                      onChange={setDateRange}
+                      style={{ width: '100%', marginTop: '8px' }}
+                    />
+                  </div>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <div>
+                    <Text strong>Hiển thị xu hướng:</Text>
+                    <Switch
+                      checked={showTrends}
+                      onChange={setShowTrends}
+                      style={{ marginTop: '8px' }}
+                    />
+                  </div>
+                </Col>
+              </Row>
+            )
           }
-          key="1"
-        >
-          <Row gutter={[16, 16]}>
-            <Col xs={24} sm={12} md={6}>
-              <div>
-                <Text strong>Auto-refresh interval (giây):</Text>
-                <InputNumber
-                  min={10}
-                  max={300}
-                  value={refreshInterval}
-                  onChange={setRefreshInterval}
-                  style={{ width: '100%', marginTop: '8px' }}
-                  disabled={!autoRefresh}
-                />
-     </div>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <div>
-                <Text strong>Gói được chọn:</Text>
-                <Select
-                  mode="multiple"
-                  placeholder="Chọn gói để phân tích"
-                  value={selectedPackages}
-                  onChange={setSelectedPackages}
-                  style={{ width: '100%', marginTop: '8px' }}
-                  options={packageAnalysis.map(p => ({ label: p.name, value: p.name }))}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <div>
-                <Text strong>Khoảng thời gian:</Text>
-                <RangePicker
-                  value={dateRange}
-                  onChange={setDateRange}
-                  style={{ width: '100%', marginTop: '8px' }}
-                />
-              </div>
-            </Col>
-            <Col xs={24} sm={12} md={6}>
-              <div>
-                <Text strong>Hiển thị xu hướng:</Text>
-                <Switch
-                  checked={showTrends}
-                  onChange={setShowTrends}
-                  style={{ marginTop: '8px' }}
-                />
-              </div>
-            </Col>
-          </Row>
-        </Panel>
-      </Collapse>
+        ]}
+      />
    </div>
  );
 };

@@ -197,7 +197,7 @@ export default function CertificateAdmin() {
                 okText="Xác nhận"
                 cancelText="Hủy"
                 maskClosable={false}
-                destroyOnClose
+                destroyOnHidden //ĐỔI SANG CÁI NI
             >
                 <Input.TextArea
                     value={reason}
