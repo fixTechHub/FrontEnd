@@ -145,106 +145,106 @@ export default function UserDetail() {
   if (!user) return null;
 
   return (
-   <>
-    <div className="modern-page- wrapper">
-      <div className="modern-content-card">
-        <div className="container-fluid">
-              <Space direction="vertical" size={16} style={{ width: '100%' }}>
-                <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
-                  <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
-                </Space>
+    <>
+      <div className="modern-page- wrapper">
+        <div className="modern-content-card">
+          <div className="container-fluid">
+            <Space direction="vertical" size={16} style={{ width: '100%' }}>
+              <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
+                <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
+              </Space>
 
-                <Card title="Thông tin người dùng" bordered={false} style={{ borderRadius: 12 }}>
-                  <div style={{display:'flex', alignItems:'center', gap:24, marginBottom:16}}>
-                    <Avatar
-                      size={80}
-                      src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`}
-                      style={{flexShrink:0}}
-                    >
-                      {(user.fullName || 'U').charAt(0).toUpperCase()}
-                    </Avatar>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:20, fontWeight:600}}>{user.fullName || 'N/A'}</div>
-                      <div style={{color:'#888', marginTop:4}}>ID: {user.id}</div>
-                      <br></br>
-                      <div>
-                      <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
-                      </div>
+              <Card title="Thông tin người dùng" bordered={false} style={{ borderRadius: 12 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 16 }}>
+                  <Avatar
+                    size={80}
+                    src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`}
+                    style={{ flexShrink: 0 }}
+                  >
+                    {(user.fullName || 'U').charAt(0).toUpperCase()}
+                  </Avatar>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 20, fontWeight: 600 }}>{user.fullName || 'N/A'}</div>
+                    <div style={{ color: '#888', marginTop: 4 }}>ID: {user.id}</div>
+                    <br></br>
+                    <div>
+                      {/* <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button> */}
                     </div>
                   </div>
-                  <Descriptions column={2} bordered>
-                    <Descriptions.Item label="Họ và tên">{user.fullName || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-                    <Descriptions.Item label="SĐT">{user.phone || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Vai trò">{user.roleName || user.role || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Mã người dùng">{user.userCode || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Trạng thái">{statusTag(user.status)}</Descriptions.Item>
-                    <Descriptions.Item label="Thời gian tạo">{formatDateTime(user.createdAt)}</Descriptions.Item>
-                    {user.address && (
-                      <Descriptions.Item label="Địa chỉ" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
-                    )}
-                  </Descriptions>
-
-                  {/* Locked Reason - Hiển thị riêng */}
-                  {user.lockedReason && (
-                    <div style={{ marginTop: 16 }}>
-                      <h4 style={{ marginBottom: 12, color: '#333', fontSize: '16px', fontWeight: '600' }}>
-                        Lý Do Khóa Tài Khoản
-                      </h4>
-                      <div style={{ 
-                        background: '#fff2f0', 
-                        border: '1px solid #ffccc7', 
-                        borderRadius: '8px', 
-                        padding: '16px',
-                        color: '#cf1322',
-                        fontSize: '14px',
-                        lineHeight: '1.5'
-                      }}>
-                        <strong>⚠️ Lý do:</strong> {user.lockedReason}
-                      </div>
-                    </div>
+                </div>
+                <Descriptions column={2} bordered>
+                  <Descriptions.Item label="Họ và tên">{user.fullName || ''}</Descriptions.Item>
+                  <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
+                  <Descriptions.Item label="SĐT">{user.phone || ''}</Descriptions.Item>
+                  <Descriptions.Item label="Vai trò">{user.roleName || user.role || ''}</Descriptions.Item>
+                  <Descriptions.Item label="Mã người dùng">{user.userCode || ''}</Descriptions.Item>
+                  <Descriptions.Item label="Trạng thái">{statusTag(user.status)}</Descriptions.Item>
+                  <Descriptions.Item label="Thời gian tạo">{formatDateTime(user.createdAt)}</Descriptions.Item>
+                  {user.address && (
+                    <Descriptions.Item label="Địa chỉ" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
                   )}
-                </Card>
+                </Descriptions>
 
-                <Tabs
-                  items={[
-                    {
-                      key: 'bookings',
-                      label: 'Các đơn hàng của người dùng',
-                      children: (
-                        <Table
-                          rowKey={(r) => r.id}
-                          dataSource={bookings}
-                          columns={bookingColumns}
-                          pagination={{ pageSize: 10 }}
-                        />
-                      ),
-                    },
-                  ]}
-                />
-              </Space>
+                {/* Locked Reason - Hiển thị riêng */}
+                {user.lockedReason && (
+                  <div style={{ marginTop: 16 }}>
+                    <h4 style={{ marginBottom: 12, color: '#333', fontSize: '16px', fontWeight: '600' }}>
+                      Lý Do Khóa Tài Khoản
+                    </h4>
+                    <div style={{
+                      background: '#fff2f0',
+                      border: '1px solid #ffccc7',
+                      borderRadius: '8px',
+                      padding: '16px',
+                      color: '#cf1322',
+                      fontSize: '14px',
+                      lineHeight: '1.5'
+                    }}>
+                      <strong>⚠️ Lý do:</strong> {user.lockedReason}
+                    </div>
+                  </div>
+                )}
+              </Card>
+
+              <Tabs
+                items={[
+                  {
+                    key: 'bookings',
+                    label: 'Các đơn hàng của người dùng',
+                    children: (
+                      <Table
+                        rowKey={(r) => r.id}
+                        dataSource={bookings}
+                        columns={bookingColumns}
+                        pagination={{ pageSize: 10 }}
+                      />
+                    ),
+                  },
+                ]}
+              />
+            </Space>
+          </div>
         </div>
       </div>
-    </div>
-    <Modal
-    title="Gửi Cảnh Cáo"
-    open={isModalOpen}
-    onOk={handleSendWarningToUser}
-    onCancel={() => {
-      setIsModalOpen(false);
-      setNotificationContent('');
-    }}
-    okText="Gửi"
-    cancelText="Hủy"
-  >
-    <TextArea
-      rows={4}
-      value={notificationContent}
-      onChange={(e) => setNotificationContent(e.target.value)}
-      placeholder="Nhập nội dung cảnh cáo"
-    />
-  </Modal>
-   </>
+      <Modal
+        title="Gửi Cảnh Cáo"
+        open={isModalOpen}
+        onOk={handleSendWarningToUser}
+        onCancel={() => {
+          setIsModalOpen(false);
+          setNotificationContent('');
+        }}
+        okText="Gửi"
+        cancelText="Hủy"
+      >
+        <TextArea
+          rows={4}
+          value={notificationContent}
+          onChange={(e) => setNotificationContent(e.target.value)}
+          placeholder="Nhập nội dung cảnh cáo"
+        />
+      </Modal>
+    </>
   );
 }
 

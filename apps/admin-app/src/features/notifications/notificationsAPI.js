@@ -6,16 +6,16 @@ export const sendNotifications = async (notifyData) => {
 
 
 export const notificationAPI = {
-    getUserNotifications: () => {
-      return apiClient.get('/notifications');
+    getUserNotifications: (adminId) => {
+      return apiClient.get(`/notifications/admin/${adminId}`);
     },
     markAsRead: (id) => {
-      return apiClient.patch(`/notifications/${id}/read`);
+      return apiClient.patch(`/notifications/${id}/read/admin`);
     },
-    clearAllNotifications: () => {
-      return apiClient.delete('/notifications/clear');
+    clearAllNotifications: (adminId) => {
+      return apiClient.delete(`/notifications/clear/admin/${adminId}`);
     },
     getAllUserNotifications: (params = {}) => {
-      return apiClient.get('/notifications/all', { params });
+      return apiClient.get('/notifications/all/admin', { params });
     },
   };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
 import { Link } from "react-router-dom"
-import { 
+import {
   RiSettings3Line as Wrench,
   RiFireLine as Zap,
   RiTvLine as Tv,
@@ -23,16 +23,16 @@ import {
   RiLightbulbLine as Lightbulb,
   RiToolsLine as Tools,
   RiRocketLine as Rocket,
-    RiFlashlightLine as Flash,
+  RiFlashlightLine as Flash,
   RiCheckboxCircleLine as CheckboxCircle,
   RiTimerLine as Timer,
   RiDropLine as Drop,
   RiSpeakerLine as Sound,
   RiCpuLine as Cpu,
   RiPlugLine as Plug,
-  
+
   RiTestTubeLine as Test,
-  
+
   RiWindyLine as Wind,
   RiRefreshLine as Refresh,
   RiVerifiedBadgeLine as Verified,
@@ -55,10 +55,13 @@ import "swiper/css/effect-coverflow"
 import "swiper/css/pagination"
 import Header from "../../components/common/Header"
 import Footer from "../../components/common/Footer"
+import AIChatbox from "../../components/message/AIChatBox";
 
 function NewHomePage() {
   const [isVisible, setIsVisible] = useState(false)
-  
+  const { user, isAuthenticated, verificationStatus } = useSelector(
+    (state) => state.auth
+  );
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100)
@@ -134,14 +137,14 @@ function NewHomePage() {
       verified: true,
     },
     {
-      name: "Tuấn Vũ", 
+      name: "Tuấn Vũ",
       location: "Thanh Khê, Đà Nẵng",
       content:
         "Điều hòa phòng khách không mát, thổi gió nóng. Anh thợ đến kiểm tra và sửa trong 2 tiếng. Giờ mát lạnh như mới!",
       rating: 5,
       avatar: "https://i.pravatar.cc/100?img=8",
       service: "Sửa điều hòa",
-      price: "200,000đ", 
+      price: "200,000đ",
       verified: true,
     },
     {
@@ -536,7 +539,7 @@ function NewHomePage() {
           {/* <div style={{ textAlign: "center", marginTop: "2rem" }}>
             <button className="nhp-btn-orange">Đọc thêm đánh giá</button>
           </div> */}
-          
+
           {/* Real-time Social Proof */}
           <div style={{ textAlign: "center", marginTop: "3rem" }}>
             <div className="nhp-social-proof" style={{ fontSize: "1rem", padding: "1rem 2rem" }}>
@@ -558,28 +561,32 @@ function NewHomePage() {
       </div>
 
       {/* Premium Floating Chat Button */}
-      <div style={{ position: "fixed", bottom: "3rem", right: "3.5rem", zIndex: 100 }}>
-        <div style={{ position: "relative", width: "4rem", height: "4rem" }}>
-          <button className="nhp-btn-morph nhp-floating-chat" style={{ 
-            width: "4rem", 
-            height: "4rem", 
-            borderRadius: "50%",
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            animation: "bounce 3s ease-in-out infinite"
-          }}>
-            <MessageCircle size={24} />
-          </button>
-          {/* Small pulse ring only around the chat button */}
+      {isAuthenticated && user.role.name === 'CUSTOMER' && <>
 
-
+        <div style={{ position: "fixed", bottom: "3rem", right: "3.5rem", zIndex: 1000 }}>
+          <AIChatbox size={24} />
         </div>
+      </>}
 
-      </div>
-
-
+      {/* Scroll to Top Button */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="btn-liquid"
+        style={{
+          position: "fixed",
+          bottom: "2rem",
+          left: "2rem",
+          zIndex: 100,
+          width: "3rem",
+          height: "3rem",
+          borderRadius: "50%",
+          display: isVisible ? "flex" : "none",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <ArrowRight size={20} style={{ transform: "rotate(-90deg)" }} />
+      </button>
     </div>
   )
 }
