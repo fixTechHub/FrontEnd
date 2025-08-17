@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { Spinner } from "react-bootstrap";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logoutThunk } from '../../features/auth/authSlice';
 import Swal from 'sweetalert2';
@@ -90,6 +90,7 @@ const Divider = styled.hr`
 
 function Header() {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
     const categories = useSelector((state) => state.categories.categories);
     const services = useSelector((state) => state.services.services);
@@ -126,9 +127,20 @@ function Header() {
         });
 
         if (result.isConfirmed) {
+            // Lưu role trước khi logout (vì sau logout user sẽ bị clear)
+            const userRole = user?.role?.name;
+            
             await dispatch(logoutThunk());
-
             sessionStorage.removeItem('hasWelcomed');
+
+            // Role-based redirect sau logout
+            if (userRole === 'TECHNICIAN') {
+                // Technician logout -> về login để security tốt hơn
+                navigate('/login', { replace: true });
+            } else {
+                // Customer logout -> về homepage để continue browsing
+                navigate('/', { replace: true });
+            }
 
             Swal.fire({
                 title: 'Đã đăng xuất',

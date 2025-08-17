@@ -452,6 +452,7 @@ const SystemReportButton = () => {
 
   const dispatch = useDispatch();
   const { loading, success, error } = useSelector((state) => state.systemReport);
+  const { isAuthenticated } = useSelector((state) => state.auth);
 
   const [show, setShow] = useState(false);
   const [showButton, setShowButton] = useState(false);
@@ -471,6 +472,11 @@ const SystemReportButton = () => {
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Chỉ hiển thị khi đã đăng nhập
+  if (!isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -507,7 +513,7 @@ const SystemReportButton = () => {
           }}
         onClick={() => setShow(true)}
       >
-          <i className="bi bi-bug-fill report-btn-icon" style={{ fontSize: '1.6rem', color: 'white' }}></i>
+          <i className="bi bi-bug-fill report-btn-icon" style={{ fontSize: '1.6rem', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
       </button>
       )}
 

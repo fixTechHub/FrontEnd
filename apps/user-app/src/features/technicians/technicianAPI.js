@@ -23,9 +23,7 @@ export const getJobDetails = async (technicianId, bookingId) => {
 };
 
 export const getTechnicianJob = async (technicianId) => {
-  console.log('✅ Gọi API với technicianId:', technicianId);
   const response = await apiClient.get(`/technicians/${technicianId}/bookings`);
-  console.log("📦 Dữ liệu trả về:", response.data);
   return response.data;
 };
 
@@ -48,8 +46,12 @@ export const getTechnicians = async () => {
 };
 
 export const completeTechnicianProfile = async (technicianData) => {
-  const response = await apiClient.post('/technicians/complete-profile', technicianData);
-  return response.data;
+  try {
+    const response = await apiClient.post('/technicians/complete-profile', technicianData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };
 
 export const fetchCertificatesByTechnicianId = async (technicianId) => {

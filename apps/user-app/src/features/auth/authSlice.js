@@ -25,6 +25,7 @@ const initialState = {
     emailOrPhone: '',
     password: '',
     role: '',
+    accountType: '',
   },
   registrationToken: null, // Thêm token để lưu JWT
 };
@@ -514,10 +515,17 @@ const authSlice = createSlice({
         state.user = action.payload.user;
         state.technician = action.payload.technician;
         
-        state.verificationStatus = determineVerificationStatus(
+        // ✅ FIX: Use verificationStatus from backend, fallback to computed
+        state.verificationStatus = action.payload.verificationStatus || determineVerificationStatus(
           action.payload.user,
           action.payload.technician
         );
+        
+        console.log('🔄 [AuthSlice] Updated verification status:', {
+          fromBackend: !!action.payload.verificationStatus,
+          step: state.verificationStatus?.step,
+          redirectTo: state.verificationStatus?.redirectTo
+        });
       })
       .addCase(checkAuthThunk.rejected, (state, action) => {
         // Chỉ cập nhật state và reset nếu người dùng đang ở trạng thái đăng nhập

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useSelector, useDispatch } from "react-redux"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import {
   RiSettings3Line as Wrench,
   RiFireLine as Zap,
@@ -62,6 +62,38 @@ function NewHomePage() {
   const { user, isAuthenticated, verificationStatus } = useSelector(
     (state) => state.auth
   );
+  const navigate = useNavigate();
+
+  // NGAY LẬP TỨC redirect technician về dashboard - không render homepage
+  useEffect(() => {
+    // Chỉ redirect khi user đã authenticated và là TECHNICIAN
+    // Không redirect khi user === null (đã logout)
+    if (isAuthenticated && user && user.role && user.role.name === 'TECHNICIAN') {
+      navigate('/technician', { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  // Nếu là technician thì không render homepage, chỉ hiện loading nhỏ
+  if (isAuthenticated && user && user.role && user.role.name === 'TECHNICIAN') {
+    return (
+      <div style={{ 
+        position: 'fixed', 
+        top: 0, 
+        left: 0, 
+        width: '100%', 
+        height: '100%', 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center',
+        background: 'white',
+        zIndex: 9999
+      }}>
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Đang chuyển hướng...</span>
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100)
@@ -568,25 +600,7 @@ function NewHomePage() {
         </div>
       </>}
 
-      {/* Scroll to Top Button */}
-      <button
-        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        className="btn-liquid"
-        style={{
-          position: "fixed",
-          bottom: "2rem",
-          left: "2rem",
-          zIndex: 100,
-          width: "3rem",
-          height: "3rem",
-          borderRadius: "50%",
-          display: isVisible ? "flex" : "none",
-          alignItems: "center",
-          justifyContent: "center"
-        }}
-      >
-        <ArrowRight size={20} style={{ transform: "rotate(-90deg)" }} />
-      </button>
+
     </div>
   )
 }

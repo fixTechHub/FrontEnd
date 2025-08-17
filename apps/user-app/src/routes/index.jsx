@@ -10,6 +10,7 @@ import RegisterPage from "../pages/authentication/RegisterPage";
 import ForgotPasswordPage from "../pages/authentication/ForgotPasswordPage";
 import ResetPasswordPage from "../pages/authentication/ResetPasswordPage";
 import ChooseRole from "../pages/authentication/ChooseRole";
+import ChooseAccountType from "../pages/authentication/ChooseAccountType";
 import VerifyEmailPage from "../pages/authentication/VerifyEmailPage";
 import VerifyOTPPage from "../pages/authentication/VerifyOTPPage";
 import ViewTechnicianProfile from "../pages/technician/TechnicianProfile";
@@ -81,6 +82,23 @@ export default function AppRoutes() {
             redirectPath={user ? "/" : "/login"}
           >
             <ChooseRole />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/choose-account-type"
+        element={
+          <PrivateRoute
+            isAllowed={
+              // Allow access if user is TECHNICIAN and needs to choose account type
+              (!!user && user.role?.name === "TECHNICIAN") ||
+              // OR if user is in registration process and chose TECHNICIAN role
+              (!!registrationData && registrationData.role === "TECHNICIAN")
+            }
+            redirectPath={user ? "/" : "/login"}
+          >
+            <ChooseAccountType />
           </PrivateRoute>
         }
       />
