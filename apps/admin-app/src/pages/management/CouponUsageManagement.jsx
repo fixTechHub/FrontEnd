@@ -6,7 +6,7 @@ import { couponAPI } from '../../features/coupons/couponAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { Modal, Button, Select, Descriptions, Spin, Tag } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 
 
@@ -189,11 +189,11 @@ const [isDataReady, setIsDataReady] = useState(false);
   }
   
   // Fallback: LUÔN sắp xếp theo thời gian sử dụng mới nhất trước
-  const dateA = new Date(a.usedAt || 0);
-  const dateB = new Date(b.usedAt || 0);
+    const dateA = new Date(a.usedAt || 0);
+    const dateB = new Date(b.usedAt || 0);
   console.log(`📅 FORCE fallback sorting DESC: ${dateA.toISOString()} vs ${dateB.toISOString()}`);
   return dateB - dateA;
- });
+});
 const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
 
 // Set export data và columns
@@ -217,7 +217,7 @@ useEffect(() => {
   }));
 
   createExportData(exportData, exportColumns, 'coupon_usages_export', 'Coupon Usages');
- }, [sortedUsages, couponMap, userMap, bookingMap]);
+}, [sortedUsages, couponMap, userMap, bookingMap]);
 
  // Debug: Log dữ liệu sắp xếp
  useEffect(() => {
@@ -233,7 +233,7 @@ useEffect(() => {
    console.log('🔄 Sort state changed:', { sortField, sortOrder, hasSorted });
  }, [sortField, sortOrder, hasSorted]);
 
- const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
+const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
 
  const handlePageChange = (page) => {
    setCurrentPage(page);
@@ -300,11 +300,11 @@ const handleSortByUsedAt = () => {
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
-           <h4 className="mb-1">Lịch sử sử dụng mã giảm giá</h4>
+           <h4 className="mb-1">Lịch sử mã giảm giá</h4>
            <nav>
              <ol className="breadcrumb mb-0">
                <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
-               <li className="breadcrumb-item active">Lịch sử sử dụng mã giảm giá</li>
+               <li className="breadcrumb-item active">Lịch sử mã giảm giá</li>
              </ol>
            </nav>
          </div>
@@ -326,15 +326,15 @@ const handleSortByUsedAt = () => {
          </div>
          <div className="d-flex align-items-center">
            <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
-                       <Select
+           <Select
               value="lasted"
-              style={{ width: 120 }}
-              onChange={handleSortChange}
-              options={[
-                { value: 'lasted', label: 'Mới nhất' },
-                { value: 'oldest', label: 'Cũ nhất' },
-              ]}
-            />
+             style={{ width: 120 }}
+             onChange={handleSortChange}
+             options={[
+               { value: 'lasted', label: 'Mới nhất' },
+               { value: 'oldest', label: 'Cũ nhất' },
+             ]}
+           />
          </div>
        </div>
 
@@ -558,8 +558,8 @@ const handleSortByUsedAt = () => {
                    <i className="ti ti-chevron-right"></i>
                  </button>
                </li>
-             </ul>
-           </nav>
+           </ul>
+         </nav>
          )}
        </div>
      </div>

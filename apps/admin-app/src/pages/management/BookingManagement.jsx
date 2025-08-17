@@ -5,7 +5,7 @@ import ApiBE from '../../services/ApiBE';
 import { Modal, Button, Select, Descriptions, Spin, Row, Col, Tag, Divider, Image } from 'antd';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined } from '@ant-design/icons';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -306,6 +306,9 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
              <Select.Option value="DONE">DONE</Select.Option>
              <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
+             <Select.Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Select.Option>
+             <Select.Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Select.Option>
+             <Select.Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center">

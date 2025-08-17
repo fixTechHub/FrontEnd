@@ -21,7 +21,8 @@ import {
  FileTextOutlined,
  UserOutlined,
  CalendarOutlined,
- ExclamationCircleOutlined
+ ExclamationCircleOutlined,
+ SafetyOutlined
 } from '@ant-design/icons';
 import { reportAPI } from '../../features/reports/reportAPI';
 import { setReports, setSelectedReport, setFilters, clearFilters, setLoading, setError } from '../../features/reports/reportSlice';
@@ -40,7 +41,8 @@ const ReportManagement = () => {
  const [userMap, setUserMap] = useState({});
  const [sortField, setSortField] = useState('createdAt');
  const [sortOrder, setSortOrder] = useState('desc');
-
+ const [currentPage, setCurrentPage] = useState(1);
+ const [reportsPerPage, setReportsPerPage] = useState(10);
 
  // Redux selectors
  const filteredReports = useSelector(selectFilteredReports);
@@ -48,6 +50,35 @@ const ReportManagement = () => {
  const reportStats = useSelector(selectReportStats);
  const loading = useSelector(state => state.reports.loading);
  const error = useSelector(state => state.reports.error);
+
+ // Pagination logic
+ const indexOfLastReport = currentPage * reportsPerPage;
+ const indexOfFirstReport = indexOfLastReport - reportsPerPage;
+ const totalPages = Math.ceil(filteredReports.length / reportsPerPage);
+
+ // Sorted reports for current page
+ const sortedReports = [...filteredReports].sort((a, b) => {
+   if (sortField === 'createdAt') {
+     return sortOrder === 'desc' ? new Date(b.createdAt) - new Date(a.createdAt) : new Date(a.createdAt) - new Date(b.createdAt);
+   }
+   return 0;
+ });
+
+ const currentReports = sortedReports.slice(indexOfFirstReport, indexOfLastReport);
+
+ const handlePageChange = (pageNumber) => {
+   setCurrentPage(pageNumber);
+ };
+
+ const handleSortChange = (field) => {
+   if (sortField === field) {
+     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+   } else {
+     setSortField(field);
+     setSortOrder('desc');
+   }
+   setCurrentPage(1); // Reset to first page when sorting changes
+ };
 
 
  // Load reports on component mount
@@ -111,17 +142,6 @@ const ReportManagement = () => {
  };
 
 
- const handleSortChange = (value) => {
-   if (value === 'lasted') {
-     setSortField('createdAt');
-     setSortOrder('desc');
-   } else if (value === 'oldest') {
-     setSortField('createdAt');
-     setSortOrder('asc');
-   }
- };
-
-
  const getStatusColor = (status) => {
    switch (status) {
      case 'pending':
@@ -140,6 +160,10 @@ const ReportManagement = () => {
    switch (type) {
      case 'REPORT':
        return 'blue';
+     case 'VIOLATION':
+       return 'red';
+     case 'WARRANTY':
+       return 'green';
      default:
        return 'default';
    }
@@ -151,11 +175,24 @@ const ReportManagement = () => {
      title: 'Vấn đề',
      dataIndex: 'type',
      key: 'type',
-     render: (type) => (
-       <Tag color={getTypeColor(type)} icon={<FileTextOutlined />}>
-         {type}
-       </Tag>
-     ),
+     render: (type) => {
+       let icon;
+       if (type === 'REPORT') {
+         icon = <FileTextOutlined />;
+       } else if (type === 'WARRANTY') {
+         icon = <SafetyOutlined />;
+       } else if (type === 'VIOLATION') {
+         icon = <ExclamationCircleOutlined />;
+       } else {
+         icon = <FileTextOutlined />; // Default icon
+       }
+       
+       return (
+         <Tag color={getTypeColor(type)} icon={icon}>
+           {type}
+         </Tag>
+       );
+     },
    },
    {
      title: 'Mô tả',
@@ -188,17 +225,6 @@ const ReportManagement = () => {
       </Space>
     ),
   },
-   {
-     title: 'Người bị báo cáo',
-     dataIndex: 'reportedUserId',
-     key: 'reportedUserId',
-     render: (userId) => (
-       <Space>
-         <UserOutlined />
-         <span>{userMap[userId] || userId || ""}</span>
-       </Space>
-     ),
-   },
    
    {
      title: 'Hành động',
@@ -216,39 +242,30 @@ const ReportManagement = () => {
  const isUserMapReady = filteredReports.every(r => (!r.reportedUserId || userMap[r.reportedUserId]) && (!r.reporterId || userMap[r.reporterId]));
 
 
- // Sort reports theo sortField/sortOrder
- const sortedReports = [...filteredReports].sort((a, b) => {
-   if (sortField === 'createdAt') {
-     const dateA = new Date(a.createdAt);
-     const dateB = new Date(b.createdAt);
-     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-   }
-   return 0;
- });
-
  // Set export data và columns
  useEffect(() => {
-   const exportColumns = [
-     { title: 'Vấn đề', dataIndex: 'type' },
-     { title: 'Mô tả', dataIndex: 'description' },
-     { title: 'Người báo cáo', dataIndex: 'reporterName' },
-     { title: 'Người bị báo cáo', dataIndex: 'reportedUserName' },
-     { title: 'Trạng thái', dataIndex: 'status' },
-     { title: 'Thời gian tạo', dataIndex: 'createdAt' },
-   ];
+   if (filteredReports.length > 0) {
+     const exportColumns = [
+       { title: 'ID', dataIndex: 'id', key: 'id' },
+       { title: 'Loại báo cáo', dataIndex: 'type', key: 'type' },
+       { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+       { title: 'Người báo cáo', dataIndex: 'reporterId', key: 'reporterId' },
+       { title: 'Người bị báo cáo', dataIndex: 'reportedUserId', key: 'reportedUserId' },
+       { title: 'Thời gian tạo', dataIndex: 'createdAt', key: 'createdAt' },
+     ];
 
-   const exportData = sortedReports.map(report => ({
-     type: report.type,
-     description: report.description,
-     reporterName: userMap[report.reporterId] || report.reporterId,
-     reportedUserName: userMap[report.reportedUserId] || report.reportedUserId,
-     status: report.status?.toUpperCase(),
-     createdAt: formatDateTime(report.createdAt),
-     updatedAt: formatDateTime(report.updatedAt),
-   }));
+     const exportData = sortedReports.map((report) => ({
+       id: report.id,
+       type: report.type || '',
+       status: report.status || '',
+       reporterId: userMap[report.reporterId] || report.reporterId || '',
+       reportedUserId: userMap[report.reportedUserId] || report.reportedUserId || '',
+       createdAt: formatDateTime(report.createdAt),
+     }));
 
-   createExportData(exportData, exportColumns, 'reports_export', 'Reports');
- }, [sortedReports, userMap]);
+     createExportData(exportData, exportColumns, 'reports', 'Reports');
+   }
+ }, [filteredReports, userMap, sortedReports]);
 
 
  return (
@@ -385,18 +402,131 @@ const ReportManagement = () => {
          {/* Reports Table */}
          <Table
            columns={columns}
-           dataSource={isUserMapReady ? sortedReports : []}
+           dataSource={isUserMapReady ? currentReports : []}
            rowKey="id"
            loading={loading || !isUserMapReady}
-           pagination={{
-             total: filteredReports.length,
-             pageSize: 10,
-             showSizeChanger: true,
-             showQuickJumper: true,
-             showTotal: (total, range) =>
-               `${range[0]}-${range[1]} of ${total} reports`,
-           }}
+           pagination={false}
          />
+
+         {/* Custom Pagination */}
+         <div className="d-flex justify-content-between align-items-center mt-3">
+           <div className="d-flex align-items-center gap-3">
+             <div className="text-muted">
+               Hiển thị {indexOfFirstReport + 1}-{Math.min(indexOfLastReport, filteredReports.length)} trong tổng số {filteredReports.length} báo cáo
+             </div>
+           </div>
+           {/* Pagination Controls - Always show if there are reports */}
+           {filteredReports.length > 0 && (
+             <nav>
+               <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                 {/* Previous button */}
+                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                   <button 
+                     className="page-link" 
+                     onClick={() => handlePageChange(currentPage - 1)}
+                     disabled={currentPage === 1}
+                     style={{ 
+                       border: '1px solid #dee2e6',
+                       borderRadius: '6px',
+                       padding: '8px 12px',
+                       minWidth: '40px'
+                     }}
+                   >
+                     <i className="ti ti-chevron-left"></i>
+                   </button>
+                 </li>
+                 
+                 {/* Page numbers */}
+                 {[...Array(totalPages)].map((_, i) => {
+                   const pageNumber = i + 1;
+                   // Show all pages if total pages <= 7
+                   if (totalPages <= 7) {
+                     return (
+                       <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                         <button 
+                           className="page-link" 
+                           onClick={() => handlePageChange(pageNumber)}
+                           style={{ 
+                             border: '1px solid #dee2e6',
+                             borderRadius: '6px',
+                             padding: '8px 12px',
+                             minWidth: '40px',
+                             backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                             color: currentPage === pageNumber ? 'white' : '#007bff',
+                             borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                           }}
+                         >
+                           {pageNumber}
+                         </button>
+                       </li>
+                     );
+                   }
+                   
+                   // Show first page, last page, current page, and pages around current page
+                   if (
+                     pageNumber === 1 || 
+                     pageNumber === totalPages || 
+                     (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                   ) {
+                     return (
+                       <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                         <button 
+                           className="page-link" 
+                           onClick={() => handlePageChange(pageNumber)}
+                           style={{ 
+                             border: '1px solid #dee2e6',
+                             borderRadius: '6px',
+                             padding: '8px 12px',
+                             minWidth: '40px',
+                             backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                             color: currentPage === pageNumber ? 'white' : '#007bff',
+                             borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                           }}
+                         >
+                           {pageNumber}
+                         </button>
+                       </li>
+                     );
+                   } else if (
+                     pageNumber === currentPage - 2 || 
+                     pageNumber === currentPage + 2
+                   ) {
+                     return (
+                       <li key={i} className="page-item disabled">
+                         <span className="page-link" style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: '#f8f9fa',
+                           color: '#6c757d'
+                         }}>...</span>
+                       </li>
+                     );
+                   }
+                   return null;
+                 })}
+                 
+                 {/* Next button */}
+                 <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                   <button 
+                     className="page-link" 
+                     onClick={() => handlePageChange(currentPage + 1)}
+                     disabled={currentPage === totalPages}
+                     style={{ 
+                       border: '1px solid #dee2e6',
+                       borderRadius: '6px',
+                       padding: '8px 12px',
+                       minWidth: '40px'
+                     }}
+                   >
+                     <i className="ti ti-chevron-right"></i>
+                   </button>
+                 </li>
+               </ul>
+             </nav>
+           )}
+         </div>
        </Card>
 
 

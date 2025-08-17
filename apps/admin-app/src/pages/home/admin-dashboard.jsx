@@ -18,7 +18,8 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   ArrowUpOutlined,
-  ArrowDownOutlined
+  ArrowDownOutlined,
+  TrophyOutlined
 } from '@ant-design/icons';
 import {
   Chart as ChartJS,
@@ -651,9 +652,9 @@ const AdminDashboard = () => {
                 <div>
                   <div className="text-white-50 small mb-1">Tổng doanh thu của tháng</div>
                   <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
-                    ${currentRevenue.toLocaleString()}
+                    {currentRevenue.toLocaleString()} VND
                 </div>
-                  <div className="text-white-50 small mb-2">
+                  <div className="text-white-50 small mb-2" >
                     {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
                   <div className="d-flex align-items-center mt-2">
@@ -943,7 +944,7 @@ const AdminDashboard = () => {
                 display: 'flex',
                 flexDirection: 'column'
               }}
-              bodyStyle={{flex: 1, display: 'flex', flexDirection: 'column'}}
+              styles={{ body: {flex: 1, display: 'flex', flexDirection: 'column'} }}
             >
                   {recentBookingsLoading ? (
                 <div className="text-center py-4">
@@ -965,7 +966,6 @@ const AdminDashboard = () => {
                       style={{
                         background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa', 
                         borderRadius: '8px',
-                        border: index === 0 ? '2px solid #667eea' : '1px solid #e9ecef',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
                         transform: 'translateY(0)'
@@ -1059,7 +1059,7 @@ const AdminDashboard = () => {
                 display: 'flex',
                 flexDirection: 'column'
               }}
-              bodyStyle={{flex: 1, display: 'flex', flexDirection: 'column'}}
+              styles={{ body: {flex: 1, display: 'flex', flexDirection: 'column'} }}
             >
               {topTechniciansLoading ? (
                 <div className="text-center py-4">
@@ -1079,9 +1079,8 @@ const AdminDashboard = () => {
                       key={tech.id} 
                       className="d-flex align-items-center p-3"
                       style={{
-                        background: index === 0 ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)' : '#f8f9fa',
+                        background: index === 0 ? 'linear-gradient(135deg,rgb(150, 103, 215) 0%,rgb(26, 189, 78) 100%)' : '#f8f9fa',
                         borderRadius: '8px',
-                        border: index === 0 ? '2px solid #ffc107' : '1px solid #e9ecef',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
                         transform: 'translateY(0)'
@@ -1148,7 +1147,7 @@ const AdminDashboard = () => {
             footer={null}
             title={null}
             width={960}
-            styles={{ body: { padding: 0 } }}
+            styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column' } }}
           >
             <div style={{background: '#fff', borderRadius: 12, overflow: 'hidden'}}>
               {/* Header */}

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Descriptions, Tag, Space, Button, Spin, message, Tabs, Table, Avatar, Modal, Input } from 'antd';
+import { Card, Descriptions, Tag, Space, Button, Spin, message, Tabs, Table, Avatar, Modal, Input, Select } from 'antd';
 const { TextArea } = Input;
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { userAPI } from '../../features/users/userAPI';
@@ -12,17 +12,17 @@ import { useDispatch } from 'react-redux';
 const statusTag = (status) => {
   const colorMap = {
     ACTIVE: 'green',
-    INACTIVE: 'default',
+    INACTIVE: 'red',
     LOCKED: 'red',
   };
   return <Tag color={colorMap[status] || 'default'}>{status || 'UNKNOWN'}</Tag>;
 };
 
 const formatAddressValue = (addr) => {
-  if (!addr) return 'N/A';
+  if (!addr) return '';
   if (typeof addr === 'string') return addr;
   const parts = [addr.street, addr.district, addr.city].filter(Boolean);
-  return parts.length ? parts.join(', ') : 'N/A';
+  return parts.length ? parts.join(', ') : '';
 };
 
 const formatStatusLabel = (status) => {
@@ -41,6 +41,11 @@ export default function UserDetail() {
   const [serviceMap, setServiceMap] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notificationContent, setNotificationContent] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [filterService, setFilterService] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [allServices, setAllServices] = useState([]);
+ 
   useEffect(() => {
     const load = async () => {
       try {
@@ -62,6 +67,7 @@ export default function UserDetail() {
           sm[s.id] = s.serviceName || s.name;
         });
         setServiceMap(sm);
+        setAllServices(services); // Thêm dòng này để có dữ liệu cho filter
         const userBookings = (allBookings || []).filter(
           (b) => b.customerId === u.id || b.technicianId === u.technicianId || b.createdBy === u.id
         );
@@ -76,6 +82,26 @@ export default function UserDetail() {
     load();
   }, [id, navigate]);
 
+
+
+  // Logic filter cho bookings
+  const filteredBookings = useMemo(() => {
+    return bookings.filter(b => {
+      const bookingCode = (b.bookingCode || '').toLowerCase();
+      const service = (serviceMap[b.serviceId] || '').toLowerCase();
+      const status = (b.status || '').toLowerCase();
+      const search = searchText.toLowerCase();
+
+      return (
+        (bookingCode.includes(search) ||
+         service.includes(search) ||
+         status.includes(search)) &&
+        (!filterService || b.serviceId === filterService) &&
+        (!filterStatus || b.status === filterStatus)
+      );
+    }).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sắp xếp mới nhất trước
+  }, [bookings, searchText, filterService, filterStatus, serviceMap]);
+
   const bookingColumns = useMemo(
     () => [
       { title: 'Mã đơn hàng', dataIndex: 'bookingCode', key: 'bookingCode' },
@@ -89,14 +115,14 @@ export default function UserDetail() {
   useEffect(() => {
     if (!bookings || bookings.length === 0) return;
     const exportColumns = bookingColumns.map((c) => ({ title: c.title, dataIndex: c.dataIndex }));
-    const exportData = bookings.map((b) => ({
+    const exportData = filteredBookings.map((b) => ({
       bookingCode: b.bookingCode,
       serviceName: serviceMap[b.serviceId] || b.serviceName || b.serviceId,
       status: formatStatusLabel(b.status),
       createdAt: formatDateTime(b.createdAt),
     }));
     createExportData(exportData, exportColumns, `user_${id}_bookings`, 'UserBookings');
-  }, [bookings, bookingColumns, id, serviceMap]);
+  }, [filteredBookings, bookingColumns, id, serviceMap]);
   const handleSendWarningToUser = async () => {
     if (!notificationContent.trim()) {
       message.error('Please enter notification content');
@@ -154,7 +180,7 @@ export default function UserDetail() {
                   <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
                 </Space>
 
-                <Card title="Thông tin người dùng" bordered={false} style={{ borderRadius: 12 }}>
+                <Card title="Thông tin người dùng" variant="borderless" style={{ borderRadius: 12 }}>
                   <div style={{display:'flex', alignItems:'center', gap:24, marginBottom:16}}>
                     <Avatar
                       size={80}
@@ -173,16 +199,16 @@ export default function UserDetail() {
                     </div>
                   </div>
                   <Descriptions column={2} bordered>
-                    <Descriptions.Item label="Họ và tên">{user.fullName || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-                    <Descriptions.Item label="SĐT">{user.phone || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Vai trò">{user.roleName || user.role || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Mã người dùng">{user.userCode || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Trạng thái">{statusTag(user.status)}</Descriptions.Item>
-                    <Descriptions.Item label="Thời gian tạo">{formatDateTime(user.createdAt)}</Descriptions.Item>
-                    {user.address && (
+                    <Descriptions.Item label="Họ và tên" span={1}>{user.fullName || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Email" span={1}>{user.email}</Descriptions.Item>
+                    <Descriptions.Item label="SĐT" span={1}>{user.phone || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Vai trò" span={1}>{user.roleName || user.role || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Mã người dùng" span={1}>{user.userCode || ''}</Descriptions.Item>
+                    <Descriptions.Item label="Trạng thái" span={1}>{statusTag(user.status)}</Descriptions.Item>
+                    <Descriptions.Item label="Thời gian tạo" span={1}>{formatDateTime(user.createdAt)}</Descriptions.Item>
+                    
                       <Descriptions.Item label="Địa chỉ" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
-                    )}
+                    
                   </Descriptions>
 
                   {/* Locked Reason - Hiển thị riêng */}
@@ -212,12 +238,122 @@ export default function UserDetail() {
                       key: 'bookings',
                       label: 'Các đơn hàng của người dùng',
                       children: (
-                        <Table
-                          rowKey={(r) => r.id}
-                          dataSource={bookings}
-                          columns={bookingColumns}
-                          pagination={{ pageSize: 10 }}
-                        />
+                        <div>
+                          {/* Search và Filter Controls */}
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between', 
+                            flexWrap: 'wrap',
+                            gap: 16,
+                            marginBottom: 16,
+                            padding: '16px',
+                            background: '#f8f9fa',
+                            borderRadius: '8px'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                              {/* Search Input */}
+                              <div className="top-search">
+             <div className="top-search-group">
+               <span className="input-icon">
+                 <i className="ti ti-search"></i>
+               </span>
+               <input
+                 type="text"
+                 className="form-control"
+                 placeholder="Tìm kiếm đơn hàng..."
+                 value={searchText}
+                 onChange={e => setSearchText(e.target.value)}
+               />
+             </div>
+           </div>
+
+                              {/* Service Filter */}
+                              <Select
+                                placeholder="Dịch vụ"
+                                value={filterService || undefined}
+                                onChange={(value) => setFilterService(value)}
+                                style={{ width: 150 }}
+                                allowClear
+                              >
+                                {allServices.map(s => (
+                                  <Select.Option key={s.id} value={s.id}>
+                                    {s.serviceName || s.name}
+                                  </Select.Option>
+                                ))}
+                              </Select>
+
+                              {/* Status Filter */}
+                              <Select
+                                placeholder="Trạng thái"
+                                value={filterStatus || undefined}
+                                onChange={(value) => setFilterStatus(value)}
+                                style={{ width: 130 }}
+                                allowClear
+                              >
+                                <Select.Option value="PENDING">PENDING</Select.Option>
+                                <Select.Option value="CANCELLED">CANCELLED</Select.Option>
+                                <Select.Option value="WAITING_CONFIRM">WAITING CONFIRM</Select.Option>
+                                <Select.Option value="IN_PROGRESS">IN PROGRESS</Select.Option>
+                                <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
+                                <Select.Option value="DONE">DONE</Select.Option>
+                                <Select.Option value="AWAITING_CONFIRM">AWAITING CONFIRM</Select.Option>
+                                <Select.Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Select.Option>
+                                <Select.Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Select.Option>
+                                <Select.Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Select.Option>
+                                <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
+                              </Select>
+                            </div>
+
+                            
+                          </div>
+
+                          {/* Filter Info */}
+                          {(searchText || filterService || filterStatus) && (
+         <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+           <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+           {searchText && (
+             <span className="badge bg-primary-transparent">
+               <i className="ti ti-search me-1"></i>
+               Tìm kiếm: "{searchText}"
+             </span>
+           )}
+           {filterService && (
+             <span className="badge bg-info-transparent">
+               <i className="ti ti-tools me-1"></i>
+               Dịch vụ: {serviceMap[filterService] || filterService}
+             </span>
+           )}
+           {filterStatus && (
+             <span className="badge bg-warning-transparent">
+               <i className="ti ti-filter me-1"></i>
+               Trạng thái: {filterStatus.replace(/_/g, ' ')}
+             </span>
+           )}
+           <button 
+             className="btn btn-sm btn-outline-secondary"
+             onClick={() => {
+               setSearchText('');
+               setFilterService('');
+               setFilterStatus('');
+             }}
+           >
+             <i className="ti ti-x me-1"></i>
+             Xóa tất cả
+           </button>
+         </div>
+       )}
+
+                          <Table
+                            rowKey={(r) => r.id}
+                            dataSource={filteredBookings}
+                            columns={bookingColumns}
+                            pagination={{ 
+                              pageSize: 10,
+                              showSizeChanger: false
+                            }}
+                          />
+                        </div>
                       ),
                     },
                   ]}

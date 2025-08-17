@@ -17,7 +17,7 @@ import {
 } from '../../features/coupons/couponSlice';  
 import { couponAPI } from '../../features/coupons/couponAPI';
 import { userAPI } from '../../features/users/userAPI';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined, FilterOutlined } from '@ant-design/icons';
 import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 
@@ -127,6 +127,15 @@ const couponsPerPage = 10;
    }
  };
 
+ const handleSortByMinOrderValue = () => {
+   if (sortField === 'minOrderValue') {
+     setSortOrder((prev) => (prev === 'asc' ? 'desc' : 'asc'));
+   } else {
+     setSortField('minOrderValue');
+     setSortOrder('asc');
+   }
+ };
+
  const filteredCoupons = coupons.filter(coupon =>
    coupon.code?.toLowerCase().includes(searchText.toLowerCase()) &&
    (!filterType || coupon.type === filterType) &&
@@ -157,6 +166,14 @@ const couponsPerPage = 10;
        return a.maxDiscount - b.maxDiscount;
      } else {
        return b.maxDiscount - a.maxDiscount;
+     }
+   } else if (sortField === 'minOrderValue') {
+     if (a.minOrderValue == null) return 1;
+     if (b.minOrderValue == null) return -1;
+     if (sortOrder === 'asc') {
+       return a.minOrderValue - b.minOrderValue;
+     } else {
+       return b.minOrderValue - a.minOrderValue;
      }
    } else if (sortField === 'createdAt') {
      const dateA = new Date(a.createdAt);
@@ -370,8 +387,8 @@ const handleImageUpload = () => {
           ...prev,
           images: [...prev.images, imageUrl]
         }));
-        // Thêm image tag vào description
-        const imageTag = `\n[IMAGE:${imageUrl}]\n`;
+        // Thêm image tag với ảnh thật vào description
+        const imageTag = `\n<img src="${imageUrl}" alt="${file.name}" style="max-width: 100%; height: auto; margin: 10px 0;" />\n`;
         setFormData(prev => ({
           ...prev,
           description: prev.description + imageTag
@@ -757,7 +774,6 @@ const handleConfirmUserSelection = () => {
                      </span>
                    )}
                  </th>
-                 <th>Phân loại</th>
                  <th style={{ cursor: 'pointer' }} onClick={handleSortByValue}>
                     Giá trị
                    {sortField === 'value' && (
@@ -783,7 +799,7 @@ const handleConfirmUserSelection = () => {
              <tbody>
                {loading ? (
                  <tr>
-                   <td colSpan={8} className="text-center">
+                   <td colSpan={9} className="text-center">
                      <div className="spinner-border text-primary" role="status">
                        <span className="visually-hidden">Loading...</span>
                      </div>
@@ -791,7 +807,7 @@ const handleConfirmUserSelection = () => {
                  </tr>
                ) : filteredCoupons.length === 0 ? (
                  <tr>
-                   <td colSpan={8} className="text-center text-muted py-4">
+                   <td colSpan={9} className="text-center text-muted py-4">
                      <div>
                        <i className="ti ti-ticket" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
                        <p className="mb-0">Không có mã giảm giá nào</p>
@@ -800,7 +816,7 @@ const handleConfirmUserSelection = () => {
                  </tr>
                ) : currentCoupons.length === 0 ? (
                  <tr>
-                   <td colSpan={8} className="text-center text-muted py-4">
+                   <td colSpan={9} className="text-center text-muted py-4">
                      <div>
                        <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
                        <p className="mb-0">Không tìm thấy mã giảm giá nào phù hợp</p>
@@ -831,9 +847,10 @@ const handleConfirmUserSelection = () => {
                           }}
                         />
                       </td> */}
-                     <td>{coupon.type}</td>
-                     <td>{coupon.value}</td>
-                     <td>{coupon.maxDiscount}</td>
+                     <td>
+                       {coupon.type === 'PERCENT' ? `${coupon.value}%` : formatCurrency(coupon.value)}
+                     </td>
+                     <td>{coupon.maxDiscount ? formatCurrency(coupon.maxDiscount) : ''}</td>
                      <td>
                        <span className={`badge ${(coupon.usedCount || 0) >= (coupon.totalUsageLimit || 1) ? 'bg-warning-transparent' : 'bg-info-transparent'} text-dark`}>
                          {coupon.usedCount || 0}
@@ -1127,6 +1144,10 @@ const handleConfirmUserSelection = () => {
                      onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
                      style={{ width: '100%' }}
                      placeholder="Nhập phần trăm giảm giá"
+                     min={0}
+                     max={100}
+                     formatter={(value) => `${value}%`}
+                     parser={(value) => value.replace('%', '')}
                    />
                  </Form.Item>
                </Col>
@@ -1139,6 +1160,8 @@ const handleConfirmUserSelection = () => {
                      min={1}
                      style={{ width: '100%' }}
                      placeholder="Nhập số tiền giảm tối đa"
+                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                     parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                    />
                  </Form.Item>
                </Col>
@@ -1153,7 +1176,9 @@ const handleConfirmUserSelection = () => {
                    onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
                    min={1}
                    style={{ width: '100%' }}
-                   placeholder="Nhập sô tiền giảm"
+                   placeholder="Nhập số tiền giảm"
+                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                   parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                  />
                </Form.Item>
              </Col>
@@ -1170,6 +1195,8 @@ const handleConfirmUserSelection = () => {
                  min={0}
                  style={{ width: '100%' }}
                  placeholder="Nhập giá trị đơn hàng tối thiểu"
+                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                 parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                />
              </Form.Item>
            </Col>
@@ -1394,6 +1421,10 @@ const handleConfirmUserSelection = () => {
                      onChange={(value) => handleChange({ target: { name: 'value', value: value?.toString() || '' } })}
                      style={{ width: '100%' }}
                      placeholder="Nhập phần trăm giảm giá"
+                     min={0}
+                     max={100}
+                     formatter={(value) => `${value}%`}
+                     parser={(value) => value.replace('%', '')}
                    />
                  </Form.Item>
                </Col>
@@ -1406,6 +1437,8 @@ const handleConfirmUserSelection = () => {
                      min={1}
                      style={{ width: '100%' }}
                      placeholder="Nhập số tiền giảm tối đa"
+                     formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                     parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                    />
                  </Form.Item>
                </Col>
@@ -1421,6 +1454,8 @@ const handleConfirmUserSelection = () => {
                    min={1}
                    style={{ width: '100%' }}
                    placeholder="Nhập số tiền giảm"
+                   formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                   parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                  />
                </Form.Item>
              </Col>
@@ -1437,6 +1472,8 @@ const handleConfirmUserSelection = () => {
                  min={0}
                  style={{ width: '100%' }}
                  placeholder="Nhập giá trị đơn hàng tối thiểu"
+                 formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                 parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                />
              </Form.Item>
            </Col>
@@ -1572,7 +1609,7 @@ const handleConfirmUserSelection = () => {
          <table className="table datatable">
            <thead className="thead-light">
              <tr>
-               <th>Mã</th>
+               <th>Mã giảm giá</th>
                <th>Phân loại</th>
                <th>Giá trị</th>
                <th>Hành động</th>
@@ -1581,9 +1618,26 @@ const handleConfirmUserSelection = () => {
            <tbody>
              {deletedCoupons.map((coupon) => (
                <tr key={coupon.id}>
-                 <td>{coupon.code}</td>
-                 <td>{coupon.type}</td>
-                 <td>{coupon.value}</td>
+                 <td>
+                   <span style={{ 
+                     fontFamily: 'monospace', 
+                     fontWeight: 600, 
+                     color: '#1890ff',
+                     fontSize: 14
+                   }}>
+                     {coupon.code}
+                   </span>
+                 </td>
+                 <td>
+                   <span className={`badge ${coupon.type === 'PERCENT' ? 'bg-primary' : 'bg-success'}`}>
+                     {coupon.type === 'PERCENT' ? 'Phần trăm' : 'Cố định'}
+                   </span>
+                 </td>
+                 <td>
+                   <span style={{ fontWeight: 600, color: '#1a1a1a' }}>
+                     {coupon.type === 'PERCENT' ? `${coupon.value}%` : `${coupon.value.toLocaleString('vi-VN')}₫`}
+                   </span>
+                 </td>
                  <td>
                    <Button size="small" type="primary" onClick={() => handleRestoreCoupon(coupon.id)}>
                      Khôi phục

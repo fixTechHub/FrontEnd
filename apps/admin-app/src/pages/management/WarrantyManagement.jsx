@@ -7,7 +7,7 @@ import { technicianAPI } from "../../features/technicians/techniciansAPI";
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import { createExportData, formatDateTime } from '../../utils/exportUtils';
 
 
@@ -22,6 +22,26 @@ const statusOptions = [
 const WarrantyManagement = () => {
   const dispatch = useDispatch();
   const { list: warranties, loading, error } = useSelector(state => state.warranty);
+  
+  // Hàm để lấy màu sắc cho status
+  const getStatusColor = (status) => {
+    switch ((status || '').toUpperCase()) {
+      case 'PENDING':
+        return 'default';
+      case 'CONFIRMED':
+        return 'processing';
+      case 'DONE':
+        return 'green';
+      case 'RESOLVED':
+        return 'success';
+      case 'DENIED':
+        return 'red';
+      case 'EXPIRED':
+        return 'orange';
+      default:
+        return 'default';
+    }
+  };
   const [searchText, setSearchText] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [selected, setSelected] = useState(null);
@@ -180,6 +200,15 @@ const totalPages = Math.ceil(filtered.length / warrantiesPerPage);
    // 🔄 IsReviewedByAdmin sẽ tự động được set thành true khi admin thay đổi
    setEditResolutionNote(w.resolutionNote || '');
    setEditRejectionReason(w.rejectionReason || '');
+   
+   // Khởi tạo font properties từ dữ liệu hiện có hoặc default
+   // setResolutionFontFamily(w.resolutionFontFamily || 'Arial'); // Removed as per new modal
+   // setResolutionFontSize(w.resolutionFontSize || 14); // Removed as per new modal
+   // setResolutionTextAlign(w.resolutionTextAlign || 'left'); // Removed as per new modal
+   // setRejectionFontFamily(w.rejectionFontFamily || 'Arial'); // Removed as per new modal
+   // setRejectionFontSize(w.rejectionFontSize || 14); // Removed as per new modal
+   // setRejectionTextAlign(w.rejectionTextAlign || 'left'); // Removed as per new modal
+   
    setShowModal(true);
  };
 
@@ -378,8 +407,7 @@ const handleSortByTechnician = () => {
                    )}
                  </th>
                  <th>Trạng thái</th>
-                 <th>Tình trạng bảo hành</th>
-                 <th>Duyệt</th>
+                 <th>Bảo hành</th>
                  <th>Hành động</th>
                </tr>
              </thead>
@@ -416,10 +444,63 @@ const handleSortByTechnician = () => {
                      <td>{bookingMap[w.bookingId] || ''}</td>
                      <td>{userNames[w.customerId]|| ''}</td>
                      <td>{technicianNames[w.technicianId]|| ''}</td>
-                     <td>{w.status}</td>
+                     <td style={{ textAlign: 'center', padding: '12px 8px' }}>
+                       {w.status ? (
+                         <span style={{
+                           padding: '6px 12px',
+                           borderRadius: '20px',
+                           fontSize: '12px',
+                           fontWeight: '500',
+                           textTransform: 'capitalize',
+                           display: 'inline-block',
+                           minWidth: '80px',
+                           backgroundColor: getStatusColor(w.status) === 'default' ? '#6c757d' : 
+                                           getStatusColor(w.status) === 'processing' ? '#1890ff' :
+                                           getStatusColor(w.status) === 'green' ? '#52c41a' :
+                                           getStatusColor(w.status) === 'success' ? '#52c41a' :
+                                           getStatusColor(w.status) === 'red' ? '#ff4d4f' :
+                                           getStatusColor(w.status) === 'orange' ? '#fa8c16' : '#6c757d',
+                           color: 'white',
+                           border: 'none'
+                         }}>
+                           {w.status}
+                         </span>
+                       ) : (
+                         <span style={{
+                           padding: '6px 12px',
+                           borderRadius: '20px',
+                           fontSize: '12px',
+                           fontWeight: '500',
+                           backgroundColor: '#f8f9fa',
+                           color: '#6c757d',
+                           border: '1px solid #dee2e6',
+                           display: 'inline-block',
+                           minWidth: '80px'
+                         }}>
+                           N/A
+                         </span>
+                       )}
+                     </td>
                     
-                     <td>{w.isUnderWarranty ? 'Yes' : 'No'}</td>
-                     <td>{w.isReviewedByAdmin ? 'Yes' : 'No'}</td>
+                                           <td style={{ textAlign: 'center', padding: '12px 8px' }}>
+                        {w.isUnderWarranty ? (
+                          <span style={{
+                            color: '#52c41a',
+                            fontSize: '18px',
+                            fontWeight: 'bold'
+                          }}>
+                            ✓
+                          </span>
+                        ) : (
+                          <span style={{
+                            color: '#ff4d4f',
+                            fontSize: '18px',
+                            fontWeight: 'bold'
+                          }}>
+                            ✗
+                          </span>
+                        )}
+                      </td>
                      <td>
                        <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
                           Chỉnh sửa
@@ -555,52 +636,714 @@ const handleSortByTechnician = () => {
          )}
        </div>
      </div>
-     <Modal
-       open={showModal}
-       onCancel={() => {
-         setShowModal(false);
-         setEditResolutionNote('');
-         setEditRejectionReason('');
-       }}
-       onOk={handleUpdate}
-       title="Cập nhật bảo hành"
-       okText="Lưu"
-       confirmLoading={loading}
-       width={600}
-     >
-       <Form layout="vertical">
-         <Row gutter={16}>
-           <Col span={12}>
-             <Form.Item label="Trạng thái" required>
-               <Select
-                 value={editStatus}
-                 onChange={setEditStatus}
-                 options={statusOptions}
-                 style={{ width: '100%' }}
-               />
-             </Form.Item>
-           </Col>
-         </Row>
-         
-         <Form.Item label="Phương án giải quyết">
-           <Input.TextArea
-             value={editResolutionNote}
-             onChange={(e) => setEditResolutionNote(e.target.value)}
-             placeholder="Nhập ghi chú giải quyết (nếu có)"
-             rows={3}
-           />
-         </Form.Item>
-         
-         <Form.Item label="Lý do từ chối">
-           <Input.TextArea
-             value={editRejectionReason}
-             onChange={(e) => setEditRejectionReason(e.target.value)}
-             placeholder="Nhập lý do từ chối (nếu có)"
-             rows={3}
-           />
-         </Form.Item>
-       </Form>
-     </Modal>
+                   <Modal
+          open={showModal}
+          onCancel={() => {
+            setShowModal(false);
+            setEditResolutionNote('');
+            setEditRejectionReason('');
+          }}
+          onOk={handleUpdate}
+          title={
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 12,
+              padding: '6px 0',
+              borderBottom: '1px solid #f0f0f0'
+            }}>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: 16,
+                fontWeight: 600
+              }}>
+                <EditOutlined />
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a', marginBottom: 2 }}>
+                  Chỉnh sửa trạng thái bảo hành
+                </div>
+                <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                  Cập nhật trạng thái và thông tin xử lý
+                </div>
+              </div>
+            </div>
+          }
+          okText={loading ? "Đang xử lý..." : "Lưu thay đổi"}
+          cancelText="Hủy bỏ"
+          width={800}
+        okButtonProps={{
+          disabled: !editStatus || 
+            (editStatus === 'CONFIRMED' && !editResolutionNote.trim()) ||
+            (editStatus === 'RESOLVED' && !editResolutionNote.trim()) ||
+            (editStatus === 'DENIED' && !editRejectionReason.trim()),
+          loading: loading,
+          style: {
+            height: 36,
+            borderRadius: 6,
+            fontSize: 14,
+            fontWeight: 600,
+            background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+            border: 'none',
+            boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)'
+          }
+        }}
+        cancelButtonProps={{
+          style: {
+            height: 36,
+            borderRadius: 6,
+            fontSize: 14,
+            fontWeight: 500,
+            border: '2px solid #d9d9d9',
+            color: '#595959'
+          }
+        }}
+        styles={{
+          body: { 
+            padding: '20px 16px',
+            background: '#fafafa'
+          },
+          header: {
+            padding: '16px 16px 12px 16px',
+            borderBottom: 'none'
+          },
+          footer: {
+            padding: '12px 16px 16px 16px',
+            borderTop: '1px solid #f0f0f0',
+            background: '#ffffff'
+          }
+        }} 
+      >
+        {/* Status Selection Section */}
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          {/* Status Selection Card */}
+          <Col span={12}>
+            <div style={{
+              background: '#ffffff',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 16,
+              border: '1px solid #f0f0f0',
+              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <div style={{ marginBottom: 16, flex: 1 }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#1a1a1a',
+                  marginBottom: 8
+                }}>
+                  Trạng thái bảo hành <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>
+                </label>
+                <Select
+                  value={editStatus}
+                  onChange={setEditStatus}
+                  placeholder="Chọn trạng thái mới"
+                  size="middle"
+                  style={{
+                    width: '100%',
+                    height: 36,
+                    borderRadius: 6,
+                    fontSize: 14
+                  }}
+                >
+                  <Select.Option value="PENDING">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#faad14'
+                      }} />
+                      <span>PENDING - Đang chờ xử lý</span>
+                    </div>
+                  </Select.Option>
+                  <Select.Option value="DONE">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#52c41a'
+                      }} />
+                      <span>DONE - Đã hoàn thành</span>
+                    </div>
+                  </Select.Option>
+                  <Select.Option value="CONFIRMED">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#1890ff'
+                      }} />
+                      <span>CONFIRMED - Xác nhận bảo hành</span>
+                    </div>
+                  </Select.Option>
+                  <Select.Option value="RESOLVED">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#52c41a'
+                      }} />
+                      <span>RESOLVED - Đã giải quyết</span>
+                    </div>
+                  </Select.Option>
+                  <Select.Option value="DENIED">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#ff4d4f'
+                      }} />
+                      <span>DENIED - Đã từ chối</span>
+                    </div>
+                  </Select.Option>
+                  <Select.Option value="EXPIRED">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        background: '#fa8c16'
+                      }} />
+                      <span>EXPIRED - Hết hạn bảo hành</span>
+                    </div>
+                  </Select.Option>
+                </Select>
+              </div>
+            </div>
+          </Col>
+
+          {/* Info Card */}
+          <Col span={12}>
+            <div style={{
+              background: '#ffffff',
+              border: '1px solid #f0f0f0',
+              borderRadius: 12,
+              padding: 16,
+              height: '100%',
+              boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+              display: 'flex',
+              flexDirection: 'column'
+            }}>
+              <div style={{ marginBottom: 16, flex: 1 }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#1a1a1a',
+                  marginBottom: 8
+                }}>
+                  <i className="ti ti-info-circle" style={{ marginRight: 6, color: '#1890ff', fontSize: 14 }} />
+                  Thông tin bổ sung
+                </label>
+                <div style={{ 
+                  fontSize: 13, 
+                  color: '#666', 
+                  lineHeight: 1.6,
+                  padding: '12px',
+                  background: '#f8f9fa',
+                  borderRadius: '6px',
+                  border: '1px solid #e8e8e8'
+                }}>
+                  {editStatus === 'CONFIRMED' && 'Vui lòng điền phương án giải quyết để hoàn tất quy trình bảo hành'}
+                  {editStatus === 'RESOLVED' && 'Vui lòng điền phương án giải quyết để hoàn tất quy trình bảo hành'}
+                  {editStatus === 'DENIED' && 'Vui lòng điền lý do từ chối để khách hàng hiểu rõ nguyên nhân'}
+                  {editStatus && !['CONFIRMED', 'RESOLVED', 'DENIED'].includes(editStatus) && 'Thông tin bổ sung sẽ giúp quy trình bảo hành rõ ràng hơn'}
+                </div>
+              </div>
+            </div>
+          </Col>
+        </Row>
+
+          {/* Resolution Section - Chỉ hiển thị khi status là CONFIRMED hoặc RESOLVED */}
+          {(editStatus === 'CONFIRMED' || editStatus === 'RESOLVED') && (
+            <div style={{
+              background: '#ffffff',
+              border: '1px solid #f0f0f0',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 16,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Status Indicator */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3,
+                background: 'linear-gradient(135deg, #52c41a 0%, #73d13d 100%)'
+              }} />
+              
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#1a1a1a',
+                  marginBottom: 8
+                }}>
+                  <i className="ti ti-file-text" style={{ marginRight: 6, color: '#1890ff', fontSize: 14 }} />
+                  Phương án giải quyết
+                  <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>
+                </label>
+                <div style={{
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '8px'
+                }}>
+                  <div style={{ marginBottom: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <Select
+                      placeholder="Font Family"
+                      style={{ width: 120 }}
+                      onChange={(value) => {
+                        const textarea = document.getElementById('resolution-textarea');
+                        if (textarea) {
+                          textarea.style.fontFamily = value;
+                        }
+                      }}
+                      defaultValue="Arial"
+                    >
+                      <Select.Option value="Arial">Arial</Select.Option>
+                      <Select.Option value="Times New Roman">Times New Roman</Select.Option>
+                      <Select.Option value="Courier New">Courier New</Select.Option>
+                      <Select.Option value="Georgia">Georgia</Select.Option>
+                      <Select.Option value="Verdana">Verdana</Select.Option>
+                    </Select>
+                    <Select
+                      placeholder="Font Size"
+                      style={{ width: 80 }}
+                      onChange={(value) => {
+                        const textarea = document.getElementById('resolution-textarea');
+                        if (textarea) {
+                          textarea.style.fontSize = `${value}px`;
+                        }
+                      }}
+                      defaultValue="14"
+                    >
+                      <Select.Option value="12">12px</Select.Option>
+                      <Select.Option value="14">14px</Select.Option>
+                      <Select.Option value="16">16px</Select.Option>
+                      <Select.Option value="18">18px</Select.Option>
+                      <Select.Option value="20">20px</Select.Option>
+                    </Select>
+                    <Button.Group size="small">
+                      <Button 
+                        type="default"
+                        onClick={() => {
+                          const textarea = document.getElementById('resolution-textarea');
+                          if (textarea) {
+                            textarea.style.textAlign = 'left';
+                          }
+                        }}
+                      >
+                        <i className="ti ti-align-left"></i>
+                      </Button>
+                      <Button 
+                        type="default"
+                        onClick={() => {
+                          const textarea = document.getElementById('resolution-textarea');
+                          if (textarea) {
+                            textarea.style.textAlign = 'center';
+                          }
+                        }}
+                      >
+                        <i className="ti ti-align-center"></i>
+                      </Button>
+                      <Button 
+                        type="default"
+                        onClick={() => {
+                          const textarea = document.getElementById('resolution-textarea');
+                          if (textarea) {
+                            textarea.style.textAlign = 'right';
+                          }
+                        }}
+                      >
+                        <i className="ti ti-align-right"></i>
+                      </Button>
+                    </Button.Group>
+                    <Button 
+                      size="small"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              const textarea = document.getElementById('resolution-textarea');
+                              if (textarea) {
+                                // Tạo img tag với base64 data
+                                const imgTag = `\n<img src="${e.target.result}" alt="${file.name}" style="max-width: 100%; height: auto; margin: 10px 0;" />\n`;
+                                const cursorPos = textarea.selectionStart;
+                                const textBefore = textarea.value.substring(0, cursorPos);
+                                const textAfter = textarea.value.substring(cursorPos);
+                                const newValue = textBefore + imgTag + textAfter;
+                                
+                                // Cập nhật state
+                                setEditResolutionNote(newValue);
+                                
+                                // Cập nhật textarea value
+                                textarea.value = newValue;
+                                
+                                // Đặt con trỏ sau tag ảnh
+                                const newCursorPos = cursorPos + imgTag.length;
+                                textarea.focus();
+                                textarea.setSelectionRange(newCursorPos, newCursorPos);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        };
+                        input.click();
+                      }}
+                      icon={<i className="ti ti-photo"></i>}
+                    >
+                      Thêm ảnh
+                    </Button>
+                  </div>
+                  <Input.TextArea
+                    id="resolution-textarea"
+                    value={editResolutionNote}
+                    onChange={(e) => setEditResolutionNote(e.target.value)}
+                    rows={4}
+                    placeholder="Nhập phương án giải quyết..."
+                    style={{
+                      fontFamily: 'Arial',
+                      fontSize: '14px',
+                      textAlign: 'left',
+                      border: 'none',
+                      resize: 'none'
+                    }}
+                  />
+                </div>
+                {!editResolutionNote.trim() && (
+                  <div style={{ 
+                    color: '#ff4d4f', 
+                    fontSize: 12, 
+                    marginTop: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '6px 8px',
+                    background: '#fff2f0',
+                    borderRadius: 4,
+                    border: '1px solid #ffccc7'
+                  }}>
+                    <i className="ti ti-exclamation-circle" style={{ fontSize: 12 }} />
+                    Hãy nhập phương án giải quyết
+                  </div>
+                )}
+                {editResolutionNote.trim() && (
+                  <div style={{ 
+                    color: '#52c41a', 
+                    fontSize: 12, 
+                    marginTop: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '6px 8px',
+                    background: '#f6ffed',
+                    borderRadius: 4,
+                    border: '1px solid #b7eb8f'
+                  }}>
+                    <i className="ti ti-check-circle" style={{ fontSize: 12 }} />
+                    Phương án giải quyết đã được nhập
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Rejection Section - Chỉ hiển thị khi status là DENIED */}
+          {editStatus === 'DENIED' && (
+            <div style={{
+              background: '#ffffff',
+              border: '1px solid #f0f0f0',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 16,
+              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Status Indicator */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3,
+                background: 'linear-gradient(135deg, #ff4d4f 0%, #fa8c16 100%)'
+              }} />
+              
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ 
+                  display: 'block', 
+                  fontSize: 14,
+                  fontWeight: 600,
+                  color: '#1a1a1a',
+                  marginBottom: 8
+                }}>
+                  <i className="ti ti-file-text" style={{ marginRight: 6, color: '#1890ff', fontSize: 14 }} />
+                  Lý do từ chối
+                  <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>
+                </label>
+                <div style={{
+                  border: '1px solid #d9d9d9',
+                  borderRadius: '6px',
+                  padding: '8px'
+                }}>
+                  <div style={{ marginBottom: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <Select
+                      placeholder="Font Family"
+                      style={{ width: 120 }}
+                      onChange={(value) => {
+                        const textarea = document.getElementById('rejection-textarea');
+                        if (textarea) {
+                          textarea.style.fontFamily = value;
+                        }
+                      }}
+                      defaultValue="Arial"
+                    >
+                      <Select.Option value="Arial">Arial</Select.Option>
+                      <Select.Option value="Times New Roman">Times New Roman</Select.Option>
+                      <Select.Option value="Courier New">Courier New</Select.Option>
+                      <Select.Option value="Georgia">Georgia</Select.Option>
+                      <Select.Option value="Verdana">Verdana</Select.Option>
+                    </Select>
+                    <Select
+                      placeholder="Font Size"
+                      style={{ width: 80 }}
+                      onChange={(value) => {
+                        const textarea = document.getElementById('rejection-textarea');
+                        if (textarea) {
+                          textarea.style.fontSize = `${value}px`;
+                        }
+                      }}
+                      defaultValue="14"
+                    >
+                      <Select.Option value="12">12px</Select.Option>
+                      <Select.Option value="14">14px</Select.Option>
+                      <Select.Option value="16">16px</Select.Option>
+                      <Select.Option value="18">18px</Select.Option>
+                      <Select.Option value="20">20px</Select.Option>
+                    </Select>
+                    <Button.Group size="small">
+                      <Button 
+                        type="default"
+                        onClick={() => {
+                          const textarea = document.getElementById('rejection-textarea');
+                          if (textarea) {
+                            textarea.style.textAlign = 'left';
+                          }
+                        }}
+                      >
+                        <i className="ti ti-align-left"></i>
+                      </Button>
+                      <Button 
+                        type="default"
+                        onClick={() => {
+                          const textarea = document.getElementById('rejection-textarea');
+                          if (textarea) {
+                            textarea.style.textAlign = 'center';
+                          }
+                        }}
+                      >
+                        <i className="ti ti-align-center"></i>
+                      </Button>
+                      <Button 
+                        type="default"
+                        onClick={() => {
+                          const textarea = document.getElementById('rejection-textarea');
+                          if (textarea) {
+                            textarea.style.textAlign = 'right';
+                          }
+                        }}
+                      >
+                        <i className="ti ti-align-right"></i>
+                      </Button>
+                    </Button.Group>
+                    <Button 
+                      size="small"
+                      onClick={() => {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'image/*';
+                        input.onchange = (e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (e) => {
+                              const textarea = document.getElementById('rejection-textarea');
+                              if (textarea) {
+                                // Tạo img tag với base64 data
+                                const imgTag = `\n<img src="${e.target.result}" alt="${file.name}" style="max-width: 100%; height: auto; margin: 10px 0;" />\n`;
+                                const cursorPos = textarea.selectionStart;
+                                const textBefore = textarea.value.substring(0, cursorPos);
+                                const textAfter = textarea.value.substring(cursorPos);
+                                const newValue = textBefore + imgTag + textAfter;
+                                
+                                // Cập nhật state
+                                setEditRejectionReason(newValue);
+                                
+                                // Cập nhật textarea value
+                                textarea.value = newValue;
+                                
+                                // Đặt con trỏ sau tag ảnh
+                                const newCursorPos = cursorPos + imgTag.length;
+                                textarea.focus();
+                                textarea.setSelectionRange(newCursorPos, newCursorPos);
+                              }
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        };
+                        input.click();
+                      }}
+                      icon={<i className="ti ti-photo"></i>}
+                    >
+                      Thêm ảnh
+                    </Button>
+                  </div>
+                  <Input.TextArea
+                    id="rejection-textarea"
+                    value={editRejectionReason}
+                    onChange={(e) => setEditRejectionReason(e.target.value)}
+                    rows={4}
+                    placeholder="Nhập lý do từ chối..."
+                    style={{
+                      fontFamily: 'Arial',
+                      fontSize: '14px',
+                      textAlign: 'left',
+                      border: 'none',
+                      resize: 'none'
+                    }}
+                  />
+                </div>
+                {!editRejectionReason.trim() && (
+                  <div style={{ 
+                    color: '#ff4d4f', 
+                    fontSize: 12, 
+                    marginTop: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '6px 8px',
+                    background: '#fff2f0',
+                    borderRadius: 4,
+                    border: '1px solid #ffccc7'
+                  }}>
+                    <i className="ti ti-exclamation-circle" style={{ fontSize: 12 }} />
+                    Hãy nhập lý do từ chối
+                  </div>
+                )}
+                {editRejectionReason.trim() && (
+                  <div style={{ 
+                    color: '#52c41a', 
+                    fontSize: 12, 
+                    marginTop: 8,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    padding: '6px 8px',
+                    background: '#f6ffed',
+                    borderRadius: 4,
+                    border: '1px solid #b7eb8f'
+                  }}>
+                    <i className="ti ti-check-circle" style={{ fontSize: 12 }} />
+                    Lý do từ chối đã được nhập
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Summary Section */}
+          <Row gutter={24} style={{ marginBottom: 24 }}>
+            {/* Summary Card */}
+            <Col span={12}>
+              {(editStatus === 'CONFIRMED' || editStatus === 'RESOLVED' || editStatus === 'DENIED') && (
+                <div style={{
+                  background: 'linear-gradient(135deg, #f6ffed 0%, #f0f9ff 100%)',
+                  border: '1px solid #b7eb8f',
+                  borderRadius: 12,
+                  padding: 16,
+                  height: '100%',
+                  animation: 'slideInUp 0.3s ease-out'
+                }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: 8, 
+                    marginBottom: 12,
+                    color: '#52c41a',
+                    fontWeight: 600
+                  }}>
+                    <i className="ti ti-check-circle" />
+                    Tóm tắt thay đổi
+                  </div>
+                  <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                    Bảo hành sẽ được chuyển sang trạng thái <strong>{editStatus}</strong>.
+                    {(editStatus === 'CONFIRMED' || editStatus === 'RESOLVED') && editResolutionNote.trim() && ' Phương án giải quyết đã được thêm vào hệ thống.'}
+                    {editStatus === 'DENIED' && editRejectionReason.trim() && ' Lý do từ chối đã được thêm vào hệ thống.'}
+                  </div>
+                </div>
+              )}
+            </Col>
+
+            {/* Progress Card */}
+            <Col span={12}>
+              <div style={{
+                background: 'linear-gradient(135deg, #f0f8ff 0%, #e6f7ff 100%)',
+                border: '1px solid #bae7ff',
+                borderRadius: 12,
+                padding: 16,
+                height: '100%'
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 8, 
+                  marginBottom: 12,
+                  color: '#1890ff',
+                  fontWeight: 600
+                }}>
+                  <i className="ti ti-info-circle" />
+                  Tiến độ xử lý
+                </div>
+                <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                  {editStatus === 'PENDING' && 'Bảo hành đang chờ xử lý'}
+                  {editStatus === 'DONE' && 'Bảo hành đã hoàn thành'}
+                  {editStatus === 'CONFIRMED' && 'Bảo hành đã được xác nhận'}
+                  {editStatus === 'RESOLVED' && 'Bảo hành đã được giải quyết'}
+                  {editStatus === 'DENIED' && 'Bảo hành đã bị từ chối'}
+                  {editStatus === 'EXPIRED' && 'Bảo hành đã hết hạn'}
+                </div>
+              </div>
+            </Col>
+          </Row>
+        </Modal>
      {/* View Detail Modal */}
      {showDetailModal && selectedWarranty && (
        <Modal
@@ -646,7 +1389,7 @@ const handleSortByTechnician = () => {
                    <div style={{ display: 'grid', rowGap: 10 }}>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                        <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
-                       <span style={{ fontWeight: 600, color: '#52c41a' }}>{selectedWarranty.status}</span>
+                       <span style={{ fontWeight: 600, color: 'black' }}>{selectedWarranty.status}</span>
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                        <span style={{ color: '#8c8c8c' }}>Tình trạng bảo hành</span>

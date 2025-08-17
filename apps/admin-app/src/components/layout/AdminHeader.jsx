@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { FaBell, FaUserCircle, FaDownload, FaServer } from 'react-icons/fa';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
@@ -7,10 +7,12 @@ import { ReactSortable } from 'react-sortablejs';
 import { useNavigate } from 'react-router-dom';
 import ApiBE from '../../services/ApiBE';
 import Notifications from '../common/Notifications';
+
 const AdminHeader = () => {
   const [showExportModal, setShowExportModal] = useState(false);
   const [useDotNetBackend, setUseDotNetBackend] = useState(true);
   const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   // Dữ liệu mẫu cho export - sẽ được cập nhật từ trang hiện tại
   const [exportData, setExportData] = useState([]);
@@ -193,9 +195,43 @@ const AdminHeader = () => {
         <Notifications
         // style={{ fontSize: 22, color: '#FFA726', marginLeft: 8, cursor: 'pointer' }}
         />
-        <Dropdown menu={{ items: userMenuItems, onClick: onUserMenuClick }} trigger={["click"]} placement="bottomRight">
-          <FaUserCircle className="icon" style={{ fontSize: 28, color: '#888', marginLeft: 8, cursor: 'pointer' }} />
-        </Dropdown>
+        <div ref={dropdownRef} style={{ position: 'relative' }}>
+          <Dropdown 
+            menu={{ items: userMenuItems, onClick: onUserMenuClick }} 
+            trigger={["click"]} 
+            placement="bottomRight" 
+            getPopupContainer={() => dropdownRef.current}
+            destroyOnHidden={true}
+            autoAdjustOverflow={false}
+            overlayStyle={{ zIndex: 1050 }}
+            overlayClassName="user-dropdown-overlay"
+            mouseEnterDelay={0.1}
+            mouseLeaveDelay={0.1}
+            transitionName="slide-up"
+            popupClassName="user-dropdown-popup"
+          >
+            <div 
+              className="icon" 
+              style={{ 
+                fontSize: 28, 
+                color: '#888', 
+                marginLeft: 8, 
+                cursor: 'pointer',
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                background: '#f0f0f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontWeight: 'bold',
+                userSelect: 'none'
+              }}
+            >
+              {(userInfo?.fullName || 'A').charAt(0).toUpperCase()}
+            </div>
+          </Dropdown>
+        </div>
       </div>
 
       {/* Export Modal */}
@@ -206,6 +242,7 @@ const AdminHeader = () => {
         onCancel={handleModalCancel}
         okText="Export"
         cancelText="Cancel"
+        styles={{ body: { padding: '24px' } }}
       >
         <div style={{ marginBottom: 12 }}>
           <b>Chọn cột và kéo thả để sắp xếp:</b>
