@@ -2,14 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
-
 import Header from '../../components/common/Header';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
-
 import {
   fetchTechnicianDepositLogs,
 } from '../../features/technicians/technicianSlice';
-
 import {
   depositBalance,
   clearTransactionState,
@@ -17,14 +14,13 @@ import {
   subscriptionBalance,
   extendSubscription,
 } from '../../features/transactions/transactionSlice';
-
 import {
   fetchCurrentSubscription,
   getAllPackages,
 } from '../../features/package/packageSlice';
+import { Button } from 'react-bootstrap';
 
 const styles = {
-  // ===== Pagination =====
   pagination: {
     display: 'flex',
     justifyContent: 'center',
@@ -61,7 +57,6 @@ const styles = {
 
 const TechnicianDeposit = () => {
   const dispatch = useDispatch();
-
   const formatDate = (isoDate) => {
     if (!isoDate) return '-';
     const date = new Date(isoDate);
@@ -115,7 +110,6 @@ const TechnicianDeposit = () => {
       setAmountError('Hãy nhập số tiền hợp lệ');
       return;
     }
-    setAmountError(null);
 
     try {
       const depositURL = await dispatch(depositBalance(parsed)).unwrap();
@@ -200,13 +194,18 @@ const TechnicianDeposit = () => {
 
   const handleRequestWithdrawSubmit = async (e) => {
     e.preventDefault();
-    const parsed = parseFloat(withdrawAmount);
-    if (isNaN(parsed) || parsed <= 0) {
-      setWithdrawAmountError('Hãy nhập số tiền hợp lệ');
+
+    // Tẩy mọi ký tự không phải số: chấm, phẩy, khoảng trắng…
+    const raw = String(withdrawAmount || '');
+    const amountNumber = Number(raw.replace(/[^\d]/g, ''));   // "1.234.567" -> 1234567
+    const bal = Number(technician?.balance || 0);
+
+    if (!amountNumber || amountNumber <= 0) {
+      setWithdrawAmountError('Vui lòng nhập số tiền hợp lệ.');
       return;
     }
-    if (parsed > (technician?.balance || 0)) {
-      setWithdrawAmountError('Số tiền rút không được vượt quá số dư khả dụng');
+    if (amountNumber > bal) {
+      setWithdrawAmountError('Số tiền vượt quá số dư khả dụng.');
       return;
     }
     setWithdrawAmountError(null);
@@ -215,29 +214,32 @@ const TechnicianDeposit = () => {
       await dispatch(
         withdrawBalance({
           technicianId,
-          amount: parsed,
+          amount: amountNumber,      // 👈 dùng số sạch
           paymentMethod,
-        }),
+        })
       ).unwrap();
 
       toast.success('Yêu cầu rút tiền đã được gửi đến admin');
 
-      // đóng modal
-      const modalElement = document.getElementById('withdraw_modal');
-      const modal = window.bootstrap.Modal.getInstance(modalElement);
-      if (modal) modal.hide();
+      // Đóng modal an toàn
+      const el = document.getElementById('withdraw_modal');
+      if (el) {
+        const instance = window.bootstrap?.Modal.getInstance(el) || new window.bootstrap.Modal(el);
+        instance.hide();
+      }
 
-      // reset
+      // Reset form
       setWithdrawAmount('');
       setPaymentMethod('BANK');
 
-      // refresh logs
+      // Refresh logs (nếu page là 1-based thì dùng (page-1)*limit)
       dispatch(fetchTechnicianDepositLogs({ limit, skip: page * limit }));
     } catch (err) {
       console.error('Withdraw request error:', err);
-      toast.error(err.message || 'Có lỗi xảy ra khi gửi yêu cầu rút tiền.');
+      toast.error(err?.message || 'Có lỗi xảy ra khi gửi yêu cầu rút tiền.');
     }
   };
+
 
   const handleAmountChange = (e) => {
     setAmount(e.target.value);
@@ -263,6 +265,23 @@ const TechnicianDeposit = () => {
     }
   };
 
+  const translateStatus = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "Đang chờ";
+      case "APPROVED":
+        return "Đã duyệt";
+      case "REJECTED":
+        return "Bị từ chối";
+      case "COMPLETED":
+        return "Hoàn thành";
+      case "CANCELLED":
+        return "Đã hủy";
+      default:
+        return status; // fallback giữ nguyên
+    }
+  };
+
   const handlePageChange = (newPage) => {
     if (newPage >= 0) setPage(newPage);
   };
@@ -273,6 +292,43 @@ const TechnicianDeposit = () => {
     const modal = new window.bootstrap.Modal(el);
     modal.show();
   };
+
+  // --- helpers ---
+  const digitsOnly = (s) => (s || '').replace(/[^\d]/g, ''); // bỏ mọi thứ không phải số
+  const formatVND = (n) => Number(n).toLocaleString('vi-VN'); // 1.234.567
+
+  // --- onChange: format khi gõ ---
+  const onFormattedAmountChange = (e) => {
+    const bal = Number(technician?.balance || 0);
+    const rawDigits = digitsOnly(e.target.value);
+
+    if (!rawDigits) {
+      setWithdrawAmount('');
+      setWithdrawAmountError(null);
+      return;
+    }
+
+    let num = parseInt(rawDigits, 10);
+    if (Number.isNaN(num)) num = 0;
+
+    // Giới hạn tối đa theo số dư
+    if (bal > 0 && num > bal) num = bal;
+
+    setWithdrawAmount(formatVND(num));   // 👉 lưu dạng "1.234.567"
+    setWithdrawAmountError(null);
+  };
+
+  // format "1.234.567"
+  const formatThousands = (v) =>
+    String(v).replace(/[^\d]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  const onDepositAmountChange = (e) => {
+    const formatted = formatThousands(e.target.value);
+    setAmount(formatted);              // dùng state amount của deposit
+    if (amountError) setAmountError(null);
+  };
+
+
 
   return (
     <div className="main-wrapper">
@@ -288,7 +344,7 @@ const TechnicianDeposit = () => {
                   <li>
                     <Link to={`/technician`}>
                       <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
-                      <span>Bảng điểu khiển</span>
+                      <span>Bảng điều khiển</span>
                     </Link>
                   </li>
                   <li>
@@ -357,11 +413,6 @@ const TechnicianDeposit = () => {
                         <h6>Số dư khả dụng</h6>
                         <h4>{(technician?.balance || 0).toLocaleString('vi-VN')} VND</h4>
                       </div>
-                      <div className="refersh-icon">
-                        <a href="javascript:void(0);">
-                          <i className="fas fa-arrows-rotate"></i>
-                        </a>
-                      </div>
                     </div>
 
                     <div className="balance-list">
@@ -398,17 +449,22 @@ const TechnicianDeposit = () => {
                         Rút
                       </button>
                     </div>
-                    {/* <div className="wallet-btn">
-                      <a
-                        href="#deposit_modal"
+                    <div className="wallet-btn">
+                      <Button
                         className="btn"
-                        data-bs-toggle="modal"
-                        data-bs-target="#deposit_modal"
+                        onClick={handleDepositSubmit}
+                        disabled={transactionLoading || technician.debBalance <= 0}
                       >
-                        Nạp
-                      </a>
-                    </div> */}
+                        {transactionLoading ? 'Đang xử lý...' : 'Thanh toán nợ'}
+                      </Button>
+                    </div>
                   </div>
+                  {transactionError && (
+                    <small className="text-danger mt-2 d-block">{transactionError}</small>
+                  )}
+                  {successMessage && (
+                    <small className="text-success mt-2 d-block">{successMessage}</small>
+                  )}
                 </div>
               </div>
             </div>
@@ -428,9 +484,13 @@ const TechnicianDeposit = () => {
                     <h5 className="text-primary fw-bold">
                       {pkg?.name || 'Chưa đăng ký gói'}
                     </h5>
-                    <p className="mb-1 text-muted">
-                      {pkg?.description || 'Bạn chưa có gói nào. Hãy bấm “Chọn gói” để đăng ký.'}
-                    </p>
+
+                    {/* Chỉ hiện khi chưa có gói */}
+                    {!(pkg && (pkg._id || pkg.id || pkg.name)) && (
+                      <p className="mb-1 text-muted">
+                        Bạn chưa có gói nào. Hãy bấm “Chọn gói” để đăng ký.
+                      </p>
+                    )}
                   </div>
 
                   <ul className="list-group mb-4">
@@ -511,7 +571,7 @@ const TechnicianDeposit = () => {
                                 <td>{new Date(log.createdAt).toLocaleString()}</td>
                                 <td>
                                   <span className={`badge ${getStatusBadgeClass(log.status)}`}>
-                                    {log.status}
+                                    {translateStatus(log.status)}
                                   </span>
                                 </td>
                                 <td className="text-end">
@@ -584,20 +644,31 @@ const TechnicianDeposit = () => {
                         <div className="row">
                           <div className="col-md-12">
                             <div className="modal-form-group">
-                              <label>
+                              <label className="form-label">
                                 Số tiền <span className="text-danger">*</span>
                               </label>
-                              <input
-                                type="number"
-                                className="form-control"
-                                placeholder="Nhập số tiền"
-                                value={amount}
-                                onChange={handleAmountChange}
-                                min="1"
-                              />
-                              {amountError && <small className="text-danger">{amountError}</small>}
-                              {transactionError && <small className="text-danger">{transactionError}</small>}
-                              {successMessage && <small className="text-success">{successMessage}</small>}
+                              <div className="input-group">
+                                <input
+                                  type="text"
+                                  inputMode="numeric"        // gợi ý bàn phím số trên mobile
+                                  pattern="\d*"              // chấp nhận chỉ số (cho trình duyệt hỗ trợ)
+                                  className={`form-control ${withdrawAmountError || transactionError ? 'is-invalid' : ''}`}
+                                  placeholder="Nhập số tiền muốn rút"
+                                  value={withdrawAmount}
+                                  onChange={onFormattedAmountChange}
+                                  autoComplete="off"
+                                />
+                                <span className="input-group-text">VND</span>
+                                {(withdrawAmountError || transactionError) && (
+                                  <div className="invalid-feedback">
+                                    {withdrawAmountError || transactionError}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="form-text">
+                                Tối đa: {(technician?.balance || 0).toLocaleString('vi-VN')} VND
+                              </div>
+                              {successMessage && <div className="form-text text-success">{successMessage}</div>}
                             </div>
                           </div>
                         </div>
@@ -624,75 +695,88 @@ const TechnicianDeposit = () => {
                 </div>
               </div>
 
-              {/* Withdraw Modal */}
-              <div className="modal new-modal fade" id="withdraw_modal" data-bs-keyboard="false" data-bs-backdrop="static">
-                <div className="modal-dialog modal-dialog-centered modal-md">
-                  <div className="modal-content">
+              {/* Withdraw Modal (đã sửa) */}
+              <div
+                className="modal fade new-modal"
+                id="withdraw_modal"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                aria-hidden="true"
+                aria-labelledby="withdrawModalLabel"
+              >
+                <div className="modal-dialog modal-dialog-centered">
+                  <div className="modal-content shadow-lg">
                     <div className="modal-header">
-                      <h4 className="modal-title">Yêu Cầu Rút Tiền</h4>
+                      <h5 className="modal-title" id="withdrawModalLabel">Yêu Cầu Rút Tiền</h5>
                       <button
                         type="button"
-                        className="close-btn"
+                        className="btn-close"                // ✅ dùng nút chuẩn của Bootstrap
                         data-bs-dismiss="modal"
+                        aria-label="Close"
                         onClick={() => {
                           setWithdrawAmount('');
                           setWithdrawAmountError(null);
                           setPaymentMethod('BANK');
                           dispatch(clearTransactionState());
                         }}
-                      >
-                        <span>×</span>
-                      </button>
+                      />
                     </div>
+
                     <div className="modal-body">
-                      <form onSubmit={handleRequestWithdrawSubmit}>
-                        <div className="row">
-                          <div className="col-md-12">
-                            <div className="modal-form-group">
-                              <label>
-                                Số dư khả dụng:{' '}
-                                <strong>{(technician?.balance || 0).toLocaleString('vi-VN')} VND</strong>
-                              </label>
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div className="modal-form-group">
-                              <label>
-                                Số tiền <span className="text-danger">*</span>
-                              </label>
-                              <input
-                                type="number"
-                                className="form-control"
-                                placeholder="Nhập số tiền muốn rút"
-                                value={withdrawAmount}
-                                onChange={handleWithdrawAmountChange}
-                                max={technician?.balance || 0}
-                                min="1"
-                              />
-                              {withdrawAmountError && <small className="text-danger">{withdrawAmountError}</small>}
-                              {transactionError && <small className="text-danger">{transactionError}</small>}
-                              {successMessage && <small className="text-success">{successMessage}</small>}
-                            </div>
-                          </div>
-                          <div className="col-md-12">
-                            <div className="modal-form-group">
-                              <label>
-                                Phương thức thanh toán <span className="text-danger">*</span>
-                              </label>
-                              <select
-                                className="form-control"
-                                value={paymentMethod}
-                                onChange={(e) => setPaymentMethod(e.target.value)}
-                              >
-                                <option value="BANK">Chuyển khoản ngân hàng</option>
-                              </select>
-                            </div>
-                          </div>
+                      {/* Số dư khả dụng */}
+                      <div className="mb-3">
+                        <div className="balance-box d-flex justify-content-between align-items-center">
+                          <span>Số dư khả dụng</span>
+                          <strong>{(technician?.balance || 0).toLocaleString('vi-VN')} VND</strong>
                         </div>
-                        <div className="modal-btn modal-btn-sm">
+                      </div>
+
+                      <form onSubmit={handleRequestWithdrawSubmit}>
+                        {/* Số tiền */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            Số tiền <span className="text-danger">*</span>
+                          </label>
+                          <div className="input-group">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              pattern="\d*"
+                              className={`form-control ${amountError || transactionError ? 'is-invalid' : ''}`}
+                              placeholder="Nhập số tiền muốn nạp"
+                              value={amount}                          // ✅ dùng amount, KHÔNG dùng withdrawAmount
+                              onChange={onDepositAmountChange}        // ✅ handler format dấu chấm
+                              autoComplete="off"
+                            />
+                            <span className="input-group-text">VND</span>
+                            {(amountError || transactionError) && (
+                              <div className="invalid-feedback">
+                                {amountError || transactionError}
+                              </div>
+                            )}
+                          </div>
+                          {successMessage && <div className="form-text text-success">{successMessage}</div>}
+                        </div>
+
+                        {/* Phương thức */}
+                        <div className="mb-3">
+                          <label className="form-label">
+                            Phương thức thanh toán <span className="text-danger">*</span>
+                          </label>
+                          <select
+                            className="form-select"
+                            value={paymentMethod}
+                            onChange={(e) => setPaymentMethod(e.target.value)}
+                          >
+                            <option value="BANK">Chuyển khoản ngân hàng</option>
+                          </select>
+                        </div>
+
+                        {/* Footer nút */}
+                        <div className="modal-footer">
                           <button
                             type="button"
-                            className="btn btn-secondary"
+                            className="btn btn-outline-secondary"
                             data-bs-dismiss="modal"
                             onClick={() => {
                               setWithdrawAmount('');
@@ -711,7 +795,38 @@ const TechnicianDeposit = () => {
                     </div>
                   </div>
                 </div>
+
+                {/* CSS chỉ áp cho modal này */}
+                <style>{`
+    .new-modal .modal-dialog{
+      max-width: 640px !important;      /* ✅ không quá rộng */
+      margin: 1.75rem auto;
+    }
+    .new-modal .modal-content{
+      border-radius: 14px;               /* bo góc nhẹ */
+    }
+    .new-modal .modal-header{
+      padding: 12px 16px;
+      border-bottom: 1px solid #eef2f7;
+    }
+    .new-modal .modal-body{ padding: 16px; }
+    .new-modal .modal-footer{
+      padding: 12px 16px;
+      border-top: 1px solid #eef2f7;
+    }
+    .new-modal .balance-box{
+      background:#f8fafc;
+      border:1px solid #eef2f7;
+      border-radius:10px;
+      padding:10px 12px;
+      font-weight:600;
+    }
+    @media (max-width: 576px){
+      .new-modal .modal-dialog{ margin: 0 12px; }
+    }
+  `}</style>
               </div>
+
 
               {/* View Deposit Modals */}
               {Array.isArray(logs) &&

@@ -7,6 +7,10 @@ import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import { validateEmail, validateLoginForm } from "../../utils/validation";
 import "../../styles/auth.css";
+// thêm ở đầu file LogInPage.jsx
+import { postLoginBootstrap } from '../../features/auth/bootstrap';
+import { loginThunk, checkAuthThunk } from '../../features/auth/authSlice';
+
 
 function LogInPage() {
   const [formData, setFormData] = useState({
@@ -137,53 +141,80 @@ function LogInPage() {
     setErrors(newErrors);
   };
 
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!(await validateForm())) return;
+
+  //   setIsLoading(true);
+  //   try {
+  //     const result = await authAPI.login(formData);
+
+  //     // Dispatch authSuccess để cập nhật user vào Redux state
+  //     dispatch(authSuccess({
+  //       user: result.user,
+  //       verificationStatus: result.verificationStatus
+  //     }));
+
+  //     if (result.user.role?.name === "TECHNICIAN") {
+  //       localStorage.setItem("technician", JSON.stringify(result.user));
+  //     }
+
+  //     // Hiển thị thông báo thành công
+  //     if (result.wasReactivated) {
+  //       toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
+  //     } else if (result.user.role?.name === 'PENDING' || !result.user.role) {
+  //       toast.info("Vui lòng chọn vai trò để hoàn tất đăng ký.");
+  //     } else {
+  //       toast.success("Đăng nhập thành công!");
+  //     }
+
+  //     // Điều hướng sau khi đăng nhập Google
+  //     if (result.user.role?.name === "PENDING" || !result.user.role) {
+  //       // Người dùng mới cần chọn vai trò
+  //       navigate('/choose-role', { replace: true });
+  //     } else if (result.user.role.name === "ADMIN") {
+  //       navigate("/admin/dashboard", { replace: true });
+  //     } else if (result.user.role.name === "TECHNICIAN") {
+  //       navigate("/technician", { replace: true });
+  //     } else {
+  //       navigate("/", { replace: true });
+  //     }
+
+  //   } catch (error) {
+  //     const errorMessage = error.message || "Đăng nhập thất bại. Vui lòng thử lại.";
+  //     handleServerError(errorMessage);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
+
   const handleSubmit = async (e) => {
-    e.preventDefault();
+  e.preventDefault();
+  try {
+    await dispatch(loginThunk(formData)).unwrap();
 
-    if (!(await validateForm())) return;
+    const me = await dispatch(checkAuthThunk()).unwrap();
 
-    setIsLoading(true);
-    try {
-      const result = await authAPI.login(formData);
-
-      // Dispatch authSuccess để cập nhật user vào Redux state
-      dispatch(authSuccess({
-        user: result.user,
-        verificationStatus: result.verificationStatus
-      }));
-
-      if (result.user.role?.name === "TECHNICIAN") {
-        localStorage.setItem("technician", JSON.stringify(result.user));
+    if (me?.user?.role?.name === 'TECHNICIAN') {
+      const techId = me?.technician?._id;
+      if (techId) {
+        await Promise.all([
+          dispatch(fetchTechnicianAvailability(techId)),
+          dispatch(fetchTechnicianJobs(techId)),
+          dispatch(fetchEarningAndCommission(techId)),
+        ]);
       }
-
-      // Hiển thị thông báo thành công
-      if (result.wasReactivated) {
-        toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
-      } else if (result.user.role?.name === 'PENDING' || !result.user.role) {
-        toast.info("Vui lòng chọn vai trò để hoàn tất đăng ký.");
-      } else {
-        toast.success("Đăng nhập thành công!");
-      }
-
-      // Điều hướng sau khi đăng nhập Google
-      if (result.user.role?.name === "PENDING" || !result.user.role) {
-        // Người dùng mới cần chọn vai trò
-        navigate('/choose-role', { replace: true });
-      } else if (result.user.role.name === "ADMIN") {
-        navigate("/admin/dashboard", { replace: true });
-      } else if (result.user.role.name === "TECHNICIAN") {
-        navigate("/technician", { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
-
-    } catch (error) {
-      const errorMessage = error.message || "Đăng nhập thất bại. Vui lòng thử lại.";
-      handleServerError(errorMessage);
-    } finally {
-      setIsLoading(false);
+      navigate('/technician', { replace: true });
+    } else if (me?.user?.role?.name === 'ADMIN') {
+      navigate('/admin/dashboard', { replace: true });
+    } else {
+      navigate('/', { replace: true });
     }
-  };
+  } catch (err) {
+    toast.error(err?.message || 'Đăng nhập thất bại');
+  }
+};
 
   const handleGoogleLogin = async () => {
     setIsLoading(true);

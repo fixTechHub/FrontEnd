@@ -85,3 +85,9 @@ export const getFeedbacksByBooking = async (bookingId) => {
   const res = await apiClient.get(`/feedbacks/by-booking/${bookingId}`);
   return res.data; // { items, total }  (theo BE bạn vừa chuẩn hoá)
 };
+
+export const updateFeedbackAPI = async (feedbackId, payload) => {
+  const res = await apiClient.put(`/feedbacks/${feedbackId}`, payload);
+  // BE trả { message, data } => mình trả về data cho gọn
+  return res.data.data;
+};

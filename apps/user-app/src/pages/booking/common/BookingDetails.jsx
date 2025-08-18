@@ -7,6 +7,8 @@ import { useNavigate } from "react-router-dom";
 import { Image, Card, Badge, Button, Row, Col, Alert, Spinner, Modal, Form, Tab, Tabs } from "react-bootstrap";
 import { toast } from 'react-toastify';
 import { onAdditionalItemsAdded, onAdditionalItemsStatusUpdate, onAdditionalItemsAccepted, onAdditionalItemsRejected } from "../../../services/socket";
+import { isPaidPlan, underTrialLimit, FREE_TRIAL_LIMIT } from '../../../constants/subscription';
+
 
 // Icons
 import {
@@ -49,6 +51,10 @@ function BookingDetails({ bookingId }) {
     const [cancelError, setCancelError] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    const technician = useSelector((s) => s.auth.technician);
+    console.log('tech', technician);
+
 
     useEffect(() => {
         if (bookingId) {
@@ -120,11 +126,11 @@ function BookingDetails({ bookingId }) {
         try {
             setCancelError(''); // Clear previous error
             dispatch(setLastCancelBy(user._id));
-            
+
             // Không sử dụng unwrap() để có thể xử lý error tốt hơn
             const resultAction = await dispatch(cancelBooking({ bookingId, reason: cancelReason }));
             console.log('--- CANCEL RESULT ACTION ---', resultAction);
-            
+
             if (cancelBooking.fulfilled.match(resultAction)) {
                 toast.success(resultAction.payload.message);
                 setShowCancelModal(false);
@@ -141,7 +147,7 @@ function BookingDetails({ bookingId }) {
             // console.log('--- CANCEL ERROR MESSAGE ---', error?.message);
             // console.log('--- CANCEL ERROR TYPE ---', typeof error);
             // console.log('--- CANCEL ERROR KEYS ---', Object.keys(error || {}));
-            
+
             // Khi sử dụng unwrap(), error message thường là string trực tiếp
             const errorMessage = typeof error === 'string' ? error : (error?.payload || error?.message || error?.error || 'Hủy đơn thất bại!');
             console.log('--- FINAL ERROR MESSAGE ---', errorMessage);
@@ -149,66 +155,149 @@ function BookingDetails({ bookingId }) {
         }
     };
 
+    // const handleTechnicianConfirm = async () => {
+    //     if (!bookingId) return;
+    //     setConfirming(true);
+    //     try {
+    //         // console.log('--- FRONTEND: Bắt đầu gửi request ---');
+    //         const resultAction = await dispatch(technicianAcceptBookingThunk(bookingId));
+    //         // console.log('--- FRONTEND: Kết quả từ thunk ---', resultAction);
+    //         // console.log('--- FRONTEND: Action type ---', resultAction.type);
+    //         // console.log('--- FRONTEND: Payload ---', resultAction.payload);
+    //         // console.log('--- FRONTEND: Error ---', resultAction.error);
+
+    //         if (technicianAcceptBookingThunk.fulfilled.match(resultAction)) {
+    //             console.log('--- FRONTEND: Thành công ---');
+    //             toast.success('Bạn đã xác nhận nhận đơn!');
+    //             dispatch(fetchBookingById(bookingId));
+    //         } else {
+    //             console.log('--- FRONTEND: Thất bại ---');
+    //             const errorMessage = resultAction.payload || 'Có lỗi xảy ra!';
+    //             console.log('--- FRONTEND: Error message ---', errorMessage);
+
+    //             // Xử lý lỗi race condition và MongoDB transaction
+    //             if (errorMessage.includes('đã được thợ khác nhận trước')) {
+    //                 setErrorMessage(errorMessage);
+    //                 setShowErrorModal(true);
+    //                 // Refresh booking data để đảm bảo UI hiển thị đúng trạng thái
+    //                 setTimeout(() => {
+    //                     dispatch(fetchBookingById(bookingId));
+    //                 }, 1000);
+    //             } else if (errorMessage.includes('Write conflict') || errorMessage.includes('Transaction numbers')) {
+    //                 setErrorMessage('Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.');
+    //                 setShowErrorModal(true);
+    //             } else {
+    //                 setErrorMessage(errorMessage);
+    //                 setShowErrorModal(true);
+    //             }
+    //         }
+    //     } catch (error) {
+    //         console.log('--- FRONTEND: Catch error ---', error);
+    //         const errorMessage = error?.payload || error?.message || 'Có lỗi xảy ra!';
+    //         console.log('--- FRONTEND: Error message in catch ---', errorMessage);
+
+    //         // Xử lý lỗi race condition và MongoDB transaction
+    //         if (errorMessage.includes('đã được thợ khác nhận trước')) {
+    //             setErrorMessage(errorMessage);
+    //             setShowErrorModal(true);
+    //             // Refresh booking data để đảm bảo UI hiển thị đúng trạng thái
+    //             setTimeout(() => {
+    //                 dispatch(fetchBookingById(bookingId));
+    //             }, 1000);
+    //         } else if (errorMessage.includes('Write conflict') || errorMessage.includes('Transaction numbers')) {
+    //             setErrorMessage('Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.');
+    //             setShowErrorModal(true);
+    //         } else {
+    //             setErrorMessage(errorMessage);
+    //             setShowErrorModal(true);
+    //         }
+    //     } finally {
+    //         setConfirming(false);
+    //     }
+    // };
+
     const handleTechnicianConfirm = async () => {
         if (!bookingId) return;
+
+        // ✅ FE trial gate: chặn trước khi gọi API
+        try {
+            const paid = isPaidPlan(technician);
+            const stillTrial = underTrialLimit(technician); // true nếu jobCompleted < FREE_TRIAL_LIMIT
+
+            if (!paid && !stillTrial) {
+                toast.info(`Bạn đã dùng hết ${FREE_TRIAL_LIMIT} đơn dùng thử. Vui lòng đăng ký gói để tiếp tục nhận việc.`);
+                navigate('/technician/deposit'); // đổi route nếu trang đăng ký của bạn khác
+                return;
+            }
+        } catch (e) {
+            // nếu vì lý do gì đó không đọc được technician, vẫn cho đi tiếp chứ không chặn
+        }
+
         setConfirming(true);
         try {
-            // console.log('--- FRONTEND: Bắt đầu gửi request ---');
             const resultAction = await dispatch(technicianAcceptBookingThunk(bookingId));
-            // console.log('--- FRONTEND: Kết quả từ thunk ---', resultAction);
-            // console.log('--- FRONTEND: Action type ---', resultAction.type);
-            // console.log('--- FRONTEND: Payload ---', resultAction.payload);
-            // console.log('--- FRONTEND: Error ---', resultAction.error);
 
             if (technicianAcceptBookingThunk.fulfilled.match(resultAction)) {
-                console.log('--- FRONTEND: Thành công ---');
                 toast.success('Bạn đã xác nhận nhận đơn!');
                 dispatch(fetchBookingById(bookingId));
-            } else {
-                console.log('--- FRONTEND: Thất bại ---');
-                const errorMessage = resultAction.payload || 'Có lỗi xảy ra!';
-                console.log('--- FRONTEND: Error message ---', errorMessage);
-                
-                // Xử lý lỗi race condition và MongoDB transaction
-                if (errorMessage.includes('đã được thợ khác nhận trước')) {
-                    setErrorMessage(errorMessage);
-                    setShowErrorModal(true);
-                    // Refresh booking data để đảm bảo UI hiển thị đúng trạng thái
-                    setTimeout(() => {
-                        dispatch(fetchBookingById(bookingId));
-                    }, 1000);
-                } else if (errorMessage.includes('Write conflict') || errorMessage.includes('Transaction numbers')) {
-                    setErrorMessage('Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.');
-                    setShowErrorModal(true);
-                } else {
-                    setErrorMessage(errorMessage);
-                    setShowErrorModal(true);
-                }
+                return;
             }
-        } catch (error) {
-            console.log('--- FRONTEND: Catch error ---', error);
-            const errorMessage = error?.payload || error?.message || 'Có lỗi xảy ra!';
-            console.log('--- FRONTEND: Error message in catch ---', errorMessage);
-            
-            // Xử lý lỗi race condition và MongoDB transaction
-            if (errorMessage.includes('đã được thợ khác nhận trước')) {
-                setErrorMessage(errorMessage);
+
+            // ❌ Rejected
+            const payload = resultAction?.payload;
+            const code = payload?.code;
+            const msg = typeof payload === 'string'
+                ? payload
+                : (payload?.message || 'Có lỗi xảy ra!');
+
+            // ✅ BE trial gate
+            if (code === 'TRIAL_LIMIT_REACHED' || /TRIAL_LIMIT_REACHED|hết.*dùng thử|đăng ký gói/i.test(msg)) {
+                toast.info(`Bạn đã dùng hết ${FREE_TRIAL_LIMIT} đơn dùng thử. Vui lòng đăng ký gói để tiếp tục nhận việc.`);
+                navigate('/technician/deposit');
+                return;
+            }
+
+            // ✅ Giữ nguyên xử lý lỗi hiện có
+            if (msg.includes('đã được thợ khác nhận trước')) {
+                setErrorMessage(msg);
                 setShowErrorModal(true);
-                // Refresh booking data để đảm bảo UI hiển thị đúng trạng thái
-                setTimeout(() => {
-                    dispatch(fetchBookingById(bookingId));
-                }, 1000);
-            } else if (errorMessage.includes('Write conflict') || errorMessage.includes('Transaction numbers')) {
+                setTimeout(() => { dispatch(fetchBookingById(bookingId)); }, 1000);
+            } else if (msg.includes('Write conflict') || msg.includes('Transaction numbers')) {
                 setErrorMessage('Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.');
                 setShowErrorModal(true);
             } else {
-                setErrorMessage(errorMessage);
+                setErrorMessage(msg);
+                setShowErrorModal(true);
+            }
+        } catch (error) {
+            const msg =
+                error?.payload?.message ||
+                error?.message ||
+                'Có lỗi xảy ra!';
+
+            // ✅ Phòng trường hợp BE trả error ở catch
+            if (/TRIAL_LIMIT_REACHED|hết.*dùng thử|đăng ký gói/i.test(msg)) {
+                toast.info(`Bạn đã dùng hết ${FREE_TRIAL_LIMIT} đơn dùng thử. Vui lòng đăng ký gói để tiếp tục nhận việc.`);
+                navigate('/technician/deposit');
+                return;
+            }
+
+            if (msg.includes('đã được thợ khác nhận trước')) {
+                setErrorMessage(msg);
+                setShowErrorModal(true);
+                setTimeout(() => { dispatch(fetchBookingById(bookingId)); }, 1000);
+            } else if (msg.includes('Write conflict') || msg.includes('Transaction numbers')) {
+                setErrorMessage('Có lỗi xảy ra khi xử lý yêu cầu. Vui lòng thử lại.');
+                setShowErrorModal(true);
+            } else {
+                setErrorMessage(msg);
                 setShowErrorModal(true);
             }
         } finally {
             setConfirming(false);
         }
     };
+
 
     const handleTechnicianReject = async () => {
         if (!bookingId) return;
@@ -574,7 +663,7 @@ function BookingDetails({ bookingId }) {
                                 </>
                             )}
                         </Button>
-                        
+
                         <Button
                             variant="warning"
                             className="booking-details-action-btn reject-btn"
@@ -630,14 +719,14 @@ function BookingDetails({ bookingId }) {
                         <FaExclamationTriangle className="me-2" />
                         <strong>Lưu ý:</strong> Hành động này không thể hoàn tác.
                     </Alert>
-                    
+
                     {cancelError && (
                         <Alert variant="danger" className="mt-3">
                             <FaExclamationTriangle className="me-2" />
                             <strong>Lỗi:</strong> {cancelError}
                         </Alert>
                     )}
-                    
+
                     <Form.Group className="mt-3">
                         <Form.Label>Lý do hủy đơn:</Form.Label>
                         <Form.Control
