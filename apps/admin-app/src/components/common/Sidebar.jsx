@@ -19,7 +19,11 @@ import {
   FaSearch,
   FaTimes,
   FaShieldAlt,
-  FaDollarSign
+  FaDollarSign,
+   FaCrown,           
+  FaCommentDots,     
+  FaMoneyBillWave,  
+  FaCertificate 
 } from "react-icons/fa";
 
 
@@ -269,23 +273,23 @@ const Sidebar = () => {
                 </Link>
               </li>
               <li>
-                <Link to="/admin/feedback" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
+                <Link to="/admin/feedback" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/feedback" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/feedback" ? customStyles.activeMenuItem : {}}>
-                  <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/feedback" ? customStyles.activeIcon : {})}} />
+                  <FaCommentDots className="me-3" style={{width: '20px', ...(currentPath === "/admin/feedback" ? customStyles.activeIcon : {})}} />
                   <span>Đánh giá</span>
                 </Link>
               </li>
               <li>
-                <Link to="/admin/package" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
+                <Link to="/admin/package" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/package" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/package" ? customStyles.activeMenuItem : {}}>
-                  <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/package" ? customStyles.activeIcon : {})}} />
+                  <FaCrown className="me-3" style={{width: '20px', ...(currentPath === "/admin/package" ? customStyles.activeIcon : {})}} />
                   <span>Gói thành viên</span>
                 </Link>
               </li>
               <li>
-                <Link to="/admin/certificate" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
+                <Link to="/admin/certificate" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/certificate" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/certificate" ? customStyles.activeMenuItem : {}}>
-                  <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/certificate" ? customStyles.activeIcon : {})}} />
+                  <FaCertificate className="me-3" style={{width: '20px', ...(currentPath === "/admin/certificate" ? customStyles.activeIcon : {})}} />
                   <span>Chứng chỉ</span>
                 </Link>
               </li>
@@ -329,9 +333,9 @@ const Sidebar = () => {
           <li>
             <ul className="list-unstyled m-0 p-0">
               <li>
-                <Link to="/admin/withdraw" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/booking-management" ? "" : "text-dark"}`}
+                <Link to="/admin/withdraw" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/withdraw" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/withdraw" ? customStyles.activeMenuItem : {}}>
-                  <FaCalendar className="me-3" style={{width: '20px', ...(currentPath === "/admin/withdraw" ? customStyles.activeIcon : {})}} />
+                  <FaMoneyBillWave className="me-3" style={{width: '20px', ...(currentPath === "/admin/withdraw" ? customStyles.activeIcon : {})}} />
                   <span>Tài chính</span>
                 </Link>
               </li>

@@ -487,7 +487,7 @@ const TechnicianDeposit = () => {
 
                     {/* Chỉ hiện khi chưa có gói */}
                     {!(pkg && (pkg._id || pkg.id || pkg.name)) && (
-                      <p className="mb-1 text-muted">
+                      <p className="mb-1 text-primary">
                         Bạn chưa có gói nào. Hãy bấm “Chọn gói” để đăng ký.
                       </p>
                     )}

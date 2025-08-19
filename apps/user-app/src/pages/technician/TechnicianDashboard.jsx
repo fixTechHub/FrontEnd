@@ -3,7 +3,7 @@ import Header from "../../components/common/Header";
 import Footer from "../../components/common/Footer";
 // import { useParams } from 'react-router-dom'; // <-- không dùng
 import { useDispatch, useSelector } from 'react-redux';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState  } from 'react';
 import React from "react";
 import {
   fetchEarningAndCommission,
@@ -15,7 +15,7 @@ import { Link } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { selectTechnicianId } from '../../utils/selectors';
-
+import { useNavigate } from 'react-router-dom';
 import { formatDateOnly } from '../../utils/formatDate';
 
 const BreadcrumbSection = () => (
@@ -211,7 +211,7 @@ function ViewEarningAndCommission() {
             </div>
           </div>
         </div>
-      </div>  
+      </div>
     </div>
   );
 }
@@ -387,7 +387,7 @@ const AvailabilitySwitch = () => {
 
     // Nếu đang bật (FREE/ONJOB) -> tắt BUSY thì phải xong hết đơn
     if (isSwitchOn && !allJobsDone) {
-      toast.error('Không thể chuyển sang "Tạm ngưng" khi vẫn còn đơn chưa hoàn thành.', { position:'top-right', autoClose:3000, theme:'colored' });
+      toast.error('Không thể chuyển sang "Tạm ngưng" khi vẫn còn đơn chưa hoàn thành.', { position: 'top-right', autoClose: 3000, theme: 'colored' });
       return;
     }
 
@@ -399,9 +399,9 @@ const AvailabilitySwitch = () => {
         dispatch(fetchTechnicianAvailability(techId)),
         dispatch(fetchTechnicianJobs(techId)),
       ]);
-      toast.success(next === 'BUSY' ? 'Đã chuyển sang: Tạm ngưng' : 'Đã chuyển sang: Nhận việc', { position:'top-right', autoClose:2000, theme:'colored' });
+      toast.success(next === 'BUSY' ? 'Đã chuyển sang: Tạm ngưng' : 'Đã chuyển sang: Nhận việc', { position: 'top-right', autoClose: 2000, theme: 'colored' });
     } catch {
-      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại!', { position:'top-right', autoClose:3000, theme:'colored' });
+      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại!', { position: 'top-right', autoClose: 3000, theme: 'colored' });
     } finally {
       setPending(false);
     }
@@ -512,8 +512,23 @@ const CardsRow = () => (
 
 function TechnicianDashboard() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { technician } = useSelector((state) => state.auth);
   const techId = useSelector(selectTechnicianId);
   const techReady = !!techId;
+  const [showSubModal, setShowSubModal] = useState(false);
+
+  useEffect(() => {
+    if (!technician) return;
+    const status = String(technician.subscriptionStatus || '').toUpperCase();
+    const isSub = technician.isSubscribe;
+
+    if (status === 'FREE' || isSub === false) {
+      setShowSubModal(true);
+    }
+  }, [technician?.subscriptionStatus, technician?.isSubscribe, technician]);
+
+  const goToSubscription = () => navigate('/technician/deposit', { replace: true });
 
   // ✅ Gọi fetch sau khi có techId
   useEffect(() => {
@@ -544,6 +559,7 @@ function TechnicianDashboard() {
   }
 
   return (
+    <>
     <div className="main-wrapper">
       <Header />
       <BreadcrumbSection />
@@ -586,6 +602,56 @@ function TechnicianDashboard() {
       </div>
       <Footer />
     </div>
+
+
+  {/* Modal thông báo đăng ký gói */}
+      {showSubModal && (
+        <div className="subscr-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="subscr-modal-title">
+          <div className="subscr-modal">
+            <div className="subscr-modal__header">
+              <h5 id="subscr-modal-title" className="m-0">Bạn chưa đăng ký gói thành viên</h5>
+            </div>
+            <div className="subscr-modal__body">
+              <p className="mb-2">
+                Tài khoản của bạn đang ở trạng thái <b>FREE</b>. Hãy đăng ký gói để nhận đơn và hưởng quyền lợi dành cho kỹ thuật viên.
+              </p>
+              <ul className="mb-0">
+                <li>Nhận đơn ưu tiên theo khu vực & chuyên môn</li>
+                <li>Biểu phí minh bạch, rút tiền nhanh</li>
+                <li>Hỗ trợ kỹ thuật & CSKH</li>
+              </ul>
+            </div>
+            <div className="subscr-modal__footer">
+              <button className="btn btn-outline-secondary" onClick={() => setShowSubModal(false)}>
+                Để sau
+              </button>
+              <button className="btn btn-primary" onClick={goToSubscription}>
+                Đăng ký ngay
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+       {/* CSS tối giản cho modal */}
+      <style>{`
+        .subscr-modal-overlay{
+          position:fixed; inset:0; background:rgba(0,0,0,.45);
+          display:flex; align-items:center; justify-content:center; z-index:1050;
+        }
+        .subscr-modal{
+          background:#fff; width:min(560px, calc(100% - 32px));
+          border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.2);
+          overflow:hidden;
+        }
+        .subscr-modal__header{ padding:14px 18px; border-bottom:1px solid #eee; }
+        .subscr-modal__body{ padding:16px 18px; }
+        .subscr-modal__footer{
+          display:flex; gap:10px; justify-content:flex-end;
+          padding:12px 18px; border-top:1px solid #eee;
+        }
+      `}</style>
+       </>
   );
 }
 
