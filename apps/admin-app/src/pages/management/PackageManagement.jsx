@@ -63,8 +63,6 @@ const PackageManagement = () => {
 
 
   const handleEditPackage = (service) => {
-
-
     setFormData({
       id: service._id,  // ✅ id phải có
       name: service.name,
@@ -73,9 +71,6 @@ const PackageManagement = () => {
       benefit: service.benefits || [],
       isActive: service.isActive,
     });
-
-
-
     setShowEditModal(true);
   };
 
