@@ -5,7 +5,7 @@ import ApiBE from '../../services/ApiBE';
 import { Modal, Button, Select, Descriptions, Spin, Row, Col, Tag, Divider, Image } from 'antd';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined } from '@ant-design/icons';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -306,6 +306,9 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
              <Select.Option value="DONE">DONE</Select.Option>
              <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
+             <Select.Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Select.Option>
+             <Select.Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Select.Option>
+             <Select.Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center">
@@ -583,7 +586,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
         >
           <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)', padding: 24, color: '#fff' }}>
+            <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: 24, color: '#fff' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết đơn hàng</div>
@@ -627,8 +630,8 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                     <div style={{ fontWeight: 600, marginBottom: 12 }}>Khách hàng & Kỹ thuật viên</div>
                     <Descriptions size="small" column={1} bordered={false}
                       items={[
-                        { key: 'customer', label: 'Khách hàng', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || 'UNKNOWN' },
-                        { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : 'UNKNOWN') },
+                        { key: 'customer', label: 'Khách hàng', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || '' },
+                        { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : '') },
                       ]}
                     />
                   </div>

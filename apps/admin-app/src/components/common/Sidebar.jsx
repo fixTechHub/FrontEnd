@@ -90,6 +90,7 @@ const Sidebar = () => {
     { label: 'Financial Management', path: '/admin/financial-management' },
     { label: 'Commission Config Management', path: '/admin/commission-config-management' },
     { label: 'Technician Subscription Analytics', path: '/admin/technician-subscription-analytics' },
+    { label: 'Booking Status Logs', path: '/admin/booking-status-log-management' },
   ];
   const filteredRoutes = searchValue
     ? managementRoutes.filter(r =>
@@ -309,6 +310,7 @@ const Sidebar = () => {
                   <span>Đơn hàng</span>
                 </Link>
               </li>
+              
               <li>
                 <Link to="/admin/coupon-usage-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/coupon-usage-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/coupon-usage-management" ? customStyles.activeMenuItem : {}}>
@@ -343,8 +345,16 @@ const Sidebar = () => {
             </ul>
             
           </li>
-         
-         
+            <span>Quản lí lịch sử</span>
+          </li>
+          <li>
+                 <Link to="/admin/booking-status-log-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/booking-status-log-management" ? "" : "text-dark"}`}
+                       style={currentPath === "/admin/booking-status-log-management" ? customStyles.activeMenuItem : {}}>
+                   <FaClipboardList className="me-3" style={{width: '20px', ...(currentPath === "/admin/booking-status-log-management" ? customStyles.activeIcon : {})}} />
+                   <span>Lịch sử trạng thái</span>
+                 </Link>
+               </li>
+
           {/* Add more menu sections as needed */}
         </ul>
       </div>

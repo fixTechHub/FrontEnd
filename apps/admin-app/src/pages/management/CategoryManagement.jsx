@@ -10,7 +10,7 @@ import {
  fetchDeletedCategories,
  restoreCategory,
 } from '../../features/categories/categorySlice';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { createExportData, formatDateTime } from '../../utils/exportUtils';
 import IconUploader from '../../components/common/IconUploader';
@@ -535,11 +535,19 @@ const isDataReady = categories.length > 0;
        onCancel={() => setShowAddModal(false)}
        footer={null}
        title="Thêm danh mục"
-       width={600}
+       width={650}
      >
         <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
-           <div style={{ color: 'red', marginBottom: 8 }}>
+           <div style={{ 
+             color: 'red', 
+             marginBottom: 16,
+             padding: '8px 12px',
+             background: '#fff2f0',
+             border: '1px solid #ffccc7',
+             borderRadius: '6px',
+             fontSize: '14px'
+           }}>
              {validationErrors.general.includes('The dto field is required') ||
               validationErrors.general.includes('could not be converted') ||
               validationErrors.general.includes('System.')
@@ -547,48 +555,96 @@ const isDataReady = categories.length > 0;
                : validationErrors.general}
            </div>
          )}
-          <Row gutter={16}>
-            <Col span={16}>
-              <Form.Item label="Tên danh mục" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
-                <Input
-                  name="categoryName"
-                  value={formData.categoryName}
-                  onChange={handleChange}
-                  placeholder="Nhập tên danh mục"
-                  required
-                  maxLength={100}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label="Trạng thái">
-                <Switch
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                  checkedChildren="Active"
-                  unCheckedChildren="Inactive"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="Chọn ký hiệu" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-                <IconUploader
-                  value={formData.icon}
-                  onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-                  placeholder="Đăng tải hình ảnh"
-                />
-                <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>PNG/SVG, kích thước đề xuất 64x64</div>
-              </Form.Item>
-            </Col>
-          </Row>
-         <div className="d-flex justify-content-end">
-           <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
+         
+         <div style={{ marginBottom: '20px' }}>
+           <Row gutter={20}>
+             <Col span={18}>
+               <Form.Item 
+                 label="Tên danh mục" 
+                 required 
+                 validateStatus={validationErrors.CategoryName ? 'error' : ''} 
+                 help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}
+               >
+                 <Input
+                   name="categoryName"
+                   value={formData.categoryName}
+                   onChange={handleChange}
+                   placeholder="Nhập tên danh mục"
+                   required
+                   maxLength={100}
+                   size="large"
+                 />
+               </Form.Item>
+             </Col>
+             <Col span={6}>
+               <Form.Item label="Trạng thái">
+                 <div style={{ 
+                   padding: '8px 12px',
+                 }}>
+                   <Switch
+                     name="isActive"
+                     checked={formData.isActive}
+                     onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                     checkedChildren="Active"
+                     unCheckedChildren="Inactive"
+                   />
+                 </div>
+               </Form.Item>
+             </Col>
+           </Row>
+         </div>
+         
+         <div style={{ marginBottom: '24px' }}>
+           <Form.Item 
+             label="Chọn ký hiệu" 
+             required 
+             validateStatus={validationErrors.Icon ? 'error' : ''} 
+             help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}
+           >
+             <div style={{ 
+               padding: '16px',
+               background: '#fafafa',
+               borderRadius: '8px',
+               border: '1px solid #f0f0f0',
+               textAlign: 'center'
+             }}>
+               <IconUploader
+                 value={formData.icon}
+                 onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                 placeholder="Đăng tải hình ảnh"
+               />
+               <div style={{ 
+                 fontSize: 12, 
+                 color: '#8c8c8c', 
+                 marginTop: 12,
+                 padding: '6px 12px',
+                 background: '#ffffff',
+                 borderRadius: '4px',
+                 border: '1px solid #e8e8e8',
+                 display: 'inline-block'
+               }}>
+                 PNG/SVG, kích thước đề xuất 64x64
+               </div>
+             </div>
+           </Form.Item>
+         </div>
+         
+         <div className="d-flex justify-content-end" style={{ 
+           paddingTop: '16px',
+           borderTop: '1px solid #f0f0f0'
+         }}>
+           <Button 
+             onClick={() => setShowAddModal(false)} 
+             style={{ marginRight: 12 }}
+             size="large"
+           >
              Hủy
            </Button>
-           <Button type="primary" onClick={handleSubmit}>
+           <Button 
+             type="primary" 
+             onClick={handleSubmit}
+             size="large"
+           >
              Thêm
            </Button>
          </div>
@@ -601,11 +657,19 @@ const isDataReady = categories.length > 0;
        onCancel={() => setShowEditModal(false)}
        footer={null}
        title="Cập nhật danh mục"
-       width={600}
+       width={650}
      >
         <Form layout="vertical" onSubmit={handleSubmit}>
          {validationErrors.general && (
-           <div style={{ color: 'red', marginBottom: 8 }}>
+           <div style={{ 
+             color: 'red', 
+             marginBottom: 16,
+             padding: '8px 12px',
+             background: '#fff2f0',
+             border: '1px solid #ffccc7',
+             borderRadius: '6px',
+             fontSize: '14px'
+           }}>
              {validationErrors.general.includes('The dto field is required') ||
               validationErrors.general.includes('could not be converted') ||
               validationErrors.general.includes('System.')
@@ -613,49 +677,96 @@ const isDataReady = categories.length > 0;
                : validationErrors.general}
            </div>
          )}
-          <Row gutter={16}>
-            <Col span={16}>
-              <Form.Item label="Tên danh mục" required validateStatus={validationErrors.CategoryName ? 'error' : ''} help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}>
-                <Input
-                  name="categoryName"
-                  value={formData.categoryName}
-                  onChange={handleChange}
-                  placeholder="Nhập tên danh mục"
-                  required
-                  maxLength={100}
-                />
-              </Form.Item>
-            </Col>
-            <Col span={8}>
-              <Form.Item label="Trạng thái">
-                <Switch
-                  name="isActive"
-                  checked={formData.isActive}
-                  onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                  checkedChildren="Active"
-                  unCheckedChildren="Inactive"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="Chọn ký hiệu" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-                <IconUploader
-                  value={formData.icon}
-                  onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-                  placeholder="Đăng tải hình ảnh"
-                />
-                <div style={{ fontSize: 12, color: '#8c8c8c', marginTop: 6 }}>PNG/SVG, kích thước đề xuất 64x64</div>
-              </Form.Item>
-            </Col>
-            
-          </Row>
-         <div className="d-flex justify-content-end">
-           <Button onClick={() => setShowEditModal(false)} style={{ marginRight: 8 }}>
+         
+         <div style={{ marginBottom: '20px' }}>
+           <Row gutter={20}>
+             <Col span={18}>
+               <Form.Item 
+                 label="Tên danh mục" 
+                 required 
+                 validateStatus={validationErrors.CategoryName ? 'error' : ''} 
+                 help={validationErrors.CategoryName ? validationErrors.CategoryName.join(', ') : ''}
+               >
+                 <Input
+                   name="categoryName"
+                   value={formData.categoryName}
+                   onChange={handleChange}
+                   placeholder="Nhập tên danh mục"
+                   required
+                   maxLength={100}
+                   size="large"
+                 />
+               </Form.Item>
+             </Col>
+             <Col span={6}>
+               <Form.Item label="Trạng thái">
+                 <div style={{ 
+                   padding: '8px 12px',
+                 }}>
+                   <Switch
+                     name="isActive"
+                     checked={formData.isActive}
+                     onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                     checkedChildren="Active"
+                     unCheckedChildren="Inactive"
+                   />
+                 </div>
+               </Form.Item>
+             </Col>
+           </Row>
+         </div>
+         
+         <div style={{ marginBottom: '24px' }}>
+           <Form.Item 
+             label="Chọn ký hiệu" 
+             required 
+             validateStatus={validationErrors.Icon ? 'error' : ''} 
+             help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}
+           >
+             <div style={{ 
+               padding: '16px',
+               background: '#fafafa',
+               borderRadius: '8px',
+               border: '1px solid #f0f0f0',
+               textAlign: 'center'
+             }}>
+               <IconUploader
+                 value={formData.icon}
+                 onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                 placeholder="Đăng tải hình ảnh"
+               />
+               <div style={{ 
+                 fontSize: 12, 
+                 color: '#8c8c8c', 
+                 marginTop: 12,
+                 padding: '6px 12px',
+                 background: '#ffffff',
+                 borderRadius: '4px',
+                 border: '1px solid #e8e8e8',
+                 display: 'inline-block'
+               }}>
+                 PNG/SVG, kích thước đề xuất 64x64
+               </div>
+             </div>
+           </Form.Item>
+         </div>
+         
+         <div className="d-flex justify-content-end" style={{ 
+           paddingTop: '16px',
+           borderTop: '1px solid #f0f0f0'
+         }}>
+           <Button 
+             onClick={() => setShowEditModal(false)} 
+             style={{ marginRight: 12 }}
+             size="large"
+           >
              Hủy
            </Button>
-           <Button type="primary" onClick={handleSubmit}>
+           <Button 
+             type="primary" 
+             onClick={handleSubmit}
+             size="large"
+           >
              Lưu
            </Button>
          </div>
