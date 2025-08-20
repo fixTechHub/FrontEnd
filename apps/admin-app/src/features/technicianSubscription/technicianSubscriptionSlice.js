@@ -143,6 +143,18 @@ export const renewSubscription = createAsyncThunk(
   }
 );
 
+export const fetchSubscriptionAnalytics = createAsyncThunk(
+  'technicianSubscription/fetchAnalytics',
+  async ({ year, timeRange }, { rejectWithValue }) => {
+    try {
+      const response = await technicianSubscriptionAPI.getSubscriptionAnalytics(year, timeRange);
+      return response;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch analytics');
+    }
+  }
+);
+
 const initialState = {
   subscriptions: [],
   activeSubscriptions: [],
@@ -153,6 +165,7 @@ const initialState = {
     totalRevenue: 0,
     yearlyRevenue: null
   },
+  analytics: null, // Thêm analytics mới
   loading: false,
   error: null,
   success: false
@@ -360,6 +373,20 @@ const technicianSubscriptionSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.success = false;
+      })
+
+      // Fetch analytics
+      .addCase(fetchSubscriptionAnalytics.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchSubscriptionAnalytics.fulfilled, (state, action) => {
+        state.loading = false;
+        state.analytics = action.payload;
+      })
+      .addCase(fetchSubscriptionAnalytics.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   }
 });

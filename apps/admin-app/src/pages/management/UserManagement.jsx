@@ -427,7 +427,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                )}
 
                <div className="custom-datatable-filter table-responsive">
-                   <table className="table datatable">
+                   <table className="table datatable ">
                        <thead className="thead-light">
                            <tr>
                                <th style={{ cursor: 'pointer' }} onClick={handleSortByName}>
@@ -441,14 +441,6 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                <th style={{ cursor: 'pointer' }} onClick={handleSortByEmail}>
                                    Email
                                    {sortField === 'email' && (
-                                       <span style={{ marginLeft: 4 }}>
-                                           {sortOrder === 'asc' ? '▲' : '▼'}
-                                       </span>
-                                   )}
-                               </th>
-                               <th style={{ cursor: 'pointer' }} onClick={handleSortByPhone}>
-                                   SĐT
-                                   {sortField === 'phone' && (
                                        <span style={{ marginLeft: 4 }}>
                                            {sortOrder === 'asc' ? '▲' : '▼'}
                                        </span>
@@ -490,11 +482,10 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                                <p className="avatar me-2 flex-shrink-0">
                                                    <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} className="rounded-circle" alt="" />
                                                </p>
-                                               <h6><p className="fs-14 fw-semibold">{user.fullName || "UNKNOWN"}</p></h6>
+                                               <h6><p className="fs-14 fw-semibold">{user.fullName || ""}</p></h6>
                                            </div>
                                        </td>
                                        <td><p className="text-gray-9">{user.email}</p></td>
-                                       <td><p className="text-gray-9">{user.phone}</p></td>
                                        <td><p className="text-gray-9">{roleMap[user.role]}</p></td>
                                        <td>
                                            <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
