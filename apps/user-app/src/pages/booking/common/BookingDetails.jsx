@@ -7,8 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { Image, Card, Badge, Button, Row, Col, Alert, Spinner, Modal, Form, Tab, Tabs } from "react-bootstrap";
 import { toast } from 'react-toastify';
 import { onAdditionalItemsAdded, onAdditionalItemsStatusUpdate, onAdditionalItemsAccepted, onAdditionalItemsRejected } from "../../../services/socket";
-import { isPaidPlan, underTrialLimit, FREE_TRIAL_LIMIT } from '../../../constants/subscription';
-
 
 // Icons
 import {
@@ -51,10 +49,6 @@ function BookingDetails({ bookingId }) {
     const [cancelError, setCancelError] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-
-    const technician = useSelector((s) => s.auth.technician);
-    console.log('tech', technician);
-
 
     useEffect(() => {
         if (bookingId) {
