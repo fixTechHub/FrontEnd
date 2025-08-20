@@ -209,7 +209,7 @@ const Notifications = ({ userId }) => {
     <Dropdown
       open={isOpen}
       onOpenChange={setIsOpen}
-      dropdownRender={() => dropdownContent}
+      popupRender={() => dropdownContent}
       trigger={['click']}
       placement="bottomRight"
       overlayStyle={{

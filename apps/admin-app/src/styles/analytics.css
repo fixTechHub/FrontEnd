@@ -270,3 +270,19 @@
 .analytics-dashboard ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+.stats-card-modern {
+  border-radius: 12px;
+  transition: all 0.2s ease-in-out;
+}
+.stats-card-modern:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+.icon-wrapper {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
