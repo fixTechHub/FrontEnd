@@ -329,12 +329,12 @@ export default function SearchComponent() {
 
             {/* Gợi ý mô tả */}
             {showSuggestions && (
-              <div className="nhp-banner-search-suggestions">
+              <div className="banner-search-suggestions">
                 {/* Gợi ý tìm kiếm */}
                 {searchValue && searchValue.trim().length >= 2 && (
                   <>
                     {suggestionSearchLoading && (
-                      <div className="nhp-banner-loading-container">
+                      <div className="banner-loading-container">
                         <div className="spinner-border text-primary" role="status">
                           <span className="visually-hidden">Loading...</span>
                         </div>
@@ -343,29 +343,29 @@ export default function SearchComponent() {
                     )}
                     {suggestionSearchResults.length > 0 && (
                       <div>
-                        <div className="nhp-banner-search-header nhp-banner-search-header-blue">
+                        <div className="banner-search-header banner-search-header-pink">
                           <i className="bx bx-search-alt" style={{ fontSize: '14px' }}></i>
                           Kết quả tìm kiếm
                         </div>
                         {suggestionSearchResults.map((suggestion, idx) => (
                           <div
                             key={`search-${idx}`}
-                            className="nhp-banner-search-item"
+                            className="banner-search-item"
                             onMouseDown={() => handleSuggestionClick(suggestion)}
                           >
-                            <div className="nhp-banner-search-avatar nhp-banner-search-avatar-blue">
+                            <div className="banner-search-avatar banner-search-avatar-pink">
                               <i className="bx bx-search-alt"></i>
                             </div>
-                            <div className="nhp-banner-search-content">
-                              <div className="nhp-banner-search-title">
+                            <div className="banner-search-content">
+                              <div className="banner-search-title">
                                 {suggestion.description}
                               </div>
-                              <div className="nhp-banner-search-meta">
+                              <div className="banner-search-meta">
                                 <i className="bx bx-time" style={{ fontSize: '10px' }}></i>
                                 {suggestion.count || 0} lần sử dụng
                               </div>
                             </div>
-                            <i className="bx bx-chevron-right nhp-banner-search-arrow"></i>
+                            <i className="bx bx-chevron-right banner-search-arrow"></i>
                           </div>
                         ))}
                       </div>
@@ -376,29 +376,29 @@ export default function SearchComponent() {
                 {/* Gợi ý phổ biến */}
                 {(!searchValue || searchValue.trim().length < 2) && popularDescriptions.length > 0 && (
                   <div>
-                    <div className="nhp-banner-search-header nhp-banner-search-header-pink">
+                    <div className="banner-search-header banner-search-header-pink">
                       <i className="bx bx-star" style={{ fontSize: '14px' }}></i>
                       Mô tả phổ biến
                     </div>
                     {popularDescriptions.map((suggestion, idx) => (
                       <div
                         key={`popular-${idx}`}
-                        className="nhp-banner-search-item"
+                        className="banner-search-item"
                         onMouseDown={() => handleSuggestionClick(suggestion)}
                       >
-                        <div className="nhp-banner-search-avatar nhp-banner-search-avatar-pink">
+                        <div className="banner-search-avatar banner-search-avatar-pink">
                           <i className="bx bx-star"></i>
                         </div>
-                        <div className="nhp-banner-search-content">
-                          <div className="nhp-banner-search-title">
+                        <div className="banner-search-content">
+                          <div className="banner-search-title">
                             {suggestion.description}
                           </div>
-                          <div className="nhp-banner-search-meta">
+                          <div className="banner-search-meta">
                             <i className="bx bx-trending-up" style={{ fontSize: '10px' }}></i>
                             {suggestion.count || 0} lần sử dụng
                           </div>
                         </div>
-                        <i className="bx bx-chevron-right nhp-banner-search-arrow"></i>
+                        <i className="bx bx-chevron-right banner-search-arrow"></i>
                       </div>
                     ))}
                   </div>
@@ -406,10 +406,10 @@ export default function SearchComponent() {
 
                 {/* Thông báo không có kết quả */}
                 {searchValue && searchValue.trim().length >= 2 && !suggestionSearchLoading && suggestionSearchResults.length === 0 && (
-                  <div className="nhp-banner-search-empty">
-                    <i className="bx bx-search nhp-banner-search-empty-icon"></i>
+                  <div className="banner-search-empty">
+                    <i className="bx bx-search banner-search-empty-icon"></i>
                     <div>Không tìm thấy gợi ý phù hợp</div>
-                    <div className="nhp-banner-search-empty-title">
+                    <div className="banner-search-empty-title">
                       Thử nhập từ khóa khác
                     </div>
                   </div>
@@ -512,99 +512,99 @@ export default function SearchComponent() {
       >
         <Modal.Header
           closeButton
-          className="nhp-banner-modal-header"
+          className="banner-modal-header"
         >
-          <Modal.Title className="nhp-banner-modal-title">
+          <Modal.Title className="banner-modal-title">
             {step === 0 && 'Kết quả dịch vụ phù hợp'}
             {step === 1 && 'Chọn loại đặt lịch'}
             {step === 2 && 'Đặt lịch dịch vụ'}
           </Modal.Title>
         </Modal.Header>
-        <Modal.Body className="nhp-banner-modal-body" style={{paddingBottom: 5}}>
+        <Modal.Body className="banner-modal-body" style={{paddingBottom: 5}}>
           {/* Bước 1: Chọn dịch vụ */}
           {step === 0 && (
             <>
               {searchStatus === 'loading' && (
-                <div className="nhp-banner-loading-container">
+                <div className="banner-loading-container">
                   <div className="spinner-border text-primary" role="status">
                     <span className="visually-hidden">Loading...</span>
                   </div>
-                  <div className="nhp-banner-loading-text">
-                    <div className="nhp-banner-loading-title">Đang tìm kiếm dịch vụ phù hợp...</div>
-                    <div className="nhp-banner-loading-subtitle">Dựa trên mô tả: "{searchValue}"</div>
+                  <div className="banner-loading-text">
+                    <div className="banner-loading-title">Đang tìm kiếm dịch vụ phù hợp...</div>
+                    <div className="banner-loading-subtitle">Dựa trên mô tả: "{searchValue}"</div>
                   </div>
                 </div>
               )}
               {searchError && (
-                <div className="alert alert-danger nhp-banner-alert-danger">
+                <div className="alert alert-danger banner-alert-danger">
                   <i className="bx bx-error-circle me-2"></i>
                   {searchError}
                 </div>
               )}
               {searchStatus === 'succeeded' && searchResults.length === 0 && (
-                <div className="nhp-banner-empty-container">
-                  <i className="bx bx-search nhp-banner-empty-icon"></i>
-                  <div className="nhp-banner-empty-title">Không tìm thấy dịch vụ phù hợp</div>
-                  <div className="nhp-banner-empty-subtitle">Thử nhập mô tả khác hoặc liên hệ hỗ trợ</div>
+                <div className="banner-empty-container">
+                  <i className="bx bx-search banner-empty-icon"></i>
+                  <div className="banner-empty-title">Không tìm thấy dịch vụ phù hợp</div>
+                  <div className="banner-empty-subtitle">Thử nhập mô tả khác hoặc liên hệ hỗ trợ</div>
                 </div>
               )}
               {searchStatus === 'succeeded' && searchResults.length > 0 && (
                 <div>
                   {/* Header thông tin tìm kiếm */}
-                  <div className="nhp-banner-info-header">
+                  <div className="banner-info-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                      <i className="bx bx-search-alt nhp-banner-info-header-icon"></i>
-                      <div className="nhp-banner-info-header-title">
+                      <i className="bx bx-search-alt banner-info-header-icon"></i>
+                      <div className="banner-info-header-title">
                         Dịch vụ phù hợp với mô tả của bạn
                       </div>
                     </div>
-                    <div className="nhp-banner-info-header-subtitle">
+                    <div className="banner-info-header-subtitle">
                       Tìm thấy {searchResults.length} dịch vụ dựa trên: "{searchValue}"
                     </div>
                   </div>
 
                   {/* Danh sách dịch vụ */}
-                  <div className="nhp-banner-service-list">
+                  <div className="banner-service-list">
                     {searchResults.map((service, idx) => (
                       <div
                         key={service._id || idx}
-                        className={`nhp-banner-service-card ${selectedServiceIdx === idx ? 'selected' : ''}`}
+                        className={`banner-service-card ${selectedServiceIdx === idx ? 'selected' : ''}`}
                         onClick={() => setSelectedServiceIdx(idx)}
                       >
                         {/* Badge mức độ phù hợp */}
                         {idx === 0 && (
-                          <div className="nhp-banner-service-badge-best">
+                          <div className="banner-service-badge-best">
                             <i className="bx bx-star" style={{ fontSize: '10px' }}></i>
                             Phù hợp nhất
                           </div>
                         )}
                         {idx === 1 && (
-                          <div className="nhp-banner-service-badge-good">
+                          <div className="banner-service-badge-good">
                             <i className="bx bx-star" style={{ fontSize: '10px' }}></i>
                             Phù hợp tốt
                           </div>
                         )}
 
                         {/* Radio button */}
-                        <div className={`nhp-banner-service-radio ${selectedServiceIdx === idx ? 'selected' : ''}`}>
+                        <div className={`banner-service-radio ${selectedServiceIdx === idx ? 'selected' : ''}`}>
                           {selectedServiceIdx === idx && (
-                            <div className="nhp-banner-service-radio-dot"></div>
+                            <div className="banner-service-radio-dot"></div>
                           )}
                         </div>
 
                         {/* Nội dung dịch vụ */}
-                        <div className="nhp-banner-service-content">
-                          <div className="nhp-banner-service-header">
+                        <div className="banner-service-content">
+                          <div className="banner-service-header">
                             <div style={{ flex: 1 }}>
-                              <div className="nhp-banner-service-title">
+                              <div className="banner-service-title">
                                 {service.serviceName}
                               </div>
-                              <div className="nhp-banner-service-description">
+                              <div className="banner-service-description">
                                 {service.description}
                               </div>
                             </div>
                             {service.price && (
-                              <div className="nhp-banner-service-price">
+                              <div className="banner-service-price">
                                 {service.price.toLocaleString()} VNĐ
                               </div>
                             )}
@@ -615,8 +615,8 @@ export default function SearchComponent() {
                   </div>
 
                   {/* Thông tin thêm */}
-                  <div className="nhp-banner-info-box">
-                    <i className="bx bx-info-circle nhp-banner-info-icon"></i>
+                  <div className="banner-info-box">
+                    <i className="bx bx-info-circle banner-info-icon"></i>
                     <span>
                       Dịch vụ được sắp xếp theo mức độ phù hợp với mô tả của bạn.
                       Dịch vụ đầu tiên là phù hợp nhất.
@@ -630,39 +630,39 @@ export default function SearchComponent() {
           {/* Bước 2: Chọn loại đặt lịch */}
           {step === 1 && (
             <div>
-              <div className="nhp-banner-info-header">
+              <div className="banner-info-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                  <i className="bx bx-calendar nhp-banner-info-header-icon"></i>
-                  <div className="nhp-banner-info-header-title">
+                  <i className="bx bx-calendar banner-info-header-icon"></i>
+                  <div className="banner-info-header-title">
                     Chọn loại đặt lịch
                   </div>
                 </div>
-                <div className="nhp-banner-info-header-subtitle">
+                <div className="banner-info-header-subtitle">
                   Bạn muốn đặt lịch ngay hay lên lịch trước?
                 </div>
               </div>
 
-              <div className="nhp-banner-booking-cards">
+              <div className="banner-booking-cards">
                 <div
-                  className={`nhp-banner-booking-card ${bookingType === 'urgent' ? 'selected' : ''}`}
+                  className={`banner-booking-card ${bookingType === 'urgent' ? 'selected' : ''}`}
                   onClick={() => setBookingType('urgent')}
                 >
                   {/* Radio button */}
-                  <div className={`nhp-banner-service-radio ${bookingType === 'urgent' ? 'selected' : ''}`} style={{ top: '16px', right: '16px', left: 'auto' }}>
+                  <div className={`banner-service-radio ${bookingType === 'urgent' ? 'selected' : ''}`} style={{ top: '16px', right: '16px', left: 'auto' }}>
                     {bookingType === 'urgent' && (
-                      <div className="nhp-banner-service-radio-dot"></div>
+                      <div className="banner-service-radio-dot"></div>
                     )}
                   </div>
 
-                  <div className="nhp-banner-booking-content">
-                    <div className="nhp-banner-booking-icon nhp-banner-booking-icon-urgent">
+                  <div className="banner-booking-content">
+                    <div className="banner-booking-icon banner-booking-icon-urgent">
                       <i className="bx bxs-bolt"></i>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div className="nhp-banner-booking-title">
+                      <div className="banner-booking-title">
                         Đặt ngay
                       </div>
-                      <div className="nhp-banner-booking-subtitle">
+                      <div className="banner-booking-subtitle">
                         Kỹ thuật viên sẽ đến trong 20-40 phút
                       </div>
                     </div>
@@ -670,25 +670,25 @@ export default function SearchComponent() {
                 </div>
 
                 <div
-                  className={`nhp-banner-booking-card ${bookingType === 'scheduled' ? 'selected' : ''}`}
+                  className={`banner-booking-card ${bookingType === 'scheduled' ? 'selected' : ''}`}
                   onClick={() => setBookingType('scheduled')}
                 >
                   {/* Radio button */}
-                  <div className={`nhp-banner-service-radio ${bookingType === 'scheduled' ? 'selected' : ''}`} style={{ top: '16px', right: '16px', left: 'auto' }}>
+                  <div className={`banner-service-radio ${bookingType === 'scheduled' ? 'selected' : ''}`} style={{ top: '16px', right: '16px', left: 'auto' }}>
                     {bookingType === 'scheduled' && (
-                      <div className="nhp-banner-service-radio-dot"></div>
+                      <div className="banner-service-radio-dot"></div>
                     )}
                   </div>
 
-                  <div className="nhp-banner-booking-content">
-                    <div className="nhp-banner-booking-icon nhp-banner-booking-icon-scheduled">
+                  <div className="banner-booking-content">
+                    <div className="banner-booking-icon banner-booking-icon-scheduled">
                       <i className="bx bx-calendar"></i>
                     </div>
                     <div style={{ flex: 1 }}>
-                      <div className="nhp-banner-booking-title">
+                      <div className="banner-booking-title">
                         Đặt lịch
                       </div>
-                      <div className="nhp-banner-booking-subtitle">
+                      <div className="banner-booking-subtitle">
                         Chọn thời gian linh hoạt theo lịch của bạn
                       </div>
                     </div>
@@ -701,28 +701,28 @@ export default function SearchComponent() {
           {/* Bước 3: Form booking */}
           {step === 2 && (
             <div>
-              <div className="nhp-banner-info-header">
+              <div className="banner-info-header">
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                  <i className="bx bx-edit nhp-banner-info-header-icon"></i>
-                  <div className="nhp-banner-info-header-title">
+                  <i className="bx bx-edit banner-info-header-icon"></i>
+                  <div className="banner-info-header-title">
                     Thông tin đặt lịch
                   </div>
                 </div>
-                <div className="nhp-banner-info-header-subtitle">
+                <div className="banner-info-header-subtitle">
                   Vui lòng điền đầy đủ thông tin để đặt lịch dịch vụ
                 </div>
               </div>
 
               <form onSubmit={handleSubmitBooking}>
                 {/* Hiển thị dịch vụ đã chọn */}
-                <div className="nhp-banner-selected-service">
+                <div className="banner-selected-service">
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
                     <i className="bx bx-check-circle" style={{ fontSize: '18px' }}></i>
-                    <div className="nhp-banner-selected-service-title">
+                    <div className="banner-selected-service-title">
                       Dịch vụ đã chọn
                     </div>
                   </div>
-                  <div className="nhp-banner-selected-service-info">
+                  <div className="banner-selected-service-info">
                     {searchResults[selectedServiceIdx]?.serviceName}
                     {searchResults[selectedServiceIdx]?.price && (
                       <span> - {searchResults[selectedServiceIdx].price.toLocaleString()} VNĐ</span>
@@ -731,12 +731,12 @@ export default function SearchComponent() {
                 </div>
 
                 <div className="mb-3" style={{ position: 'relative' }}>
-                  <label className="form-label nhp-banner-form-label">
+                  <label className="form-label banner-form-label">
                     Vị trí <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
-                    className={`form-control nhp-banner-form-input ${errors.addressInput ? 'error' : ''}`}
+                    className={`form-control banner-form-input ${errors.addressInput ? 'error' : ''}`}
                     value={bookingLocation}
                     onChange={e => {
                       setBookingLocation(e.target.value);
@@ -757,14 +757,14 @@ export default function SearchComponent() {
                     autoComplete="off"
                     placeholder="Nhập địa chỉ của bạn ( ví dụ: 105 Lê Duẩn, TP. Đà Nẵng )"
                   />
-                  {addressLoading && <div className="nhp-banner-form-loading">Đang tìm gợi ý...</div>}
-                  {addressError && <div className="nhp-banner-form-error">{addressError}</div>}
+                  {addressLoading && <div className="banner-form-loading">Đang tìm gợi ý...</div>}
+                  {addressError && <div className="banner-form-error">{addressError}</div>}
                   {showLocationSuggestions && addressSuggestions.length > 0 && (
-                    <ul className="nhp-banner-address-suggestions">
+                    <ul className="banner-address-suggestions">
                       {addressSuggestions.map((s, idx) => (
                         <li
                           key={s.id || s.title + idx}
-                          className="nhp-banner-address-item"
+                          className="banner-address-item"
                           onMouseDown={() => {
                             setBookingLocation(s.address?.label || s.title);
                             setShowLocationSuggestions(false);
@@ -776,82 +776,82 @@ export default function SearchComponent() {
                       ))}
                     </ul>
                   )}
-                  {errors.addressInput && <div className="nhp-banner-form-error">{errors.addressInput}</div>}
+                  {errors.addressInput && <div className="banner-form-error">{errors.addressInput}</div>}
                 </div>
 
                 <div className="mb-3">
-                  <label className="form-label nhp-banner-form-label">
+                  <label className="form-label banner-form-label">
                     Mô tả tình trạng <span className="text-danger">*</span>
                   </label>
                   <textarea
-                    className={`form-control nhp-banner-form-textarea ${errors.description ? 'error' : ''}`}
+                    className={`form-control banner-form-textarea ${errors.description ? 'error' : ''}`}
                     value={bookingDescription}
                     onChange={e => setBookingDescription(e.target.value)}
                     required
                     placeholder="Mô tả chi tiết tình trạng bạn gặp phải..."
                   />
-                  {errors.description && <div className="nhp-banner-form-error">{errors.description}</div>}
+                  {errors.description && <div className="banner-form-error">{errors.description}</div>}
                 </div>
 
                 {/* Nếu là scheduled thì nhập ngày, giờ bắt đầu, giờ kết thúc */}
                 {bookingType === 'scheduled' && (
-                  <div className="nhp-banner-schedule-section">
-                    <div className="nhp-banner-schedule-header">
-                      <i className="bx bx-time nhp-banner-info-icon"></i>
-                      <span className="nhp-banner-schedule-title">Thông tin lịch hẹn</span>
+                  <div className="banner-schedule-section">
+                    <div className="banner-schedule-header">
+                      <i className="bx bx-time banner-info-icon"></i>
+                      <span className="banner-schedule-title">Thông tin lịch hẹn</span>
                     </div>
 
-                    <div className="nhp-banner-schedule-inputs">
-                      <div className="nhp-banner-schedule-input-group">
-                        <label className="form-label nhp-banner-form-label">
+                    <div className="banner-schedule-inputs">
+                      <div className="banner-schedule-input-group">
+                        <label className="form-label banner-form-label">
                           Ngày đặt lịch <span className="text-danger">*</span>
                         </label>
                         <input
                           type="date"
-                          className={`form-control nhp-banner-form-input ${errors.scheduleDate ? 'error' : ''}`}
+                          className={`form-control banner-form-input ${errors.scheduleDate ? 'error' : ''}`}
                           value={bookingDate}
                           onChange={e => setBookingDate(e.target.value)}
                           required
                         />
-                        {errors.scheduleDate && <div className="nhp-banner-form-error">{errors.scheduleDate}</div>}
+                        {errors.scheduleDate && <div className="banner-form-error">{errors.scheduleDate}</div>}
                       </div>
                     </div>
 
-                    <div className="nhp-banner-schedule-time-inputs">
-                      <label className="form-label nhp-banner-form-label">
+                    <div className="banner-schedule-time-inputs">
+                      <label className="form-label banner-form-label">
                         Thời gian <span className="text-danger">*</span>
                       </label>
 
-                      <div className="nhp-banner-schedule-time-inputs-row">
-                        <div className="nhp-banner-schedule-input-group">
+                      <div className="banner-schedule-time-inputs-row">
+                        <div className="banner-schedule-input-group">
                           <input
                             type="time"
-                            className={`form-control nhp-banner-form-input ${errors.startTime ? 'error' : ''}`}
+                            className={`form-control banner-form-input ${errors.startTime ? 'error' : ''}`}
                             value={bookingTime}
                             onChange={e => setBookingTime(e.target.value)}
                             required
                             placeholder="Từ"
                           />
-                          {errors.startTime && <div className="nhp-banner-form-error">{errors.startTime}</div>}
+                          {errors.startTime && <div className="banner-form-error">{errors.startTime}</div>}
                         </div>
-                        <div className="nhp-banner-schedule-input-separator">
+                        <div className="banner-schedule-input-separator">
                           <span>-</span>
                         </div>
-                        <div className="nhp-banner-schedule-input-group">
+                        <div className="banner-schedule-input-group">
                           <input
                             type="time"
-                            className={`form-control nhp-banner-form-input ${errors.endTime ? 'error' : ''}`}
+                            className={`form-control banner-form-input ${errors.endTime ? 'error' : ''}`}
                             value={bookingEndTime}
                             onChange={e => setBookingEndTime(e.target.value)}
                             required
                             placeholder="Đến"
                           />
-                          {errors.endTime && <div className="nhp-banner-form-error">{errors.endTime}</div>}
+                          {errors.endTime && <div className="banner-form-error">{errors.endTime}</div>}
                         </div>
                       </div>
 
-                      <div className="nhp-banner-info-box">
-                        <i className="bx bx-info-circle nhp-banner-info-icon"></i>
+                      <div className="banner-info-box">
+                        <i className="bx bx-info-circle banner-info-icon"></i>
                         <span>
                           Lưu ý: Đây là khoảng thời gian bạn mong muốn thợ đến, không phải thời gian sửa chữa chính xác.
                         </span>
@@ -861,15 +861,15 @@ export default function SearchComponent() {
                 )}
 
                 <div className="mb-3">
-                  {/* <label className="form-label nhp-banner-form-label">
+                  {/* <label className="form-label banner-form-label">
                     Hình ảnh (tùy chọn)
                   </label> */}
                   <ImageUploader onFilesSelect={handleBookingImages} />
-                  {errors.images && <div className="nhp-banner-form-error">{errors.images}</div>}
+                  {errors.images && <div className="banner-form-error">{errors.images}</div>}
                 </div>
 
                 {formError && (
-                  <div className="alert alert-danger nhp-banner-alert-danger">
+                  <div className="alert alert-danger banner-alert-danger">
                     <i className="bx bx-error-circle"></i>
                     {formError}
                   </div>
@@ -878,12 +878,12 @@ export default function SearchComponent() {
             </div>
           )}
         </Modal.Body>
-        <Modal.Footer className="nhp-banner-modal-footer">
+        <Modal.Footer className="banner-modal-footer">
           {step > 0 && (
             <button
               type="button"
               onClick={() => setStep(step - 1)}
-              className="nhp-banner-btn-outline"
+              className="banner-btn-outline"
             >
               Quay lại
             </button>
@@ -893,7 +893,7 @@ export default function SearchComponent() {
               type="button"
               onClick={handleContinueService}
               disabled={searchResults.length === 0}
-              className="nhp-banner-btn-primary"
+              className="banner-btn-primary"
             >
               Tiếp tục
             </button>
@@ -902,7 +902,7 @@ export default function SearchComponent() {
             <button
               type="button"
               onClick={handleContinueType}
-              className="nhp-banner-btn-primary"
+              className="banner-btn-primary"
             >
               Tiếp tục
             </button>
@@ -912,7 +912,7 @@ export default function SearchComponent() {
               type="submit"
               onClick={handleSubmitBooking}
               disabled={submitting}
-              className="nhp-banner-btn-primary"
+              className="banner-btn-primary"
             >
               {submitting ? 'Đang xử lý...' : 'Đặt lịch & chọn kỹ thuật viên'}
             </button>
@@ -920,7 +920,7 @@ export default function SearchComponent() {
           <button
             type="button"
             onClick={() => { setShowSearchModal(false); setShowBookingForm(false); setStep(0); }}
-            className="nhp-banner-btn-secondary"
+            className="banner-btn-secondary"
           >
             Đóng
           </button>

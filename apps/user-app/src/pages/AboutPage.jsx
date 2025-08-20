@@ -517,34 +517,34 @@ function AboutPage() {
             {[
               {
                 name: "Nguyễn Đức Trí",
-                role: "Frontend Developer",
-                desc: "Chuyên trách phát triển giao diện người dùng và trải nghiệm UX/UI.",
+                role: "Team Member",
+                desc: "Tham gia xây dựng toàn diện dự án, từ thiết kế database đến triển khai tính năng.",
                 avatar: "/img/team/frontend-dev.png",
-                fallbackEmoji: "👩‍💻",
+                fallbackEmoji: "👨‍💻",
                 isLeader: false
               },
               {
                 name: "Nguyễn Khánh Đạt",
-                role: "Backend Developer",
-                desc: "Xây dựng hệ thống backend và API cho nền tảng FixTech.",
+                role: "Team Member",
+                desc: "Cùng nhau phát triển nền tảng FixTech, từ giao diện người dùng đến hệ thống backend.",
                 avatar: "/img/team/backend-dev.png",
                 fallbackEmoji: "👨‍💻",
                 isLeader: false
               },
               {
                 name: "Lê Nguyễn Quốc Đạt",
-                role: "UI/UX Designer",
-                desc: "Thiết kế giao diện và tối ưu trải nghiệm người dùng.",
+                role: "Team Member",
+                desc: "Đóng góp vào mọi khía cạnh của dự án, từ thiết kế UX/UI đến lập trình.",
                 avatar: "/img/team/designer.png",
-                fallbackEmoji: "👩‍🎨",
+                fallbackEmoji: "👨‍💻",
                 isLeader: false
               },
               {
                 name: "Tôn Thất Anh Tuấn",
-                role: "QA Tester",
-                desc: "Đảm bảo chất lượng sản phẩm và kiểm thử hệ thống.",
+                role: "Team Member",
+                desc: "Cùng team thực hiện đầy đủ quy trình phát triển và đảm bảo chất lượng sản phẩm.",
                 avatar: "/img/team/qa-tester.png",
-                fallbackEmoji: "👨‍🔧",
+                fallbackEmoji: "👨‍💻",
                 isLeader: false
               }
             ].map((member, index) => (

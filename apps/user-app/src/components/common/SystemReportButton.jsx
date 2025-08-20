@@ -86,7 +86,7 @@ const injectStyles = () => {
     .report-btn-floating {
       width: 50px !important;
       height: 50px !important;
-      bottom: 120px !important;
+      bottom: 16px !important;
       left: 16px !important;
     }
     
@@ -99,7 +99,7 @@ const injectStyles = () => {
     .report-btn-floating {
       width: 46px !important;
       height: 46px !important;
-      bottom: 100px !important;
+      bottom: 12px !important;
       left: 12px !important;
     }
     
@@ -502,8 +502,8 @@ const SystemReportButton = () => {
           className="position-fixed report-btn-floating report-btn-entrance pulse"
           style={{ 
             left: '20px', 
-            bottom: '140px', 
-            zIndex: 1070, 
+            bottom: '20px', 
+            zIndex: 1060, 
             borderRadius: '50%', 
             width: '60px', 
             height: '60px', 
