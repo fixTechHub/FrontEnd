@@ -4,11 +4,9 @@ import { fetchAllFeedback, updateFeedbackVisibility } from "../../features/feedb
 import { Button, Select, Spin, Modal, Form, Input, Typography } from "antd";
 import { ExclamationCircleTwoTone } from "@ant-design/icons";
 
-
 function FeedbackAdmin() {
   const dispatch = useDispatch();
   const { feedbacks, status } = useSelector((state) => state.adminFeedback);
-
   const [showModal, setShowModal] = useState(false);
   const [selectedFeedbackId, setSelectedFeedbackId] = useState(null);
   const [reason, setReason] = useState("");
