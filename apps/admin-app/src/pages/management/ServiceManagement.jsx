@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, InputNumber } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, InputNumber, Space } from 'antd';
 import {
   fetchServices,
   createService,
@@ -11,7 +11,7 @@ import {
   restoreService,
 } from '../../features/service/serviceSlice';
 import { fetchCategories } from '../../features/categories/categorySlice';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 import IconUploader from '../../components/common/IconUploader';
@@ -23,6 +23,9 @@ const initialFormState = {
   icon: '',
   isActive: true,
   description: '',
+  fontFamily: 'Arial',
+  fontSize: '14',
+  textAlign: 'left',
 };
 
 const ServiceManagement = () => {
@@ -142,13 +145,15 @@ const ServiceManagement = () => {
   };
 
   const handleEditService = (service) => {
-    setSelectedService(service);
     setFormData({
       serviceName: service.serviceName || '',
       categoryId: service.categoryId || '',
       icon: service.icon || '',
       isActive: service.isActive ?? true,
       description: service.description || '',
+      fontFamily: service.fontFamily || 'Arial',
+      fontSize: service.fontSize || '14',
+      textAlign: service.textAlign || 'left',
       embedding: service.embedding || [],
     });
     setValidationErrors({});
@@ -195,6 +200,9 @@ const ServiceManagement = () => {
         categoryName: category?.categoryName || service.categoryId,
         status: service.isActive ? 'ACTIVE' : 'INACTIVE',
         description: service.description,
+        fontFamily: service.fontFamily || 'Arial',
+        fontSize: service.fontSize || '14',
+        textAlign: service.textAlign || 'left',
         embeddingDimensions: service.embedding?.length || 0,
         createdAt: formatDateTime(service.createdAt),
         updatedAt: formatDateTime(service.updatedAt),
@@ -226,6 +234,36 @@ const ServiceManagement = () => {
         [name]: type === 'checkbox' ? checked : value
       }));
     }
+  };
+
+  const handleFontChange = (property, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [property]: value
+    }));
+  };
+
+  const handleImageUpload = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const imageUrl = event.target.result;
+          // Thêm image tag với ảnh thật vào description
+          const imageTag = `\n<img src="${imageUrl}" alt="${file.name}" style="max-width: 100%; height: auto; margin: 10px 0;" />\n`;
+          setFormData(prev => ({
+            ...prev,
+            description: prev.description + imageTag
+          }));
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    input.click();
   };
 
   const processErrors = (apiErrors) => {
@@ -408,22 +446,22 @@ const ServiceManagement = () => {
                       </span>
                     )}
                   </th>
-                                     <th style={{ cursor: 'pointer' }} onClick={handleSortByCategory}>
-                     Danh mục
-                     {sortField === 'category' && (
-                       <span style={{ marginLeft: 4 }}>
-                         {sortOrder === 'asc' ? '▲' : '▼'}
-                       </span>
-                     )}
-                   </th>
-                   <th>Trạng thái</th>
-                   <th>Hàng động</th>
+                  <th style={{ cursor: 'pointer' }} onClick={handleSortByCategory}>
+                    Danh mục
+                    {sortField === 'category' && (
+                      <span style={{ marginLeft: 4 }}>
+                        {sortOrder === 'asc' ? '▲' : '▼'}
+                      </span>
+                    )}
+                  </th>
+                  <th>Trạng thái</th>
+                  <th>Hành động</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={4} className="text-center">
+                    <td colSpan={5} className="text-center">
                       <div className="spinner-border text-primary" role="status">
                         <span className="visually-hidden">Loading...</span>
                       </div>
@@ -431,7 +469,7 @@ const ServiceManagement = () => {
                   </tr>
                 ) : filteredServices.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center text-muted py-4">
+                    <td colSpan={5} className="text-center text-muted py-4">
                       <div>
                         <i className="ti ti-tools" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
                         <p className="mb-0">Không có dịch vụ nào</p>
@@ -440,7 +478,7 @@ const ServiceManagement = () => {
                   </tr>
                 ) : currentServices.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="text-center text-muted py-4">
+                    <td colSpan={5} className="text-center text-muted py-4">
                       <div>
                         <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
                         <p className="mb-0">Không tìm thấy dịch vụ nào phù hợp</p>
@@ -606,84 +644,221 @@ const ServiceManagement = () => {
       >
         <Form layout="vertical" onSubmit={handleSubmit}>
           {validationErrors.general && (
-            <div style={{ color: 'red', marginBottom: 8 }}>
+            <div style={{ 
+              color: 'red', 
+              marginBottom: 16,
+              padding: '8px 12px',
+              background: '#fff2f0',
+              border: '1px solid #ffccc7',
+              borderRadius: '6px',
+              fontSize: '14px'
+            }}>
               {validationErrors.general.includes('The dto field is required') ||
                validationErrors.general.includes('could not be converted') ||
                validationErrors.general.includes('System.')
-                ? 'Nhập vào các trường * bắt buộc'
+                ? 'Vui lòng nhập đầy đủ các trường bắt buộc (*)'
                 : validationErrors.general}
             </div>
           )}
-          <Row gutter={16}>
-                         <Col span={12}>
-               <Form.Item label="Tên dịch vụ" required validateStatus={validationErrors.ServiceName ? 'error' : ''} help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}>
-                 <Input
-                   name="serviceName"
-                   value={formData.serviceName}
-                   onChange={handleChange}
-                   placeholder="Nhập tên dịch vụ"
-                   required
-                 />
-               </Form.Item>
-             </Col>
-             <Col span={12}>
-               <Form.Item label="Danh mục" required validateStatus={validationErrors.CategoryId ? 'error' : ''} help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}>
-                 <Select
-                   placeholder="Chọn danh mục"
-                   name="categoryId"
-                   value={formData.categoryId}
-                   onChange={(value) => handleChange({ target: { name: 'categoryId', value } })}
-                   required
-                 >
-                   {categories.map(cat => (
-                     <Select.Option key={cat.id} value={cat.id}>{cat.categoryName}</Select.Option>
-                   ))}
-                 </Select>
-               </Form.Item>
-             </Col>
+          
+          <Row gutter={20}>
+            <Col span={12}>
+              <Form.Item 
+                label="Tên dịch vụ" 
+                required 
+                validateStatus={validationErrors.ServiceName ? 'error' : ''} 
+                help={validationErrors.ServiceName ? validationErrors.ServiceName.join(', ') : ''}
+              >
+                <Input
+                  name="serviceName"
+                  value={formData.serviceName}
+                  onChange={handleChange}
+                  placeholder="Nhập tên dịch vụ"
+                  required
+                  size="large"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item 
+                label="Danh mục" 
+                required 
+                validateStatus={validationErrors.CategoryId ? 'error' : ''} 
+                help={validationErrors.CategoryId ? validationErrors.CategoryId.join(', ') : ''}
+              >
+                <Select
+                  placeholder="Chọn danh mục"
+                  name="categoryId"
+                  value={formData.categoryId}
+                  onChange={(value) => handleChange({ target: { name: 'categoryId', value } })}
+                  required
+                  size="large"
+                >
+                  {categories.map(cat => (
+                    <Select.Option key={cat.id} value={cat.id}>{cat.categoryName}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
           </Row>
 
-                     <Row gutter={16}>
-             <Col span={12}>
-               <Form.Item label="Chọn hình ảnh" required validateStatus={validationErrors.Icon ? 'error' : ''} help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}>
-                 <IconUploader
-                   value={formData.icon}
-                   onChange={(value) => handleChange({ target: { name: 'icon', value } })}
-                   placeholder="Đăng tải hình ảnh"
-                 />
-               </Form.Item>
-             </Col>
-             <Col span={12}>
-               <Form.Item label="Trạng thái">
-                 <Switch
-                   name="isActive"
-                   checked={formData.isActive}
-                   onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                   checkedChildren="Active"
-                   unCheckedChildren="Inactive"
-                 />
-               </Form.Item>
-             </Col>
-           </Row>
+          <Row gutter={20}>
+            <Col span={12}>
+              <Form.Item 
+                label="Chọn hình ảnh" 
+                required 
+                validateStatus={validationErrors.Icon ? 'error' : ''} 
+                help={validationErrors.Icon ? validationErrors.Icon.join(', ') : ''}
+              >
+                <div style={{
+                  padding: '12px',
+                }}>
+                  <IconUploader
+                    value={formData.icon}
+                    onChange={(value) => handleChange({ target: { name: 'icon', value } })}
+                    placeholder="Đăng tải hình ảnh"
+                  />
+                </div>
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item label="Trạng thái">
+                <div style={{
+                  padding: '12px',
+                }}>
+                  <Switch
+                    name="isActive"
+                    checked={formData.isActive}
+                    onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
+                    checkedChildren="Active"
+                    unCheckedChildren="Inactive"
+                  />
+                  <div style={{
+                    fontSize: 12,
+                    color: '#8c8c8c',
+                    marginTop: 8
+                  }}>
+                    {formData.isActive ? 'Đang hoạt động' : 'Tạm ngưng'}
+                  </div>
+                </div>
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <Form.Item label="Mô tả" required validateStatus={validationErrors.Description ? 'error' : ''} help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}>
-             <Input.TextArea
-               name="description"
-               value={formData.description}
-               onChange={handleChange}
-               rows={3}
-               placeholder="Nhập mô tả dịch vụ"
-             />
-           </Form.Item>
+          <Form.Item 
+            label="Mô tả" 
+            required 
+            validateStatus={validationErrors.Description ? 'error' : ''} 
+            help={validationErrors.Description ? validationErrors.Description.join(', ') : ''}
+          >
+            <div style={{ 
+              border: '1px solid #d9d9d9', 
+              borderRadius: '8px', 
+              padding: '12px',
+              background: '#ffffff'
+            }}>
+              <div style={{ 
+                marginBottom: '12px', 
+                display: 'flex', 
+                gap: '8px', 
+                flexWrap: 'wrap',
+                padding: '8px 0',
+                borderBottom: '1px solid #f0f0f0'
+              }}>
+                <Select
+                  placeholder="Font Family"
+                  style={{ width: 120 }}
+                  onChange={(value) => handleFontChange('fontFamily', value)}
+                  defaultValue="Arial"
+                  value={formData.fontFamily}
+                  size="small"
+                >
+                  <Select.Option value="Arial">Arial</Select.Option>
+                  <Select.Option value="Times New Roman">Times New Roman</Select.Option>
+                  <Select.Option value="Courier New">Courier New</Select.Option>
+                  <Select.Option value="Georgia">Georgia</Select.Option>
+                  <Select.Option value="Verdana">Verdana</Select.Option>
+                </Select>
+                <Select
+                  placeholder="Font Size"
+                  style={{ width: 80 }}
+                  onChange={(value) => handleFontChange('fontSize', value)}
+                  defaultValue="14"
+                  value={formData.fontSize}
+                  size="small"
+                >
+                  <Select.Option value="12">12px</Select.Option>
+                  <Select.Option value="14">14px</Select.Option>
+                  <Select.Option value="16">16px</Select.Option>
+                  <Select.Option value="18">18px</Select.Option>
+                  <Select.Option value="20">20px</Select.Option>
+                </Select>
+                <Space.Compact size="small">
+                  <Button 
+                    type={formData.textAlign === 'left' ? 'primary' : 'default'}
+                    onClick={() => handleFontChange('textAlign', 'left')}
+                  >
+                    <i className="ti ti-align-left"></i>
+                  </Button>
+                  <Button 
+                    type={formData.textAlign === 'center' ? 'primary' : 'default'}
+                    onClick={() => handleFontChange('textAlign', 'center')}
+                  >
+                    <i className="ti ti-align-center"></i>
+                  </Button>
+                  <Button 
+                    type={formData.textAlign === 'right' ? 'primary' : 'default'}
+                    onClick={() => handleFontChange('textAlign', 'right')}
+                  >
+                    <i className="ti ti-align-right"></i>
+                  </Button>
+                </Space.Compact>
+                <Button 
+                  size="small"
+                  onClick={() => handleImageUpload()}
+                  icon={<i className="ti ti-photo"></i>}
+                >
+                  Thêm ảnh
+                </Button>
+              </div>
+              <Input.TextArea
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                rows={4}
+                placeholder="Nhập mô tả dịch vụ..."
+                required
+                style={{
+                  fontFamily: formData.fontFamily || 'Arial',
+                  fontSize: `${formData.fontSize || 14}px`,
+                  textAlign: formData.textAlign || 'left',
+                  border: 'none',
+                  resize: 'none'
+                }}
+              />
+            </div>
+          </Form.Item>
 
-          <div className="d-flex justify-content-end">
-            <Button onClick={() => {
-              setShowAddModal(false);
-              setShowEditModal(false);
-            }} style={{ marginRight: 8 }}>
+          <div className="d-flex justify-content-end" style={{ 
+            paddingTop: '16px',
+            borderTop: '1px solid #f0f0f0',
+            marginTop: '16px'
+          }}>
+            <Button 
+              onClick={() => {
+                setShowAddModal(false);
+                setShowEditModal(false);
+              }} 
+              style={{ marginRight: 12 }}
+              size="large"
+            >
               Hủy 
             </Button>
-            <Button type="primary" onClick={handleSubmit}>
+            <Button 
+              type="primary" 
+              onClick={handleSubmit}
+              size="large"
+            >
               {showAddModal ? 'Thêm' : 'Lưu'}
             </Button>
           </div>

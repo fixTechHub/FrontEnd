@@ -189,5 +189,18 @@ export const technicianSubscriptionAPI = {
       console.error('Delete subscription error:', error);
       throw error;
     }
+  },
+
+  // Get subscription analytics
+  getSubscriptionAnalytics: async (year, timeRange) => {
+    try {
+      const response = await ApiBE.get(`/analytics/subscription-metrics`, {
+        params: { year, timeRange }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Get subscription analytics error:', error);
+      throw error;
+    }
   }
 };

@@ -26,6 +26,7 @@ import TechnicianDetail from "../pages/management/TechnicianDetail";
 import CertificateAdmin from "../pages/management/CertificateManagement";
 import WithdrawAdmin from "../pages/management/WithdrawManagement";
 import TechnicianSubscriptionAnalytics from "../pages/management/TechnicianSubscriptionAnalytics";
+import BookingStatusLogManagement from "../pages/management/BookingStatusLogManagement";
 
 //Định nghĩa các route, xác định trang nào sẽ render vào <Outlet /> của AdminLayout, quyết định trang nào là management page.
 export function AppRoutes() {
@@ -56,6 +57,7 @@ export function AppRoutes() {
         <Route path="certificate" element={<CertificateAdmin />} />
         <Route path="withdraw" element={<WithdrawAdmin />} />
         <Route path="technician-subscription-analytics" element={<TechnicianSubscriptionAnalytics />} />
+        <Route path="booking-status-log-management" element={<BookingStatusLogManagement />} />
         <Route index element={<AdminDashboard />} /> {/* Trang mặc định */}
       </Route>
       <Route path="/admin/commission" element={

@@ -25,7 +25,10 @@ import {
  ExclamationCircleOutlined,
  CheckCircleOutlined,
  CloseCircleOutlined,
- EditOutlined as EditIcon
+ EditOutlined as EditIcon,
+ PictureOutlined,
+ SettingOutlined,
+ DollarOutlined
 } from '@ant-design/icons';
 import { systemReportAPI } from '../../features/systemreports/systemReportAPI';
 import {
@@ -64,6 +67,9 @@ const SystemReportManagement = () => {
  const [adminUsers, setAdminUsers] = useState([]);
  const [resolvedBy, setResolvedBy] = useState('');
  const [resolutionNote, setResolutionNote] = useState('');
+ const [isSubmitting, setIsSubmitting] = useState(false);
+ const [currentPage, setCurrentPage] = useState(1);
+ const [reportsPerPage, setReportsPerPage] = useState(10);
 
 
  // Redux selectors
@@ -73,6 +79,35 @@ const SystemReportManagement = () => {
  const loading = useSelector(state => state.systemReports.loading);
  const error = useSelector(state => state.systemReports.error);
  const reportStats = useSelector(selectReportStats);
+
+ // Pagination logic
+ const indexOfLastReport = currentPage * reportsPerPage;
+ const indexOfFirstReport = indexOfLastReport - reportsPerPage;
+ const totalPages = Math.ceil(filteredSystemReports.length / reportsPerPage);
+
+ // Sorted reports for current page
+ const sortedSystemReports = [...filteredSystemReports].sort((a, b) => {
+   if (sortField === 'createdAt') {
+     return sortOrder === 'desc' ? new Date(b.createdAt) - new Date(a.createdAt) : new Date(a.createdAt) - new Date(b.createdAt);
+   }
+   return 0;
+ });
+
+ const currentReports = sortedSystemReports.slice(indexOfFirstReport, indexOfLastReport);
+
+ const handlePageChange = (pageNumber) => {
+   setCurrentPage(pageNumber);
+ };
+
+ const handleSortChange = (field) => {
+   if (sortField === field) {
+     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+   } else {
+     setSortField(field);
+     setSortOrder('desc');
+   }
+   setCurrentPage(1); // Reset to first page when sorting changes
+ };
 
 
  // Load system reports on component mount
@@ -198,12 +233,14 @@ const SystemReportManagement = () => {
 
  const getTagColor = (tag) => {
    switch (tag) {
-     case 'bug':
-       return 'red';
-     case 'feature':
+     case 'UI':
        return 'blue';
-     case 'improvement':
+     case 'SYSTEM':
+       return 'red';
+     case 'PAYMENT':
        return 'green';
+     case 'OTHER':
+       return 'yellow';
      default:
        return 'default';
    }
@@ -211,11 +248,19 @@ const SystemReportManagement = () => {
 
 
  const openEditStatusModal = (record) => {
+   console.log('Opening modal for record:', record); // Debug log
    setEditingStatusId(record.id);
    setStatusValue(record.status || 'PENDING');
    setResolvedBy(record.resolvedBy || '');
    setResolutionNote(record.resolutionNote || '');
    setShowEditStatusModal(true);
+   
+   // Debug log để kiểm tra
+   console.log('Modal state set:', {
+     statusValue: record.status || 'PENDING',
+     resolvedBy: record.resolvedBy || '',
+     resolutionNote: record.resolutionNote || ''
+   });
  };
 
  const handleCloseEditModal = () => {
@@ -251,11 +296,14 @@ const SystemReportManagement = () => {
     
     if (editingStatusId && statusValue) {
       try {
+        setIsSubmitting(true);
         // Nếu status là PENDING hoặc IN_PROGRESS, xóa resolvedBy và resolutionNote
         const finalResolvedBy = (statusValue === 'PENDING' || statusValue === 'IN_PROGRESS') ? '' : resolvedBy;
         const finalResolutionNote = (statusValue === 'PENDING' || statusValue === 'IN_PROGRESS') ? '' : resolutionNote;
         
         await handleUpdateStatus(editingStatusId, statusValue.toUpperCase(), finalResolutionNote, finalResolvedBy);
+        
+        message.success(`Cập nhật trạng thái thành công! Báo cáo đã chuyển sang ${statusValue}`);
         setShowEditStatusModal(false);
         setEditingStatusId(null);
         // Reset form
@@ -264,20 +312,11 @@ const SystemReportManagement = () => {
         setResolutionNote('');
       } catch (error) {
         message.error('Không thể cập nhật trạng thái');
+      } finally {
+        setIsSubmitting(false);
       }
     }
   };
-
-
- const handleSortChange = (value) => {
-   if (value === 'lasted') {
-     setSortField('createdAt');
-     setSortOrder('desc');
-   } else if (value === 'oldest') {
-     setSortField('createdAt');
-     setSortOrder('asc');
-   }
- };
 
 
  const columns = [
@@ -295,11 +334,24 @@ const SystemReportManagement = () => {
      title: 'Phân loại',
      dataIndex: 'tag',
      key: 'tag',
-     render: (tag) => (
-       <Tag color={getTagColor(tag)}>
-         {tag?.toUpperCase()}
-       </Tag>
-     ),
+     render: (tag) => {
+       let icon;
+       if (tag === 'UI') {
+         icon = <PictureOutlined />;
+       } else if (tag === 'SYSTEM') {
+         icon = <SettingOutlined />;
+       } else if (tag === 'PAYMENT') {
+         icon = <DollarOutlined />;
+       } else {
+         icon = <FileTextOutlined />; // Default icon
+       }
+       
+       return (
+         <Tag color={getTagColor(tag)} icon={icon}>
+           {tag?.toUpperCase()}
+         </Tag>
+       );
+     },
    },
    {
      title: 'Mô tả',
@@ -328,7 +380,7 @@ const SystemReportManagement = () => {
      render: (userId) => (
        <Space>
          <UserOutlined />
-         <span>{userMap[userId] || userId || "UNKNOWN"}</span>
+         <span>{userMap[userId] || userId || "ss"}</span>
        </Space>
      ),
    },
@@ -353,39 +405,30 @@ const SystemReportManagement = () => {
  const isUserMapReady = filteredSystemReports.every(r => !r.submittedBy || userMap[r.submittedBy]);
 
 
- // Sort system reports theo sortField/sortOrder
- const sortedSystemReports = [...filteredSystemReports].sort((a, b) => {
-   if (sortField === 'createdAt') {
-     const dateA = new Date(a.createdAt);
-     const dateB = new Date(b.createdAt);
-     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-   }
-   return 0;
- });
-
  // Set export data và columns
  useEffect(() => {
-   const exportColumns = [
-     { title: 'Tiêu đề', dataIndex: 'title' },
-     { title: 'Mô tả', dataIndex: 'description' },
-     { title: 'Phân loại', dataIndex: 'tag' },
-     { title: 'Trạng thái', dataIndex: 'status' },
-     { title: 'Người báo cáo', dataIndex: 'submittedBy' },
-     { title: 'Thời gian tạo', dataIndex: 'createdAt' },
-   ];
+   if (filteredSystemReports.length > 0) {
+     const exportColumns = [
+       { title: 'ID', dataIndex: 'id', key: 'id' },
+       { title: 'Tiêu đề', dataIndex: 'title', key: 'title' },
+       { title: 'Loại', dataIndex: 'tag', key: 'tag' },
+       { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
+       { title: 'Người báo cáo', dataIndex: 'submittedBy', key: 'submittedBy' },
+       { title: 'Thời gian tạo', dataIndex: 'createdAt', key: 'createdAt' },
+     ];
 
-   const exportData = sortedSystemReports.map(report => ({
-     title: report.title,
-     description: report.description,
-     tag: report.tag,
-     status: report.status?.toUpperCase(),
-     submittedBy: userMap[report.submittedBy] || report.submittedBy,
-     createdAt: formatDateTime(report.createdAt),
-     updatedAt: formatDateTime(report.updatedAt),
-   }));
+     const exportData = sortedSystemReports.map((report) => ({
+       id: report.id,
+       title: report.title || '',
+       tag: report.tag || '',
+       status: report.status || '',
+       submittedBy: userMap[report.submittedBy] || report.submittedBy || '',
+       createdAt: formatDateTime(report.createdAt),
+     }));
 
-   createExportData(exportData, exportColumns, 'system_reports_export', 'System Reports');
- }, [sortedSystemReports, userMap]);
+     createExportData(exportData, exportColumns, 'system_reports', 'SystemReports');
+   }
+ }, [filteredSystemReports, userMap, sortedSystemReports]);
 
 
  return (
@@ -523,18 +566,131 @@ const SystemReportManagement = () => {
          {/* System Reports Table */}
          <Table
            columns={columns}
-           dataSource={isUserMapReady ? sortedSystemReports : []}
+           dataSource={isUserMapReady ? currentReports : []}
            rowKey="id"
            loading={loading || !isUserMapReady}
-           pagination={{
-             total: filteredSystemReports.length,
-             pageSize: 10,
-             showSizeChanger: true,
-             showQuickJumper: true,
-             showTotal: (total, range) =>
-               `${range[0]}-${range[1]} of ${total} system reports`,
-           }}
+           pagination={false}
          />
+
+         {/* Custom Pagination */}
+         <div className="d-flex justify-content-between align-items-center mt-3">
+           <div className="d-flex align-items-center gap-3">
+             <div className="text-muted">
+               Hiển thị {indexOfFirstReport + 1}-{Math.min(indexOfLastReport, filteredSystemReports.length)} trong tổng số {filteredSystemReports.length} báo cáo hệ thống
+             </div>
+           </div>
+           {/* Pagination Controls - Always show if there are reports */}
+           {filteredSystemReports.length > 0 && (
+             <nav>
+               <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                 {/* Previous button */}
+                 <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                   <button 
+                     className="page-link" 
+                     onClick={() => handlePageChange(currentPage - 1)}
+                     disabled={currentPage === 1}
+                     style={{ 
+                       border: '1px solid #dee2e6',
+                       borderRadius: '6px',
+                       padding: '8px 12px',
+                       minWidth: '40px'
+                     }}
+                   >
+                     <i className="ti ti-chevron-left"></i>
+                   </button>
+                 </li>
+                 
+                 {/* Page numbers */}
+                 {[...Array(totalPages)].map((_, i) => {
+                   const pageNumber = i + 1;
+                   // Show all pages if total pages <= 7
+                   if (totalPages <= 7) {
+                     return (
+                       <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                         <button 
+                           className="page-link" 
+                           onClick={() => handlePageChange(pageNumber)}
+                           style={{ 
+                             border: '1px solid #dee2e6',
+                             borderRadius: '6px',
+                             padding: '8px 12px',
+                             minWidth: '40px',
+                             backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                             color: currentPage === pageNumber ? 'white' : '#007bff',
+                             borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                           }}
+                         >
+                           {pageNumber}
+                         </button>
+                       </li>
+                     );
+                   }
+                   
+                   // Show first page, last page, current page, and pages around current page
+                   if (
+                     pageNumber === 1 || 
+                     pageNumber === totalPages || 
+                     (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                   ) {
+                     return (
+                       <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                         <button 
+                           className="page-link" 
+                           onClick={() => handlePageChange(pageNumber)}
+                           style={{ 
+                             border: '1px solid #dee2e6',
+                             borderRadius: '6px',
+                             padding: '8px 12px',
+                             minWidth: '40px',
+                             backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                             color: currentPage === pageNumber ? 'white' : '#007bff',
+                             borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                           }}
+                         >
+                           {pageNumber}
+                         </button>
+                       </li>
+                     );
+                   } else if (
+                     pageNumber === currentPage - 2 || 
+                     pageNumber === currentPage + 2
+                   ) {
+                     return (
+                       <li key={i} className="page-item disabled">
+                         <span className="page-link" style={{ 
+                           border: '1px solid #dee2e6',
+                           borderRadius: '6px',
+                           padding: '8px 12px',
+                           minWidth: '40px',
+                           backgroundColor: '#f8f9fa',
+                           color: '#6c757d'
+                         }}>...</span>
+                       </li>
+                     );
+                   }
+                   return null;
+                 })}
+                 
+                 {/* Next button */}
+                 <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                   <button 
+                     className="page-link" 
+                     onClick={() => handlePageChange(currentPage + 1)}
+                     disabled={currentPage === totalPages}
+                     style={{ 
+                       border: '1px solid #dee2e6',
+                       borderRadius: '6px',
+                       padding: '8px 12px',
+                       minWidth: '40px'
+                     }}
+                   >
+                     <i className="ti ti-chevron-right"></i>
+                   </button>
+                 </li>
+               </ul>
+             </nav>
+           )}
+         </div>
        </Card>
 
 
@@ -550,19 +706,20 @@ const SystemReportManagement = () => {
           >
             <div style={{ background: '#fff', borderRadius: 16 }}>
               <div style={{
-                background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 padding: '20px 24px',
                 color: '#fff'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontSize: 20, fontWeight: 700 }}>
-                    {selectedSystemReport.title || 'SYSTEM REPORT'}
+                    {selectedSystemReport?.title || 'SYSTEM REPORT'}
                   </div>
                   <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
-                    {selectedSystemReport.tag?.toUpperCase()}
+                    
+                    {(selectedSystemReport?.status ? String(selectedSystemReport.status).replace(/_/g, ' ').toUpperCase() : 'N/A')}
                   </Tag>
                 </div>
-                {selectedSystemReport.id && (
+                {selectedSystemReport?.id && (
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ fontFamily: 'monospace', fontSize: 14 }}>ID: {selectedSystemReport.id}</span>
                   </div>
@@ -582,12 +739,16 @@ const SystemReportManagement = () => {
                       <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Tổng quan</div>
                       <div style={{ display: 'grid', rowGap: 10 }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
-                          <span style={{ fontWeight: 600 }}>{(selectedSystemReport.status ? String(selectedSystemReport.status).replace(/_/g, ' ').toUpperCase() : 'N/A')}</span>
+                          <span style={{ color: '#8c8c8c' }}>Phân loại</span>
+                          <span style={{ fontWeight: 600 }}>
+                                                            <Tag color={getTagColor(selectedSystemReport?.tag)}>
+                                <span style={{ fontWeight: 600 }}>{selectedSystemReport?.tag?.toUpperCase()}</span>
+                              </Tag>
+                            </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Thời gian tạo</span>
-                          <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport.createdAt)}</span>
+                          <span style={{ fontWeight: 600 }}>{formatDateTime(selectedSystemReport?.createdAt)}</span>
                         </div>
                       </div>
                     </div>
@@ -604,11 +765,11 @@ const SystemReportManagement = () => {
                       <div style={{ display: 'grid', rowGap: 12 }}>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Người báo cáo</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.submittedBy] || selectedSystemReport.submittedBy || ''}</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport?.submittedBy] || selectedSystemReport?.submittedBy || ''}</span>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Người xử lý</span>
-                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport.resolvedBy] || selectedSystemReport.resolvedBy || ''}</span>
+                          <span style={{ fontWeight: 600 }}>{userMap[selectedSystemReport?.resolvedBy] || selectedSystemReport?.resolvedBy || ''}</span>
                         </div>
                       </div>
                     </div>
@@ -624,12 +785,12 @@ const SystemReportManagement = () => {
                     }}>
                       <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Mô tả</div>
                       <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
-                        {selectedSystemReport.description || 'No description'}
+                        {selectedSystemReport?.description || 'No description'}
                       </div>
                     </div>
                   </div>
                   {/* Resolution Note full width if any */}
-                  {selectedSystemReport.resolutionNote && (
+                  {selectedSystemReport?.resolutionNote && (
                     <div style={{ gridColumn: '1 / span 2' }}>
                       <div style={{
                         background: '#ffffff',
@@ -639,7 +800,7 @@ const SystemReportManagement = () => {
                       }}>
                         <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Ghi chú</div>
                         <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
-                          {selectedSystemReport.resolutionNote}
+                          {selectedSystemReport?.resolutionNote}
                         </div>
                       </div>
                     </div>
@@ -651,93 +812,500 @@ const SystemReportManagement = () => {
         )}
 
 
-       {/* Modal Edit Status */}
-       <Modal
-         title="Cập nhật báo cáo"
-         open={showEditStatusModal}
-         onCancel={handleCloseEditModal}
-         onOk={handleSaveStatus}
-         okText="Xác nhận"
-         cancelText="Hủy"
-         width={600}
-         okButtonProps={{
-           disabled: !statusValue || 
-             (statusValue === 'RESOLVED' && (!resolvedBy || !resolutionNote.trim())) ||
-             (statusValue === 'REJECTED' && (!resolvedBy || !resolutionNote.trim()))
-         }}
-       >
-         <div style={{ marginBottom: 16 }}>
-           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
-             Trạng thái <span style={{ color: 'red' }}>*</span>
-           </label>
-           <Select
-             value={statusValue}
-             style={{ width: '100%' }}
-             onChange={setStatusValue}
-             placeholder="Select status"
-           >
-             <Option value="PENDING">PENDING</Option>
-             <Option value="IN_PROGRESS">IN PROGRESS</Option>
-             <Option value="RESOLVED">RESOLVED</Option>
-             <Option value="REJECTED">REJECTED</Option>
-           </Select>
-         </div>
-         
-         <div style={{ marginBottom: 16 }}>
-           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
-             Người xử lý (Admin) 
-             {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && <span style={{ color: 'red' }}>*</span>}
-           </label>
-           <Select
-             value={resolvedBy}
-             style={{ width: '100%' }}
-             onChange={setResolvedBy}
-             placeholder="Chọn Admin xử lý"
-             allowClear
-             disabled={statusValue !== 'RESOLVED' && statusValue !== 'REJECTED'}
-           >
-             {adminUsers.map(user => (
-               <Option key={user.id} value={user.id}>
-                 {user.fullName || user.email} ({user.roleName || user.role})
-               </Option>
-             ))}
-           </Select>
-           {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && !resolvedBy && (
-             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-               Hãy chọn Admin xử lý báo cáo
-             </div>
-           )}
-         </div>
-         
-         <div style={{ marginBottom: 16 }}>
-           <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>
-             Phương án giải quyết
-             {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && <span style={{ color: 'red' }}>*</span>}
-           </label>
-           <Input.TextArea
-             value={resolutionNote}
-             onChange={(e) => setResolutionNote(e.target.value)}
-             placeholder={
-               statusValue === 'RESOLVED' ? "Hãy nhập phương án giải quyết..." :
-               statusValue === 'REJECTED' ? "Hãy nhập lý do từ chối giải quyết..." :
-               "Enter note (optional)..."
-             }
-             rows={4}
-             style={{ width: '100%' }}
-             disabled={statusValue !== 'RESOLVED' && statusValue !== 'REJECTED'}
-           />
-           {statusValue === 'RESOLVED' && !resolutionNote.trim() && (
-             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-               Hãy nhập phương án giải quyết
-             </div>
-           )}
-           {statusValue === 'REJECTED' && !resolutionNote.trim() && (
-             <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-               Hãy nhập lý do từ chối giải quyết
-             </div>
-           )}
-         </div>
-       </Modal>
+        {/* Modal Edit Status */}
+        <Modal
+          title={
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: 12,
+              padding: '6px 0',
+              borderBottom: '1px solid #f0f0f0'
+            }}>
+              <div style={{
+                width: 36,
+                height: 36,
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'white',
+                fontSize: 16,
+                fontWeight: 600
+              }}>
+                <EditIcon />
+              </div>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 600, color: '#1a1a1a', marginBottom: 2 }}>
+                  Chỉnh sửa trạng thái báo cáo
+                </div>
+                <div style={{ fontSize: 12, color: '#8c8c8c' }}>
+                  Cập nhật trạng thái và thông tin xử lý
+                </div>
+              </div>
+            </div>
+          }
+          open={showEditStatusModal}
+          onCancel={handleCloseEditModal}
+          onOk={handleSaveStatus}
+          
+          okText={isSubmitting ? "Đang xử lý..." : "Lưu thay đổi"}
+          cancelText="Hủy bỏ"
+          width={850}
+          okButtonProps={{
+            disabled: !statusValue || 
+              (statusValue === 'RESOLVED' && (!resolvedBy || !resolutionNote.trim())) ||
+              (statusValue === 'REJECTED' && (!resolvedBy || !resolutionNote.trim())),
+            loading: isSubmitting,
+            style: {
+              height: 36,
+              borderRadius: 6,
+              fontSize: 14,
+              fontWeight: 600,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              border: 'none',
+              boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)'
+            }
+          }}
+          cancelButtonProps={{
+            style: {
+              height: 36,
+              borderRadius: 6,
+              fontSize: 14,
+              fontWeight: 500,
+              border: '2px solid #d9d9d9',
+              color: '#595959'
+            }
+          }}
+          styles={{
+            body: { 
+              padding: '12px 12px 0px 12px',
+              background: '#fafafa'
+            },
+            header: {
+              padding: '12px 12px 8px 12px',
+              borderBottom: 'none'
+            },
+            footer: {
+              padding: '8px 12px 12px 12px',
+              borderTop: '1px solid #f0f0f0',
+              background: '#ffffff'
+            }
+          }}
+        >
+          {/* Status Selection Section */}
+          
+          
+          {/* Admin and Resolution Note Section */}
+          <Row gutter={12} style={{ marginBottom: 12 }}>
+            {/* Admin Selection Card */}
+            
+            <Col span={12}>
+            <div style={{
+            background: '#ffffff',
+            borderRadius: 8,
+            padding: 12,
+            marginBottom: 12,
+            border: '1px solid #f0f0f0',
+            boxShadow: '0 1px 4px rgba(0, 0, 0, 0.06)',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{ marginBottom: 12, flex: 1 }}>
+              <label style={{ 
+                display: 'block', 
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#1a1a1a',
+                marginBottom: 6
+              }}>
+                Trạng thái xử lý <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>
+              </label>
+              <Select
+                value={statusValue}
+                onChange={setStatusValue}
+                placeholder="Chọn trạng thái xử lý"
+                size="middle"
+                style={{
+                  width: '100%',
+                  height: 36,
+                  borderRadius: 6,
+                  fontSize: 14
+                }}
+              >
+                <Option value="PENDING">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: '#faad14'
+                    }} />
+                    <span>PENDING - Đang chờ xử lý</span>
+                  </div>
+                </Option>
+                <Option value="IN_PROGRESS">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: '#1890ff'
+                    }} />
+                    <span>IN PROGRESS - Đang xử lý</span>
+                  </div>
+                </Option>
+                <Option value="RESOLVED">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: '#52c41a'
+                    }} />
+                    <span>RESOLVED - Đã giải quyết</span>
+                  </div>
+                </Option>
+                <Option value="REJECTED">
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <div style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: '50%',
+                      background: '#ff4d4f'
+                    }} />
+                    <span>REJECTED - Đã từ chối</span>
+                  </div>
+                </Option>
+              </Select>
+            </div>
+          </div>
+            </Col>
+            <Col span={12}>
+              <div style={{
+                background: '#ffffff',
+                border: '1px solid #f0f0f0',
+                borderRadius: 8,
+                padding: 12,
+                height: '100%',
+                opacity: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? 1 : 0.6,
+                transition: 'all 0.3s ease',
+                transform: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? 'translateY(0)' : 'translateY(-3px)',
+                boxShadow: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? '0 2px 8px rgba(0, 0, 0, 0.08)' : '0 1px 4px rgba(0, 0, 0, 0.04)',
+                position: 'relative',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                {/* Status Indicator */}
+                {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && (
+                  <div style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 3
+                  }} />
+                )}
+                
+                <div style={{ marginBottom: 12, flex: 1 }}>
+                  <label style={{ 
+                    display: 'block', 
+                    fontSize: 14,
+                    fontWeight: 600,
+                    color: '#1a1a1a',
+                    marginBottom: 6
+                  }}>
+                    <UserOutlined style={{ marginRight: 6, color: '#1890ff', fontSize: 14 }} />
+                    Người xử lý (Admin)
+                    {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && (
+                      <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>
+                    )}
+                  </label>
+                  <Select
+                    value={resolvedBy}
+                    onChange={setResolvedBy}
+                    placeholder="Chọn Admin xử lý báo cáo"
+                    allowClear
+                    size="middle"
+                    disabled={statusValue !== 'RESOLVED' && statusValue !== 'REJECTED'}
+                    filterOption={(input, option) =>
+                      option.children.toLowerCase().indexOf(input.toLowerCase()) >= 0
+                    }
+                    style={{
+                      width: '100%',
+                      height: 36,
+                      borderRadius: 6,
+                      fontSize: 14
+                    }}
+                    className="admin-select-force-placeholder"
+                  >
+                    {adminUsers && adminUsers.length > 0 ? (
+                      adminUsers.map(user => (
+                        <Option key={user.id} value={user.id}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ 
+                              width: 24,
+                              height: 24,
+                              borderRadius: '50%',
+                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'white',
+                              fontWeight: 600,
+                              fontSize: 12
+                            }}>
+                              {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'A'}
+                            </div>
+                            <div style={{ fontWeight: 600, color: '#1a1a1a', fontSize: 13 }}>
+                              {user.fullName || user.email || 'Unknown User'}
+                            </div>
+                          </div>
+                        </Option>
+                      ))
+                    ) : (
+                      <Option value="" disabled>
+                        <div style={{ textAlign: 'center', color: '#8c8c8c', padding: '12px 0' }}>
+                          Không có Admin nào
+                        </div>
+                      </Option>
+                    )}
+                  </Select>
+                  
+                  {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && !resolvedBy && (
+                    <div style={{ 
+                      color: '#ff4d4f', 
+                      fontSize: 12, 
+                      marginTop: 6,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '4px 6px',
+                      background: '#fff2f0',
+                      borderRadius: 4,
+                      border: '1px solid #ffccc7'
+                    }}>
+                      <ExclamationCircleOutlined style={{ fontSize: 12 }} />
+                      Hãy chọn Admin xử lý báo cáo
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Col>
+          </Row>
+
+          {/* Resolution Note Section - Full Width */}
+          <div style={{
+            background: '#ffffff',
+            border: '1px solid #f0f0f0',
+            borderRadius: 8,
+            padding: 12,
+            marginBottom: 12,
+            opacity: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? 1 : 0.6,
+            transition: 'all 0.3s ease',
+            transform: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? 'translateY(0)' : 'translateY(-3px)',
+            boxShadow: (statusValue === 'RESOLVED' || statusValue === 'REJECTED') ? '0 2px 8px rgba(0, 0, 0, 0.08)' : '0 1px 4px rgba(0, 0, 0, 0.04)',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            {/* Status Indicator */}
+            {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && (
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 3
+              }} />
+            )}
+            
+            <div style={{ marginBottom: 12 }}>
+              <label style={{ 
+                display: 'block', 
+                fontSize: 14,
+                fontWeight: 600,
+                color: '#1a1a1a',
+                marginBottom: 6
+              }}>
+                <FileTextOutlined style={{ marginRight: 6, color: '#1890ff', fontSize: 14 }} />
+                Ghi chú xử lý
+                {(statusValue === 'RESOLVED' || statusValue === 'REJECTED') && (
+                  <span style={{ color: '#ff4d4f', marginLeft: 4 }}>*</span>
+                )}
+              </label>
+                  <div style={{
+                    border: '1px solid #d9d9d9',
+                    borderRadius: '6px',
+                    padding: '8px'
+                  }}>
+                    <div style={{ marginBottom: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <Select
+                        placeholder="Font Family"
+                        style={{ width: 120 }}
+                        onChange={(value) => {
+                          const textarea = document.getElementById('resolution-note-textarea');
+                          if (textarea) {
+                            textarea.style.fontFamily = value;
+                          }
+                        }}
+                        defaultValue="Arial"
+                      >
+                        <Select.Option value="Arial">Arial</Select.Option>
+                        <Select.Option value="Times New Roman">Times New Roman</Select.Option>
+                        <Select.Option value="Courier New">Courier New</Select.Option>
+                        <Select.Option value="Georgia">Georgia</Select.Option>
+                        <Select.Option value="Verdana">Verdana</Select.Option>
+                      </Select>
+                      <Select
+                        placeholder="Font Size"
+                        style={{ width: 80 }}
+                        onChange={(value) => {
+                          const textarea = document.getElementById('resolution-note-textarea');
+                          if (textarea) {
+                            textarea.style.fontSize = `${value}px`;
+                          }
+                        }}
+                        defaultValue="14"
+                      >
+                        <Select.Option value="12">12px</Select.Option>
+                        <Select.Option value="14">14px</Select.Option>
+                        <Select.Option value="16">16px</Select.Option>
+                        <Select.Option value="18">18px</Select.Option>
+                        <Select.Option value="20">20px</Select.Option>
+                      </Select>
+                      <Space.Compact size="small">
+                        <Button 
+                          type="default"
+                          onClick={() => {
+                            const textarea = document.getElementById('resolution-note-textarea');
+                            if (textarea) {
+                              textarea.style.textAlign = 'left';
+                            }
+                          }}
+                        >
+                          <i className="ti ti-align-left"></i>
+                        </Button>
+                        <Button 
+                          type="default"
+                          onClick={() => {
+                            const textarea = document.getElementById('resolution-note-textarea');
+                            if (textarea) {
+                              textarea.style.textAlign = 'center';
+                            }
+                          }}
+                        >
+                          <i className="ti ti-align-center"></i>
+                        </Button>
+                        <Button 
+                          type="default"
+                          onClick={() => {
+                            const textarea = document.getElementById('resolution-note-textarea');
+                            if (textarea) {
+                              textarea.style.textAlign = 'right';
+                            }
+                          }}
+                        >
+                          <i className="ti ti-align-right"></i>
+                        </Button>
+                      </Space.Compact>
+                      <Button 
+                        size="small"
+                        onClick={() => {
+                          const input = document.createElement('input');
+                          input.type = 'file';
+                          input.accept = 'image/*';
+                          input.onchange = (e) => {
+                            const file = e.target.files[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onload = (e) => {
+                                const textarea = document.getElementById('resolution-note-textarea');
+                                if (textarea) {
+                                  // Tạo img tag với base64 data
+                                  const imgTag = `\n<img src="${e.target.result}" alt="${file.name}" style="max-width: 100%; height: auto; margin: 10px 0;" />\n`;
+                                  const cursorPos = textarea.selectionStart;
+                                  const textBefore = textarea.value.substring(0, cursorPos);
+                                  const textAfter = textarea.value.substring(cursorPos);
+                                  const newValue = textBefore + imgTag + textAfter;
+                                  
+                                  // Cập nhật state
+                                  setResolutionNote(newValue);
+                                  
+                                  // Cập nhật textarea value
+                                  textarea.value = newValue;
+                                  
+                                  // Đặt con trỏ sau tag ảnh
+                                  const newCursorPos = cursorPos + imgTag.length;
+                                  textarea.focus();
+                                  textarea.setSelectionRange(newCursorPos, newCursorPos);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          };
+                          input.click();
+                        }}
+                        icon={<i className="ti ti-photo"></i>}
+                      >
+                        Thêm ảnh
+                      </Button>
+                    </div>
+                    <Input.TextArea
+                      id="resolution-note-textarea"
+                      value={resolutionNote}
+                      onChange={(e) => setResolutionNote(e.target.value)}
+                      rows={4}
+                      placeholder="Nhập ghi chú xử lý..."
+                      style={{
+                        fontFamily: 'Arial',
+                        fontSize: '14px',
+                        textAlign: 'left',
+                        border: 'none',
+                        resize: 'none'
+                      }}
+                      disabled={statusValue !== 'RESOLVED' && statusValue !== 'REJECTED'}
+                    />
+                  </div>
+              {statusValue === 'RESOLVED' && !resolutionNote.trim() && (
+                <div style={{ 
+                  color: '#ff4d4f', 
+                  fontSize: 12, 
+                  marginTop: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 6px',
+                  background: '#fff2f0',
+                  borderRadius: 4,
+                  border: '1px solid #ffccc7'
+                }}>
+                  <ExclamationCircleOutlined style={{ fontSize: 12 }} />
+                  Hãy nhập phương án giải quyết
+                </div>
+              )}
+              {statusValue === 'REJECTED' && !resolutionNote.trim() && (
+                <div style={{ 
+                  color: '#ff4d4f', 
+                  fontSize: 12, 
+                  marginTop: 6,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '4px 6px',
+                  background: '#fff2f0',
+                  borderRadius: 4,
+                  border: '1px solid #ffccc7'
+                }}>
+                  <ExclamationCircleOutlined style={{ fontSize: 12 }} />
+                  Hãy nhập lý do từ chối giải quyết
+                </div>
+              )}
+            </div>
+          </div>
+         </Modal>
      </div>
    </div>
  );
@@ -745,4 +1313,47 @@ const SystemReportManagement = () => {
 
 
 export default SystemReportManagement;
+
+// Custom CSS để force hiển thị placeholder
+const customStyles = `
+  .admin-select-force-placeholder .ant-select-selection-placeholder {
+    color: #8c8c8c !important;
+    font-size: 16px !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+    pointer-events: none !important;
+  }
+  
+  .admin-select-force-placeholder.ant-select-disabled .ant-select-selection-placeholder {
+    color: #bfbfbf !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+  }
+  
+  .admin-select-force-placeholder .ant-select-selection-item {
+    color: #1a1a1a !important;
+    font-weight: 600 !important;
+  }
+  
+  .admin-select-force-placeholder.ant-select-disabled {
+    background-color: #f5f5f5 !important;
+    border-color: #d9d9d9 !important;
+    cursor: not-allowed !important;
+  }
+  
+  .admin-select-force-placeholder:not(.ant-select-disabled) {
+    background-color: #ffffff !important;
+    border-color: #d9d9d9 !important;
+    cursor: pointer !important;
+  }
+`;
+
+// Inject CSS vào head
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = customStyles;
+  document.head.appendChild(styleElement);
+}
 

@@ -80,7 +80,7 @@ const PackageManagement = () => {
   };
 
   const confirmDelete = () => {
-    dispatch(removePackage(selectedPackage._id));
+    dispatch(removePackage(selectedPackage._id || selectedPackage.id));
     setShowDeleteModal(false);
   };
 
@@ -99,14 +99,16 @@ const PackageManagement = () => {
   };
 
   const handleSubmit = () => {
-
-
     if (showAddModal) {
       dispatch(createNewPackage(formData));
     } else if (showEditModal) {
       dispatch(editPackage(formData)); // ✅ check formData có id không
     }
-
+    if (showAddModal) {
+      dispatch(createNewPackage(formData));
+    } else if (showEditModal) {
+      dispatch(editPackage(formData)); // ✅ check formData có id không
+    }
     setShowAddModal(false);
     setShowEditModal(false);
   };
@@ -287,7 +289,7 @@ const PackageManagement = () => {
                   </tr>
                 ) : (
                   currentPackages.map((pkg) => (
-                    <tr key={pkg.id}>
+                    <tr key={pkg._id || pkg.id}>
                       <td>{pkg.name}</td>
                       <td>{pkg.price}</td>
                       <td>
@@ -662,7 +664,7 @@ const PackageManagement = () => {
             </thead>
             <tbody>
               {deletedPackages.map((pkg) => (
-                <tr key={pkg.id}>
+                <tr key={pkg._id || pkg.id}>
                   <td>{pkg.name}</td>
                   <td>{pkg.price}</td>
                   <td>{pkg.description}</td>
@@ -672,7 +674,7 @@ const PackageManagement = () => {
                     </span>
                   </td>
                   <td>
-                    <Button size="small" type="primary" onClick={() => handleRestorePackage(pkg.id)}>
+                    <Button size="small" type="primary" onClick={() => handleRestorePackage(pkg._id || pkg.id)}>
                       Restore
                     </Button>
                   </td>

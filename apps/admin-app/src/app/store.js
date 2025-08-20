@@ -21,6 +21,7 @@ import notificationReducer from '../features/notifications/notificationsSlice'
 import adminCertificateReducer from '../features/certificates/certificateSlice';
 import adminWithdrawReducer from '../features/withdraw/withdrawSlice';
 import technicianSubscriptionReducer from '../features/technicianSubscription/technicianSubscriptionSlice';
+import bookingStatusLogReducer from '../features/bookingStatusLogs/bookingStatusLogSlice';
 
 const store = configureStore({
   reducer: {
@@ -46,6 +47,7 @@ const store = configureStore({
     adminCertificate: adminCertificateReducer,
     adminWithdraw : adminWithdrawReducer,
     technicianSubscription: technicianSubscriptionReducer,
+    bookingStatusLogs: bookingStatusLogReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
