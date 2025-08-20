@@ -270,11 +270,134 @@ export default function TechnicianDetail() {
                   <br></br>
                   <div>
                     <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
-
                   </div>
-                  {/* Thêm cảnh cáo ở dưới*/}
-
                 </div>
+                
+                                 {/* Financial Summary Card - Góc trên cùng bên phải */}
+                 {financialLoading ? (
+                   <div style={{ 
+                     display: 'flex', 
+                     alignItems: 'center', 
+                     justifyContent: 'center',
+                     minWidth: '280px',
+                     height: '120px',
+                     background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                     borderRadius: '16px',
+                     border: '2px dashed #d9d9d9'
+                   }}>
+                     <Spin size="large" />
+                   </div>
+                 ) : financialData ? (
+                   <div style={{
+                     minWidth: '280px',
+                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                     borderRadius: '20px',
+                     padding: '24px',
+                     color: 'white',
+                     boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+                     position: 'relative',
+                     overflow: 'hidden'
+                   }}>
+                     {/* Background Pattern */}
+                     <div style={{
+                       position: 'absolute',
+                       top: '-20px',
+                       right: '-20px',
+                       width: '80px',
+                       height: '80px',
+                       background: 'rgba(255, 255, 255, 0.1)',
+                       borderRadius: '50%',
+                       opacity: 0.6
+                     }} />
+                     <div style={{
+                       position: 'absolute',
+                       bottom: '-30px',
+                       left: '-30px',
+                       width: '120px',
+                       height: '120px',
+                       background: 'rgba(255, 255, 255, 0.05)',
+                       borderRadius: '50%'
+                     }} />
+                     
+                     {/* Icon */}
+                     <div style={{
+                       display: 'flex',
+                       alignItems: 'center',
+                       marginBottom: '16px'
+                     }}>
+                       <div style={{
+                         width: '40px',
+                         height: '40px',
+                         background: 'rgba(255, 255, 255, 0.2)',
+                         borderRadius: '12px',
+                         display: 'flex',
+                         alignItems: 'center',
+                         justifyContent: 'center',
+                         marginRight: '12px'
+                       }}>
+                         <i className="ti ti-wallet" style={{ 
+                           fontSize: '20px', 
+                           color: 'white' 
+                         }} />
+                       </div>
+                       <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                         Tổng Thu Nhập
+                       </div>
+                     </div>
+                     
+                     {/* Amount */}
+                     <div style={{
+                       fontSize: '28px',
+                       fontWeight: '700',
+                       marginBottom: '8px',
+                       textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                     }}>
+                       {formatCurrency(financialData.totalEarning || 0)}
+                     </div>
+                     
+                     {/* Subtitle */}
+                     <div style={{
+                       fontSize: '12px',
+                       opacity: 0.8,
+                       fontWeight: '500'
+                     }}>
+                       Từ tất cả công việc
+                     </div>
+                     
+                     {/* Trend Indicator */}
+                     <div style={{
+                       position: 'absolute',
+                       top: '16px',
+                       right: '16px',
+                       background: 'rgba(255, 255, 255, 0.2)',
+                       padding: '4px 8px',
+                       borderRadius: '12px',
+                       fontSize: '10px',
+                       fontWeight: '600'
+                     }}>
+                       📈 +12.5%
+                     </div>
+                   </div>
+                 ) : (
+                   <div style={{
+                     minWidth: '280px',
+                     height: '120px',
+                     background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                     borderRadius: '20px',
+                     border: '2px dashed #d9d9d9',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     color: '#666',
+                     fontSize: '14px',
+                     fontWeight: '500'
+                   }}>
+                     <div style={{ textAlign: 'center' }}>
+                       <div style={{ fontSize: '24px', marginBottom: '8px' }}>💰</div>
+                       Chưa có dữ liệu thu nhập
+                     </div>
+                   </div>
+                 )}
               </div>
 
               <Descriptions column={2} bordered>
@@ -709,6 +832,7 @@ export default function TechnicianDetail() {
                           </div>
                         )}
 
+
                      <Table
                        rowKey={(r) => r.id}
                           dataSource={filteredBookings}
@@ -788,6 +912,8 @@ export default function TechnicianDetail() {
                           </div>
                         </div>
 
+                        
+
                         {/* Filter Info */}
                         {(financialSearchText || financialFilterService || financialFilterStatus) && (
                           <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
@@ -824,49 +950,7 @@ export default function TechnicianDetail() {
                           </div>
                         )}
 
-                        {/* Financial Summary Cards */}
-                       {financialLoading ? (
-                         <div style={{ textAlign: 'center', padding: '50px' }}>
-                           <Spin size="large" />
-                         </div>
-                       ) : financialData ? (
-                          <div style={{ marginBottom: 24 }}>
-                             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
-                               <Card size="small">
-                                 <div style={{ textAlign: 'center' }}>
-                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#52c41a', marginBottom: 8 }}>
-                                     {formatCurrency(financialData.totalEarning || 0)}
-                                   </div>
-                                   <div style={{ color: '#666', fontSize: '14px' }}>Tổng Thu Nhập</div>
-                                 </div>
-                               </Card>
-                               <Card size="small">
-                                 <div style={{ textAlign: 'center' }}>
-                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#1890ff', marginBottom: 8 }}>
-                                     {formatCurrency(financialData.totalCommissionPaid || 0)}
-                                   </div>
-                                   <div style={{ color: '#666', fontSize: '14px' }}>Hoa Hồng Đã Trả</div>
-                                 </div>
-                               </Card>
-                               <Card size="small">
-                                 <div style={{ textAlign: 'center' }}>
-                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#faad14', marginBottom: 8 }}>
-                                     {formatCurrency(financialData.totalHoldingAmount || 0)}
-                                   </div>
-                                   <div style={{ color: '#666', fontSize: '14px' }}>Số Tiền Đang Giữ</div>
-                                 </div>
-                               </Card>
-                               <Card size="small">
-                                 <div style={{ textAlign: 'center' }}>
-                                   <div style={{ fontSize: '24px', fontWeight: 600, color: '#722ed1', marginBottom: 8 }}>
-                                     {formatCurrency(financialData.totalWithdrawn || 0)}
-                                   </div>
-                                   <div style={{ color: '#666', fontSize: '14px' }}>Đã Rút Tiền</div>
-                                 </div>
-                               </Card>
-                             </div>
-                           </div>
-                        ) : null}
+                       
 
                            {/* Financial Bookings Table */}
                         {financialData ? (
@@ -883,18 +967,6 @@ export default function TechnicianDetail() {
                                      title: 'Giá cuối',
                                      dataIndex: 'finalPrice',
                                      key: 'finalPrice',
-                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
-                                   },
-                                   {
-                                     title: 'Số tiền giữ',
-                                     dataIndex: 'holdingAmount',
-                                     key: 'holdingAmount',
-                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
-                                   },
-                                   {
-                                     title: 'Hoa hồng',
-                                     dataIndex: 'commissionAmount',
-                                     key: 'commissionAmount',
                                      render: (value) => value ? formatCurrency(value) : formatCurrency(0),
                                    },
                                    {

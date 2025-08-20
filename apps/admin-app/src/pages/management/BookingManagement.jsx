@@ -586,7 +586,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
         >
           <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)', padding: 24, color: '#fff' }}>
+            <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: 24, color: '#fff' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết đơn hàng</div>

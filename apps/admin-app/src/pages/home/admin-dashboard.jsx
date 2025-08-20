@@ -583,7 +583,7 @@ const AdminDashboard = () => {
             <Card 
               className="stats-card"
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #ffc107 100%)',
+                background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
                 border: 'none',
                 borderRadius: '12px',
                 boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)',
@@ -1079,7 +1079,7 @@ const AdminDashboard = () => {
                       key={tech.id} 
                       className="d-flex align-items-center p-3"
                       style={{
-                        background: index === 0 ? 'linear-gradient(135deg,rgb(150, 103, 215) 0%,rgb(26, 189, 78) 100%)' : '#f8f9fa',
+                        background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa',
                         borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
