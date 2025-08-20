@@ -57,7 +57,7 @@ export default function HeroBanner() {
                 <div className="nhp-feature-icon">
                   <Magic size={20} />
                 </div>
-                <span>Báo giá minh bạch trước sửa</span>
+                <span>Báo giá minh bạch</span>
               </div>
               <div className="nhp-feature-item">
                 <div className="nhp-feature-icon">
@@ -69,7 +69,7 @@ export default function HeroBanner() {
                 <div className="nhp-feature-icon">
                   <Lightning size={20} />
                 </div>
-                <span>Matching thợ tự động</span>
+                <span>Kết nối với thợ phù hợp</span>
               </div>
               <div className="nhp-feature-item">
                 <div className="nhp-feature-icon">
