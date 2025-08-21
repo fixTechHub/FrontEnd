@@ -24,6 +24,7 @@ import FeedbackAdmin from "../pages/management/FeedbackManagement";
 import UserDetail from "../pages/management/UserDetail";
 import TechnicianDetail from "../pages/management/TechnicianDetail";
 import CertificateAdmin from "../pages/management/CertificateManagement";
+import WithdrawAdmin from "../pages/management/WithdrawManagement";
 import TechnicianSubscriptionAnalytics from "../pages/management/TechnicianSubscriptionAnalytics";
 import BookingStatusLogManagement from "../pages/management/BookingStatusLogManagement";
 
@@ -54,6 +55,7 @@ export function AppRoutes() {
         <Route path="package" element={<AdminPackagePage />} />
         <Route path="feedback" element={<FeedbackAdmin />} />
         <Route path="certificate" element={<CertificateAdmin />} />
+        <Route path="withdraw" element={<WithdrawAdmin />} />
         <Route path="technician-subscription-analytics" element={<TechnicianSubscriptionAnalytics />} />
         <Route path="booking-status-log-management" element={<BookingStatusLogManagement />} />
         <Route index element={<AdminDashboard />} /> {/* Trang mặc định */}

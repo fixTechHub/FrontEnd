@@ -120,11 +120,11 @@ function BookingDetails({ bookingId }) {
         try {
             setCancelError(''); // Clear previous error
             dispatch(setLastCancelBy(user._id));
-            
+
             // Không sử dụng unwrap() để có thể xử lý error tốt hơn
             const resultAction = await dispatch(cancelBooking({ bookingId, reason: cancelReason }));
             console.log('--- CANCEL RESULT ACTION ---', resultAction);
-            
+
             if (cancelBooking.fulfilled.match(resultAction)) {
                 toast.success(resultAction.payload.message);
                 setShowCancelModal(false);
@@ -141,7 +141,7 @@ function BookingDetails({ bookingId }) {
             // console.log('--- CANCEL ERROR MESSAGE ---', error?.message);
             // console.log('--- CANCEL ERROR TYPE ---', typeof error);
             // console.log('--- CANCEL ERROR KEYS ---', Object.keys(error || {}));
-            
+
             // Khi sử dụng unwrap(), error message thường là string trực tiếp
             const errorMessage = typeof error === 'string' ? error : (error?.payload || error?.message || error?.error || 'Hủy đơn thất bại!');
             console.log('--- FINAL ERROR MESSAGE ---', errorMessage);
@@ -168,7 +168,7 @@ function BookingDetails({ bookingId }) {
                 console.log('--- FRONTEND: Thất bại ---');
                 const errorMessage = resultAction.payload || 'Có lỗi xảy ra!';
                 console.log('--- FRONTEND: Error message ---', errorMessage);
-                
+
                 // Xử lý lỗi race condition và MongoDB transaction
                 if (errorMessage.includes('đã được thợ khác nhận trước')) {
                     setErrorMessage(errorMessage);
@@ -189,7 +189,7 @@ function BookingDetails({ bookingId }) {
             console.log('--- FRONTEND: Catch error ---', error);
             const errorMessage = error?.payload || error?.message || 'Có lỗi xảy ra!';
             console.log('--- FRONTEND: Error message in catch ---', errorMessage);
-            
+
             // Xử lý lỗi race condition và MongoDB transaction
             if (errorMessage.includes('đã được thợ khác nhận trước')) {
                 setErrorMessage(errorMessage);
@@ -574,7 +574,7 @@ function BookingDetails({ bookingId }) {
                                 </>
                             )}
                         </Button>
-                        
+
                         <Button
                             variant="warning"
                             className="booking-details-action-btn reject-btn"
@@ -630,14 +630,14 @@ function BookingDetails({ bookingId }) {
                         <FaExclamationTriangle className="me-2" />
                         <strong>Lưu ý:</strong> Hành động này không thể hoàn tác.
                     </Alert>
-                    
+
                     {cancelError && (
                         <Alert variant="danger" className="mt-3">
                             <FaExclamationTriangle className="me-2" />
                             <strong>Lỗi:</strong> {cancelError}
                         </Alert>
                     )}
-                    
+
                     <Form.Group className="mt-3">
                         <Form.Label>Lý do hủy đơn:</Form.Label>
                         <Form.Control
