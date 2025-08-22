@@ -58,15 +58,12 @@ export const validateBookingData = (bookingData, addressInput, geoJson, type) =>
             } else if (end <= start) {
                 newErrors.endTime = "Giờ kết thúc phải sau giờ bắt đầu.";
             } else {
-                // Nếu đặt lịch cho **hôm nay**, bảo đảm giờ bắt đầu > thời gian hiện tại
+                // Kiểm tra thời gian bắt đầu phải cách thời điểm hiện tại ít nhất 2 tiếng
                 const now = new Date();
-                const sameDay =
-                    start.getFullYear() === now.getFullYear() &&
-                    start.getMonth() === now.getMonth() &&
-                    start.getDate() === now.getDate();
-
-                if (sameDay && start <= now) {
-                    newErrors.startTime = "Giờ bắt đầu phải sau thời điểm hiện tại.";
+                const twoHoursLater = new Date(now.getTime() + 2 * 60 * 60 * 1000); // +2 tiếng
+                
+                if (start <= twoHoursLater) {
+                    newErrors.startTime = "Thời gian bắt đầu cần được thiết lập cách thời điểm hiện tại tối thiểu 2 giờ.";
                 }
             }
         }

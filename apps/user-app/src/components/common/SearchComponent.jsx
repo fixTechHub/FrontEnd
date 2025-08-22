@@ -195,6 +195,50 @@ export default function SearchComponent() {
     setBookingImages(files);
   };
 
+  // Validate và chuyển sang bước 3: Xác nhận
+  const handleProceedToConfirm = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setFormError("");
+    setErrors({});
+
+    const selectedService = searchResults[selectedServiceIdx];
+    const bookingData = {
+      service: selectedService,
+      description: bookingDescription,
+      scheduleDate: bookingDate,
+      startTime: bookingTime,
+      endTime: bookingType === 'scheduled' ? bookingEndTime : bookingTime,
+      images: bookingImages
+    };
+
+    let newErrors = {};
+    if (bookingType === 'scheduled') {
+      newErrors = validateBookingData(
+        bookingData,
+        bookingLocation,
+        true,
+        bookingType
+      );
+    } else {
+      if (!bookingLocation || bookingLocation.trim().length < 5) newErrors.addressInput = 'Vui lòng nhập địa chỉ hợp lệ của bạn.';
+      if (!selectedService) newErrors.service = 'Vui lòng chọn dịch vụ.';
+      if (!bookingDescription || bookingDescription.trim().length < 10) newErrors.description = 'Vui lòng nhập mô tả chi tiết (tối thiểu 10 ký tự).';
+      if (bookingImages && bookingImages.length > 5) newErrors.images = 'Chỉ được tải lên tối đa 5 ảnh.';
+    }
+
+    if (!selectedService) {
+      newErrors.service = 'Vui lòng chọn dịch vụ.';
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setFormError('Vui lòng kiểm tra lại thông tin!');
+      return;
+    }
+
+    setStep(3);
+  };
+
   const handleSubmitBooking = async (e) => {
     e.preventDefault();
     setFormError("");
@@ -518,6 +562,7 @@ export default function SearchComponent() {
             {step === 0 && 'Kết quả dịch vụ phù hợp'}
             {step === 1 && 'Chọn loại đặt lịch'}
             {step === 2 && 'Đặt lịch dịch vụ'}
+            {step === 3 && 'Xác nhận thông tin'}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="banner-modal-body" style={{paddingBottom: 5}}>
@@ -732,7 +777,7 @@ export default function SearchComponent() {
 
                 <div className="mb-3" style={{ position: 'relative' }}>
                   <label className="form-label banner-form-label">
-                    Vị trí <span className="text-danger">*</span>
+                    Địa chỉ <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -866,6 +911,38 @@ export default function SearchComponent() {
                   </label> */}
                   <ImageUploader onFilesSelect={handleBookingImages} />
                   {errors.images && <div className="banner-form-error">{errors.images}</div>}
+                  
+                  {/* Hiển thị hình ảnh đã upload */}
+                  {bookingImages && bookingImages.length > 0 && (
+                    <div className="banner-uploaded-images">
+                      <div className="banner-uploaded-images-title">
+                        <i className="bx bx-image" style={{ fontSize: '16px', marginRight: '8px' }}></i>
+                        Hình ảnh đã chọn ({bookingImages.length})
+                      </div>
+                      <div className="banner-uploaded-images-grid">
+                        {bookingImages.map((file, index) => (
+                          <div key={index} className="banner-uploaded-image-item">
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={`Hình ảnh ${index + 1}`}
+                              className="banner-uploaded-image"
+                            />
+                            <button
+                              type="button"
+                              className="banner-remove-image-btn"
+                              onClick={() => {
+                                const newImages = bookingImages.filter((_, i) => i !== index);
+                                setBookingImages(newImages);
+                              }}
+                              title="Xóa hình ảnh"
+                            >
+                              <i className="bx bx-x"></i>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {formError && (
@@ -875,6 +952,58 @@ export default function SearchComponent() {
                   </div>
                 )}
               </form>
+            </div>
+          )}
+
+          {/* Bước 4: Xác nhận thông tin */}
+          {step === 3 && (
+            <div className="banner-confirm-container">
+              <div className="banner-info-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  <i className="bx bx-check-circle banner-info-header-icon"></i>
+                  <div className="banner-info-header-title">
+                    Xác nhận thông tin đặt lịch
+                  </div>
+                </div>
+                <div className="banner-info-header-subtitle">
+                  Vui lòng kiểm tra lại trước khi xác nhận.
+                </div>
+              </div>
+
+              <div className="banner-confirm-summary">
+                <div className="alert alert-light" role="alert">
+                  <div><strong>Dịch vụ:</strong> <span>{searchResults[selectedServiceIdx]?.serviceName}</span></div>
+                  <div><strong>Loại đặt:</strong> <span>{bookingType === 'urgent' ? 'Đặt ngay' : 'Đặt lịch'}</span></div>
+                  {bookingType === 'scheduled' && (
+                    <>
+                      <div><strong>Ngày:</strong> <span>{bookingDate ? new Date(bookingDate).toLocaleDateString('vi-VN') : ''}</span></div>
+                      <div><strong>Thời gian:</strong> <span>{bookingTime} - {bookingEndTime}</span></div>
+                    </>
+                  )}
+                  <div><strong>Địa chỉ:</strong> <span>{bookingLocation}</span></div>
+                  <div><strong>Mô tả:</strong> <span>{bookingDescription}</span></div>
+                  {bookingImages && bookingImages.length > 0 && (
+                    <div><strong>Hình ảnh:</strong> 
+                      <div className="banner-confirm-images">
+                        {bookingImages.map((file, index) => (
+                          <div key={index} className="banner-confirm-image-item">
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={`Hình ảnh ${index + 1}`}
+                              className="banner-confirm-image"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="banner-confirm-note">
+                <i className="bx bx-info-circle banner-info-icon"></i>
+                <span>Nhấn "Xác nhận đặt lịch" để tạo yêu cầu và chuyển sang bước chọn kỹ thuật viên.</span>
+              </div>
             </div>
           )}
         </Modal.Body>
@@ -909,12 +1038,22 @@ export default function SearchComponent() {
           )}
           {step === 2 && (
             <button
-              type="submit"
+              type="button"
+              onClick={handleProceedToConfirm}
+              disabled={submitting}
+              className="banner-btn-primary"
+            >
+              Tiếp tục
+            </button>
+          )}
+          {step === 3 && (
+            <button
+              type="button"
               onClick={handleSubmitBooking}
               disabled={submitting}
               className="banner-btn-primary"
             >
-              {submitting ? 'Đang xử lý...' : 'Đặt lịch & chọn kỹ thuật viên'}
+              {submitting ? 'Đang xử lý...' : 'Xác nhận đặt lịch'}
             </button>
           )}
           <button
