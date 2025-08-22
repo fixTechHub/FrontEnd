@@ -91,3 +91,27 @@ export const updateFeedbackAPI = async (feedbackId, payload) => {
   // BE trả { message, data } => mình trả về data cho gọn
   return res.data.data;
 };
+
+/**
+ * Lấy danh sách feedback công khai để hiển thị trên homepage
+ * params:
+ *  - limit: số lượng feedback cần lấy
+ *  - visible: true để lấy feedback công khai
+ */
+export const getPublicFeedbacks = async (params = {}) => {
+  const { limit = 10, visible = true } = params;
+  
+  const res = await apiClient.get('/feedbacks', {
+    params: {
+      isVisible: visible,
+      ...(limit ? { limit } : {}),
+    },
+  });
+  
+  // Chuyển đổi format để phù hợp với frontend
+  return {
+    success: true,
+    items: res.data.data || [],
+    total: res.data.data?.length || 0
+  };
+};
