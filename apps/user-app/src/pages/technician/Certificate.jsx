@@ -1,11 +1,13 @@
 // CertificateList.jsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { getCertificates, deleteCertificate } from '../../features/technicians/technicianSlice';
 import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import { Link } from 'react-router-dom';
 import UploadCertificateForm from './UploadCer';
+
+const PAGE_SIZE = 5; // ✅ đổi số dòng mỗi trang ở đây
 
 const CertificateList = () => {
   const dispatch = useDispatch();
@@ -18,6 +20,27 @@ const CertificateList = () => {
   const [showModal, setShowModal] = useState(false);
   const [selectedId, setSelectedId] = useState(null);
 
+  // ✅ State cho image preview
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewList, setPreviewList] = useState([]);   // danh sách URL ảnh (lọc bỏ PDF)
+  const [previewIndex, setPreviewIndex] = useState(0);  // vị trí đang xem
+
+  // ✅ Phân trang
+  const [page, setPage] = useState(1);
+  const totalItems = certificates?.length || 0;
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+
+  // khi danh sách thay đổi, đảm bảo page không vượt quá tổng trang
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [totalPages, page]);
+
+  const pagedCertificates = useMemo(() => {
+    if (!Array.isArray(certificates)) return [];
+    const start = (page - 1) * PAGE_SIZE;
+    return certificates.slice(start, start + PAGE_SIZE);
+  }, [certificates, page]);
+
   useEffect(() => {
     if (technicianId) dispatch(getCertificates(technicianId));
   }, [technicianId, dispatch]);
@@ -26,14 +49,26 @@ const CertificateList = () => {
   useEffect(() => {
     if (openUpload && certificateUpload?.fileUrl && !certificateUpload?.loading) {
       setOpenUpload(false);
-      // if (technicianId)
-         dispatch(getCertificates(technicianId));
+      dispatch(getCertificates(technicianId));
     }
   }, [openUpload, certificateUpload?.fileUrl, certificateUpload?.loading, technicianId, dispatch]);
 
   const openDeleteModal = (id) => {
     setSelectedId(id);
     setShowModal(true);
+  };
+
+  const translateStatus = (status) => {
+    switch (status) {
+      case "PENDING":
+        return "Đang chờ";
+      case "APPROVED":
+        return "Đã duyệt";
+      case "REJECTED":
+        return "Bị từ chối";
+      default:
+        return status;
+    }
   };
 
   const confirmDelete = async () => {
@@ -53,6 +88,49 @@ const CertificateList = () => {
     }
   };
 
+  // =========================
+  // ✅ Image Preview helpers
+  // =========================
+  const getImageGallery = () => {
+    if (!Array.isArray(certificates)) return [];
+    return certificates
+      .map(c => c?.fileUrl)
+      .filter(Boolean)
+      .filter(url => !url.toLowerCase().endsWith('.pdf'));
+  };
+
+  const openImagePreview = (startUrl) => {
+    const gallery = getImageGallery();
+    if (!gallery.length) return;
+    const startIndex = Math.max(0, gallery.indexOf(startUrl));
+    setPreviewList(gallery);
+    setPreviewIndex(startIndex);
+    setPreviewOpen(true);
+  };
+
+  const closeImagePreview = () => {
+    setPreviewOpen(false);
+    setPreviewList([]);
+    setPreviewIndex(0);
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    setPreviewIndex(i => (i - 1 + previewList.length) % previewList.length);
+  };
+
+  const nextImage = (e) => {
+    e.stopPropagation();
+    setPreviewIndex(i => (i + 1) % previewList.length);
+  };
+
+  // Đóng viewer bằng phím ESC
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') closeImagePreview(); };
+    if (previewOpen) window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [previewOpen]);
+
   if (loading) return <p>Đang tải chứng chỉ...</p>;
   if (error) return <p>Lỗi: {error}</p>;
 
@@ -62,71 +140,70 @@ const CertificateList = () => {
       <BreadcrumbBar />
 
       <div className="dashboard-section">
-                    <div className="container">
-                        <div className="row">
-                            <div className="col-lg-12">
-                                <div className="dashboard-menu">
-                                    <ul>
-                                        <li>
-                                            <Link to={`/technician`} >
-                                                <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
-                                                <span>Bảng điểu khiển</span>
-                                            </Link>
-                                        </li>
-                                        <li>
-                                            <Link to={`/technician/booking`} >
-                                                <img src="/img/icons/booking-icon.svg" alt="Icon" />
-                                                <span>Đơn hàng</span>
-                                            </Link>
-                                        </li>
-                                        <li>
-                                            <Link to="/technician/feedback">
-                                                <img src="/img/icons/review-icon.svg" alt="Icon" />
-                                                <span>Đánh giá</span>
-                                            </Link>
-                                        </li>
-                                        <li>
-                                            <Link to={`/technician/${technicianId}/certificate`} className="active">
-                                                <img style={{ height: '28px' }} src="/img/cer.png" alt="Icon" />
-                                                <span>Chứng chỉ</span>
-                                            </Link>
-                                        </li>
-                                        <li>
-                                            <Link to="/technician/schedule">
-                                                <img src="/img/icons/booking-icon.svg" alt="Icon" />
-                                                <span>Lịch trình</span>
-                                            </Link>
-                                        </li>
-                                        <li>
-                                            <Link to="/technician/deposit" >
-                                                <img src="/img/icons/wallet-icon.svg" alt="Icon" />
-                                                <span>Ví của tôi</span>
-                                            </Link>
-                                        </li>
-                                        {/* <li>
-                                            <Link to={`/technician/earning`} >
-                                                <img src="/img/icons/payment-icon.svg" alt="Icon" />
-                                                <span>Thu nhập</span>
-                                            </Link>
-                                        </li> */}
-                                        {/* <li>
-                                            <Link to={`/profile`}>
-                                                <img src="/img/icons/settings-icon.svg" alt="Icon" />
-                                                <span>Cái đặt</span>
-                                            </Link>
-                                        </li> */}
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div className="container">
+          <div className="row">
+            <div className="col-lg-12">
+              <div className="dashboard-menu">
+                <ul>
+                  <li>
+                    <Link to={`/technician`} >
+                      <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
+                      <span>Bảng điểu khiển</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to={`/technician/booking`} >
+                      <img src="/img/icons/booking-icon.svg" alt="Icon" />
+                      <span>Đơn hàng</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/technician/feedback">
+                      <img src="/img/icons/review-icon.svg" alt="Icon" />
+                      <span>Đánh giá</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to={`/technician/${technicianId}/certificate`} className="active">
+                      <img style={{ height: '28px' }} src="/img/cer.png" alt="Icon" />
+                      <span>Chứng chỉ</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/technician/schedule">
+                      <img src="/img/icons/booking-icon.svg" alt="Icon" />
+                      <span>Lịch trình</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/technician/deposit" >
+                      <img src="/img/icons/wallet-icon.svg" alt="Icon" />
+                      <span>Ví của tôi</span>
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to={`/technician/earning`} >
+                      <img src="/img/icons/payment-icon.svg" alt="Icon" />
+                      <span>Thu nhập</span>
+                    </Link>
+                  </li>
+                  {/* <li>
+                    <Link to={`/profile`}>
+                      <img src="/img/icons/settings-icon.svg" alt="Icon" />
+                      <span>Cái đặt</span>
+                    </Link>
+                  </li> */}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="content">
         <div className="container">
 
-          <div >
-            
+          <div>
 
             <div className="col-lg-9">
               <div className="settings-info">
@@ -149,22 +226,27 @@ const CertificateList = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {(!certificates || certificates.length === 0) ? (
+                          {(!pagedCertificates || pagedCertificates.length === 0) ? (
                             <tr>
                               <td colSpan="5" className="text-center text-muted">Không có chứng chỉ nào.</td>
                             </tr>
                           ) : (
-                            certificates.map((cert, index) => (
+                            pagedCertificates.map((cert, index) => (
                               <tr key={cert._id}>
-                                <td>{index + 1}</td>
+                                <td>{(page - 1) * PAGE_SIZE + index + 1}</td>
                                 <td className="blog-img">
                                   {cert.fileUrl ? (
                                     cert.fileUrl.toLowerCase().endsWith('.pdf') ? (
-                                      <a href={cert.fileUrl} target="_blank" rel="noreferrer" className="text-muted fst-italic">
+                                      <a href={cert.fileUrl} target="_blank" rel="noreferrer" className="text-muted fst-italic" title="Mở PDF trong tab mới">
                                         Xem file PDF
                                       </a>
                                     ) : (
-                                      <img src={cert.fileUrl} alt="Chứng chỉ" style={{ width: 80, height: 'auto', borderRadius: 5 }} />
+                                      <img
+                                        src={cert.fileUrl}
+                                        alt="Chứng chỉ"
+                                        style={{ width: 80, height: 'auto', borderRadius: 5, cursor: 'zoom-in' }}
+                                        onClick={() => openImagePreview(cert.fileUrl)}
+                                      />
                                     )
                                   ) : <span className="text-muted">Không có tệp</span>}
                                 </td>
@@ -179,7 +261,7 @@ const CertificateList = () => {
                                           : 'badge badge-light-warning'
                                     }
                                   >
-                                    {cert.status}
+                                    {translateStatus(cert.status)}
                                   </span>
                                 </td>
                                 <td>
@@ -197,6 +279,42 @@ const CertificateList = () => {
                           )}
                         </tbody>
                       </table>
+                    </div>
+
+                    {/* ✅ Pagination controls */}
+                    <div className="cert-paging">
+                      <button
+                        className="btn btn-light"
+                        disabled={page <= 1}
+                        onClick={() => setPage(p => Math.max(1, p - 1))}
+                      >
+                        ‹ Trước
+                      </button>
+
+                      <div className="cert-pages">
+                        {Array.from({ length: totalPages }).map((_, i) => {
+                          const p = i + 1;
+                          return (
+                            <button
+                              key={p}
+                              className={`cert-page ${p === page ? 'active' : ''}`}
+                              onClick={() => setPage(p)}
+                            >
+                              {p}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      <button
+                        className="btn btn-light"
+                        disabled={page >= totalPages}
+                        onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                      >
+                        Sau ›
+                      </button>
+
+
                     </div>
 
                     {/* Modal XÓA */}
@@ -235,6 +353,21 @@ const CertificateList = () => {
                       </div>
                     )}
 
+                    {/* ✅ IMAGE PREVIEW MODAL */}
+                    {previewOpen && (
+                      <div className="imgviewer-backdrop" onClick={closeImagePreview}>
+                        <div className="imgviewer" onClick={(e) => e.stopPropagation()}>
+                          <img src={previewList[previewIndex]} alt="preview" />
+                          {previewList.length > 1 && (
+                            <>
+                              <button className="imgviewer-nav imgviewer-prev" onClick={prevImage} aria-label="Prev">‹</button>
+                              <button className="imgviewer-nav imgviewer-next" onClick={nextImage} aria-label="Next">›</button>
+                            </>
+                          )}
+                        </div>
+                        <button className="imgviewer-close" onClick={closeImagePreview} aria-label="Close">✕</button>
+                      </div>
+                    )}
 
                   </div>
                 </div>
@@ -245,6 +378,7 @@ const CertificateList = () => {
           </div>
         </div>
       </div>
+
       <style>{`
   .acm-backdrop{
     position: fixed; inset: 0;
@@ -279,6 +413,75 @@ const CertificateList = () => {
   .ucf-remove{ position:absolute; top:6px; right:6px; border:0; border-radius:8px; background:rgba(0,0,0,.55); color:#fff; padding:4px 8px; font-size:12px; cursor:pointer; }
   .ucf-meta{ font-size:13px; color:#334155; }
   .ucf-actions{ display:flex; gap:10px; margin-top:12px; }
+
+  /* ✅ Image Preview Modal (viewer) */
+  .imgviewer-backdrop{
+    position: fixed; inset: 0; z-index: 3000;
+    background: rgba(0,0,0,.75);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .imgviewer{
+    position: relative; max-width: 90vw; max-height: 90vh;
+    background: transparent; border-radius: 12px; overflow: hidden;
+  }
+  .imgviewer img{
+    max-width: 90vw; max-height: 90vh; display: block;
+    object-fit: contain; background: #000;
+  }
+  .imgviewer-close{
+    position: fixed; top: 18px; right: 18px;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid #ffffff33; color: #fff; background: #00000055;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .imgviewer-nav{
+    position: absolute; top: 50%; transform: translateY(-50%);
+    width: 44px; height: 44px; border-radius: 50%;
+    border: 1px solid #ffffff33; color: #fff; background: #00000055;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .imgviewer-prev{ left: 10px; }
+  .imgviewer-next{ right: 10px; }
+
+  /* ✅ Căn cột & khoảng cách */
+  .dashboard-table table { table-layout: fixed; width: 100%; }
+  .dashboard-table th, .dashboard-table td {
+    padding: 12px 16px;
+    text-align: center;
+    vertical-align: middle;
+  }
+  .dashboard-table th:nth-child(1), .dashboard-table td:nth-child(1) { width: 70px; }
+  .dashboard-table th:nth-child(2), .dashboard-table td:nth-child(2) { width: 180px; min-width: 160px; }
+  .dashboard-table th:nth-child(3), .dashboard-table td:nth-child(3) { width: 150px; }
+  .dashboard-table th:nth-child(4), .dashboard-table td:nth-child(4) { width: 140px; }
+  .dashboard-table th:nth-child(5), .dashboard-table td:nth-child(5) { width: 120px; }
+  .dashboard-table td.blog-img { text-align: center !important; vertical-align: middle !important; }
+  .dashboard-table td.blog-img img { display: block; margin-left: auto; margin-right: auto; }
+
+  /* ✅ Pagination styles */
+  .cert-paging{
+  display:flex;
+  align-items:center;
+  justify-content:center;  /* căn giữa */
+  gap:10px;
+  margin-top: 12px;
+  width: 100%;
+}
+
+.cert-pages{
+  display:flex;
+  gap:6px;
+}
+
+.cert-page{
+  min-width:36px; height:36px; padding:0 10px;
+  border:1px solid #e5e7eb; border-radius:8px; background:#fff;
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+
+.cert-page.active{
+  background:#1554d1; color:#fff; border-color:#1554d1;
+}
 `}</style>
     </div>
   );

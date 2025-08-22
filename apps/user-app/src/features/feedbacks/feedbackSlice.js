@@ -5,6 +5,8 @@ import {
   submitFeedbackReply,
   getFeedbacksByTechnician,
   getFeedbackStatsByTechnician,
+  getFeedbacksByFromUser,
+  updateFeedbackAPI
 } from './feedbackAPI';
 
 // =============== THUNK: Submit feedback của booking ===============
@@ -69,6 +71,47 @@ export const fetchFeedbackStatsByTechnician = createAsyncThunk(
   }
 );
 
+export const fetchFeedbacksByFromUser = createAsyncThunk(
+  'feedback/fetchByFromUser',
+  async ({ userId, page = 1, limit = 10 }, thunkAPI) => {
+    try {
+      return await getFeedbacksByFromUser(userId, { page, limit });
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err?.response?.data?.message || 'Fetch feedback failed'
+      );
+    }
+  }
+);
+
+export const fetchFeedbacksByBooking = createAsyncThunk(
+  'bookingFeedback/fetchByBooking',
+  async (bookingId, thunkAPI) => {
+    try {
+      const data = await getFeedbacksByBooking(bookingId); // { items, total }
+      return { bookingId, ...data };
+    } catch (err) {
+      return thunkAPI.rejectWithValue(
+        err?.response?.data?.message || 'Fetch feedback by booking failed'
+      );
+    }
+  }
+);
+
+export const updateFeedbackThunk = createAsyncThunk(
+  'feedback/updateOne',
+  async ({ id, content, rating, images = [] }, { rejectWithValue }) => {
+    try {
+      // payload BE nhận: { rating, content, images }
+      const updated = await updateFeedbackAPI(id, { rating, content, images });
+      return updated; // là document feedback sau khi save
+    } catch (err) {
+      const msg = err?.response?.data?.message || err.message || 'Update feedback failed';
+      return rejectWithValue(msg);
+    }
+  }
+);
+
 const initialState = {
   loading: false,
   errorMessage: '',
@@ -81,19 +124,24 @@ const initialState = {
   total: 0,
   totalPages: 0,
 
-  // Filters cho list
+  // Filters
   filters: {
-    rating: '',          // '', '1'..'5'
-    sort: 'recent',      // 'recent' | 'rating_desc' | 'rating_asc'
-    from: '',            // 'YYYY-MM-DD'
-    to: '',              // 'YYYY-MM-DD'
-    visible: true,       // mặc định chỉ hiển thị feedback visible
+    rating: '',
+    sort: 'recent',
+    from: '',
+    to: '',
+    visible: true,
   },
 
   // Stats
-  stats: null,           // { averageRating, total, distribution }
+  stats: null,
   statsLoading: false,
   statsError: '',
+
+  // ⬇️ trạng thái riêng cho EDIT
+  updateLoading: false,
+  updateError: null,
+  updateSuccessMessage: '',
 };
 
 const feedbackSlice = createSlice({
@@ -103,9 +151,10 @@ const feedbackSlice = createSlice({
     clearMessages: (state) => {
       state.successMessage = '';
       state.errorMessage = '';
+      state.updateSuccessMessage = '';
+      state.updateError = null;
     },
     setFeedbackFilters: (state, action) => {
-      // merge filters; khi đổi filter thì reset page về 1
       state.filters = { ...state.filters, ...action.payload };
       state.page = 1;
     },
@@ -127,7 +176,8 @@ const feedbackSlice = createSlice({
       })
       .addCase(submitFeedbackThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.successMessage = action.payload?.message || 'Submit feedback success';
+        state.successMessage =
+          action.payload?.message || 'Submit feedback success';
       })
       .addCase(submitFeedbackThunk.rejected, (state, action) => {
         state.loading = false;
@@ -142,14 +192,15 @@ const feedbackSlice = createSlice({
       })
       .addCase(submitFeedbackReplyThunk.fulfilled, (state, action) => {
         state.loading = false;
-        state.successMessage = action.payload?.message || 'Reply submitted';
+        state.successMessage =
+          action.payload?.message || 'Reply submitted';
       })
       .addCase(submitFeedbackReplyThunk.rejected, (state, action) => {
         state.loading = false;
         state.errorMessage = action.payload;
       })
 
-      // ----- Fetch list -----
+      // ----- Fetch list by technician -----
       .addCase(fetchFeedbacksByTechnician.pending, (state) => {
         state.loading = true;
         state.errorMessage = '';
@@ -174,11 +225,65 @@ const feedbackSlice = createSlice({
       })
       .addCase(fetchFeedbackStatsByTechnician.fulfilled, (state, action) => {
         state.statsLoading = false;
-        state.stats = action.payload; // { averageRating, total, distribution }
+        state.stats = action.payload;
       })
       .addCase(fetchFeedbackStatsByTechnician.rejected, (state, action) => {
         state.statsLoading = false;
         state.statsError = action.payload;
+      })
+
+      // ----- Fetch by fromUser -----
+      .addCase(fetchFeedbacksByFromUser.pending, (state) => {
+        state.loading = true;
+        state.errorMessage = '';
+      })
+      .addCase(fetchFeedbacksByFromUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.items || [];
+        state.page = action.payload.page;
+        state.limit = action.payload.limit;
+        state.total = action.payload.total;
+        state.totalPages = action.payload.totalPages;
+      })
+      .addCase(fetchFeedbacksByFromUser.rejected, (state, action) => {
+        state.loading = false;
+        state.errorMessage = action.payload;
+      })
+
+      // ----- Fetch by booking -----
+      .addCase(fetchFeedbacksByBooking.pending, (state) => {
+        state.loading = true;
+        state.errorMessage = null;
+      })
+      .addCase(fetchFeedbacksByBooking.fulfilled, (state, action) => {
+        state.loading = false;
+        state.items = action.payload.items || [];
+        state.total = action.payload.total || 0;
+      })
+      .addCase(fetchFeedbacksByBooking.rejected, (state, action) => {
+        state.loading = false;
+        state.errorMessage = action.payload;
+      })
+
+      // ======= UPDATE (EDIT) FEEDBACK =======
+      .addCase(updateFeedbackThunk.pending, (state) => {
+        state.updateLoading = true;
+        state.updateError = null;
+        state.updateSuccessMessage = '';
+      })
+      .addCase(updateFeedbackThunk.fulfilled, (state, action) => {
+        state.updateLoading = false;
+        const updated = action.payload;
+        // cập nhật ngay trong list hiện tại
+        const idx = state.items.findIndex((i) => i._id === updated._id);
+        if (idx !== -1) {
+          state.items[idx] = updated;
+        }
+        state.updateSuccessMessage = 'Cập nhật đánh giá thành công';
+      })
+      .addCase(updateFeedbackThunk.rejected, (state, action) => {
+        state.updateLoading = false;
+        state.updateError = action.payload || 'Cập nhật thất bại';
       });
   },
 });

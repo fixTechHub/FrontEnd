@@ -7,6 +7,10 @@ import { toast } from "react-toastify";
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import { validateEmail, validateLoginForm } from "../../utils/validation";
 import "../../styles/auth.css";
+// thêm ở đầu file LogInPage.jsx
+import { postLoginBootstrap } from '../../features/auth/bootstrap';
+import { loginThunk, checkAuthThunk } from '../../features/auth/authSlice';
+
 
 function LogInPage() {
   const [formData, setFormData] = useState({

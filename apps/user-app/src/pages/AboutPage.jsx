@@ -303,34 +303,34 @@ function AboutPage() {
           >
             {[
               {
-                year: "2025 Q1",
-                title: "Khởi động dự án",
-                desc: "Ý tưởng FixTech ra đời từ việc nhận thấy khó khăn trong việc tìm thợ sửa chữa uy tín tại Đà Nẵng."
+                year: "Giai đoạn 1",
+                title: "Khởi đầu và Ý tưởng",
+                desc: "Nhận diện nhu cầu thực tế về dịch vụ sửa chữa thiết bị gia dụng và hình thành ý tưởng kết nối thợ với khách hàng."
               },
               {
-                year: "2025 Q2", 
-                title: "Nghiên cứu thị trường",
-                desc: "Khảo sát nhu cầu khách hàng và thợ sửa chữa. Phát triển MVP đầu tiên của nền tảng."
+                year: "Giai đoạn 2", 
+                title: "Nghiên cứu và Phát triển",
+                desc: "Xây dựng nền tảng công nghệ, phát triển hệ thống tìm kiếm thông minh và giao diện người dùng thân thiện."
               },
               {
-                year: "2025 Q3",
-                title: "Phát triển sản phẩm",
-                desc: "Hoàn thiện tính năng AI matching, hệ thống đánh giá và thanh toán an toàn."
+                year: "Giai đoạn 3",
+                title: "Thử nghiệm Beta",
+                desc: "Ra mắt phiên bản thử nghiệm với nhóm thợ và khách hàng đầu tiên tại khu vực Đà Nẵng."
               },
               {
-                year: "2025 Q4",
-                title: "Ra mắt Beta",
-                desc: "Phiên bản thử nghiệm với 10+ thợ đầu tiên. Nhận feedback và cải thiện sản phẩm."
+                year: "Giai đoạn 4",
+                title: "Chính thức vận hành",
+                desc: "Chính thức ra mắt dịch vụ với đầy đủ tính năng và mở rộng mạng lưới thợ sửa chữa."
               },
               {
-                year: "2026 Q1",
+                year: "Giai đoạn 5",
                 title: "Mở rộng dịch vụ",
-                desc: "Chính thức hoạt động tại 6 quận Đà Nẵng với 50+ kết nối thành công."
+                desc: "Tăng cường các tính năng mới như đánh giá, thanh toán online và hệ thống hỗ trợ 24/7."
               },
               {
-                year: "2026 Q2",
-                title: "Tương lai",
-                desc: "Mở rộng ra các tỉnh thành khác, tích hợp IoT và phát triển ứng dụng mobile."
+                year: "Giai đoạn 6",
+                title: "Phát triển bền vững",
+                desc: "Xây dựng hệ sinh thái hoàn chỉnh với đào tạo thợ, bảo hành dịch vụ và mở rộng toàn quốc."
               }
             ].map((item, index) => (
               <div key={index} style={{
@@ -379,7 +379,11 @@ function AboutPage() {
         background: "#f7fafc",
         padding: "6rem 0"
       }}>
-        <div className="nhp-container">
+        <div style={{
+          maxWidth: "1600px",
+          margin: "0 auto",
+          padding: "0 2rem"
+        }}>
           <div style={{ textAlign: "center", marginBottom: "4rem" }}>
             <h2 style={{ 
               fontSize: "2.5rem", 
@@ -399,118 +403,14 @@ function AboutPage() {
             </p>
           </div>
           
-          {/* Leader Card - Centered */}
-          <div style={{ 
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "3rem"
-          }}>
-            {[
-              {
-                name: "Lê Viết Duy",
-                role: "Team Leader",
-                desc: "Dẫn dắt đội ngũ phát triển và định hướng chiến lược sản phẩm FixTech.",
-                avatar: "/img/team/leader.png",
-                isLeader: true
-              }
-            ].map((member, index) => (
-              <div key={index} style={{
-                background: "linear-gradient(135deg, #fe9307 0%, #ff6b6b 100%)",
-                borderRadius: "20px",
-                padding: "2.5rem",
-                textAlign: "center",
-                border: "3px solid #fe9307",
-                boxShadow: "0 15px 40px rgba(254, 147, 7, 0.3)",
-                color: "white",
-                position: "relative",
-                maxWidth: "280px",
-                width: "100%"
-              }}>
-                <div style={{
-                  position: "absolute",
-                  top: "-15px",
-                  right: "-15px",
-                  background: "#ffd700",
-                  color: "#2d3748",
-                  borderRadius: "25px",
-                  padding: "0.5rem 1rem",
-                  fontSize: "0.8rem",
-                  fontWeight: "bold",
-                  boxShadow: "0 5px 15px rgba(255, 215, 0, 0.4)"
-                }}>
-                  LEADER
-                </div>
-                <div style={{
-                  marginBottom: "1.5rem",
-                  display: "flex",
-                  justifyContent: "center"
-                }}>
-                  <img 
-                    src={member.avatar}
-                    alt={member.name}
-                    style={{
-                      width: "120px",
-                      height: "120px",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      border: "4px solid rgba(255,255,255,0.3)",
-                      boxShadow: "0 8px 25px rgba(0,0,0,0.15)"
-                    }}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div 
-                    style={{
-                      width: "120px",
-                      height: "120px",
-                      borderRadius: "50%",
-                      background: "rgba(255,255,255,0.2)",
-                      display: "none",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "2.5rem",
-                      border: "4px solid rgba(255,255,255,0.3)"
-                    }}
-                  >
-                    👨‍💼
-                  </div>
-                </div>
-                <h3 style={{ 
-                  fontSize: "1.4rem", 
-                  fontWeight: "bold", 
-                  color: "white",
-                  marginBottom: "0.5rem"
-                }}>
-                  {member.name}
-                </h3>
-                <div style={{
-                  color: "#ffd700",
-                  fontWeight: "600",
-                  marginBottom: "1rem",
-                  fontSize: "1.1rem"
-                }}>
-                  {member.role}
-                </div>
-                <p style={{ 
-                  fontSize: "1rem", 
-                  color: "rgba(255,255,255,0.9)",
-                  lineHeight: "1.6"
-                }}>
-                  {member.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {/* Team Members Grid - 4 cards */}
+          {/* All Team Members - Single Row */}
           <div style={{ 
             display: "grid", 
-            gridTemplateColumns: "repeat(4, minmax(280px, 1fr))", 
-            gap: "1.5rem",
-            maxWidth: "1200px",
-            margin: "0 auto"
+            gridTemplateColumns: "repeat(5, 1fr)", 
+            gap: "1.8rem",
+            maxWidth: "1500px",
+            margin: "0 auto",
+            justifyItems: "center"
           }}
           className="team-members-grid"
           >
@@ -518,7 +418,6 @@ function AboutPage() {
               {
                 name: "Nguyễn Đức Trí",
                 role: "Team Member",
-                desc: "Tham gia xây dựng toàn diện dự án, từ thiết kế database đến triển khai tính năng.",
                 avatar: "/img/team/frontend-dev.png",
                 fallbackEmoji: "👨‍💻",
                 isLeader: false
@@ -526,15 +425,20 @@ function AboutPage() {
               {
                 name: "Nguyễn Khánh Đạt",
                 role: "Team Member",
-                desc: "Cùng nhau phát triển nền tảng FixTech, từ giao diện người dùng đến hệ thống backend.",
                 avatar: "/img/team/backend-dev.png",
                 fallbackEmoji: "👨‍💻",
                 isLeader: false
               },
               {
+                name: "Lê Viết Duy",
+                role: "Team Leader",
+                avatar: "/img/team/leader.png",
+                fallbackEmoji: "👨‍💻",
+                isLeader: true
+              },
+              {
                 name: "Lê Nguyễn Quốc Đạt",
                 role: "Team Member",
-                desc: "Đóng góp vào mọi khía cạnh của dự án, từ thiết kế UX/UI đến lập trình.",
                 avatar: "/img/team/designer.png",
                 fallbackEmoji: "👨‍💻",
                 isLeader: false
@@ -542,83 +446,107 @@ function AboutPage() {
               {
                 name: "Tôn Thất Anh Tuấn",
                 role: "Team Member",
-                desc: "Cùng team thực hiện đầy đủ quy trình phát triển và đảm bảo chất lượng sản phẩm.",
                 avatar: "/img/team/qa-tester.png",
                 fallbackEmoji: "👨‍💻",
                 isLeader: false
               }
             ].map((member, index) => (
               <div key={index} style={{
-                background: "white",
-                borderRadius: "20px",
+                background: "linear-gradient(135deg, #ffffff 0%, #fef7f0 100%)",
+                borderRadius: "24px",
                 padding: "2.5rem 2rem",
                 textAlign: "center",
-                border: "1px solid #e2e8f0",
-                boxShadow: "0 10px 30px rgba(0,0,0,0.08)",
-                transition: "transform 0.3s ease, box-shadow 0.3s ease",
-                minWidth: "280px"
+                border: member.isLeader ? "3px solid #fe9307" : "2px solid #f1f5f9",
+                boxShadow: member.isLeader 
+                  ? "0 20px 40px rgba(254, 147, 7, 0.2), 0 8px 16px rgba(254, 147, 7, 0.1)" 
+                  : "0 12px 24px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.04)",
+                minWidth: "280px",
+                position: "relative",
+                overflow: "hidden"
               }}>
                 <div style={{
-                  marginBottom: "1rem",
+                  marginBottom: "1.5rem",
                   display: "flex",
-                  justifyContent: "center"
+                  justifyContent: "center",
+                  position: "relative"
                 }}>
-                  <img 
-                    src={member.avatar}
-                    alt={member.name}
-                    style={{
-                      width: "100px",
-                      height: "100px",
-                      borderRadius: "50%",
-                      objectFit: "cover",
-                      border: "3px solid #fe9307",
-                      boxShadow: "0 5px 15px rgba(254, 147, 7, 0.2)"
-                    }}
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                  <div 
-                    style={{
-                      width: "100px",
-                      height: "100px",
-                      borderRadius: "50%",
-                      background: "linear-gradient(135deg, #fe9307, #ff6b6b)",
-                      display: "none",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontSize: "2.5rem",
-                      border: "3px solid #fe9307"
-                    }}
-                  >
-                    {member.fallbackEmoji}
+                  <div style={{
+                    position: "relative",
+                    borderRadius: "20px",
+                    overflow: "hidden",
+                    padding: "4px",
+                    background: member.isLeader 
+                      ? "linear-gradient(135deg, #fe9307, #ff7e3d)" 
+                      : "linear-gradient(135deg, #e2e8f0, #cbd5e1)"
+                  }}>
+                    <img 
+                      src={member.avatar}
+                      alt={member.name}
+                      style={{
+                        width: "180px",
+                        height: "180px",
+                        borderRadius: "16px",
+                        objectFit: "cover",
+                        display: "block",
+                        background: "white"
+                      }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                    <div 
+                      style={{
+                        width: "180px",
+                        height: "180px",
+                        borderRadius: "16px",
+                        background: member.isLeader 
+                          ? "linear-gradient(135deg, #fe9307, #ff7e3d)" 
+                          : "linear-gradient(135deg, #64748b, #475569)",
+                        display: "none",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "2rem",
+                        color: "white",
+                        fontWeight: "600"
+                      }}
+                    >
+                      {member.name.charAt(0)}
+                    </div>
                   </div>
+
                 </div>
                 <h3 style={{ 
-                  fontSize: "1.25rem", 
-                  fontWeight: "bold", 
-                  color: "#2d3748",
+                  fontSize: "1.3rem", 
+                  fontWeight: "700", 
+                  color: "#1e293b",
                   marginBottom: "0.5rem",
-                  lineHeight: "1.3"
+                  lineHeight: "1.3",
+                  whiteSpace: "nowrap",
+                  background: member.isLeader 
+                    ? "linear-gradient(135deg, #fe9307, #ff7e3d)"
+                    : "transparent",
+                  backgroundClip: member.isLeader ? "text" : "initial",
+                  WebkitBackgroundClip: member.isLeader ? "text" : "initial",
+                  WebkitTextFillColor: member.isLeader ? "transparent" : "#1e293b"
                 }}>
                   {member.name}
                 </h3>
                 <div style={{
-                  color: "#fe9307",
+                  color: member.isLeader ? "#fe9307" : "#64748b",
                   fontWeight: "600",
-                  marginBottom: "1rem",
-                  fontSize: "1rem"
+                  fontSize: "1rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  background: member.isLeader ? "#fef7f0" : "#f8fafc",
+                  padding: "0.5rem 1rem",
+                  borderRadius: "12px",
+                  border: member.isLeader ? "1px solid #fed7aa" : "1px solid #e2e8f0"
                 }}>
                   {member.role}
                 </div>
-                <p style={{ 
-                  fontSize: "0.9rem", 
-                  color: "#4a5568",
-                  lineHeight: "1.5"
-                }}>
-                  {member.desc}
-                </p>
               </div>
             ))}
           </div>
@@ -700,59 +628,6 @@ function AboutPage() {
                 }}>
                   {value.desc}
                 </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Technology Stack */}
-      <section style={{ 
-        background: "#f7fafc",
-        padding: "6rem 0"
-      }}>
-        <div className="nhp-container">
-          <div style={{ textAlign: "center", marginBottom: "4rem" }}>
-            <h2 style={{ 
-              fontSize: "2.5rem", 
-              fontWeight: "bold", 
-              color: "#2d3748",
-              marginBottom: "1rem"
-            }}>
-              Công nghệ sử dụng
-            </h2>
-            <p style={{ 
-              fontSize: "1.1rem", 
-              color: "#4a5568",
-              maxWidth: "600px",
-              margin: "0 auto"
-            }}>
-              Nền tảng được xây dựng với các công nghệ hiện đại nhất
-            </p>
-          </div>
-          
-          <div style={{ 
-            display: "grid", 
-            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
-            gap: "1.5rem",
-            maxWidth: "800px",
-            margin: "0 auto"
-          }}>
-            {[
-              "React.js", "Node.js", "MongoDB", "Socket.io", 
-              "Redux", "Express.js", "ASP.NET Core Web API", "JWT", "Cloudinary"
-            ].map((tech, index) => (
-              <div key={index} style={{
-                background: "white",
-                borderRadius: "12px",
-                padding: "1.5rem",
-                textAlign: "center",
-                border: "2px solid #fe9307",
-                fontWeight: "600",
-                color: "#2d3748",
-                transition: "transform 0.3s ease"
-              }}>
-                {tech}
               </div>
             ))}
           </div>

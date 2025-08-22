@@ -281,10 +281,10 @@ function Header() {
                                                     )
 
                                                     }
-                                                    {/* <DropdownItem to="/reviews" onClick={() => setDropdownOpen(false)}>
+                                                    <DropdownItem to="/reviews" onClick={() => setDropdownOpen(false)}>
                                                         <i className="bi bi-star-fill"></i>
                                                         Đánh giá
-                                                    </DropdownItem> */}
+                                                    </DropdownItem>
                                                     {user.role?.name === 'ADMIN' && (
                                                         <DropdownItem to="/admin" onClick={() => setDropdownOpen(false)}>
                                                             <i className="bi bi-shield-lock"></i>

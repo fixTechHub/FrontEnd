@@ -391,18 +391,6 @@ function ViewEarningAndCommission() {
                     <div className="container">
                         <div className="content-header d-flex align-items-center justify-content-between">
                             <h4>Thu nhập của tôi</h4>
-                            <ul className="booking-nav">
-                                <li>
-                                    <a href="user-bookings.html" className="active">
-                                        <i className="fa-solid fa-list"></i>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="bookings-calendar.html">
-                                        <i className="fa-solid fa-calendar-days"></i>
-                                    </a>
-                                </li>
-                            </ul>
                         </div>
 
                         <div className="card-body">

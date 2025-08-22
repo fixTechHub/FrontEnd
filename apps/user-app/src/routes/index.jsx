@@ -50,6 +50,7 @@ import ServiceList from "../pages/home/ServiceList";
 import TechnicianScheduleComponent from "../pages/technician/TechnicianSchedule";
 import AboutPage from "../pages/AboutPage";
 import ContactPage from "../pages/ContactPage";
+import FeedbackList from "../pages/feedback/CustomerFeedback";
 
 export default function AppRoutes() {
   const { user, registrationData, loading, verificationStatus } = useSelector((state) => state.auth);
@@ -126,6 +127,7 @@ export default function AppRoutes() {
           </PrivateRoute>
         }
       />
+      <Route path="/reviews" element={<FeedbackList />} />
       <Route path="/technician" element={<TechnicianDashboard />} />
       <Route path="/technician/earning" element={<ViewEarningAndCommission />} />
       <Route path="/technician/booking" element={< TechnicianJobList/>} />

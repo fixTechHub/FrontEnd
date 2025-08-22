@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { cancelBooking, fetchBookingById, setLastCancelBy, technicianAcceptBookingThunk, technicianRejectBookingThunk } from "../../../features/bookings/bookingSlice";
+import { fetchConflictingSchedules, selectConflicts, selectLoading, selectError, selectHasConflicts } from "../../../features/technicianSchedule/technicianScheduleSlice";
 import { formatDateOnly, formatTimeOnly } from "../../../utils/formatDate";
 import { BOOKING_STATUS_CONFIG } from "../../../constants/bookingConstants";
+import "../../../styles/conflictChecker.css";
 import { useNavigate } from "react-router-dom";
 import { Image, Card, Badge, Button, Row, Col, Alert, Spinner, Modal, Form, Tab, Tabs } from "react-bootstrap";
 import { toast } from 'react-toastify';
@@ -49,12 +51,36 @@ function BookingDetails({ bookingId }) {
     const [cancelError, setCancelError] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    
+    // Redux state cho technician schedule
+    const conflicts = useSelector(selectConflicts);
+    const loadingConflicts = useSelector(selectLoading);
+    const errorConflicts = useSelector(selectError);
+    const hasConflicts = useSelector(selectHasConflicts);
 
     useEffect(() => {
         if (bookingId) {
             dispatch(fetchBookingById(bookingId));
         }
     }, [dispatch, bookingId]);
+
+    // Lấy lịch trùng từ TechnicianSchedule nếu là thợ và có lịch trình
+    useEffect(() => {
+        // Kiểm tra điều kiện trước khi gọi API
+        if (!bookingId || !user || user.role.name !== 'TECHNICIAN' || 
+            !booking || booking.status !== 'AWAITING_CONFIRM' || 
+            !booking.schedule || !booking.schedule.startTime || !booking.schedule.expectedEndTime) {
+            return;
+        }
+
+        // Gọi Redux thunk để lấy conflicts
+        dispatch(fetchConflictingSchedules({
+            technicianId: user._id,
+            startTime: booking.schedule.startTime,
+            endTime: booking.schedule.expectedEndTime
+        }));
+
+    }, [dispatch, bookingId, user?._id, booking?.status, booking?.schedule?.startTime, booking?.schedule?.expectedEndTime]);
 
     // Socket listeners cho thiết bị phát sinh
     useEffect(() => {
@@ -120,11 +146,11 @@ function BookingDetails({ bookingId }) {
         try {
             setCancelError(''); // Clear previous error
             dispatch(setLastCancelBy(user._id));
-            
+
             // Không sử dụng unwrap() để có thể xử lý error tốt hơn
             const resultAction = await dispatch(cancelBooking({ bookingId, reason: cancelReason }));
             console.log('--- CANCEL RESULT ACTION ---', resultAction);
-            
+
             if (cancelBooking.fulfilled.match(resultAction)) {
                 toast.success(resultAction.payload.message);
                 setShowCancelModal(false);
@@ -141,7 +167,7 @@ function BookingDetails({ bookingId }) {
             // console.log('--- CANCEL ERROR MESSAGE ---', error?.message);
             // console.log('--- CANCEL ERROR TYPE ---', typeof error);
             // console.log('--- CANCEL ERROR KEYS ---', Object.keys(error || {}));
-            
+
             // Khi sử dụng unwrap(), error message thường là string trực tiếp
             const errorMessage = typeof error === 'string' ? error : (error?.payload || error?.message || error?.error || 'Hủy đơn thất bại!');
             console.log('--- FINAL ERROR MESSAGE ---', errorMessage);
@@ -168,7 +194,7 @@ function BookingDetails({ bookingId }) {
                 console.log('--- FRONTEND: Thất bại ---');
                 const errorMessage = resultAction.payload || 'Có lỗi xảy ra!';
                 console.log('--- FRONTEND: Error message ---', errorMessage);
-                
+
                 // Xử lý lỗi race condition và MongoDB transaction
                 if (errorMessage.includes('đã được thợ khác nhận trước')) {
                     setErrorMessage(errorMessage);
@@ -189,7 +215,7 @@ function BookingDetails({ bookingId }) {
             console.log('--- FRONTEND: Catch error ---', error);
             const errorMessage = error?.payload || error?.message || 'Có lỗi xảy ra!';
             console.log('--- FRONTEND: Error message in catch ---', errorMessage);
-            
+
             // Xử lý lỗi race condition và MongoDB transaction
             if (errorMessage.includes('đã được thợ khác nhận trước')) {
                 setErrorMessage(errorMessage);
@@ -366,6 +392,106 @@ function BookingDetails({ bookingId }) {
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Hiển thị lịch trùng cho thợ */}
+                            {user?.role?.name === 'TECHNICIAN' && booking?.status === 'AWAITING_CONFIRM' && (
+                                <div className="conflict-checker-section">
+                                    <div className="conflict-checker-header">
+                                        <div className="conflict-checker-icon">
+                                            <FaExclamationTriangle />
+                                        </div>
+                                        <div className="conflict-checker-title">
+                                            <h5>Kiểm tra lịch trùng</h5>
+                                            <p>Xem xét lịch trình hiện tại trước khi nhận đơn</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="conflict-checker-content">
+                                        {loadingConflicts ? (
+                                            <div className="conflict-loading">
+                                                <div className="conflict-loading-spinner">
+                                                    <Spinner animation="border" size="sm" />
+                                                </div>
+                                                <div className="conflict-loading-text">
+                                                    Đang kiểm tra lịch trình...
+                                                </div>
+                                            </div>
+                                        ) : errorConflicts ? (
+                                            <div className="conflict-error">
+                                                <div className="conflict-error-icon">
+                                                    <FaExclamationTriangle />
+                                                </div>
+                                                <div className="conflict-error-content">
+                                                    <h6>Lỗi kiểm tra</h6>
+                                                    <p>{errorConflicts}</p>
+                                                </div>
+                                            </div>
+                                        ) : hasConflicts ? (
+                                            <div className="conflict-results">
+                                                <div className="conflict-summary">
+                                                    <div className="conflict-summary-icon">
+                                                        <FaExclamationTriangle />
+                                                    </div>
+                                                    <div className="conflict-summary-content">
+                                                        <h6>Phát hiện {conflicts.length} lịch trình trùng</h6>
+                                                        <p>Thời gian này có thể gây xung đột với công việc hiện tại</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="conflict-list">
+                                                    {conflicts.map((schedule, index) => (
+                                                        <div key={index} className="conflict-item">
+                                                            <div className="conflict-item-number">
+                                                                #{index + 1}
+                                                            </div>
+                                                            <div className="conflict-item-content">
+                                                                <div className="conflict-item-time">
+                                                                    <FaClock />
+                                                                    <span>
+                                                                        {new Date(schedule.startTime).toLocaleString('vi-VN')} - {new Date(schedule.endTime).toLocaleString('vi-VN')}
+                                                                    </span>
+                                                                </div>
+                                                                {schedule.bookingCode && (
+                                                                    <div className="conflict-item-booking">
+                                                                        <FaTag />
+                                                                        <span>Mã đơn: {schedule.bookingCode}</span>
+                                                                    </div>
+                                                                )}
+                                                                {schedule.note && (
+                                                                    <div className="conflict-item-note">
+                                                                        <FaFileAlt />
+                                                                        <span>{schedule.note}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                    
+                                                    <div className="conflict-warning">
+                                                        <div className="conflict-warning-icon">
+                                                            <FaInfoCircle />
+                                                        </div>
+                                                        <div className="conflict-warning-content">
+                                                            <strong>Lưu ý quan trọng:</strong>
+                                                            <p>Nếu vẫn chấp nhận đơn này, bạn cần đảm bảo có thể hoàn thành tất cả công việc trong thời gian đã cam kết. Việc không hoàn thành có thể ảnh hưởng đến đánh giá và khả năng nhận đơn trong tương lai.</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="conflict-success">
+                                                <div className="conflict-success-icon">
+                                                    <FaCheckCircle />
+                                                </div>
+                                                <div className="conflict-success-content">
+                                                    <h6>Không có lịch trình trùng!</h6>
+                                                    <p>Thời gian này hoàn toàn phù hợp với lịch trình hiện tại của bạn.</p>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -574,7 +700,7 @@ function BookingDetails({ bookingId }) {
                                 </>
                             )}
                         </Button>
-                        
+
                         <Button
                             variant="warning"
                             className="booking-details-action-btn reject-btn"
@@ -630,14 +756,14 @@ function BookingDetails({ bookingId }) {
                         <FaExclamationTriangle className="me-2" />
                         <strong>Lưu ý:</strong> Hành động này không thể hoàn tác.
                     </Alert>
-                    
+
                     {cancelError && (
                         <Alert variant="danger" className="mt-3">
                             <FaExclamationTriangle className="me-2" />
                             <strong>Lỗi:</strong> {cancelError}
                         </Alert>
                     )}
-                    
+
                     <Form.Group className="mt-3">
                         <Form.Label>Lý do hủy đơn:</Form.Label>
                         <Form.Control

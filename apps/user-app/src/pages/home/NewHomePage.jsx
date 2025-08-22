@@ -39,7 +39,8 @@ import {
   RiMedalLine as Medal,
   RiCustomerServiceLine as Support,
   RiAlarmLine as Alarm,
-  RiTrophyLine as Trophy
+  RiTrophyLine as Trophy,
+  RiUserFill as UserIcon
 } from "react-icons/ri"
 
 import HeroBanner from "../../components/common/HeroBanner"
@@ -55,10 +56,14 @@ import "swiper/css/effect-coverflow"
 import "swiper/css/pagination"
 import Header from "../../components/common/Header"
 import Footer from "../../components/common/Footer"
-import AIChatbox from "../../components/message/AIChatBox";
+import AIChatbox from "../../components/message/AIChatBox"
+import { getPublicFeedbacks } from "../../features/feedbacks/feedbackAPI";
 
 function NewHomePage() {
   const [isVisible, setIsVisible] = useState(false)
+  const [testimonials, setTestimonials] = useState([])
+  const [testimonialsLoading, setTestimonialsLoading] = useState(true)
+
   const { user, isAuthenticated, verificationStatus } = useSelector(
     (state) => state.auth
   );
@@ -145,52 +150,131 @@ function NewHomePage() {
     }
   }, [])
 
-  const testimonials = [
+  // FALLBACK testimonials đơn giản (no badges, no địa chỉ)
+  const fallbackTestimonials = [
     {
-      name: "Minh Đức",
-      location: "Sơn Trà, Đà Nẵng",
+      name: "Anh Khải",
       content:
-        "Tủ lạnh nhà em không lạnh, anh thợ đến sửa nhanh trong 1 tiếng. Giá cả hợp lý, làm việc sạch sẽ. Rất hài lòng!",
+        "[FALLBACK DATA] Bếp từ không hoạt động, báo lỗi E1. Thợ đến nhanh và sửa chữa chuyên nghiệp. Rất hài lòng!",
+      rating: 4,
+      avatar: null,
+      hasRealAvatar: false,
+      service: "Sửa bếp từ",
+      price: "220,000đ",
+      verified: false,
+    },
+    {
+      name: "Chị Mai",
+      content:
+        "[FALLBACK DATA] Quạt trần quay chậm, kêu to. Thợ thay vòng bi mới, giờ chạy êm ru. Giá cả hợp lý!",
       rating: 5,
-      avatar: "https://i.pravatar.cc/100?img=1",
-      service: "Sửa tủ lạnh",
+      avatar: null,
+      hasRealAvatar: false,
+      service: "Sửa quạt trần",
+      price: "85,000đ",
+      verified: false,
+    },
+    {
+      name: "Bác Hùng",
+      content:
+        "[FALLBACK DATA] Máy bơm nước yếu, không lên được tầng 2. Thợ kiểm tra và thay bơm mới. Hoạt động tốt!",
+      rating: 4,
+      avatar: null,
+      hasRealAvatar: false,
+      service: "Sửa máy bơm",
+      price: "450,000đ",
+      verified: false,
+    },
+    {
+      name: "Anh Phúc",
+      content:
+        "[FALLBACK DATA] Tivi bị sọc màn hình, không có tiếng. Thợ sửa nhanh trong 1 tiếng. Chất lượng dịch vụ tốt!",
+      rating: 5,
+      avatar: null,
+      hasRealAvatar: false,
+      service: "Sửa tivi",
       price: "180,000đ",
-      verified: true,
-    },
-    {
-      name: "Lan Anh",
-      location: "Hải Châu, Đà Nẵng",
-      content:
-        "Máy giặt kêu to, không vắt được. Thợ kiểm tra và sửa trong buổi sáng. Giá phù hợp với chất lượng dịch vụ!",
-      rating: 5,
-      avatar: "https://i.pravatar.cc/100?img=5",
-      service: "Sửa máy giặt",
-      price: "120,000đ",
-      verified: true,
-    },
-    {
-      name: "Tuấn Vũ",
-      location: "Thanh Khê, Đà Nẵng",
-      content:
-        "Điều hòa phòng khách không mát, thổi gió nóng. Anh thợ đến kiểm tra và sửa trong 2 tiếng. Giờ mát lạnh như mới!",
-      rating: 5,
-      avatar: "https://i.pravatar.cc/100?img=8",
-      service: "Sửa điều hòa",
-      price: "200,000đ",
-      verified: true,
-    },
-    {
-      name: "Hoa Phương",
-      location: "Liên Chiểu, Đà Nẵng",
-      content:
-        "Lò vi sóng không nóng được thức ăn. Thợ kiểm tra và thay linh kiện. Bảo hành 3 tháng, rất yên tâm!",
-      rating: 5,
-      avatar: "https://i.pravatar.cc/100?img=9",
-      service: "Sửa lò vi sóng",
-      price: "150,000đ",
-      verified: true,
+      verified: false,
     },
   ]
+
+  // Fetch REAL testimonials từ database
+  const fetchTestimonials = async () => {
+    try {
+      setTestimonialsLoading(true);
+      
+      // Call real backend API để lấy feedback từ database
+      const result = await getPublicFeedbacks({
+        limit: 6,
+        visible: true
+      });
+      
+      if (result.success && result.items && result.items.length > 0) {
+        // Transform real database data để match UI structure
+        const transformedTestimonials = result.items.map((item, index) => {
+          // Clean processing - no debug logs
+          
+          // Lấy avatar thật từ user, nếu không có thì để null để dùng icon
+          let realAvatar = null;
+          let hasRealAvatar = false;
+          
+          if (item.fromUser?.avatar && item.fromUser.avatar.trim()) {
+            let originalAvatar = item.fromUser.avatar;
+            
+            // Fix Google avatar URLs để tương thích tốt hơn
+            if (originalAvatar.includes('googleusercontent.com')) {
+              // Remove CORS restrictions và đảm bảo size phù hợp
+              realAvatar = originalAvatar
+                .replace(/=s\d+-c$/, '=s200-c') // Change to 200px
+                .replace('=s96-c', '=s200-c'); // Fix specific case
+            } else {
+              realAvatar = originalAvatar;
+            }
+            hasRealAvatar = true;
+          }
+          
+          // Lấy tên dịch vụ thật từ backend
+          const realServiceName = item.bookingId?.serviceId?.serviceName || "Dịch vụ sửa chữa";
+          
+          // Lấy giá thật từ booking
+          let realPrice = "Liên hệ";
+          if (item.bookingId?.finalPrice) {
+            realPrice = `${item.bookingId.finalPrice.toLocaleString()}đ`;
+          } else if (item.bookingId?.quote?.totalAmount) {
+            realPrice = `${item.bookingId.quote.totalAmount.toLocaleString()}đ`;
+          }
+          
+          const transformed = {
+            name: item.fromUser?.fullName || `Khách hàng ${index + 1}`,
+            content: item.content || "Dịch vụ tốt, thợ chuyên nghiệp!",
+            rating: item.rating || 5,
+            avatar: realAvatar, // null nếu không có avatar thật
+            hasRealAvatar: hasRealAvatar, // flag để biết có avatar thật không
+            service: realServiceName, // ✅ Tên dịch vụ thật từ database
+            price: realPrice, // ✅ Giá thật từ booking
+            verified: item.isVisible !== false,
+          };
+          
+          return transformed;
+        });
+        
+        setTestimonials(transformedTestimonials);
+      } else {
+        // Fallback to sample data if no real data
+        setTestimonials(fallbackTestimonials);
+      }
+    } catch (error) {
+      setTestimonials(fallbackTestimonials);
+    } finally {
+      setTestimonialsLoading(false);
+    }
+  };
+
+  // Fetch testimonials on component mount
+  useEffect(() => {
+    fetchTestimonials();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const processSteps = [
     {
@@ -245,21 +329,21 @@ function NewHomePage() {
       <HeroBanner />
 
       {/* Enhanced Stats Section */}
-      <section className="nhp-stats-section">
-        <div className="nhp-container">
+      <section className="stats-section">
+        <div className="container">
           {/* Enhanced Trust Badges */}
-          <div className="nhp-trust-badges-enhanced">
-            <div className="nhp-trust-badge-verified">
+          <div className="trust-badges-enhanced">
+            <div className="trust-badge-enhanced">
               <Shield size={18} />
               <span>Thợ xác thực chứng chỉ</span>
             </div>
-            <div className="nhp-trust-badge-customers">
+            <div className="trust-badge-enhanced">
               <Heart size={18} />
               <span>Platform đáng tin cậy</span>
             </div>
           </div>
 
-          <div className="nhp-stats-grid-enhanced">
+          <div className="stats-grid-enhanced">
             {[
               { icon: MapPin, number: 6, suffix: " quận", label: "TP Đà Nẵng phủ sóng", color: "#3b82f6", rgb: "59, 130, 246" },
               { icon: Wrench, number: 20, suffix: "+", label: "Loại thiết bị được sửa", color: "#ef4444", rgb: "239, 68, 68" },
@@ -268,21 +352,21 @@ function NewHomePage() {
             ].map((stat, index) => (
               <div 
                 key={index} 
-                className="nhp-stat-card-enhanced"
+                className="stat-card-enhanced"
                 style={{ 
-                  '--nhp-card-color': stat.color,
-                  '--nhp-card-color-light': `${stat.color}CC`,
-                  '--nhp-card-color-rgb': stat.rgb,
+                  '--card-color': stat.color,
+                  '--card-color-light': `${stat.color}CC`,
+                  '--card-color-rgb': stat.rgb,
                   animationDelay: `${index * 0.2}s`
                 }}
               >
-                <div className="nhp-stat-icon-enhanced">
+                <div className="stat-icon-enhanced">
                   <stat.icon size={36} color="white" />
                 </div>
-                <div className="nhp-stat-number-enhanced">
+                <div className="stat-number-enhanced">
                   <AnimatedCounter end={stat.number} suffix={stat.suffix} />
                 </div>
-                <p className="nhp-stat-label-enhanced">{stat.label}</p>
+                <p className="stat-label-enhanced">{stat.label}</p>
               </div>
             ))}
           </div>
@@ -312,7 +396,8 @@ function NewHomePage() {
                 icon: Refrigerator,
                 title: "Tủ lạnh",
                 description: "Sửa chữa tủ lạnh không lạnh, rò rỉ, tiếng ồn. Thay thế linh kiện chính hãng, vệ sinh hệ thống làm lạnh.",
-                price: "150K - 500K",
+                responseTime: "Phản hồi trong 10 phút",
+                serviceFeature: "Dịch vụ phổ biến",
                 gradient: "linear-gradient(135deg, #3b82f6, #06b6d4)",
                 popular: false,
                 features: [
@@ -320,15 +405,14 @@ function NewHomePage() {
                   { icon: Tools, text: "Thay gas R32/R410A" },
                   { icon: Timer, text: "Sửa trong 2-4h" },
                   { icon: Shield, text: "Bảo hành 6 tháng" }
-                ],
-                rating: 4.9,
-                reviews: 324
+                ]
               },
               {
                 icon: Wrench,
                 title: "Máy giặt",
                 description: "Sửa máy giặt không vắt, không xả nước, rung lắc. Vệ sinh bảo dưỡng định kỳ, thay thế bo mạch.",
-                price: "120K - 400K",
+                responseTime: "Phản hồi trong 15 phút",
+                serviceFeature: "Chuyên môn cao",
                 gradient: "linear-gradient(135deg, #8b5cf6, #ec4899)",
                 popular: true,
                 features: [
@@ -336,15 +420,14 @@ function NewHomePage() {
                   { icon: Drop, text: "Vệ sinh sạch sẽ" },
                   { icon: Flash, text: "Sửa nhanh trong ngày" },
                   { icon: Medal, text: "Tỷ lệ thành công 98%" }
-                ],
-                rating: 4.8,
-                reviews: 256
+                ]
               },
               {
                 icon: AirVent,
                 title: "Điều hòa",
                 description: "Sửa điều hòa không lạnh, rò gas, vệ sinh máy lạnh. Nạp gas R410A, R32, thay block lạnh.",
-                price: "200K - 800K",
+                responseTime: "Phản hồi trong 12 phút",
+                serviceFeature: "Nhiều lựa chọn",
                 gradient: "linear-gradient(135deg, #10b981, #059669)",
                 popular: false,
                 features: [
@@ -352,15 +435,14 @@ function NewHomePage() {
                   { icon: Drop, text: "Vệ sinh deep clean" },
                   { icon: CheckboxCircle, text: "Kiểm tra đầy đủ" },
                   { icon: Medal, text: "Tiết kiệm điện 30%" }
-                ],
-                rating: 4.9,
-                reviews: 189
+                ]
               },
               {
                 icon: Tv,
                 title: "TV & Điện tử",
                 description: "Sửa TV không lên hình, loa, đầu DVD, amply. Thay màn hình LED, OLED, bo mạch chủ.",
-                price: "100K - 600K",
+                responseTime: "Phản hồi trong 20 phút",
+                serviceFeature: "Kỹ thuật chuyên sâu",
                 gradient: "linear-gradient(135deg, #dc2626, #ea580c)",
                 popular: false,
                 features: [
@@ -368,15 +450,14 @@ function NewHomePage() {
                   { icon: Sound, text: "Test âm thanh" },
                   { icon: Lightbulb, text: "LED/OLED chuyên sâu" },
                   { icon: Cpu, text: "IC, bo mạch chính hãng" }
-                ],
-                rating: 4.7,
-                reviews: 142
+                ]
               },
               {
                 icon: Zap,
                 title: "Điện gia dụng",
                 description: "Sửa bếp từ, lò vi sóng, nồi cơm điện, quạt. Thay thế linh kiện an toàn, kiểm tra điện áp.",
-                price: "80K - 300K",
+                responseTime: "Phản hồi trong 8 phút",
+                serviceFeature: "An toàn tuyệt đối",
                 gradient: "linear-gradient(135deg, #eab308, #ea580c)",
                 popular: true,
                 features: [
@@ -384,15 +465,14 @@ function NewHomePage() {
                   { icon: Test, text: "Test thực tế ngay" },
                   { icon: Plug, text: "Kiểm tra nguồn điện" },
                   { icon: Rocket, text: "Hiệu suất như mới" }
-                ],
-                rating: 4.8,
-                reviews: 298
+                ]
               },
               {
                 icon: Wrench,
                 title: "Thiết bị khác",
                 description: "Máy nước nóng, máy lọc nước, máy hút bụi. Tư vấn và lắp đặt mới, bảo trì định kỳ.",
-                price: "100K - 400K",
+                responseTime: "Phản hồi trong 25 phút",
+                serviceFeature: "Linh hoạt đa dạng",
                 gradient: "linear-gradient(135deg, #6366f1, #8b5cf6)",
                 popular: false,
                 features: [
@@ -400,9 +480,7 @@ function NewHomePage() {
                   { icon: Drop, text: "Lọc nước sạch 99%" },
                   { icon: Wind, text: "Hút bụi mạnh mẽ" },
                   { icon: Refresh, text: "Bảo trì định kỳ" }
-                ],
-                rating: 4.6,
-                reviews: 87
+                ]
               },
             ].map((service, idx) => {
               const match = service.gradient.match(/#([0-9a-fA-F]{6})/);
@@ -412,9 +490,8 @@ function NewHomePage() {
                   key={idx}
                   icon={service.icon}
                   title={service.title}
-                  price={service.price}
-                  rating={service.rating}
-                  reviews={service.reviews}
+                  responseTime={service.responseTime}
+                  serviceFeature={service.serviceFeature}
                   color={primary}
                   bg={`${primary}30`}
                   description={service.description}
@@ -492,17 +569,34 @@ function NewHomePage() {
               <Heart size={20} />
             </div>
             <h2 className="nhp-section-title-enhanced" style={{ color: "white" }}>
-              50+ khách hàng đầu tiên
+              Khách hàng đầu tiên nói gì
             </h2>
             <p className="nhp-section-description-enhanced" style={{ color: "#cbd5e0" }}>
-              Từ những đơn hàng đầu tiên, chúng tôi đã tạo được lòng tin với chất lượng dịch vụ
+              Chất lượng dịch vụ được khẳng định qua từng phản hồi chân thực
             </p>
+
           </div>
 
           <div className="nhp-testi-swiper-wrapper">
+            {testimonialsLoading ? (
+              <div className="testimonials-loading-container" style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '4rem 2rem',
+                color: 'white'
+              }}>
+                <div className="spinner-border text-warning" role="status" style={{ marginBottom: '1rem' }}>
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p style={{ fontSize: '1.1rem', opacity: 0.9 }}>Đang tải đánh giá từ database...</p>
+                <p style={{ fontSize: '0.9rem', opacity: 0.7 }}>Lấy feedback thực từ khách hàng đã sử dụng dịch vụ</p>
+              </div>
+            ) : (
             <Swiper
               modules={[Autoplay, Pagination]}
-              loop={true}
+                loop={testimonials.length > 1}
               grabCursor={true}
               centeredSlides={false}
               speed={600}
@@ -534,13 +628,46 @@ function NewHomePage() {
                 
                   <div className="nhp-testi-footer-enhanced">
                     <div className="nhp-testi-author-enhanced">
+                      {testimonial.hasRealAvatar && testimonial.avatar ? (
+                        // Hiển thị avatar thật của user
                       <img className="nhp-testi-avatar-enhanced" 
                         src={testimonial.avatar} 
                         alt={testimonial.name}
-                      />
+                          onError={(e) => {
+                            // Nếu avatar thật fail, ẩn img và hiện icon
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      
+                      {/* Icon placeholder khi không có avatar thật */}
+                      <div 
+                        className="nhp-testi-avatar-placeholder"
+                        style={{
+                          width: '50px',
+                          height: '50px',
+                          borderRadius: '50%',
+                          backgroundColor: '#fe9307',
+                          display: testimonial.hasRealAvatar && testimonial.avatar ? 'none' : 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontSize: '24px'
+                        }}
+                      >
+                        <UserIcon />
+                      </div>
                       <div className="nhp-testi-info">
-                        <h4 className="nhp-testi-name">{testimonial.name}</h4>
-                        <p className="nhp-testi-location">{testimonial.location}</p>
+                        <div className="nhp-testi-name-row">
+                          <h4 className="nhp-testi-name">{testimonial.name}</h4>
+                          {testimonial.verified && (
+                            <div className="nhp-verified-badge-inline">
+                              <Verified size={14} />
+                              <span>Xác thực</span>
+                            </div>
+                          )}
+                        </div>
                         <div className="nhp-testi-stars">
                           {[...Array(testimonial.rating)].map((_, i) => (
                             <Star 
@@ -556,17 +683,12 @@ function NewHomePage() {
                         </div>
                       </div>
                     </div>
-                    {testimonial.verified && (
-                      <div className="nhp-verified-badge">
-                        <Verified size={16} />
-                        <span>Xác thực</span>
-                      </div>
-                    )}
                   </div>
                 </div>
               </SwiperSlide>
             ))}
             </Swiper>
+            )}
           </div>
           {/* <div style={{ textAlign: "center", marginTop: "2rem" }}>
             <button className="nhp-btn-orange">Đọc thêm đánh giá</button>
