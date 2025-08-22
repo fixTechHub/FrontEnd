@@ -217,13 +217,7 @@ const Sidebar = () => {
                   <span>Báo cáo hệ thống</span>
                 </Link>
               </li>
-              <li>
-                <Link to="/admin/financial-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/financial-management" ? "" : "text-dark"}`}
-                      style={currentPath === "/admin/financial-management" ? customStyles.activeMenuItem : {}}>
-                  <FaDollarSign className="me-3" style={{width: '20px', ...(currentPath === "/admin/financial-management" ? customStyles.activeIcon : {})}} />
-                  <span>Financial Report</span>
-                </Link>
-              </li>
+              
               <li>
                 <Link to="/admin/technician-subscription-analytics" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/technician-subscription-analytics" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/technician-subscription-analytics" ? customStyles.activeMenuItem : {}}>
@@ -262,13 +256,13 @@ const Sidebar = () => {
                   <span>Dịch vụ</span>
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link to="/admin/commission-config-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/commission-config-management" ? customStyles.activeMenuItem : {}}>
                   <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/commission-config-management" ? customStyles.activeIcon : {})}} />
                   <span>Hoa Hồng</span>
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link to="/admin/feedback" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/feedback" ? "" : "text-dark"}`}
                       style={currentPath === "/admin/feedback" ? customStyles.activeMenuItem : {}}>
@@ -335,6 +329,13 @@ const Sidebar = () => {
                    <span>Lịch sử trạng thái</span>
                  </Link>
                </li>
+               <li>
+                <Link to="/admin/financial-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/financial-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/financial-management" ? customStyles.activeMenuItem : {}}>
+                  <FaDollarSign className="me-3" style={{width: '20px', ...(currentPath === "/admin/financial-management" ? customStyles.activeIcon : {})}} />
+                  <span>Lịch sử giao dịch</span>
+                </Link>
+              </li>
           {/* Add more menu sections as needed */}
         </ul>
       </div>
