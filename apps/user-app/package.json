@@ -20,6 +20,8 @@
     "bootstrap-icons": "^1.13.1",
     "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.13",
+    "file-saver": "^2.0.5",
     "jquery": "^3.7.1",
     "jspdf": "^3.0.1",
     "mapbox-gl": "^3.12.0",
@@ -43,9 +45,10 @@
     "socket.io-client": "^4.8.1",
     "sweetalert2": "^11.22.0",
     "sweetalert2-react-content": "^5.1.0",
-    "tesseract.js": "^6.0.1",
     "swiper": "^11.2.10",
-    "wrap-ansi": "^9.0.0"
+    "tesseract.js": "^6.0.1",
+    "wrap-ansi": "^9.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

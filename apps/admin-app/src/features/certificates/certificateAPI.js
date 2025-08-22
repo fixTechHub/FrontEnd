@@ -12,7 +12,7 @@ export const fetchAllCertificates = async (params = {}) => {
 // PUT /admin/certificates/:id/verify
 // body: { status: 'APPROVED'|'REJECTED', reason? }
 export const verifyCertificate = async ({ id, status, reason }) => {
-  const res = await apiClient.put(`/certificates/${id}/verify`, {
+  const res = await apiClient.patch(`/certificates/${id}/verify`, {
     status,
     reason,
   });

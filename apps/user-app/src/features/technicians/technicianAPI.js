@@ -25,7 +25,7 @@ export const getJobDetails = async (technicianId, bookingId) => {
 export const getTechnicianJob = async (technicianId) => {
   console.log('✅ Gọi API với technicianId:', technicianId);
   const response = await apiClient.get(`/technicians/${technicianId}/bookings`);
-  console.log("📦 Dữ liệu trả về:", response.data);
+  console.log("📦 Dữ liệu trả về bookings:", response.data);
   return response.data;
 };
 
@@ -97,3 +97,4 @@ export const getScheduleByTechnicianId = async (technicianId) => {
   const response = await apiClient.get(`/technicians/${technicianId}/schedules`);
   return response.data;
 };
+
