@@ -502,9 +502,9 @@ const handleSortByTechnician = () => {
                         )}
                       </td>
                      <td>
-                       <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
+                       {/* <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
                           Chỉnh sửa
-                        </Button>
+                        </Button> */}
                        <Button className="management-action-btn" size="middle" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
                          <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
                        </Button>

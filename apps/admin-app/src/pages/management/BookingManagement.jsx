@@ -316,14 +316,6 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            </nav>
          </div>
          <div className="d-flex align-items-center gap-2">
-           {loading && (
-             <div className="d-flex align-items-center text-muted">
-               <div className="spinner-border spinner-border-sm me-2" role="status">
-                 <span className="visually-hidden">Loading...</span>
-               </div>
-               <span>Đang tải dữ liệu cơ bản...</span>
-             </div>
-           )}
            {bookingsLoading && (
              <div className="d-flex align-items-center text-muted">
                <div className="spinner-border spinner-border-sm me-2" role="status">
@@ -471,9 +463,6 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                  <td colSpan={5} className="text-center">
                    <div className="spinner-border text-primary" role="status">
                      <span className="visually-hidden">Loading...</span>
-                   </div>
-                   <div className="mt-2 text-muted">
-                     Đang tải dữ liệu cơ bản...
                    </div>
                  </td>
                </tr>
