@@ -510,7 +510,7 @@ const FavoriteTechniciansSection = ({ favorites, loading, onRemove }) => (
                                 <img src={user.avatar} alt="avatar" style={{width:80,height:80,borderRadius:'50%',objectFit:'cover',margin:'0 auto',boxShadow:'0 2px 6px rgba(0,0,0,.1)'}} />
                                 <h6 className="fw-semibold mt-3 mb-1" style={{color:'#0f172a'}}>{user.fullName}</h6>
                                 <small style={{color:'#475569'}}>Kinh nghiệm {tech.experienceYears} năm</small>
-                                <small className="d-block" style={{color:'#475569'}}>Đơn hoàn thành: {tech.completedBookings||0}</small>
+                                <small className="d-block" style={{color:'#475569'}}>Đơn hoàn thành: {tech.jobCompleted||0}</small>
                                 {tech.rating && (
                                   <div className="mb-2" style={{color:'#f59e0b'}}>
                                     {Array.from({length:5}).map((_,i)=>(<i key={i} className={i<tech.rating?"fa fa-star":"fa fa-star-o"}></i>))}

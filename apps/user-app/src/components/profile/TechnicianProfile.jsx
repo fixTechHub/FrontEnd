@@ -1,9 +1,50 @@
 import { Image, Tabs, Tab } from "react-bootstrap";
 import Rating from "react-rating";
 import { formatDate } from "../../utils/formatDate";
+import { useState, useEffect } from "react";
 
 function TechnicianProfile({ technician }) {
     // console.log('--- TECHNICIAN PROFILE ---', technician);
+    
+    // State cho phân trang đánh giá
+    const [currentPage, setCurrentPage] = useState(1);
+    const [reviewsPerPage] = useState(3);
+
+    // Reset về trang 1 khi technician thay đổi
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [technician]);
+
+    // Tính toán đánh giá cho trang hiện tại
+    const indexOfLastReview = currentPage * reviewsPerPage;
+    const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
+    const currentReviews = technician?.recentFeedbacks?.slice(indexOfFirstReview, indexOfLastReview) || [];
+    const totalPages = Math.ceil((technician?.recentFeedbacks?.length || 0) / reviewsPerPage);
+
+    // Hàm chuyển trang
+    const handlePageChange = (pageNumber) => {
+        setCurrentPage(pageNumber);
+    };
+
+    // Hàm chuyển về trang đầu
+    const goToFirstPage = () => {
+        setCurrentPage(1);
+    };
+
+    // Hàm chuyển đến trang cuối
+    const goToLastPage = () => {
+        setCurrentPage(totalPages);
+    };
+
+    // Hàm chuyển trang trước
+    const goToPreviousPage = () => {
+        setCurrentPage(prev => Math.max(prev - 1, 1));
+    };
+
+    // Hàm chuyển trang sau
+    const goToNextPage = () => {
+        setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    };
 
     return (
         <>
@@ -32,7 +73,7 @@ function TechnicianProfile({ technician }) {
                                     fullSymbol={<i style={{ color: '#FFA633' }} className="fas fa-star filled" />}
                                     emptySymbol={<i style={{ color: '#FFA633' }} className="far fa-star" />}
                                 />
-                                <span className="h5 fw-bold mb-0">{technician?.ratingAverage || '0'}</span>
+                                <span className="h5 fw-bold mb-0">{technician?.ratingAverage.toFixed(1) || '0'}</span>
                                 <span className="text-light opacity-75">({technician?.totalFeedbacks || 'Đang cập nhật..'} đánh giá)</span>
                             </div>
                             <div className="row g-3 small">
@@ -74,43 +115,43 @@ function TechnicianProfile({ technician }) {
                 fill
             >
                 <Tab eventKey="home" title="Tổng quan">
-                    <div class="content-area p-4">
-                        <div class="tab-content" id="technicianTabsContent">
+                    <div className="content-area p-4">
+                        <div className="tab-content" id="technicianTabsContent">
 
-                            <div class="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
-                                <div class="row g-4">
-                                    <div class="col-12">
-                                        <h5 class="fw-semibold text-dark mb-3">Thông tin cơ bản</h5>
-                                        {/* <div class="row g-3">
-                                            <div class="col-md-6">
-                                                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
-                                                    <i class="bi bi-telephone text-primary"></i>
+                            <div className="tab-pane fade show active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                                <div className="row g-4">
+                                    <div className="col-12">
+                                        <h5 className="fw-semibold text-dark mb-3">Thông tin cơ bản</h5>
+                                        {/* <div className="row g-3">
+                                            <div className="col-md-6">
+                                                <div className="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                                                    <i className="bi bi-telephone text-primary"></i>
                                                     <span>0912345678</span>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
-                                                <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
-                                                    <i class="bi bi-envelope text-primary"></i>
+                                            <div className="col-md-6">
+                                                <div className="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                                                    <i className="bi bi-envelope text-primary"></i>
                                                     <span>nam.technician@gmail.com</span>
                                                 </div>
                                             </div>
                                         </div> */}
-                                        <div class="col-12">
-                                            {/* <div class="d-flex align-items-center gap-3 p-3 bg-light rounded">
-                                                <i class="bi bi-telephone text-primary"></i>
+                                        <div className="col-12">
+                                            {/* <div className="d-flex align-items-center gap-3 p-3 bg-light rounded">
+                                                <i className="bi bi-telephone text-primary"></i>
                                                 <span>0912345678</span>
                                             </div> */}
                                             <span>Kinh nghiệm làm việc: {technician?.experienceYears + ' năm' || '0 năm'}</span>
                                         </div>
 
-                                        <div class="col-12">
+                                        <div className="col-12">
                                             <span>Việc đã hoàn thành: {technician?.jobCompleted || '0'}</span>
                                         </div>
                                     </div>
 
-                                    <div class="col-12">
-                                        <h5 class="fw-semibold text-dark mb-3">Chuyên môn</h5>
-                                        <div class="d-flex flex-wrap">
+                                    <div className="col-12">
+                                        <h5 className="fw-semibold text-dark mb-3">Chuyên môn</h5>
+                                        <div className="d-flex flex-wrap">
                                             {technician?.category.map((cate, idx) => (
                                                 <span key={idx} className="category-tag">
                                                     {cate?.categoryName || "Đang cập nhật.."}
@@ -151,12 +192,12 @@ function TechnicianProfile({ technician }) {
                         <div className="col-12">
                             <h5 className="fw-semibold text-dark mb-4">Bảng giá dịch vụ</h5>
 
-                            <div className="stats-card mb-3">
+                            {/* <div className="stats-card mb-3">
                                 <div className="d-flex justify-content-between align-items-center">
                                     <span className="fw-medium">Phí kiểm tra ban đầu</span>
-                                    <span className="h5 fw-bold text-primary mb-0">{technician?.inspectionFee.toLocaleString() || '0'} VNĐ</span>
+                                    <span className="h5 fw-bold text-primary mb-0">{technician?.inspectionFee?.toLocaleString() || '0'} VNĐ</span>
                                 </div>
-                            </div>
+                            </div> */}
 
                             <div className="stats-card mb-3">
                                 <div className="d-flex justify-content-between align-items-center">
@@ -164,7 +205,7 @@ function TechnicianProfile({ technician }) {
                                         <span className="fw-medium">Phí sửa chữa dịch vụ</span>
                                         <p className="small mb-0">Có thể sẽ có phát sinh</p>
                                     </div>
-                                    <span className="h5 fw-bold mb-0">{technician?.servicePrice.toLocaleString() || 'Đang cập nhật..'} VNĐ</span>
+                                    <span className="h5 fw-bold mb-0">{technician?.servicePrice?.toLocaleString() || 'Đang cập nhật..'} VNĐ</span>
                                 </div>
                             </div>
 
@@ -192,7 +233,7 @@ function TechnicianProfile({ technician }) {
                     <div className="row g-4">
                         <div className="col-12">
                             <div className="text-center mb-4">
-                                <div className="display-4 fw-bold text-primary">{technician?.ratingAverage || '0'}</div>
+                                <div className="display-4 fw-bold text-primary">{technician?.ratingAverage.toFixed(1) || '0'}</div>
                                 <Rating
                                     initialRating={technician?.ratingAverage}
                                     readonly
@@ -204,30 +245,118 @@ function TechnicianProfile({ technician }) {
 
                             <h6 className="fw-semibold text-dark mb-3">Đánh giá gần đây</h6>
 
-                            {technician?.recentFeedbacks.map((feedback, idx) => (
-                                <div className="stats-card mb-3">
-                                    <div className="d-flex gap-3">
-                                        <img src={feedback?.customerAvatar || '/img/avatar.svg'}
-                                            alt="Reviewer" className="review-avatar" />
-                                        <div className="flex-grow-1">
-                                            <div className="d-flex align-items-center gap-2 mb-2">
-                                                <span className="fw-semibold">{feedback?.customerName || 'Đang cập nhật..'}</span>
-                                                <Rating
-                                                    initialRating={feedback?.rating}
-                                                    readonly
-                                                    fullSymbol={<i style={{ color: '#FFA633' }} className="fas fa-star filled" />}
-                                                    emptySymbol={<i style={{ color: '#FFA633' }} className="far fa-star" />}
-                                                />
+                            {currentReviews.length > 0 ? (
+                                <>
+                                    {currentReviews.map((feedback, idx) => (
+                                        <div key={idx} className="stats-card mb-3">
+                                            <div className="d-flex gap-3">
+                                                <img src={feedback?.customerAvatar || '/img/avatar.svg'}
+                                                    alt="Reviewer" className="review-avatar" />
+                                                <div className="flex-grow-1">
+                                                    <div className="d-flex align-items-center gap-2 mb-2">
+                                                        <span className="fw-semibold">{feedback?.customerName || 'Đang cập nhật..'}</span>
+                                                        <Rating
+                                                            initialRating={feedback?.rating}
+                                                            readonly
+                                                            fullSymbol={<i style={{ color: '#FFA633' }} className="fas fa-star filled" />}
+                                                            emptySymbol={<i style={{ color: '#FFA633' }} className="far fa-star" />}
+                                                        />
+                                                    </div>
+                                                    <p className="small mb-2">
+                                                        {feedback?.content || 'Đang cập nhật..'}
+                                                    </p>
+                                                    <span className="small">{formatDate(feedback?.createdAt) || 'Đang cập nhật..'}</span>
+                                                </div>
                                             </div>
-                                            <p className="small mb-2">
-                                                {feedback?.content || 'Đang cập nhật..'}
-                                            </p>
-                                            <span className="small">{formatDate(feedback?.createdAt) || 'Đang cập nhật..'}</span>
                                         </div>
-                                    </div>
-                                </div>
-                            ))}
+                                    ))}
 
+                                    {totalPages > 1 && (
+                                        <div className="pagination-container mt-4" style={{
+                                            display: 'flex',
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            gap: '10px',
+                                            flexWrap: 'wrap'
+                                        }}>
+                                            <button 
+                                                onClick={goToFirstPage} 
+                                                disabled={currentPage === 1}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: currentPage === 1 ? '#f5f5f5' : '#fff',
+                                                    color: currentPage === 1 ? '#999' : '#333',
+                                                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Đầu
+                                            </button>
+                                            <button 
+                                                onClick={goToPreviousPage} 
+                                                disabled={currentPage === 1}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: currentPage === 1 ? '#f5f5f5' : '#fff',
+                                                    color: currentPage === 1 ? '#999' : '#333',
+                                                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Trước
+                                            </button>
+                                            <span style={{
+                                                padding: '8px 16px',
+                                                backgroundColor: '#007bff',
+                                                color: 'white',
+                                                borderRadius: '4px',
+                                                fontSize: '14px',
+                                                fontWeight: '500'
+                                            }}>
+                                                Trang {currentPage} / {totalPages}
+                                            </span>
+                                            <button 
+                                                onClick={goToNextPage} 
+                                                disabled={currentPage === totalPages}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: currentPage === totalPages ? '#f5f5f5' : '#fff',
+                                                    color: currentPage === totalPages ? '#999' : '#333',
+                                                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Sau
+                                            </button>
+                                            <button 
+                                                onClick={goToLastPage} 
+                                                disabled={currentPage === totalPages}
+                                                style={{
+                                                    padding: '8px 16px',
+                                                    border: '1px solid #ddd',
+                                                    borderRadius: '4px',
+                                                    backgroundColor: currentPage === totalPages ? '#f5f5f5' : '#fff',
+                                                    color: currentPage === totalPages ? '#999' : '#333',
+                                                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                                    fontSize: '14px'
+                                                }}
+                                            >
+                                                Cuối
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                <div className="text-center py-4">
+                                    <p className="text-muted mb-0">Chưa có đánh giá nào</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </Tab>
