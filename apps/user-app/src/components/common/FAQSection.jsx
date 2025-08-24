@@ -6,29 +6,29 @@ export default function FAQSection() {
 
   const faqs = [
     {
-      question: "Thời gian sửa chữa mất bao lâu?",
+      question: "FixTech hoạt động như thế nào?",
       answer:
-        "Thời gian sửa chữa phụ thuộc vào loại thiết bị và mức độ hỏng hóc. Thông thường, các sự cố đơn giản có thể được khắc phục trong 1-2 giờ. Các trường hợp phức tạp có thể mất 1-2 ngày để đặt hàng linh kiện.",
+        "FixTech là nền tảng kết nối khách hàng với các thợ sửa chữa thiết bị gia dụng tại Đà Nẵng. Bạn đặt lịch trên website, hệ thống sẽ tìm kiếm và kết nối với thợ phù hợp trong khu vực.",
     },
     {
-      question: "Chi phí sửa chữa như thế nào?",
+      question: "Giá sửa chữa như thế nào?",
       answer:
-        "Chúng tôi báo giá minh bạch trước khi sửa chữa. Chi phí bao gồm tiền công và linh kiện (nếu có). Khách hàng chỉ thanh toán khi đồng ý với báo giá và hài lòng với kết quả.",
+        "Giá sửa chữa do mỗi thợ tự quyết định dựa trên mức độ hỏng hóc và linh kiện cần thay. Thợ sẽ báo giá cụ thể sau khi kiểm tra thiết bị tại nhà bạn. Bạn chỉ thanh toán khi đồng ý với báo giá.",
     },
     {
-      question: "Có bảo hành sau khi sửa chữa không?",
+      question: "Thời gian bảo hành ra sao?",
       answer:
-        "Có, chúng tôi bảo hành lên đến 6 tháng tùy vào từng loại dịch vụ sửa chữa. Bảo hành bao gồm cả công sửa chữa và linh kiện thay thế. Nếu có sự cố trong thời gian bảo hành, chúng tôi sẽ sửa chữa miễn phí.",
+        "Thời gian bảo hành và chính sách bảo hành tùy thuộc vào từng thợ. Mỗi thợ có mức bảo hành khác nhau cho dịch vụ của họ. Thông tin này sẽ được thợ thông báo trước khi thực hiện sửa chữa.",
     },
     {
       question: "Khu vực nào được hỗ trợ?",
       answer:
-        "Chúng tôi hỗ trợ tất cả các quận huyện tại TP.Đà Nẵng và khu vực lân cận như Quảng Nam. Thời gian di chuyển thường trong vòng 30-60 phút tùy khu vực.",
+        "Hiện tại FixTech hỗ trợ kết nối thợ tại 6 quận chính của TP.Đà Nẵng: Hải Châu, Thanh Khê, Sơn Trà, Ngũ Hành Sơn, Liên Chiểu, Cẩm Lệ. Chúng tôi đang mở rộng thêm khu vực khác.",
     },
     {
-      question: "Có sửa chữa vào cuối tuần không?",
+      question: "Thợ có làm việc cuối tuần không?",
       answer:
-        "Có, chúng tôi làm việc 7 ngày/tuần, bao gồm cả cuối tuần và ngày lễ. Dịch vụ khẩn cấp 24/7 cho các trường hợp cần thiết với phụ phí hợp lý.",
+        "Thời gian làm việc tùy thuộc vào từng thợ. Một số thợ làm việc cả cuối tuần, một số chỉ làm thứ 2-6. Bạn có thể xem thời gian làm việc của thợ khi đặt lịch trên hệ thống.",
     },
   ]
 
@@ -37,28 +37,28 @@ export default function FAQSection() {
   }
 
   return (
-    <section className="faq-section">
-      <div className="container">
-        <div className="section-header">
-          <div className="section-badge">
-            <Sparkles size={24} style={{ animation: "pulse 2s ease-in-out infinite" }} />
+    <section className="nhp-faq-section">
+      <div className="nhp-container">
+        <div className="nhp-section-header-enhanced">
+          <div className="nhp-section-badge-enhanced">
+            <Sparkles size={20} />
             <span>CÂU HỎI THƯỜNG GẶP</span>
-            <Sparkles size={24} style={{ animation: "pulse 2s ease-in-out infinite" }} />
+            <Sparkles size={20} />
           </div>
-          <h2 className="section-title">Giải đáp thắc mắc</h2>
-          <p className="section-description">
+          <h2 className="nhp-section-title-enhanced">Giải đáp thắc mắc</h2>
+          <p className="nhp-section-description-enhanced">
             Những câu hỏi thường gặp từ khách hàng về dịch vụ sửa chữa của chúng tôi
           </p>
         </div>
 
-        <div className="faq-container">
+        <div className="nhp-faq-container">
           {faqs.map((faq, index) => (
-            <div key={index} className={`faq-item ${activeIndex === index ? "active" : ""}`}>
-              <button className="faq-question" onClick={() => toggleFAQ(index)}>
+            <div key={index} className={`nhp-faq-item-enhanced ${activeIndex === index ? "active" : ""}`}>
+              <button className="nhp-faq-question-enhanced" onClick={() => toggleFAQ(index)}>
                 <span>{faq.question}</span>
-                <ChevronDown size={20} className="faq-icon" />
+                <ChevronDown size={20} className="nhp-faq-icon" />
               </button>
-              <div className="faq-answer">
+              <div className="nhp-faq-answer-enhanced">
                 <p>{faq.answer}</p>
               </div>
             </div>

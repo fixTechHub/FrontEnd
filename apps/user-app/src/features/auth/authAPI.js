@@ -245,6 +245,16 @@ const authAPI = {
             throw handleError(error);
         }
     },
+
+    // Update user account type (for technician users)
+    updateAccountType: async (accountType) => {
+        try {
+            const response = await apiClient.post('/auth/update-account-type', { accountType });
+            return response.data;
+        } catch (error) {
+            throw handleError(error);
+        }
+    },
 };
 
 // Delete Account APIs

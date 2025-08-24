@@ -1,7 +1,7 @@
 import "./ServiceCardDark.css";
 import { RiStarFill as Star, RiPhoneFill as Phone } from "react-icons/ri";
 
-export default function ServiceCardDark({ icon: Icon, title, price, rating, reviews, color, bg, description, features }) {
+export default function ServiceCardDark({ icon: Icon, title, responseTime, serviceFeature, color, bg, description, features }) {
   return (
     <div className="glass-card" style={{ "--icon-bg": bg, "--icon-color": color }}>
       {/* Front content */}
@@ -10,14 +10,9 @@ export default function ServiceCardDark({ icon: Icon, title, price, rating, revi
           <Icon size={26} />
         </div>
         <h3 className="glass-title">{title}</h3>
-        <span className="price-dark">{price}</span>
-        <div className="rating-wrap">
-          <div className="rating-dark">
-            {[...Array(5)].map((_, i) => (
-              <Star key={i} size={14} fill={i < Math.round(rating) ? "#FBBF24" : "transparent"} color="#FBBF24" />
-            ))}
-          </div>
-          <small>{rating} ({reviews})</small>
+        <span className="response-time-tag">{responseTime}</span>
+        <div className="service-feature-wrap">
+          <span className="service-feature-tag">{serviceFeature}</span>
         </div>
         <span className="contact-tag"><Star size={13} style={{marginRight:"0.3rem"}}/>Phổ biến</span>
       </div>
