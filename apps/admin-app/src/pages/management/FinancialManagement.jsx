@@ -102,27 +102,26 @@ const FinancialManagement = () => {
     totalWithdrawn = 0
   } = financialSummary || {};
 
-  // Tạo mapping từ technician ID sang tên
+  // Tạo technicianNameMap từ technicianAPI.getAll() giống như userMap
   useEffect(() => {
-    if (techniciansFinancialSummary.length > 0) {
-      const techMap = {};
-      console.log('🔍 Creating technician mapping from technicians:', techniciansFinancialSummary);
-      techniciansFinancialSummary.forEach(tech => {
-        if (tech.technicianId) {
-          // Kiểm tra tất cả các trường có thể chứa tên technician
-          const technicianName = tech.technicianName || 
-                                tech.fullName || 
-                                tech.name ||
-                                tech.technician?.fullName ||
-                                tech.technician?.name ||
-                                'Không có tên';
-          techMap[tech.technicianId] = technicianName;
-          console.log(`🔍 Technician mapping: ${tech.technicianId} -> ${technicianName}`);
-        }
-      });
-      setTechnicianNameMap(techMap);
-    }
-  }, [techniciansFinancialSummary]);
+    const fetchTechnicians = async () => {
+      try {
+        const technicians = await technicianAPI.getAll();
+        const technicianMapData = {};
+        technicians.forEach(t => {
+          if (t.id) {
+            technicianMapData[t.id] = t.fullName || t.name || t.email || `KTV ${t.id}`;
+          }
+        });
+        setTechnicianNameMap(technicianMapData);
+        console.log('✅ TechnicianMap created successfully:', technicianMapData);
+      } catch (error) {
+        console.error('❌ Failed to fetch technicians:', error);
+      }
+    };
+    
+    fetchTechnicians();
+  }, []);
 
   // Tạo userMap từ userAPI.getAll() giống như BookingManagement
   useEffect(() => {
@@ -180,54 +179,6 @@ const FinancialManagement = () => {
       setCustomerNameMap(custMap);
     }
   }, [userMap, bookingsFinancial]);
-
-  // Tạo mapping từ technician ID sang tên từ bookingsFinancial
-  useEffect(() => {
-    if (bookingsFinancial.length > 0) {
-      const techMap = {};
-      console.log('🔍 Creating technician mapping from bookings:', bookingsFinancial);
-      
-      bookingsFinancial.forEach(booking => {
-        if (booking.technicianId && !techMap[booking.technicianId]) {
-          // Sử dụng dữ liệu có sẵn trước, fallback về ID
-          const technicianName = booking.technicianName || 
-                                booking.technician?.fullName || 
-                                booking.technician?.name ||
-                                `Kỹ thuật viên ${booking.technicianId}`;
-          techMap[booking.technicianId] = technicianName;
-          console.log(`🔍 Technician mapping from bookings: ${booking.technicianId} -> ${technicianName}`);
-        }
-      });
-      
-      // Merge với technicianNameMap hiện tại
-      setTechnicianNameMap(prev => ({ ...prev, ...techMap }));
-    }
-  }, [bookingsFinancial]);
-
-  // Tạo mapping từ technician ID sang tên từ techniciansFinancialSummary (ưu tiên cao nhất)
-  useEffect(() => {
-    if (techniciansFinancialSummary.length > 0) {
-      const techMap = {};
-      console.log('🔍 Creating technician mapping from techniciansFinancialSummary:', techniciansFinancialSummary);
-      
-      techniciansFinancialSummary.forEach(tech => {
-        if (tech.technicianId) {
-          // Kiểm tra tất cả các trường có thể chứa tên technician
-          const technicianName = tech.technicianName || 
-                                tech.fullName || 
-                                tech.name ||
-                                tech.technician?.fullName ||
-                                tech.technician?.name ||
-                                `Kỹ thuật viên ${tech.technicianId}`;
-          techMap[tech.technicianId] = technicianName;
-          console.log(`🔍 Technician mapping from summary: ${tech.technicianId} -> ${technicianName}`);
-        }
-      });
-      
-      // Cập nhật technicianNameMap với dữ liệu từ summary (ưu tiên cao nhất)
-      setTechnicianNameMap(prev => ({ ...prev, ...techMap }));
-    }
-  }, [techniciansFinancialSummary]);
 
   // Debug logging cho mapping
   useEffect(() => {
@@ -700,34 +651,10 @@ const FinancialManagement = () => {
   const handleExport = () => {
     // Set export data for AdminHeader
     if (activeTab === 'bookings') {
-      console.log('🔍 Exporting bookings with mappings:', {
-        customerNameMap,
-        technicianNameMap,
-        serviceNameMap,
-        sampleBooking: filteredBookings[0]
-      });
-      
       window.currentPageExportData = {
         data: filteredBookings.map(booking => {
-          const customerName = customerNameMap[booking.customerId] || booking.customerName || `Khách hàng ${booking.customerId}`;
-          const technicianName = technicianNameMap[booking.technicianId] || booking.technicianName || `KTV ${booking.technicianId}`;
-          const serviceName = serviceNameMap[booking.serviceId] || booking.serviceName || `Dịch vụ ${booking.serviceId}`;
-          
-          console.log(`🔍 Export mapping for booking ${booking.bookingCode}:`, {
-            customerId: booking.customerId,
-            customerName,
-            technicianId: booking.technicianId,
-            technicianName,
-            serviceId: booking.serviceId,
-            serviceName,
-            technicianNameMapValue: technicianNameMap[booking.technicianId]
-          });
-          
           return {
             'Mã đơn hàng': booking.bookingCode,
-            'Tên khách hàng': customerName,
-            'Tên kỹ thuật viên': technicianName,
-            'Tên dịch vụ': serviceName,
             'Giá cuối cùng': formatCurrency(booking.finalPrice),
             'Số tiền giữ lại': formatCurrency(booking.holdingAmount),
             'Thu nhập kỹ thuật viên': formatCurrency(booking.technicianEarning),
@@ -738,9 +665,6 @@ const FinancialManagement = () => {
         }),
         columns: [
           { title: 'Mã đơn hàng', dataIndex: 'Mã đơn hàng' },
-          { title: 'Tên khách hàng', dataIndex: 'Tên khách hàng' },
-          { title: 'Tên kỹ thuật viên', dataIndex: 'Tên kỹ thuật viên' },
-          { title: 'Tên dịch vụ', dataIndex: 'Tên dịch vụ' },
           { title: 'Giá cuối cùng', dataIndex: 'Giá cuối cùng' },
           { title: 'Số tiền giữ lại', dataIndex: 'Số tiền giữ lại' },
           { title: 'Thu nhập kỹ thuật viên', dataIndex: 'Thu nhập kỹ thuật viên' },
@@ -754,16 +678,7 @@ const FinancialManagement = () => {
     } else {
       window.currentPageExportData = {
         data: filteredTechnicians.map(technician => {
-          const technicianName = technicianNameMap[technician.technicianId] || technician.technicianName || `KTV ${technician.technicianId}`;
-          
-          console.log(`🔍 Export mapping for technician ${technician.technicianId}:`, {
-            technicianId: technician.technicianId,
-            technicianName,
-            technicianNameMapValue: technicianNameMap[technician.technicianId]
-          });
-          
           return {
-            'Tên kỹ thuật viên': technicianName,
             'Tổng đơn hàng': technician.totalBookings,
             'Tổng thu nhập': formatCurrency(technician.totalEarning),
             'Số tiền giữ lại': formatCurrency(technician.totalHoldingAmount),
@@ -771,7 +686,6 @@ const FinancialManagement = () => {
           };
         }),
         columns: [
-          { title: 'Tên kỹ thuật viên', dataIndex: 'Tên kỹ thuật viên' },
           { title: 'Tổng đơn hàng', dataIndex: 'Tổng đơn hàng' },
           { title: 'Tổng thu nhập', dataIndex: 'Tổng thu nhập' },
           { title: 'Số tiền giữ lại', dataIndex: 'Số tiền giữ lại' },
@@ -857,6 +771,20 @@ const FinancialManagement = () => {
           {text?.length > 15 ? `${text.substring(0, 15)}...` : text}
         </div>
       ),
+    },
+    {
+      title: 'Kỹ thuật viên',
+      dataIndex: 'technicianId',
+      key: 'technician',
+      width: 150,
+      render: (technicianId, record) => {
+        const technicianName = technicianNameMap[technicianId] || record.technicianName || `KTV ${technicianId}`;
+        return (
+          <div style={{ maxWidth: 150, fontWeight: 500, fontSize: '12px' }}>
+            {technicianName?.length > 20 ? `${technicianName.substring(0, 20)}...` : technicianName}
+          </div>
+        );
+      },
     },
     {
       title: (
