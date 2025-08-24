@@ -66,6 +66,7 @@ const VideoCallPage = () => {
   const [connectionState, setConnectionState] = useState('new');
   const [isConnecting, setIsConnecting] = useState(false);
   const [iceFailureTimeout, setIceFailureTimeout] = useState(null);
+  const [isStreamReady, setIsStreamReady] = useState(false);
 
   const logIceCandidate = (candidate, type) => {
     console.log(`${type} ICE Candidate:`, {
@@ -119,6 +120,7 @@ const VideoCallPage = () => {
         userVideo.current.load();
       }
       setStream(null);
+      setIsStreamReady(false);
       console.log(`Stream stopped for user: ${user._id} (Reason: ${reason})`);
     }
   };
@@ -127,7 +129,7 @@ const VideoCallPage = () => {
     const maxRetries = 3;
     if (attempt >= maxRetries) {
       console.error(`Max retries (${maxRetries}) reached for media access`);
-      toast.error('Could not access camera/microphone. Please check permissions.');
+      toast.error('Could not access camera/microphone. Please check permissions or device availability.');
       return;
     }
 
@@ -141,6 +143,7 @@ const VideoCallPage = () => {
         throw new Error('No video track available');
       }
       setStream(currentStream);
+      setIsStreamReady(true);
       if (myVideo.current) {
         myVideo.current.srcObject = currentStream;
         try {
@@ -148,7 +151,7 @@ const VideoCallPage = () => {
           console.log('Local video playing successfully');
         } catch (playError) {
           console.warn('Video autoplay failed:', playError);
-          toast.warn('Local video failed to play. Please ensure autoplay is enabled.');
+          toast.warn('Local video failed to play. Please ensure autoplay is enabled or interact with the page.');
         }
       }
       console.log('Stream initialized successfully');
@@ -156,14 +159,13 @@ const VideoCallPage = () => {
     } catch (error) {
       console.error(`Error accessing media devices, attempt ${attempt + 1}:`, error);
       if (error.name === 'NotAllowedError') {
-        toast.error('Camera/microphone access denied. Please allow permissions.');
-        return;
+        toast.error('Camera/microphone access denied. Please allow permissions in browser settings.');
       } else if (error.name === 'NotFoundError') {
         toast.error('No camera/microphone found. Please connect a device.');
-        return;
       } else if (error.name === 'NotReadableError') {
         toast.error('Camera/microphone is being used by another application.');
-        return;
+      } else {
+        toast.error('Failed to access camera/microphone. Check device or permissions.');
       }
       if (attempt < maxRetries - 1) {
         setTimeout(() => {
@@ -173,6 +175,7 @@ const VideoCallPage = () => {
           navigator.mediaDevices.getUserMedia(fallbackConstraints)
             .then((currentStream) => {
               setStream(currentStream);
+              setIsStreamReady(true);
               if (myVideo.current) {
                 myVideo.current.srcObject = currentStream;
                 myVideo.current.play().catch((error) => console.warn('Video autoplay failed:', error));
@@ -207,7 +210,6 @@ const VideoCallPage = () => {
       console.log('🔌 Peer connection closed');
       setConnectionState('closed');
       setIsConnecting(false);
-      // Only stop stream if call is explicitly ended
       if (callEnded) {
         stopStream('peer closed');
       }
@@ -217,7 +219,6 @@ const VideoCallPage = () => {
       console.error('❌ Peer error:', err);
       setConnectionState('failed');
       setIsConnecting(false);
-      // Only stop stream if call is explicitly ended
       if (callEnded) {
         stopStream('peer error');
       }
@@ -267,27 +268,21 @@ const VideoCallPage = () => {
       return;
     }
 
-    dispatch(fetchBookingById(bookingId));
-    initializeStream();
+    initializeStream(); // Ensure stream is initialized on mount
 
     const handleCallUser = (data) => {
       console.log('Received callUser event:', data);
       const { from, name, signal, sessionId, bookingId: incomingBookingId, warrantyId: incomingWarrantyId } = data;
       const isValidCall = (incomingBookingId && incomingBookingId === bookingId) || (incomingWarrantyId && incomingWarrantyId === bookingWarrantyId);
-      if (isValidCall && !callAccepted && !hasCalled.current) {
-        hasCalled.current = false;
-        // Do not clear stream here to prevent local video disappearance
-        if (!stream) {
-          initializeStream().then(() => {
-            dispatch(setCurrentSessionId(data.sessionId));
-            dispatch(setCall({ ...data, isReceivingCall: true }));
-            console.log('Incoming call from:', data.from, 'with sessionId:', data.sessionId);
-          });
-        } else {
-          dispatch(setCurrentSessionId(data.sessionId));
-          dispatch(setCall({ ...data, isReceivingCall: true }));
-          console.log('Incoming call from:', data.from, 'with sessionId:', data.sessionId);
-        }
+      if (isValidCall && !callAccepted && !hasCalled.current && isStreamReady && user) {
+        hasCalled.current = true;
+        dispatch(setCurrentSessionId(data.sessionId));
+        dispatch(setCall({ ...data, isReceivingCall: true }));
+        console.log('Incoming call from:', data.from, 'with sessionId:', data.sessionId);
+        answerIncomingCall(data);
+      } else if (!isStreamReady) {
+        console.warn('Stream not ready for incoming call, reinitializing...');
+        initializeStream();
       }
     };
 
@@ -373,11 +368,7 @@ const VideoCallPage = () => {
   }, [dispatch, bookingId, navigate, callEnded, iceFailureTimeout]);
 
   useEffect(() => {
-    if (!stream || !user || hasCalled.current) {
-      console.log('Stream or user not available, or call already initiated, skipping call initiation');
-      return;
-    }
-    if (!call.isReceivingCall && !callAccepted && !location.state?.answerCall) {
+    if (isStreamReady && user && !hasCalled.current && !call.isReceivingCall && !callAccepted && !location.state?.answerCall) {
       const otherUserId = user._id === booking?.customerId?._id ? booking?.technicianId?.userId?._id : booking?.customerId?._id;
       if (otherUserId) {
         console.log(`Initiating call to user: ${otherUserId}`);
@@ -386,20 +377,16 @@ const VideoCallPage = () => {
         callUser(otherUserId);
       }
     }
-  }, [stream, user, call.isReceivingCall, callAccepted, location.state, booking]);
+  }, [isStreamReady, user, call.isReceivingCall, callAccepted, location.state, booking]);
 
   useEffect(() => {
-    if (!stream || !user || hasCalled.current) {
-      console.log('Stream or user not available, or call already initiated, skipping answer');
-      return;
-    }
-    if (location.state?.answerCall && location.state?.incomingCall && !callAccepted) {
+    if (isStreamReady && user && !hasCalled.current && location.state?.answerCall && location.state?.incomingCall && !callAccepted) {
       console.log('Answering incoming call from:', location.state.incomingCall.from);
       hasCalled.current = true;
       setIsConnecting(true);
       answerIncomingCall(location.state.incomingCall);
     }
-  }, [stream, user, location.state, callAccepted, booking]);
+  }, [isStreamReady, user, location.state, callAccepted, booking]);
 
   const callUser = (id) => {
     const socket = getSocket();
@@ -593,6 +580,8 @@ const VideoCallPage = () => {
           <div>Call Accepted: {callAccepted ? 'Yes' : 'No'}</div>
           <div>Stream: {stream ? 'Available' : 'Not Available'}</div>
           <div>Stream Stopped: {hasStopped.current ? 'Yes' : 'No'}</div>
+          <div>Is Stream Ready: {isStreamReady ? 'Yes' : 'No'}</div>
+          <div>User: {user ? 'Available' : 'Not Available'}</div>
         </div>
       )}
       <div className="custom-controls">
