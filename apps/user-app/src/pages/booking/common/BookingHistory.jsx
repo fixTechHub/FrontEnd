@@ -367,64 +367,122 @@ const BookingHistory = () => {
           box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
         }
         
-        .booking-grid {
-          display: grid;
-          gap: 1rem;
-          padding: 1.5rem;
+        .booking-list {
           background: rgba(255, 255, 255, 0.95);
           backdrop-filter: blur(20px);
           border: 1px solid rgba(255, 107, 107, 0.1);
           border-radius: 20px;
+          overflow: hidden;
           margin-bottom: 3rem;
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         }
         
-        .booking-card {
-          background: white;
-          border: 1px solid #e5e7eb;
-          border-radius: 12px;
-          padding: 1.5rem;
-          transition: all 0.3s ease;
+        .booking-list-header {
+          background: linear-gradient(135deg, #ff6b6b, #ffa500);
+          border-bottom: 2px solid #ff6b6b;
+          color: white;
+          padding: 1rem 1.5rem;
+          display: grid;
+          grid-template-columns: 1.8fr 1.8fr 1.8fr 1.2fr 1.4fr;
+          gap: 1rem;
+          font-weight: 600;
+          font-size: 0.875rem;
+          text-transform: uppercase;
+          letter-spacing: 0.025em;
+        }
+        
+        .booking-item {
+          display: grid;
+          grid-template-columns: 1.8fr 1.8fr 1.8fr 1.2fr 1.4fr;
+          gap: 1rem;
+          padding: 1rem 1.5rem;
+          border-bottom: 1px solid #f3f4f6;
+          align-items: center;
+          transition: all 0.2s ease;
           position: relative;
-          overflow: hidden;
         }
         
-        .booking-card:hover {
-          border-color: #ff6b6b;
-          box-shadow: 0 8px 32px rgba(255, 107, 107, 0.15);
-          transform: translateY(-2px);
+        .booking-item:last-child {
+          border-bottom: none;
         }
         
-        .booking-card::before {
+        .booking-item:hover {
+          background: #f9fafb;
+        }
+        
+        .booking-item::before {
           content: '';
           position: absolute;
           left: 0;
           top: 0;
           bottom: 0;
-          width: 4px;
+          width: 3px;
           background: linear-gradient(135deg, #ff6b6b, #ffa500);
           opacity: 0;
-          transition: opacity 0.3s ease;
+          transition: opacity 0.2s ease;
         }
         
-        .booking-card:hover::before {
+        .booking-item:hover::before {
           opacity: 1;
         }
         
-        .booking-card-header {
+        .booking-code-section {
           display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 1rem;
+          flex-direction: column;
+          gap: 0.25rem;
         }
         
         .booking-code {
-          font-size: 1.25rem;
-          font-weight: 700;
+          font-size: 1rem;
+          font-weight: 900;
           color: #1f2937;
           display: flex;
           align-items: center;
           gap: 0.5rem;
+        }
+        
+        .booking-service-section {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        
+        .booking-service {
+          font-size: 0.8rem;
+          color: white;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 0.25rem 0.5rem;
+          background: linear-gradient(135deg, #ff6b6b, #ffa500);
+          border: 1px solid #ff6b6b;
+          border-radius: 6px;
+          transition: all 0.2s ease;
+          width: fit-content;
+          max-width: 100%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        
+        .booking-service:hover {
+          background: linear-gradient(135deg, #ffa500, #ff8500);
+          border-color: #ffa500;
+          transform: translateY(-1px);
+          box-shadow: 0 2px 6px rgba(255, 107, 107, 0.4);
+        }
+        
+        .booking-technician-section {
+          display: flex;
+          flex-direction: column;
+          gap: 0.25rem;
+        }
+        
+        .booking-technician {
+          font-size: 0.875rem;
+          color: #374151;
+          font-weight: 600;
         }
         
         .booking-status {
@@ -440,66 +498,38 @@ const BookingHistory = () => {
           width: fit-content;
         }
         
-        .booking-details {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 1rem;
-          margin-bottom: 1rem;
-        }
-        
-        .booking-detail {
-          display: flex;
-          flex-direction: column;
-          gap: 0.25rem;
-        }
-        
-        .detail-label {
-          font-size: 0.75rem;
-          color: #6b7280;
-          text-transform: uppercase;
-          font-weight: 600;
-          letter-spacing: 0.025em;
-        }
-        
-        .detail-value {
-          font-size: 0.875rem;
-          color: #374151;
-          font-weight: 600;
-          display: flex;
-          align-items: center;
-        }
-        
         .booking-actions {
           display: flex;
-          justify-content: flex-end;
-          gap: 0.5rem;
-          margin-top: 1rem;
-          padding-top: 1rem;
-          border-top: 1px solid #f3f4f6;
+          justify-content: center;
+          gap: 0.375rem;
+          flex-wrap: wrap;
         }
         
         .action-btn {
           display: flex;
           align-items: center;
-          gap: 0.375rem;
-          padding: 0.5rem 0.875rem;
+          gap: 0.25rem;
+          padding: 0.375rem 0.625rem;
           background: linear-gradient(135deg, #ff6b6b, #ffa500);
           color: white;
           border: none;
-          border-radius: 6px;
-          font-weight: 500;
-          font-size: 0.875rem;
+          border-radius: 5px;
+          font-weight: 600;
+          font-size: 0.75rem;
           cursor: pointer;
           transition: all 0.2s ease;
           text-decoration: none;
-          box-shadow: 0 1px 3px rgba(255, 107, 107, 0.3);
+          box-shadow: 0 1px 2px rgba(255, 107, 107, 0.3);
+          white-space: nowrap;
+          min-width: 60px;
+          justify-content: center;
         }
         
         .action-btn:hover {
           background: linear-gradient(135deg, #ffa500, #ff8500);
           color: white;
           transform: translateY(-1px);
-          box-shadow: 0 2px 6px rgba(255, 107, 107, 0.4);
+          box-shadow: 0 2px 4px rgba(255, 107, 107, 0.4);
         }
         
         .action-btn.secondary {
@@ -581,9 +611,50 @@ const BookingHistory = () => {
         @media (max-width: 768px) {
           .booking-title { font-size: 2rem; }
           .filters-grid { grid-template-columns: 1fr; }
-          .booking-details { grid-template-columns: 1fr; }
-          .booking-actions { flex-direction: column; }
-          .action-btn { width: 100%; justify-content: center; }
+          
+          .booking-list-header {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            text-align: center;
+          }
+          
+          .booking-item {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            text-align: left;
+          }
+          
+          .booking-item:hover {
+            transform: none;
+          }
+          
+          .booking-actions {
+            justify-content: stretch;
+          }
+          
+          .action-btn {
+            width: 100%;
+            justify-content: center;
+          }
+        }
+        
+        @media (max-width: 1024px) {
+          .booking-list-header {
+            grid-template-columns: 2fr 2fr 1fr;
+            gap: 0.75rem;
+          }
+          
+          .booking-item {
+            grid-template-columns: 2fr 2fr 1fr;
+            gap: 0.75rem;
+          }
+          
+          .booking-technician-section {
+            grid-column: 1 / -1;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 107, 107, 0.1);
+          }
         }
       `}</style>
 
@@ -682,56 +753,53 @@ const BookingHistory = () => {
               </div>
             )}
 
-            {/* Booking List */}
+                        {/* Booking List */}
             {filtered.length > 0 && (
-              <div className="booking-grid">
+              <div className="booking-list">
+                <div className="booking-list-header">
+                  <div>Mã đặt lịch</div>
+                  <div>Dịch vụ</div>
+                  <div>{isCustomer ? 'Kỹ thuật viên' : 'Khách hàng'}</div>
+                  <div>Trạng thái</div>
+                  <div>Thao tác</div>
+                </div>
+                
                 {paginated.map(booking => {
                   const config = statusConfig[booking.status] || statusConfig.PENDING;
                   const StatusIcon = config.icon;
                   
                   return (
-                    <div key={booking._id} className="booking-card">
-                      <div className="booking-card-header">
+                    <div key={booking._id} className="booking-item">
+                      <div className="booking-code-section">
                         <div className="booking-code">
-                          <Service size={20} style={{ color: '#ff6b6b' }} />
+                          <Service size={16} style={{ color: '#ff6b6b' }} />
                           #{booking.bookingCode}
-                        </div>
-                        <div 
-                          className="booking-status"
-                          style={{
-                            backgroundColor: config.bgColor,
-                            color: config.color
-                          }}
-                        >
-                          <StatusIcon size={14} />
-                          {config.label}
                         </div>
                       </div>
                       
-                      <div className="booking-details">
-                        <div className="booking-detail">
-                          <span className="detail-label">Dịch vụ</span>
-                          <span className="detail-value">{booking.serviceId?.serviceName || 'N/A'}</span>
+                      <div className="booking-service-section">
+                        <div className="booking-service">
+                          {booking.serviceId?.serviceName || 'N/A'}
                         </div>
-                        <div className="booking-detail">
-                          <span className="detail-label">{isCustomer ? 'Kỹ thuật viên' : 'Khách hàng'}</span>
-                          <span className="detail-value">
-                            {isCustomer
-                              ? booking.technicianId?.userId?.fullName || 'Chưa phân công'
-                              : booking.customerId?.fullName || 'N/A'}
-                        </span>
+                      </div>
+                      
+                      <div className="booking-technician-section">
+                        <div className="booking-technician">
+                          {isCustomer
+                            ? booking.technicianId?.userId?.fullName || 'Chưa phân công'
+                            : booking.customerId?.fullName || 'N/A'}
                         </div>
-                        <div className="booking-detail">
-                          <span className="detail-label">Ngày đặt</span>
-                          <span className="detail-value">
-                            <Calendar size={14} style={{ color: '#ffa500', marginRight: '0.25rem' }} />
-                            {formatDateOnly(booking.schedule?.startTime) || 'N/A'}
-                          </span>
-                        </div>
-                        <div className="booking-detail">
-                          <span className="detail-label">Giá tiền</span>
-                          <span className="detail-value">{formatCurrency(booking.finalPrice)}</span>
-                        </div>
+                      </div>
+                      
+                      <div 
+                        className="booking-status"
+                        style={{
+                          backgroundColor: config.bgColor,
+                          color: config.color
+                        }}
+                      >
+                        <StatusIcon size={14} />
+                        {config.label}
                       </div>
                       
                       <div className="booking-actions">
@@ -739,16 +807,16 @@ const BookingHistory = () => {
                           className="action-btn secondary"
                           onClick={() => setShowDetailsModal(booking._id)}
                         >
-                          <Eye size={16} />
+                          <Eye size={12} />
                           Chi tiết
                         </button>
                         
-                            {isCustomer && booking.status === 'DONE' && (
+                        {isCustomer && booking.status === 'DONE' && (
                           <button
                             className="action-btn"
                             onClick={() => handleWarrantyModalOpen(booking._id)}
                           >
-                            <Tools size={16} />
+                            <Tools size={12} />
                             Bảo hành
                           </button>
                         )}
@@ -758,7 +826,7 @@ const BookingHistory = () => {
                             className="action-btn"
                             onClick={() => navigate(`/booking/choose-technician?bookingId=${booking._id}`)}
                           >
-                            <User size={16} />
+                            <User size={12} />
                             Chọn thợ
                           </button>
                         )}
@@ -768,7 +836,7 @@ const BookingHistory = () => {
                             className="action-btn"
                             onClick={() => navigate(`/booking/booking-processing?bookingId=${booking._id}`)}
                           >
-                            <Clock size={16} />
+                            <Clock size={12} />
                             Tiến trình
                           </button>
                         )}
