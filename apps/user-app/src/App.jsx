@@ -33,10 +33,10 @@ function App() {
 
     useEffect(() => {
         if (user) {
-            console.log('--- Initializing socket for user:', user._id);
+            // console.log('--- Initializing socket for user:', user._id);
             initializeSocket(user._id);
         } else {
-            console.log('--- Disconnecting socket on logout ---');
+            // console.log('--- Disconnecting socket on logout ---');
             disconnectSocket();
         }
     }, [user, dispatch]);

@@ -387,7 +387,7 @@ export default function SearchComponent() {
                     )}
                     {suggestionSearchResults.length > 0 && (
                       <div>
-                        <div className="banner-search-header banner-search-header-pink">
+                        <div className="banner-search-header banner-search-header-blue">
                           <i className="bx bx-search-alt" style={{ fontSize: '14px' }}></i>
                           Kết quả tìm kiếm
                         </div>
@@ -397,7 +397,7 @@ export default function SearchComponent() {
                             className="banner-search-item"
                             onMouseDown={() => handleSuggestionClick(suggestion)}
                           >
-                            <div className="banner-search-avatar banner-search-avatar-pink">
+                            <div className="banner-search-avatar banner-search-avatar-blue">
                               <i className="bx bx-search-alt"></i>
                             </div>
                             <div className="banner-search-content">
