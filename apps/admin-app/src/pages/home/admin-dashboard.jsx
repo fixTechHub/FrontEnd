@@ -1028,7 +1028,7 @@ const AdminDashboard = () => {
                       key={booking.id} 
                       className="d-flex align-items-center justify-content-between p-3"
                       style={{
-                        background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa', 
+                        background: index === 0 ? 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)' : '#f8f9fa', 
                         borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
@@ -1143,7 +1143,7 @@ const AdminDashboard = () => {
                       key={tech.id} 
                       className="d-flex align-items-center p-3"
                       style={{
-                        background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa',
+                        background: index === 0 ? 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)' : '#f8f9fa',
                         borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
@@ -1216,7 +1216,7 @@ const AdminDashboard = () => {
             <div style={{background: '#fff', borderRadius: 12, overflow: 'hidden'}}>
               {/* Header */}
               <div style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
                 padding: 24,
                 color: '#fff'
               }}>

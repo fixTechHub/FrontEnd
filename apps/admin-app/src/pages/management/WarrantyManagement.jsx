@@ -622,7 +622,7 @@ const handleSortByTechnician = () => {
                 width: 36,
                 height: 36,
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -656,7 +656,7 @@ const handleSortByTechnician = () => {
             borderRadius: 6,
             fontSize: 14,
             fontWeight: 600,
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
             border: 'none',
             boxShadow: '0 2px 8px rgba(24, 144, 255, 0.3)'
           }
@@ -1320,7 +1320,7 @@ const handleSortByTechnician = () => {
        >
          <div style={{ background: '#fff', borderRadius: 16 }}>
            <div style={{
-             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+             background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
              padding: '20px 24px',
              color: '#fff'
            }}>

@@ -590,7 +590,7 @@ const handleSortByUsedAt = () => {
        >
          <div style={{ background: '#fff', borderRadius: 16 }}>
            <div style={{
-             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+             background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
              padding: '20px 24px',
              color: '#fff'
            }}>
