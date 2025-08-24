@@ -111,12 +111,10 @@ const VideoCallPage = () => {
         track.stop();
       });
       if (myVideo.current) {
-        myVideo.current.pause();
         myVideo.current.srcObject = null;
         myVideo.current.load();
       }
       if (userVideo.current) {
-        userVideo.current.pause();
         userVideo.current.srcObject = null;
         userVideo.current.load();
       }
@@ -130,7 +128,7 @@ const VideoCallPage = () => {
     if (attempt >= maxRetries) {
       console.error(`Max retries (${maxRetries}) reached for media access`);
       toast.error('Could not access camera/microphone. Please check permissions.');
-      return; // Don't stop stream here to keep call alive
+      return;
     }
 
     try {
@@ -147,8 +145,10 @@ const VideoCallPage = () => {
         myVideo.current.srcObject = currentStream;
         try {
           await myVideo.current.play();
+          console.log('Local video playing successfully');
         } catch (playError) {
           console.warn('Video autoplay failed:', playError);
+          toast.warn('Local video failed to play. Please ensure autoplay is enabled.');
         }
       }
       console.log('Stream initialized successfully');
@@ -207,8 +207,8 @@ const VideoCallPage = () => {
       console.log('🔌 Peer connection closed');
       setConnectionState('closed');
       setIsConnecting(false);
-      if (callAccepted && !callEnded) {
-        // Only stop stream if call was active
+      // Only stop stream if call is explicitly ended
+      if (callEnded) {
         stopStream('peer closed');
       }
     });
@@ -217,8 +217,8 @@ const VideoCallPage = () => {
       console.error('❌ Peer error:', err);
       setConnectionState('failed');
       setIsConnecting(false);
-      if (callAccepted && !callEnded) {
-        // Only stop stream if call was active
+      // Only stop stream if call is explicitly ended
+      if (callEnded) {
         stopStream('peer error');
       }
     });
@@ -232,17 +232,15 @@ const VideoCallPage = () => {
           setIsConnecting(false);
           toast.success('Connection established!', { autoClose: 2000 });
         } else if (state === 'failed') {
-          // Delay cleanup to allow recovery
           const timeout = setTimeout(() => {
             if (!callAccepted && !callEnded) {
               setIsConnecting(false);
               toast.error('Connection failed. Retrying...');
-              // Attempt to reinitialize peer
               if (initiator && stream && !hasCalled.current) {
                 callUser(user._id === booking?.customerId?._id ? booking?.technicianId?.userId?._id : booking?.customerId?._id);
               }
             }
-          }, 5000); // Wait 5 seconds before giving up
+          }, 5000);
           setIceFailureTimeout(timeout);
         } else if (state === 'disconnected') {
           setIsConnecting(false);
@@ -278,12 +276,18 @@ const VideoCallPage = () => {
       const isValidCall = (incomingBookingId && incomingBookingId === bookingId) || (incomingWarrantyId && incomingWarrantyId === bookingWarrantyId);
       if (isValidCall && !callAccepted && !hasCalled.current) {
         hasCalled.current = false;
-        setStream(null);
-        initializeStream().then(() => {
+        // Do not clear stream here to prevent local video disappearance
+        if (!stream) {
+          initializeStream().then(() => {
+            dispatch(setCurrentSessionId(data.sessionId));
+            dispatch(setCall({ ...data, isReceivingCall: true }));
+            console.log('Incoming call from:', data.from, 'with sessionId:', data.sessionId);
+          });
+        } else {
           dispatch(setCurrentSessionId(data.sessionId));
           dispatch(setCall({ ...data, isReceivingCall: true }));
           console.log('Incoming call from:', data.from, 'with sessionId:', data.sessionId);
-        });
+        }
       }
     };
 
@@ -563,7 +567,7 @@ const VideoCallPage = () => {
         </div>
         <div className="custom-video-wrapper local">
           <span className="custom-video-label">Bạn</span>
-          {stream ? (
+          {stream && !hasStopped.current ? (
             <video className="custom-video" playsInline muted ref={myVideo} autoPlay />
           ) : (
             <div className="custom-waiting-message">Đang khởi tạo camera...</div>
@@ -588,14 +592,13 @@ const VideoCallPage = () => {
           <div>Is Connecting: {isConnecting ? 'Yes' : 'No'}</div>
           <div>Call Accepted: {callAccepted ? 'Yes' : 'No'}</div>
           <div>Stream: {stream ? 'Available' : 'Not Available'}</div>
+          <div>Stream Stopped: {hasStopped.current ? 'Yes' : 'No'}</div>
         </div>
       )}
       <div className="custom-controls">
-  
-          <button className="custom-btn-hangup" onClick={leaveCall}>
-            <MdCallEnd size={24} color="white" />
-          </button>
-       
+        <button className="custom-btn-hangup" onClick={leaveCall}>
+          <MdCallEnd size={24} color="white" />
+        </button>
       </div>
     </div>
   );
