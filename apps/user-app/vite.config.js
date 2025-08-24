@@ -1,72 +1,60 @@
 import { defineConfig } from "vite";
 import path from "path";
 import react from "@vitejs/plugin-react";
-// import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
-// import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 
 export default defineConfig({
   plugins: [react()],
   build: {
-    target: 'esnext', // Target modern browsers
+    target: 'esnext',
     sourcemap: true,
     outDir: 'dist'
   },
   
   server: {
-    port: 5174
+    port: 5174,
+    host: true, // Allow external access
+    https: true, // Set to true if you need HTTPS for WebRTC testing
   },
-
-  // server: {
-  //   port: 5174, // Explicitly set frontend port
-  //   host: '0.0.0.0', // Allow external connections (needed for ngrok)
-  //   allowedHosts: [
-  //     'b8d9-2001-ee0-4b7b-3bd0-2d89-bdfa-7310-9e33.ngrok-free.app', // Specific ngrok host
-  //     '*.ngrok-free.app', // Wildcard for all ngrok-free.app hosts
-  //   ],
-  //   proxy: {
-  //     '/api': {
-  //       target: 'http://localhost:3000', // Proxy to backend
-  //       changeOrigin: true,
-  //       secure: false,
-  //       ws: true, // Support WebSockets if needed
-  //     },
-  //     '/socket.io': {
-  //       target: 'http://localhost:3000',
-  //       changeOrigin: true,
-  //       secure: false,
-  //       ws: true,
-  //     },
-  //   },
-  // },
-  // optimizeDeps: {
-  //   esbuildOptions: {
-  //     define: {
-  //       global: 'globalThis', // Polyfill 'global' for browser compatibility
-  //     },
-  //     plugins: [
-  //       NodeGlobalsPolyfillPlugin({
-  //         buffer: true,
-  //         process: true, // Explicitly polyfill process
-  //       }),
-  //       NodeModulesPolyfillPlugin(), // Polyfill Node.js modules like 'stream'
-  //     ],
-  //   },
-  // },
+  
   define: {
-    // 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'), // Ensure NODE_ENV is defined
-    global: 'globalThis', // Define global as window for browser
+    global: 'globalThis',
     'process.env': {},
+    // Add NODE_ENV for better debugging
+    // 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
   },
+  
   resolve: {
     alias: {
-      process: 'process/browser', // Alias for process
+      process: 'process/browser',
       stream: 'stream-browserify',
       crypto: 'crypto-browserify',
       events: 'events',
+      buffer: 'buffer',
       "@": path.resolve(__dirname, "./src")
     }
   },
+  
   optimizeDeps: {
-    include: ['process', 'stream', 'crypto', 'events']
+    include: [
+      'process', 
+      'stream-browserify', 
+      'crypto-browserify', 
+      'events',
+      'buffer',
+      'simple-peer'
+    ],
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+  },
+  
+  // Add polyfills for WebRTC compatibility
+  esbuild: {
+    // Ensure modern JS features are supported
+    target: 'esnext',
+    // Keep original function names for debugging
+    keepNames: true,
   }
 });
