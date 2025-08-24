@@ -7,20 +7,19 @@ export default defineConfig({
   build: {
     target: 'esnext',
     sourcemap: true,
-    outDir: 'dist'
+    outDir: 'dist',
   },
   
   server: {
     port: 5174,
-    host: true, // Allow external access
-    https: true, // Set to true if you need HTTPS for WebRTC testing
+    host: true,
+    https: true,
   },
   
   define: {
     global: 'globalThis',
     'process.env': {},
-    // Add NODE_ENV for better debugging
-    // 'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+    // 'process.env.NODE_ENV': JSON.stringify('production'),
   },
   
   resolve: {
@@ -36,12 +35,13 @@ export default defineConfig({
   
   optimizeDeps: {
     include: [
+      'simple-peer',
+      // 'browser', 
       'process', 
       'stream-browserify', 
       'crypto-browserify', 
-      'events',
       'buffer',
-      'simple-peer'
+      'events'
     ],
     esbuildOptions: {
       define: {
@@ -50,11 +50,8 @@ export default defineConfig({
     },
   },
   
-  // Add polyfills for WebRTC compatibility
   esbuild: {
-    // Ensure modern JS features are supported
     target: 'esnext',
-    // Keep original function names for debugging
     keepNames: true,
   }
 });
