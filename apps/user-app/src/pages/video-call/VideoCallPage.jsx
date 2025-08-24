@@ -114,10 +114,12 @@ const VideoCallPage = () => {
       if (myVideo.current) {
         myVideo.current.srcObject = null;
         myVideo.current.load();
+        console.log('Cleared myVideo srcObject');
       }
       if (userVideo.current) {
         userVideo.current.srcObject = null;
         userVideo.current.load();
+        console.log('Cleared userVideo srcObject');
       }
       setStream(null);
       setIsStreamReady(false);
@@ -146,12 +148,14 @@ const VideoCallPage = () => {
       setIsStreamReady(true);
       if (myVideo.current) {
         myVideo.current.srcObject = currentStream;
+        console.log('Local stream attached to myVideo');
         try {
           await myVideo.current.play();
           console.log('Local video playing successfully');
         } catch (playError) {
           console.warn('Video autoplay failed:', playError);
-          toast.warn('Local video failed to play. Please ensure autoplay is enabled or interact with the page.');
+          toast.warn('Local video failed to play. Please interact with the page or check browser settings.');
+          // Fallback: Add a play button or retry logic if needed
         }
       }
       console.log('Stream initialized successfully');
@@ -168,22 +172,7 @@ const VideoCallPage = () => {
         toast.error('Failed to access camera/microphone. Check device or permissions.');
       }
       if (attempt < maxRetries - 1) {
-        setTimeout(() => {
-          const fallbackConstraints = attempt === 1
-            ? { video: true, audio: true }
-            : { video: { width: 320, height: 240 }, audio: true };
-          navigator.mediaDevices.getUserMedia(fallbackConstraints)
-            .then((currentStream) => {
-              setStream(currentStream);
-              setIsStreamReady(true);
-              if (myVideo.current) {
-                myVideo.current.srcObject = currentStream;
-                myVideo.current.play().catch((error) => console.warn('Video autoplay failed:', error));
-              }
-              console.log('Stream initialized with fallback constraints');
-            })
-            .catch(() => initializeStream(attempt + 1));
-        }, 1000);
+        setTimeout(() => initializeStream(attempt + 1), 1000);
       }
     }
   };
@@ -268,7 +257,7 @@ const VideoCallPage = () => {
       return;
     }
 
-    initializeStream(); // Ensure stream is initialized on mount
+    initializeStream();
 
     const handleCallUser = (data) => {
       console.log('Received callUser event:', data);
@@ -328,14 +317,11 @@ const VideoCallPage = () => {
       socket.off('callEnded', handleCallEnded);
       socket.off('callDeclined', handleCallDeclined);
       if (iceFailureTimeout) clearTimeout(iceFailureTimeout);
-      if ((callAccepted && !callEnded) || connectionRef.current) {
+      if (callAccepted && !callEnded && connectionRef.current) {
         console.log('Call active during cleanup - ending call');
-        if (connectionRef.current) {
-          connectionRef.current.destroy();
-          connectionRef.current = null;
-        }
+        connectionRef.current.destroy();
+        connectionRef.current = null;
         stopStream('navigation away from call');
-        const socket = getSocket();
         const otherUserId = call.from || (booking && (user._id === booking.customerId._id ? booking.technicianId.userId._id : booking.customerId._id));
         if (socket && currentSessionId && otherUserId) {
           dispatch(endCall({ sessionId: currentSessionId, to: otherUserId }))
@@ -348,7 +334,6 @@ const VideoCallPage = () => {
         }
       } else if (call.isReceivingCall && !callAccepted) {
         console.log('Declining incoming call due to navigation');
-        const socket = getSocket();
         const otherUserId = call.from;
         if (socket && otherUserId && currentSessionId) {
           dispatch(declineCall({ sessionId: currentSessionId, to: otherUserId }))
@@ -357,10 +342,6 @@ const VideoCallPage = () => {
               socket.emit('callDeclined', { to: otherUserId, from: user._id, sessionId: currentSessionId });
             });
         }
-      }
-      if (connectionRef.current) {
-        connectionRef.current.destroy();
-        connectionRef.current = null;
       }
       stopStream('component unmount');
       hasCalled.current = false;
@@ -494,7 +475,7 @@ const VideoCallPage = () => {
         console.log('Call ended successfully');
       } catch (error) {
         console.error('Failed to end call:', error);
-        socket.emit('callEnded', { to: otherUserId, sessionId: currentSessionId });
+        socket.emit('endCall', { to: otherUserId, sessionId: currentSessionId });
       }
     }
     if (connectionRef.current) {
