@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { Badge, Dropdown, Button, List, Typography, Spin, Empty } from 'antd';
+import { BellOutlined, CheckOutlined, ClearOutlined } from '@ant-design/icons';
 import {
   onReceiveNotification,
   onNotificationUpdated,
@@ -15,73 +17,8 @@ import {
 } from '../../features/notifications/notificationsSlice';
 import { useNavigate } from 'react-router-dom';
 
-const styles = {
-  notificationMessage: {
-    padding: '10px 15px',
-    borderBottom: '1px solid #f0f0f0',
-    transition: 'background-color 0.2s',
-    cursor: 'default',
-  },
-  clickableNotification: {
-    cursor: 'pointer'
-  },
-  markAsReadBtn: {
-    backgroundColor: '#f8f9fa',
-    border: '1px solid #dee2e6',
-    borderRadius: '4px',
-    color: '#6c757d',
-    fontSize: '0.75rem',
-    padding: '0.25rem 0.5rem',
-    marginLeft: '0.5rem',
-    whiteSpace: 'nowrap',
-    transition: 'all 0.2s',
-    ':hover': {
-      backgroundColor: '#e9ecef',
-      borderColor: '#dee2e6',
-      color: '#495057',
-    }
-  },
-  unreadNotification: {
-    backgroundColor: '#f8f9fa'
-  },
-  bellIcon: {
-    position: 'relative',
-    display: 'flex',
-    width: '36px',
-    height: '36px',
-    background: '#F1F1F1',
-    borderRadius: '50%',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgePill: {
-    minWidth: '24px',
-    height: '24px',
-    fontSize: '12px',
-    fontWeight: 'bold',
-    lineHeight: '24px',
-    padding: '0 8px',
-    borderRadius: '12px',
-    position: 'absolute',
-    top: '-8px',
-    right: '-8px',
-    backgroundColor: '#dc3545',
-    color: 'white',
-    textAlign: 'center',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  badgePillLarge: {
-    minWidth: '28px',
-    height: '28px',
-    fontSize: '14px',
-    lineHeight: '28px',
-    borderRadius: '14px',
-    top: '-10px',
-    right: '-10px',
-  }
-};
+const { Text, Title } = Typography;
+
 const Notifications = ({ userId }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -90,7 +27,7 @@ const Notifications = ({ userId }) => {
 
   useEffect(() => {
     if (userId) {
-      dispatch(fetchNotificationsThunk());
+      dispatch(fetchNotificationsThunk(userId));
     }
 
     const cleanupReceive = onReceiveNotification((notification) => {
@@ -129,12 +66,10 @@ const Notifications = ({ userId }) => {
   };
 
   const handleClearAll = () => {
-    dispatch(clearAllNotificationsThunk()).then(() => {
+    dispatch(clearAllNotificationsThunk(userId)).then(() => {
       dispatch(clearNotifications());
     });
   };
-
-
 
   const getTimeAgo = (date) => {
     const seconds = Math.floor((new Date() - new Date(date)) / 1000);
@@ -154,111 +89,160 @@ const Notifications = ({ userId }) => {
 
   const unreadCount = notifications.filter((n) => !n.isRead && n.status === 'DISPLAY').length;
 
-  return (
-    <div className="nav-item dropdown logged-item noti-nav noti-wrapper">
-      <a
-        href="#"
-        className="dropdown-toggle nav-link"
-        onClick={() => setIsOpen(!isOpen)}
-      // data-bs-toggle="dropdown"
-      >
-        <span style={styles.bellIcon}>
-          <img src="/img/icons/bell-icon.svg" alt="Bell" />
-        </span>
-        {unreadCount > 0 && (
-          <span style={{ ...styles.badgePill, ...styles.badgePillLarge }}>{unreadCount}</span>
-        )}
-      </a>
+  const dropdownContent = (
+    <div style={{ width: 350, maxHeight: 400, overflow: 'hidden' }}>
+      {/* Header */}
+      <div style={{
+        padding: '12px 16px',
+        borderBottom: '1px solid #f0f0f0',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#fafafa'
+      }}>
+        <Title level={5} style={{ margin: 0, color: '#262626' }}>
+          Thông Báo
+        </Title>
+        <Button
+          type="text"
+          size="small"
+          icon={<ClearOutlined />}
+          onClick={(e) => {
+            e.preventDefault();
+            handleClearAll();
+          }}
+          style={{ color: '#1890ff' }}
+        >
+          Xóa tất cả
+        </Button>
+      </div>
 
-      {isOpen && (
-        <div className="dropdown-menu notifications show">
-          <div className="topnav-dropdown-header">
-            <span className="notification-title">Thông Báo</span>
-            <a
-              href="#"
-              className="clear-noti"
-              onClick={(e) => {
-                e.preventDefault();
-                handleClearAll();
-              }}
-            >
-              Xóa tất cả
-            </a>
+      {/* Content */}
+      <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+        {status === 'loading' ? (
+          <div style={{ padding: '40px', textAlign: 'center' }}>
+            <Spin size="default" />
+            <div style={{ marginTop: 8 }}>
+              <Text type="secondary">Đang tải...</Text>
+            </div>
           </div>
-          <div className="noti-content">
-            <ul className="notification-list">
-              {status === 'loading' ? (
-                <li className="notification-message">
-                  <div className="media d-flex">
-                    <div className="media-body flex-grow-1">
-                      <p className="noti-details">Đang tải...</p>
-                    </div>
-                  </div>
-                </li>
-              ) : notifications.length === 0 ? (
-                <li className="notification-message">
-                  <div className="media d-flex">
-                    <div className="media-body flex-grow-1">
-                      <p className="noti-details">Không có thông báo nào</p>
-                    </div>
-                  </div>
-                </li>
-              ) : (
-                notifications.map((notification) => (
-                  notification.status === 'DISPLAY' && (
-                    <li
-                      key={notification._id}
-                      className="notification-message"
-                      style={{
-                        ...styles.notificationMessage,
-                        ...(notification.isRead ? {} : styles.unreadNotification),
-                        ...(notification.url ? styles.clickableNotification : {})
+        ) : notifications.length === 0 || !notifications.some(n => n.status === 'DISPLAY') ? (
+          <div style={{ padding: '40px' }}>
+            <Empty
+              description="Không có thông báo nào"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          </div>
+        ) : (
+          <List
+            itemLayout="vertical"
+            size="small"
+            split={false}
+            dataSource={notifications.filter(n => n.status === 'DISPLAY')}
+            renderItem={(notification) => (
+              <List.Item
+                key={notification._id}
+                style={{
+                  padding: '12px 16px',
+                  backgroundColor: notification.isRead ? '#ffffff' : '#f6ffed',
+                  borderLeft: notification.isRead ? 'none' : '3px solid #52c41a',
+                  cursor: notification.url ? 'pointer' : 'default',
+                  transition: 'all 0.2s ease',
+                }}
+                className="notification-item"
+                onClick={() => handleNotificationClick(notification)}
+                onMouseEnter={(e) => {
+                  if (notification.url) {
+                    e.currentTarget.style.backgroundColor = notification.isRead ? '#f5f5f5' : '#f0f9f0';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = notification.isRead ? '#ffffff' : '#f6ffed';
+                }}
+                actions={[
+                  !notification.isRead && (
+                    <Button
+                      key="mark-read"
+                      type="text"
+                      size="small"
+                      icon={<CheckOutlined />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleMarkNotificationRead(notification._id);
                       }}
-                      onClick={() => handleNotificationClick(notification)}
-                    >
-                      <div className="media d-flex justify-content-between align-items-start">
-                        <div className="d-flex flex-grow-1">
-                         
-                          <div className="media-body">
-                            <p className="noti-details">
-                              {notification.title}
-                            </p>
-                            <p className="noti-details">
-                              <span style={{ fontSize: 13 }} className="noti-title">
-                                {notification.content}
-                              </span>
-                            </p>
-                            <p className="noti-time">
-                              <span className="notification-time">
-                                {getTimeAgo(notification.createdAt)}
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                        {!notification.isRead && (
-                          <button
-                            className="btn btn-sm btn-light mark-as-read"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              handleMarkNotificationRead(notification._id);
-                            }}
-                            style={styles.markAsReadBtn}
-                          >
-                            <i className='bx bx-check-double'></i>
-                          </button>
-                        )}
-                      </div>
-                    </li>
+                      style={{
+                        color: '#52c41a',
+                        border: '1px solid #d9f7be',
+                        borderRadius: '6px',
+                      }}
+                    />
                   )
-                ))
-              )}
-            </ul>
-          </div>
-       
-        </div>
-      )}
+                ]}
+              >
+                <div style={{ paddingRight: !notification.isRead ? '40px' : '0' }}>
+                  <div style={{ marginBottom: '4px' }}>
+                    <Text strong style={{ fontSize: '14px', color: '#262626' }}>
+                      {notification.title}
+                    </Text>
+                  </div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <Text style={{ fontSize: '13px', color: '#595959', lineHeight: '1.4' }}>
+                      {notification.content}
+                    </Text>
+                  </div>
+                  <div>
+                    <Text type="secondary" style={{ fontSize: '12px' }}>
+                      {getTimeAgo(notification.createdAt)}
+                    </Text>
+                  </div>
+                </div>
+              </List.Item>
+            )}
+          />
+        )}
+      </div>
     </div>
+  );
+
+  return (
+    <Dropdown
+      open={isOpen}
+      onOpenChange={setIsOpen}
+      popupRender={() => dropdownContent}
+      trigger={['click']}
+      placement="bottomRight"
+      overlayStyle={{
+        boxShadow: '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)'
+      }}
+    >
+      <div className="notification-trigger" style={{ position: 'relative', cursor: 'pointer' }}>
+        <Badge count={unreadCount} size="default" offset={[-2, 2]}>
+          <div style={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            backgroundColor: '#f5f5f5',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease',
+            border: '1px solid #d9d9d9'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#e6f7ff';
+            e.currentTarget.style.borderColor = '#1890ff';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = '#f5f5f5';
+            e.currentTarget.style.borderColor = '#d9d9d9';
+          }}
+          >
+            <BellOutlined style={{ fontSize: '18px', color: '#595959' }} />
+          </div>
+        </Badge>
+      </div>
+    </Dropdown>
   );
 };
 

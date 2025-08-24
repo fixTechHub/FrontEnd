@@ -58,9 +58,9 @@ const ResetPassword = () => {
           <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Please enter your email' }, { type: 'email', message: 'Invalid email' }]}> 
             <Input prefix={<MailOutlined />} placeholder="you@example.com" size="large" disabled={!!emailFromQuery} />
           </Form.Item>
-          <Form.Item label="Code" name="code" rules={[{ required: true, message: 'Please enter the code' }]}> 
+          {/* <Form.Item label="Code" name="code" rules={[{ required: true, message: 'Please enter the code' }]}> 
             <Input prefix={<SafetyOutlined />} placeholder="Reset code" size="large" disabled={!!code} value={code} />
-          </Form.Item>
+          </Form.Item> */}
           <Form.Item label="New Password" name="newPassword" rules={[{ required: true, message: 'Please enter your new password' }]}> 
             <Input.Password prefix={<LockOutlined />} placeholder="New password" size="large" />
           </Form.Item>

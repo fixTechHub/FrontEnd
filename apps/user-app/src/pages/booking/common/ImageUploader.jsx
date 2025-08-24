@@ -71,7 +71,7 @@ function ImageUploader({ onFilesSelect }) {
                 </label>
             )}
 
-            {previewUrls.length > 0 && (
+            {/* {previewUrls.length > 0 && (
                 <div className="upload-preview mt-3">
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                         {previewUrls.map((url, index) => (
@@ -98,7 +98,7 @@ function ImageUploader({ onFilesSelect }) {
                         ))}
                     </div>
                 </div>
-            )}
+            )} */}
 
             {/* <div className="upload-list mt-2">
                 <ul style={{ fontSize: 11 }}>

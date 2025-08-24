@@ -6,7 +6,7 @@ import { couponAPI } from '../../features/coupons/couponAPI';
 import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { Modal, Button, Select, Descriptions, Spin, Tag } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 
 
@@ -189,11 +189,11 @@ const [isDataReady, setIsDataReady] = useState(false);
   }
   
   // Fallback: LUÔN sắp xếp theo thời gian sử dụng mới nhất trước
-  const dateA = new Date(a.usedAt || 0);
-  const dateB = new Date(b.usedAt || 0);
+    const dateA = new Date(a.usedAt || 0);
+    const dateB = new Date(b.usedAt || 0);
   console.log(`📅 FORCE fallback sorting DESC: ${dateA.toISOString()} vs ${dateB.toISOString()}`);
   return dateB - dateA;
- });
+});
 const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
 
 // Set export data và columns
@@ -217,7 +217,7 @@ useEffect(() => {
   }));
 
   createExportData(exportData, exportColumns, 'coupon_usages_export', 'Coupon Usages');
- }, [sortedUsages, couponMap, userMap, bookingMap]);
+}, [sortedUsages, couponMap, userMap, bookingMap]);
 
  // Debug: Log dữ liệu sắp xếp
  useEffect(() => {
@@ -233,7 +233,7 @@ useEffect(() => {
    console.log('🔄 Sort state changed:', { sortField, sortOrder, hasSorted });
  }, [sortField, sortOrder, hasSorted]);
 
- const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
+const totalPages = Math.ceil(filteredUsages.length / couponsPerPage);
 
  const handlePageChange = (page) => {
    setCurrentPage(page);
@@ -300,11 +300,11 @@ const handleSortByUsedAt = () => {
      <div className="modern-content-card">
        <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
          <div className="my-auto mb-2">
-           <h4 className="mb-1">Lịch sử sử dụng mã giảm giá</h4>
+           <h4 className="mb-1">Lịch sử mã giảm giá</h4>
            <nav>
              <ol className="breadcrumb mb-0">
                <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
-               <li className="breadcrumb-item active">Lịch sử sử dụng mã giảm giá</li>
+               <li className="breadcrumb-item active">Lịch sử mã giảm giá</li>
              </ol>
            </nav>
          </div>
@@ -326,15 +326,15 @@ const handleSortByUsedAt = () => {
          </div>
          <div className="d-flex align-items-center">
            <span style={{ marginRight: 8, fontWeight: 500 }}>Sắp xếp:</span>
-                       <Select
+           <Select
               value="lasted"
-              style={{ width: 120 }}
-              onChange={handleSortChange}
-              options={[
-                { value: 'lasted', label: 'Mới nhất' },
-                { value: 'oldest', label: 'Cũ nhất' },
-              ]}
-            />
+             style={{ width: 120 }}
+             onChange={handleSortChange}
+             options={[
+               { value: 'lasted', label: 'Mới nhất' },
+               { value: 'oldest', label: 'Cũ nhất' },
+             ]}
+           />
          </div>
        </div>
 
@@ -451,7 +451,7 @@ const handleSortByUsedAt = () => {
              Hiển thị {indexOfFirst + 1}-{Math.min(indexOfLast, filteredUsages.length)} trong tổng số {filteredUsages.length} lịch sử sử dụng
            </div>
          </div>
-         {filteredUsages.length > 0 && (
+         {totalPages > 1 && (
            <nav>
              <ul className="pagination mb-0" style={{ gap: '2px' }}>
                {/* Previous button */}
@@ -473,73 +473,50 @@ const handleSortByUsedAt = () => {
                
                {/* Page numbers */}
                {[...Array(totalPages)].map((_, i) => {
-                 const pageNumber = i + 1;
-                 // Show all pages if total pages <= 7
-                 if (totalPages <= 7) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 }
-                 
-                 // Show first page, last page, current page, and pages around current page
-                 if (
-                   pageNumber === 1 || 
-                   pageNumber === totalPages || 
-                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                 ) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 } else if (
-                   pageNumber === currentPage - 2 || 
-                   pageNumber === currentPage + 2
-                 ) {
-                   return (
-                     <li key={i} className="page-item disabled">
-                       <span className="page-link" style={{ 
-                         border: '1px solid #dee2e6',
-                         borderRadius: '6px',
-                         padding: '8px 12px',
-                         minWidth: '40px',
-                         backgroundColor: '#f8f9fa',
-                         color: '#6c757d'
-                       }}>...</span>
-                     </li>
-                   );
-                 }
-                 return null;
+                   const pageNumber = i + 1;
+                   // Show first page, last page, current page, and pages around current page
+                   if (
+                       pageNumber === 1 || 
+                       pageNumber === totalPages || 
+                       (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                   ) {
+                       return (
+                           <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                               <button 
+                                   className="page-link" 
+                                   onClick={() => handlePageChange(pageNumber)}
+                                   style={{ 
+                                       border: '1px solid #dee2e6',
+                                       borderRadius: '6px',
+                                       padding: '8px 12px',
+                                       minWidth: '40px',
+                                       backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                       color: currentPage === pageNumber ? 'white' : '#007bff',
+                                       borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                   }}
+                               >
+                                   {pageNumber}
+                               </button>
+                           </li>
+                       );
+                   } else if (
+                       pageNumber === currentPage - 2 || 
+                       pageNumber === currentPage + 2
+                   ) {
+                       return (
+                           <li key={i} className="page-item disabled">
+                               <span className="page-link" style={{ 
+                                   border: '1px solid #dee2e6',
+                                   borderRadius: '6px',
+                                   padding: '8px 12px',
+                                   minWidth: '40px',
+                                   backgroundColor: '#f8f9fa',
+                                   color: '#6c757d'
+                               }}>...</span>
+                           </li>
+                       );
+                   }
+                   return null;
                })}
                
                {/* Next button */}
@@ -558,8 +535,8 @@ const handleSortByUsedAt = () => {
                    <i className="ti ti-chevron-right"></i>
                  </button>
                </li>
-             </ul>
-           </nav>
+           </ul>
+         </nav>
          )}
        </div>
      </div>
@@ -577,7 +554,7 @@ const handleSortByUsedAt = () => {
        >
          <div style={{ background: '#fff', borderRadius: 16 }}>
            <div style={{
-             background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)',
+             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
              padding: '20px 24px',
              color: '#fff'
            }}>

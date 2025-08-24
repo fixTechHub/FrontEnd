@@ -18,7 +18,8 @@ import {
   CheckCircleOutlined,
   ExclamationCircleOutlined,
   ArrowUpOutlined,
-  ArrowDownOutlined
+  ArrowDownOutlined,
+  TrophyOutlined
 } from '@ant-design/icons';
 import {
   Chart as ChartJS,
@@ -39,6 +40,7 @@ import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
+import { technicianSubscriptionAPI } from '../../features/technicianSubscription/technicianSubscriptionAPI';
 
 // Redux actions
 import { getBookingCountByMonth } from '../../features/bookings/bookingSlice';
@@ -157,49 +159,77 @@ const AdminDashboard = () => {
         position: 'top',
         align: 'end',
         labels: {
-          boxWidth: 12,
-          padding: 15,
-          font: { size: 11, weight: '500' },
-          usePointStyle: true
+          boxWidth: 16,
+          padding: 20,
+          font: { size: 12, weight: '600' },
+          usePointStyle: true,
+          color: '#374151'
         }
       },
       tooltip: {
         enabled: true,
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: 'rgba(17, 24, 39, 0.95)',
         titleColor: '#fff',
         bodyColor: '#fff',
-        borderColor: '#4CAF50',
-        borderWidth: 1,
-        bodyFont: { size: 11 },
-        titleFont: { size: 12 }
+        borderColor: '#3B82F6',
+        borderWidth: 2,
+        cornerRadius: 8,
+        padding: 12,
+        bodyFont: { size: 13, weight: '500' },
+        titleFont: { size: 14, weight: '600' },
+        displayColors: true,
+        callbacks: {
+          label: function(context) {
+            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} VNĐ`;
+          }
+        }
       }
     },
     scales: {
       x: {
-        grid: { display: false },
+        grid: { 
+          display: true,
+          color: 'rgba(156, 163, 175, 0.1)',
+          lineWidth: 1
+        },
         ticks: {
           display: true,
-          font: { size: 10, weight: '500' },
-          color: '#666',
-          maxRotation: 0
+          font: { size: 11, weight: '600' },
+          color: '#6B7280',
+          maxRotation: 0,
+          padding: 8,
+          autoSkip: false, // Đảm bảo hiển thị tất cả labels
+          minRotation: 0
+        },
+        border: {
+          display: true,
+          color: 'rgba(156, 163, 175, 0.2)',
+          width: 1
         }
       },
       y: {
         beginAtZero: true,
         grid: {
-          borderDash: [3, 3],
-          color: 'rgba(0,0,0,0.05)',
+          borderDash: [4, 4],
+          color: 'rgba(156, 163, 175, 0.1)',
+          lineWidth: 1
         },
         ticks: {
           display: true,
-          font: { size: 10, weight: '500' },
-          color: '#666',
+          font: { size: 11, weight: '600' },
+          color: '#6B7280',
+          padding: 8,
           callback: function(value) {
             return value >= 1000 ? (value/1000).toFixed(1) + 'k' : value;
           }
+        },
+        border: {
+          display: true,
+          color: 'rgba(156, 163, 175, 0.2)',
+          width: 1
         }
-      },
-    },
+      }
+    }
   };
 
   // Calculate totals
@@ -221,6 +251,20 @@ const AdminDashboard = () => {
   const currentMonth = now.getMonth() + 1;
   const lastMonthForRevenue = currentMonth === 1 ? 12 : currentMonth - 1;
   const lastYearForRevenue = currentMonth === 1 ? lastYear : currentYear;
+
+  // Đảm bảo dữ liệu được khởi tạo đúng cách
+  useEffect(() => {
+    // Khởi tạo dữ liệu mặc định cho biểu đồ
+    if (revenueThisYear.length !== 12) {
+      setRevenueThisYear(Array(12).fill(0));
+    }
+    if (revenueLastYear.length !== 12) {
+      setRevenueLastYear(Array(12).fill(0));
+    }
+    if (revenueCounts.length !== 12) {
+      setRevenueCounts(Array(12).fill(0));
+    }
+  }, []);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -282,7 +326,16 @@ const AdminDashboard = () => {
 
         // Calculate dashboard stats
         const totalUsers = bookingsData.length;
-        const totalRevenue = revenueCounts.reduce((sum, rev) => sum + rev, 0);
+        // Lấy tổng doanh thu từ Package (TechnicianSubscription) thay vì từ commission
+        let totalRevenue = 0;
+        try {
+          const revenueResponse = await technicianSubscriptionAPI.getTotalRevenue();
+          totalRevenue = revenueResponse.totalRevenue || 0;
+        } catch (error) {
+          console.error('Error fetching total revenue from packages:', error);
+          totalRevenue = 0;
+        }
+        
         const pendingBookings = bookingsData.filter(b => b.status === 'PENDING').length;
         // Count bookings with status = 'DONE' (completed jobs)
         const completedBookings = bookingsData.filter(b => b.status === 'DONE').length;
@@ -314,20 +367,25 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, []); // Empty dependency array to run only once
 
-  // Fetch revenue data
+  // Fetch revenue data - Lấy doanh thu từ Package (TechnicianSubscription) thay vì từ commission
   useEffect(() => {
     const fetchRevenueData = async () => {
       try {
         const revenueCounts = await Promise.all(
         Array.from({ length: 12 }, (_, i) =>
-            ApiBE.get(`/Dashboard/revenue?year=${currentYear}&month=${i + 1}`)
+            technicianSubscriptionAPI.getMonthlyRevenue(currentYear, i + 1)
           )
         );
         
-        const revenueData = revenueCounts.map(response => {
-          const value = response.data.revenue || 0;
+        console.log('Raw revenue response:', revenueCounts);
+        
+        const revenueData = revenueCounts.map((response, index) => {
+          console.log(`Month ${index + 1} response:`, response);
+          const value = response.revenue || response || 0;
           return typeof value === 'number' ? Math.round(value) : 0;
         });
+        
+        console.log('Processed revenue data:', revenueData);
         setRevenueCounts(revenueData);
         
         const currentMonth = new Date().getMonth();
@@ -435,15 +493,41 @@ const AdminDashboard = () => {
     fetchTechnicianCounts();
   }, [currentYear]);
 
-  // Fetch yearly revenue comparison
+  // Fetch yearly revenue comparison - Lấy doanh thu từ Package thay vì từ commission
   useEffect(() => {
     async function fetchYearlyRevenue(year) {
-      const results = await Promise.all(
+      try {
+        const results = await Promise.all(
           Array.from({ length: 12 }, (_, i) => 
-          fetchMonthlyRevenue(year, i + 1).then(res => Math.round(res.revenue || 0)).catch(() => 0)
-        )
-      );
-      return results;
+            technicianSubscriptionAPI.getMonthlyRevenue(year, i + 1)
+              .then(res => {
+                console.log(`Year ${year}, Month ${i + 1} response:`, res);
+                const revenue = res.revenue || res || 0;
+                return Math.round(revenue);
+              })
+              .catch((error) => {
+                console.warn(`Error fetching revenue for ${year}-${i + 1}:`, error);
+                return 0; // Trả về 0 nếu có lỗi
+              })
+          )
+        );
+        
+        // Đảm bảo luôn có đủ 12 tháng
+        if (results.length !== 12) {
+          console.warn(`Expected 12 months for year ${year}, got ${results.length}`);
+          // Nếu thiếu, bổ sung với 0
+          while (results.length < 12) {
+            results.push(0);
+          }
+        }
+        
+        console.log(`Revenue data for year ${year}:`, results);
+        return results;
+      } catch (error) {
+        console.error(`Error fetching yearly revenue for ${year}:`, error);
+        // Trả về mảng 12 số 0 nếu có lỗi
+        return Array(12).fill(0);
+      }
     }
     
     setRevenueChartLoading(true);
@@ -451,8 +535,14 @@ const AdminDashboard = () => {
       fetchYearlyRevenue(currentYear),
       fetchYearlyRevenue(lastYear)
     ]).then(([dataThisYear, dataLastYear]) => {
+      console.log('Final revenue data:', { currentYear: dataThisYear, lastYear: dataLastYear });
       setRevenueThisYear(dataThisYear);
       setRevenueLastYear(dataLastYear);
+    }).catch((error) => {
+      console.error('Error in yearly revenue comparison:', error);
+      // Set default data nếu có lỗi
+      setRevenueThisYear(Array(12).fill(0));
+      setRevenueLastYear(Array(12).fill(0));
     }).finally(() => setRevenueChartLoading(false));
   }, [currentYear, lastYear]);
 
@@ -556,7 +646,7 @@ const AdminDashboard = () => {
             <Card 
               className="stats-card"
               style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #ffc107 100%)',
+                background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
                 border: 'none',
                 borderRadius: '12px',
                 boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)',
@@ -625,9 +715,9 @@ const AdminDashboard = () => {
                 <div>
                   <div className="text-white-50 small mb-1">Tổng doanh thu của tháng</div>
                   <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
-                    ${currentRevenue.toLocaleString()}
+                    {currentRevenue.toLocaleString()} VND
                 </div>
-                  <div className="text-white-50 small mb-2">
+                  <div className="text-white-50 small mb-2" >
                     {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
                   <div className="d-flex align-items-center mt-2">
@@ -748,15 +838,21 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold">Số liệu doanh thu</span>
+                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Số liệu doanh thu từ Package</span>
                   <div className="d-flex align-items-center gap-2">
                     
                   </div>
                 </div>
               }
-              style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}
+              style={{
+                borderRadius: '16px', 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(156, 163, 175, 0.1)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+              }}
             >
-              <div style={{height: '300px', position: 'relative'}}>
+              <div style={{height: '320px', position: 'relative'}}>
+                
                 <Bar
                   data={{
                   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
@@ -764,22 +860,28 @@ const AdminDashboard = () => {
                     {
                         label: `${currentYear}`,
                         data: revenueThisYear,
-                        backgroundColor: '#4CAF50',
-                        borderColor: '#4CAF50',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        barPercentage: 0.7,
-                        categoryPercentage: 0.8,
+                        backgroundColor: 'rgba(59, 130, 246, 0.9)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9,
+                        hoverBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        hoverBorderColor: 'rgba(59, 130, 246, 1)',
+                        hoverBorderWidth: 3,
                       },
                       {
                         label: `${lastYear}`,
                         data: revenueLastYear,
-                        backgroundColor: '#9E9E9E',
-                        borderColor: '#9E9E9E',
-                        borderWidth: 1,
-                        borderRadius: 6,
-                        barPercentage: 0.7,
-                        categoryPercentage: 0.8,
+                        backgroundColor: 'rgba(156, 163, 175, 0.8)',
+                        borderColor: 'rgba(156, 163, 175, 1)',
+                        borderWidth: 2,
+                        borderRadius: 8,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.9,
+                        hoverBackgroundColor: 'rgba(156, 163, 175, 1)',
+                        hoverBorderColor: 'rgba(156, 163, 175, 1)',
+                        hoverBorderWidth: 3,
                       },
                     ],
                   }}
@@ -811,50 +913,71 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold">Thống kê số liệu hiện tại</span>
-                  <Button 
-                    type="link" 
-                    size="small" 
-                    onClick={() => navigate('/admin/technician-management')}
-                    className="p-0"
-                  >
-                    Xem tất cả
-              </Button>
-            </div>
+                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Thống kê số liệu hiện tại</span>
+                </div>
               }
-              style={{borderRadius: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)'}}
+              style={{
+                borderRadius: '16px', 
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+                border: '1px solid rgba(156, 163, 175, 0.1)',
+                background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+              }}
             >
-              <div className="space-y-3">
-                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
+              <div className="d-flex flex-column justify-content-between" style={{height: '320px'}}>
+                <div className="d-flex align-items-center justify-content-between p-3" style={{
+                  background: 'linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(251, 146, 60, 0.2)',
+                  transition: 'all 0.3s ease',
+                  height: '70px'
+                }}>
                   <div>
-                    <div className="text-muted small">Đơn hàng đang chờ</div>
-                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.pendingBookings}</div>
-            </div>
-                  <ClockCircleOutlined style={{fontSize: '1.5rem', color: '#ff9800'}} />
-        </div>
-
-                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
-                  <div>
-                    <div className="text-muted small">Đơn hàng đã hoàn tất</div>
-                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.completedBookings}</div>
+                    <div className="small" style={{color: '#ea580c', fontWeight: '600', fontSize: '12px'}}>Đơn hàng đang chờ</div>
+                    <div className="fw-bold" style={{fontSize: '1.3rem', color: '#ea580c'}}>{dashboardStats.pendingBookings}</div>
                   </div>
-                  <CheckCircleOutlined style={{fontSize: '1.5rem', color: '#4caf50'}} />
-                    </div>
-
-                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
-                  <div>
-                    <div className="text-muted small">Kỹ thuật viên có sẵn</div>
-                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.activeTechnicians}</div>
-                  </div>
-                  <ToolOutlined style={{fontSize: '1.5rem', color: '#2196f3'}} />
+                  <ClockCircleOutlined style={{fontSize: '1.6rem', color: '#f97316'}} />
                 </div>
 
-                <div className="d-flex align-items-center justify-content-between p-3" style={{background: '#f8f9fa', borderRadius: '8px'}}>
+                <div className="d-flex align-items-center justify-content-between p-3" style={{
+                  background: 'linear-gradient(135deg, #f0fdf4 0%, #bbf7d0 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(34, 197, 94, 0.2)',
+                  transition: 'all 0.3s ease',
+                  height: '70px'
+                }}>
                   <div>
-                    <div className="text-muted small">Điểm đánh giá trung bình của kỹ thuật viên</div>
-                    <div className="fw-bold" style={{fontSize: '1.2rem'}}>{dashboardStats.averageRating.toFixed(1)}</div>
-              </div>
-                  <StarOutlined style={{fontSize: '1.5rem', color: '#ffc107'}} />
+                    <div className="small" style={{color: '#16a34a', fontWeight: '600', fontSize: '12px'}}>Đơn hàng đã hoàn tất</div>
+                    <div className="fw-bold" style={{fontSize: '1.3rem', color: '#16a34a'}}>{dashboardStats.completedBookings}</div>
+                  </div>
+                  <CheckCircleOutlined style={{fontSize: '1.6rem', color: '#22c55e'}} />
+                </div>
+
+                <div className="d-flex align-items-center justify-content-between p-3" style={{
+                  background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(59, 130, 246, 0.2)',
+                  transition: 'all 0.3s ease',
+                  height: '70px'
+                }}>
+                  <div>
+                    <div className="small" style={{color: '#2563eb', fontWeight: '600', fontSize: '12px'}}>Kỹ thuật viên có sẵn</div>
+                    <div className="fw-bold" style={{fontSize: '1.3rem', color: '#2563eb'}}>{dashboardStats.activeTechnicians}</div>
+                  </div>
+                  <ToolOutlined style={{fontSize: '1.6rem', color: '#3b82f6'}} />
+                </div>
+
+                <div className="d-flex align-items-center justify-content-between p-3" style={{
+                  background: 'linear-gradient(135deg, #fefce8 0%, #fde68a 100%)',
+                  borderRadius: '12px',
+                  border: '1px solid rgba(245, 158, 11, 0.2)',
+                  transition: 'all 0.3s ease',
+                  height: '70px'
+                }}>
+                  <div>
+                    <div className="small" style={{color: '#d97706', fontWeight: '600', fontSize: '12px'}}>Điểm đánh giá trung bình của kỹ thuật viên</div>
+                    <div className="fw-bold" style={{fontSize: '1.3rem', color: '#d97706'}}>{dashboardStats.averageRating.toFixed(1)}</div>
+                  </div>
+                  <StarOutlined style={{fontSize: '1.6rem', color: '#f59e0b'}} />
                 </div>
               </div>
             </Card>
@@ -885,7 +1008,7 @@ const AdminDashboard = () => {
                 display: 'flex',
                 flexDirection: 'column'
               }}
-              bodyStyle={{flex: 1, display: 'flex', flexDirection: 'column'}}
+              styles={{ body: {flex: 1, display: 'flex', flexDirection: 'column'} }}
             >
                   {recentBookingsLoading ? (
                 <div className="text-center py-4">
@@ -907,7 +1030,6 @@ const AdminDashboard = () => {
                       style={{
                         background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa', 
                         borderRadius: '8px',
-                        border: index === 0 ? '2px solid #667eea' : '1px solid #e9ecef',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
                         transform: 'translateY(0)'
@@ -1001,7 +1123,7 @@ const AdminDashboard = () => {
                 display: 'flex',
                 flexDirection: 'column'
               }}
-              bodyStyle={{flex: 1, display: 'flex', flexDirection: 'column'}}
+              styles={{ body: {flex: 1, display: 'flex', flexDirection: 'column'} }}
             >
               {topTechniciansLoading ? (
                 <div className="text-center py-4">
@@ -1021,9 +1143,8 @@ const AdminDashboard = () => {
                       key={tech.id} 
                       className="d-flex align-items-center p-3"
                       style={{
-                        background: index === 0 ? 'linear-gradient(135deg, #ffd700 0%, #ffed4e 100%)' : '#f8f9fa',
+                        background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa',
                         borderRadius: '8px',
-                        border: index === 0 ? '2px solid #ffc107' : '1px solid #e9ecef',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
                         transform: 'translateY(0)'
@@ -1090,7 +1211,7 @@ const AdminDashboard = () => {
             footer={null}
             title={null}
             width={960}
-            styles={{ body: { padding: 0 } }}
+            styles={{ body: { flex: 1, display: 'flex', flexDirection: 'column' } }}
           >
             <div style={{background: '#fff', borderRadius: 12, overflow: 'hidden'}}>
               {/* Header */}

@@ -5,7 +5,7 @@ import ApiBE from '../../services/ApiBE';
 import { Modal, Button, Select, Descriptions, Spin, Row, Col, Tag, Divider, Image } from 'antd';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { EyeOutlined } from '@ant-design/icons';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -32,6 +32,12 @@ const [filterStatus,  setFilterStatus] = useState('');
 const [allServices, setAllServices] = useState([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
+
+// Separate loading states for better UX
+const [bookingsLoading, setBookingsLoading] = useState(false);
+const [usersLoading, setUsersLoading] = useState(false);
+const [servicesLoading, setServicesLoading] = useState(false);
+const [techniciansLoading, setTechniciansLoading] = useState(false);
   const getStatusColor = (status) => {
     switch ((status || '').toUpperCase()) {
       case 'PENDING':
@@ -53,40 +59,85 @@ const [error, setError] = useState(null);
   };
 
 
- useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [users, services, technicians, bookingsData] = await Promise.all([
-        userAPI.getAll(),
-        serviceAPI.getAll(), // chỉ dùng serviceAPI.getAll()
-        technicianAPI.getAll(),
-        bookingAPI.getAll()
-      ]);
-      const userMapData = {};
-      users.forEach(u => userMapData[u.id] = u.fullName || u.email);
-      setUserMap(userMapData);
+   // Load essential data first (users and services for filters)
+  useEffect(() => {
+    const fetchEssentialData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Load users and services first (essential for filters)
+        setUsersLoading(true);
+        setServicesLoading(true);
+        const [users, services] = await Promise.all([
+          userAPI.getAll(),
+          serviceAPI.getAll()
+        ]);
+        
+        const userMapData = {};
+        users.forEach(u => userMapData[u.id] = u.fullName || u.email);
+        setUserMap(userMapData);
 
-      const serviceMapData = {};
-      services.forEach(s => serviceMapData[s.id] = s.serviceName || s.name); // lấy đúng tên service
-      setServiceMap(serviceMapData);
-      setAllServices(services); // cho dropdown filter
+        const serviceMapData = {};
+        services.forEach(s => serviceMapData[s.id] = s.serviceName || s.name);
+        setServiceMap(serviceMapData);
+        setAllServices(services);
+        
+        console.log('✅ Essential data loaded (users, services)');
+      } catch (error) {
+        setError(error);
+        console.error('❌ Error loading essential data:', error);
+      } finally {
+        setLoading(false);
+        setUsersLoading(false);
+        setServicesLoading(false);
+      }
+    };
 
-      const technicianMapData = {};
-      technicians.forEach(t => technicianMapData[t.id] = t.fullName || t.email);
-      setTechnicianMap(technicianMapData);
-      setBookings(bookingsData);
-    } catch (error) {
-      setError(error);
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchEssentialData();
+  }, []);
 
-  fetchData();
-}, []);
+  // Load technicians data when needed
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      if (Object.keys(technicianMap).length === 0) {
+        try {
+          setTechniciansLoading(true);
+          const technicians = await technicianAPI.getAll();
+          const technicianMapData = {};
+          technicians.forEach(t => technicianMapData[t.id] = t.fullName || t.email);
+          setTechnicianMap(technicianMapData);
+          console.log('✅ Technicians data loaded');
+        } catch (error) {
+          console.error('❌ Error loading technicians:', error);
+        } finally {
+          setTechniciansLoading(false);
+        }
+      }
+    };
+
+    fetchTechnicians();
+  }, [technicianMap]);
+
+  // Load bookings data when needed
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (bookings.length === 0) {
+        try {
+          setBookingsLoading(true);
+          const bookingsData = await bookingAPI.getAll();
+          setBookings(bookingsData);
+          console.log('✅ Bookings data loaded');
+        } catch (error) {
+          console.error('❌ Error loading bookings:', error);
+        } finally {
+          setBookingsLoading(false);
+        }
+      }
+    };
+
+    fetchBookings();
+  }, [bookings]);
 
 useEffect(() => {
   setCurrentPage(1);
@@ -264,6 +315,16 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              </ol>
            </nav>
          </div>
+         <div className="d-flex align-items-center gap-2">
+           {bookingsLoading && (
+             <div className="d-flex align-items-center text-muted">
+               <div className="spinner-border spinner-border-sm me-2" role="status">
+                 <span className="visually-hidden">Loading...</span>
+               </div>
+               <span>Đang tải danh sách đơn hàng...</span>
+             </div>
+           )}
+         </div>
        </div>
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
          <div className="d-flex align-items-center gap-2">
@@ -282,11 +343,13 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              </div>
            </div>
            <Select
-             placeholder="Dịch vụ"
+             placeholder={servicesLoading ? "Đang tải..." : "Dịch vụ"}
              value={filterService || undefined}
              onChange={value => setFilterService(value)}
              style={{ width: 150, marginRight: 8 }}
              allowClear
+             loading={servicesLoading}
+             disabled={servicesLoading}
            >
              {allServices.map(s => (
                <Select.Option key={s.id} value={s.id}>{s.serviceName || s.name}</Select.Option>
@@ -306,6 +369,9 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
              <Select.Option value="DONE">DONE</Select.Option>
              <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
+             <Select.Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Select.Option>
+             <Select.Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Select.Option>
+             <Select.Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center">
@@ -404,6 +470,17 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                <tr>
                  <td colSpan={5} style={{ color: 'red' }}>{error.message || 'Không thể tải các đơn hàng.'}</td>
                </tr>
+             ) : bookingsLoading ? (
+               <tr>
+                 <td colSpan={5} className="text-center">
+                   <div className="spinner-border text-primary" role="status">
+                     <span className="visually-hidden">Loading...</span>
+                   </div>
+                   <div className="mt-2 text-muted">
+                     Đang tải danh sách đơn hàng...
+                   </div>
+                 </td>
+               </tr>
              ) : filteredBookings.length === 0 ? (
                <tr>
                  <td colSpan={5} className="text-center text-muted py-4">
@@ -459,7 +536,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              Hiển thị {indexOfFirstBooking + 1}-{Math.min(indexOfLastBooking, filteredBookings.length)} trong tổng số {filteredBookings.length} đơn hàng
            </div>
          </div>
-         {filteredBookings.length > 0 && (
+         {totalPages > 1 && (
            <nav>
              <ul className="pagination mb-0" style={{ gap: '2px' }}>
                {/* Previous button */}
@@ -479,76 +556,53 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                  </button>
                </li>
                
-               {/* Page numbers */}
-               {[...Array(totalPages)].map((_, i) => {
-                 const pageNumber = i + 1;
-                 // Show all pages if total pages <= 7
-                 if (totalPages <= 7) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 }
-                 
-                 // Show first page, last page, current page, and pages around current page
-                 if (
-                   pageNumber === 1 || 
-                   pageNumber === totalPages || 
-                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                 ) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 } else if (
-                   pageNumber === currentPage - 2 || 
-                   pageNumber === currentPage + 2
-                 ) {
-                   return (
-                     <li key={i} className="page-item disabled">
-                       <span className="page-link" style={{ 
-                         border: '1px solid #dee2e6',
-                         borderRadius: '6px',
-                         padding: '8px 12px',
-                         minWidth: '40px',
-                         backgroundColor: '#f8f9fa',
-                         color: '#6c757d'
-                       }}>...</span>
-                     </li>
-                   );
-                 }
-                 return null;
-               })}
+                               {/* Page numbers */}
+                {[...Array(totalPages)].map((_, i) => {
+                    const pageNumber = i + 1;
+                    // Show first page, last page, current page, and pages around current page
+                    if (
+                        pageNumber === 1 || 
+                        pageNumber === totalPages || 
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                    ) {
+                        return (
+                            <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                                <button 
+                                    className="page-link" 
+                                    onClick={() => handlePageChange(pageNumber)}
+                                    style={{ 
+                                        border: '1px solid #dee2e6',
+                                        borderRadius: '6px',
+                                        padding: '8px 12px',
+                                        minWidth: '40px',
+                                        backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                        color: currentPage === pageNumber ? 'white' : '#007bff',
+                                        borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                    }}
+                                >
+                                    {pageNumber}
+                                </button>
+                            </li>
+                        );
+                    } else if (
+                        pageNumber === currentPage - 2 || 
+                        pageNumber === currentPage + 2
+                    ) {
+                        return (
+                            <li key={i} className="page-item disabled">
+                                <span className="page-link" style={{ 
+                                    border: '1px solid #dee2e6',
+                                    borderRadius: '6px',
+                                    padding: '8px 12px',
+                                    minWidth: '40px',
+                                    backgroundColor: '#f8f9fa',
+                                    color: '#6c757d'
+                                }}>...</span>
+                            </li>
+                        );
+                    }
+                    return null;
+                })}
                
                {/* Next button */}
                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
@@ -583,7 +637,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
         >
           <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #1890ff 0%, #73d13d 100%)', padding: 24, color: '#fff' }}>
+            <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: 24, color: '#fff' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết đơn hàng</div>
@@ -627,8 +681,8 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                     <div style={{ fontWeight: 600, marginBottom: 12 }}>Khách hàng & Kỹ thuật viên</div>
                     <Descriptions size="small" column={1} bordered={false}
                       items={[
-                        { key: 'customer', label: 'Khách hàng', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || 'UNKNOWN' },
-                        { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : 'UNKNOWN') },
+                        { key: 'customer', label: 'Khách hàng', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || '' },
+                        { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking?.technicianId ? (technicianMap[selectedBooking.technicianId] || '-') : '') },
                       ]}
                     />
                   </div>

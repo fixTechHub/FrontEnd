@@ -13,7 +13,7 @@ import { onAdditionalItemsAdded, onAdditionalItemsStatusUpdate, onAdditionalItem
 import { confirmJobDoneByTechnician } from '../../features/bookings/bookingAPI';
 import { fetchBookingById, customerAcceptQuoteThunk, customerRejectQuoteThunk, technicianSendQuoteThunk } from "../../features/bookings/bookingSlice";
 import { BOOKING_STATUS } from "../../constants/bookingConstants";
-import { Modal, Button } from "react-bootstrap";
+import { Modal, Button, Alert } from "react-bootstrap";
 import { FaSpinner } from "react-icons/fa";
 import { toast } from "react-toastify";
 
@@ -43,6 +43,13 @@ function BookingProcessing() {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const lastCancelBy = useSelector((state) => state.booking.lastCancelBy);
     const [showAdditionalPopup, setShowAdditionalPopup] = useState(false);
+    
+    // State cho thông báo
+    const [notification, setNotification] = useState({
+        show: false,
+        message: '',
+        variant: 'info'
+    });
 
     // Load thông tin technician service khi booking thay đổi
     useEffect(() => {
@@ -165,7 +172,7 @@ function BookingProcessing() {
 
     const handleComfirm = () => {
         if (!bookingId) {
-            alert("Thiếu thông tin booking hoặc kỹ thuật viên!");
+            showNotification("Thiếu thông tin booking hoặc kỹ thuật viên!", "warning");
             return;
         }
 
@@ -223,35 +230,33 @@ function BookingProcessing() {
 
     const handleComfirmByTechnician = async () => {
         if (!bookingId) {
-            alert('Thiếu thông tin booking!');
+            showNotification('Thiếu thông tin booking!', 'warning');
             return;
         }
         try {
             const res = await confirmJobDoneByTechnician(bookingId);
             if (res?.data?.success) {
-                alert('Đã xác nhận hoàn thành! Bạn sẽ được chuyển đến trang xác nhận.');
+                showNotification('Đã xác nhận hoàn thành! Bạn sẽ được chuyển đến trang xác nhận.', 'success');
                 navigate(`/technician-income/${bookingId}`);
             } else {
-                alert(
-                    // 'Xác nhận hoàn thành thất bại: ' + 
-                    (res?.data?.message || 'Lỗi không xác định'));
+                showNotification(
+                    res?.data?.message || 'Lỗi không xác định', 'danger');
             }
         } catch (err) {
-            alert(
-                // 'Xác nhận hoàn thành thất bại: ' +
-                (err?.response?.data?.message || err.message));
+            showNotification(
+                err?.response?.data?.message || err.message, 'danger');
         }
     };
 
     const handleSendAdditional = async () => {
         if (!bookingId) {
-            alert('Không tìm thấy booking!');
+            showNotification('Không tìm thấy booking!', 'warning');
             return;
         }
 
         // Kiểm tra có items không trước khi gửi
         if (items.length === 0) {
-            alert('Vui lòng thêm ít nhất một thiết bị phát sinh trước khi gửi yêu cầu!');
+            showNotification('Vui lòng thêm ít nhất một thiết bị phát sinh trước khi gửi yêu cầu!', 'warning');
             return;
         }
 
@@ -275,7 +280,7 @@ function BookingProcessing() {
 
             const resultAction = await dispatch(technicianSendQuoteThunk({ bookingId, quoteData }));
             if (technicianSendQuoteThunk.fulfilled.match(resultAction)) {
-                alert('Đã gửi yêu cầu phát sinh cho khách!');
+                showNotification('Đã gửi yêu cầu phát sinh cho khách!', 'success');
                 // Reset form sau khi gửi thành công
                 setItems([]);
                 setModalItem({
@@ -287,10 +292,10 @@ function BookingProcessing() {
                 setAdditionalReason('');
                 dispatch(fetchBookingById(bookingId));
             } else {
-                alert(resultAction.payload || 'Có lỗi xảy ra!');
+                showNotification(resultAction.payload || 'Có lỗi xảy ra!', 'danger');
             }
         } catch (error) {
-            alert(error?.message || 'Có lỗi xảy ra!');
+            showNotification(error?.message || 'Có lỗi xảy ra!', 'danger');
         } finally {
             setSending(false);
         }
@@ -299,27 +304,41 @@ function BookingProcessing() {
     const handleAcceptAdditional = async () => {
         const resultAction = await dispatch(customerAcceptQuoteThunk(bookingId));
         if (customerAcceptQuoteThunk.fulfilled.match(resultAction)) {
-            alert('Bạn đã đồng ý yêu cầu phát sinh!');
+            showNotification('Bạn đã đồng ý yêu cầu phát sinh!', 'success');
             setShowAdditionalPopup(false);
             dispatch(fetchBookingById(bookingId));
         } else {
-            alert(resultAction.payload || 'Có lỗi xảy ra!');
+            showNotification(resultAction.payload || 'Có lỗi xảy ra!', 'danger');
         }
     };
 
     const handleRejectAdditional = async () => {
         const resultAction = await dispatch(customerRejectQuoteThunk(bookingId));
         if (customerRejectQuoteThunk.fulfilled.match(resultAction)) {
-            alert('Bạn đã từ chối yêu cầu phát sinh!');
+            showNotification('Bạn đã từ chối yêu cầu phát sinh!', 'success');
             setShowAdditionalPopup(false);
             dispatch(fetchBookingById(bookingId));
         } else {
-            alert(resultAction.payload || 'Có lỗi xảy ra!');
+            showNotification(resultAction.payload || 'Có lỗi xảy ra!', 'danger');
         }
     };
 
     const handleShowAdditionalRequest = () => {
         setShowAdditionalPopup(true);
+    };
+
+    // Hàm helper để hiển thị thông báo
+    const showNotification = (message, variant = 'info') => {
+        setNotification({
+            show: true,
+            message,
+            variant
+        });
+        
+        // Tự động ẩn thông báo sau 5 giây
+        setTimeout(() => {
+            setNotification(prev => ({ ...prev, show: false }));
+        }, 5000);
     };
 
     if (isAuthorized === null) {
@@ -337,6 +356,20 @@ function BookingProcessing() {
             <Header />
 
             <BreadcrumbBar title={'Thông tin chi tiết'} subtitle={'Booking Details'} />
+
+            {/* Thông báo */}
+            {notification.show && (
+                <div className="position-fixed top-0 start-0" style={{ zIndex: 9999, marginTop: '100px', marginLeft: '20px' }}>
+                    <Alert 
+                        variant={notification.variant} 
+                        onClose={() => setNotification(prev => ({ ...prev, show: false }))}
+                        dismissible
+                        className="shadow"
+                    >
+                        {notification.message}
+                    </Alert>
+                </div>
+            )}
 
             <div className="booking-new-module">
                 <div className="container">

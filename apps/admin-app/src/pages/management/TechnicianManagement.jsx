@@ -18,7 +18,7 @@ import {
 } from '../../features/technicians/technicianSelectors';
 import { categoryAPI } from "../../features/categories/categoryAPI";
 import { EyeOutlined } from '@ant-design/icons';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';
 import { approveTechnicianThunk } from '../../features/admin/adminSlice';
 
@@ -397,6 +397,8 @@ const TechnicianManagement = () => {
   };
 
 
+
+
   return (
     <div className="modern-page- wrapper">
       <div className="modern-content-card">
@@ -534,15 +536,6 @@ const TechnicianManagement = () => {
                     </span>
                   )}
                 </th>
-                <th style={{ cursor: 'pointer' }} onClick={handleSortByJobs}>
-                  Công việc
-                  {sortField === 'jobs' && (
-                    <span style={{ marginLeft: 4 }}>
-                      {sortOrder === 'asc' ? '▲' : '▼'}
-                    </span>
-                  )}
-                </th>
-                <th>Tình trạng</th>
                 <th>Hành động</th>
               </tr>
             </thead>
@@ -582,7 +575,7 @@ const TechnicianManagement = () => {
                             style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                           />
                         </p>
-                        <h6><p className="fs-14 fw-semibold">{tech.fullName || "UNKNOWN"}</p></h6>
+                        <h6><p className="fs-14 fw-semibold">{tech.fullName || ""}</p></h6>
                       </div>
                     </td>
                     <td>{tech.email}</td>
@@ -591,9 +584,58 @@ const TechnicianManagement = () => {
                         {getTechnicianStatus(tech.status)}
                       </span>
                     </td>
-                    <td>{tech.ratingAverage?.toFixed(1) ?? '-'}</td>
-                    <td>{tech.jobCompleted ?? 0}</td>
-                    <td>{getTechnicianAvailability(tech.availability)}</td>
+                                         <td>
+                     <div className="d-flex align-items-center gap-2">
+                         <span className={`badge text-white ${
+                           (tech.ratingAverage || 0) >= 4 ? 'bg-success' : 
+                           (tech.ratingAverage || 0) >= 2 ? 'bg-warning' : 'bg-danger'
+                         }`}>
+                           {tech.ratingAverage?.toFixed(1) ?? '-'}
+                         </span>
+                        <div className="rating-stars">
+                                                     {[1, 2, 3, 4, 5].map((star) => {
+                             const rating = tech.ratingAverage || 0;
+                             let starColor = '#d9d9d9'; // Mặc định xám
+                             let starClass = 'ti ti-star-filled'; // Mặc định sao đầy
+                             let starStyle = {
+                               color: starColor,
+                               fontSize: '14px',
+                               marginRight: '2px'
+                             };
+                             
+                             if (star <= Math.floor(rating)) {
+                               // Sao hoàn chỉnh (phần nguyên)
+                               starColor = '#ffc107';
+                               starClass = 'ti ti-star-filled';
+                               starStyle = {
+                                 color: starColor,
+                                 fontSize: '14px',
+                                 marginRight: '2px'
+                               };
+                             } else if (star === Math.floor(rating) + 1 && rating % 1 > 0) {
+                               // Sao một phần (có phần thập phân) - hiển thị nửa vàng nửa xám
+                               starClass = 'ti ti-star-filled';
+                               const fillPercentage = (rating % 1) * 100;
+                               starStyle = {
+                                 background: `linear-gradient(90deg, #ffc107 ${fillPercentage}%, #d9d9d9 ${fillPercentage}%)`,
+                                 WebkitBackgroundClip: 'text',
+                                 WebkitTextFillColor: 'transparent',
+                                 fontSize: '14px',
+                                 marginRight: '2px'
+                               };
+                             }
+                             
+                             return (
+                               <i 
+                                 key={star}
+                                 className={starClass}
+                                 style={starStyle}
+                               />
+                             );
+                           })}
+                        </div>
+                      </div>
+                     </td>
                     <td>
                       <div className="d-flex align-items-center gap-2">
                         <Button className="management-action-btn" size="middle" onClick={() => handleOpenDetail(tech)}>
@@ -768,7 +810,7 @@ const TechnicianManagement = () => {
           <hr></hr>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px' }}>
-              Họ và tên: {selectedTechnician.fullName || 'Unknown'}
+              Họ và tên: {selectedTechnician.fullName || ''}
             </div>
             <div style={{ fontSize: '14px', color: '#666' }}>
               Tình trạng hiện tại: {getTechnicianStatus(selectedTechnician.status)}

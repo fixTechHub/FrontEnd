@@ -10,7 +10,7 @@ import {
  fetchDeletedCommissionConfigs,
  restoreCommissionConfig,
 } from '../../features/commissionConfig/commissionSlice';
-import "../../../public/css/ManagementTableStyle.css";
+import "../../styles/ManagementTableStyle.css";
 import { EyeOutlined, EditOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { createExportData, formatDateTime, formatCurrency } from '../../utils/exportUtils';

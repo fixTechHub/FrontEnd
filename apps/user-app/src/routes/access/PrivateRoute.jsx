@@ -11,7 +11,7 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
     const prevPathRef = useRef(location.pathname);
     const lastToastMessageRef = useRef('');
 
-    const verificationPaths = ['/choose-role','/verify-email','/verify-otp','/technician/complete-profile'];
+    const verificationPaths = ['/choose-role','/choose-account-type','/verify-email','/verify-otp','/technician/complete-profile'];
 
     // Tính toán quyền nếu prop isAllowed không truyền
     let computedAllowed = isAllowed;
@@ -63,10 +63,10 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
 
             // Trường hợp đặc biệt: user vừa chọn vai trò TECHNICIAN trên trang /choose-role
             // Khi Redux đã cập nhật role nhưng vẫn còn ở trang /choose-role, cho phép chuyển
-            // thẳng sang trang hoàn thiện hồ sơ thay vì báo lỗi quyền truy cập.
+            // đến trang chọn loại tài khoản trước khi hoàn thiện hồ sơ.
             if (location.pathname === '/choose-role' && user?.role?.name === 'TECHNICIAN') {
                 return {
-                    path: '/technician/complete-profile',
+                    path: '/choose-account-type',
                     message: null,
                     state: { from: location }
                 };
@@ -79,6 +79,18 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
             };
         }
 
+        // Debug: Log verification status for troubleshooting
+        if (verificationStatus?.step && verificationStatus.step !== 'COMPLETED') {
+            console.log('[PrivateRoute] Verification status check:', {
+                currentPath: location.pathname,
+                verificationStep: verificationStatus.step,
+                redirectTo: verificationStatus.redirectTo,
+                message: verificationStatus.message,
+                userRole: user?.role?.name,
+                userId: user?._id
+            });
+        }
+
         // Nếu đang trong quá trình verification và không ở trang verification
         if (verificationStatus?.step &&
             verificationStatus.step !== 'COMPLETED' &&
@@ -86,7 +98,10 @@ const ProtectedRoute = ({ children, isAllowed, requiredRole, redirectPath = '/lo
             location.pathname !== verificationStatus.redirectTo &&
             !location.pathname.includes('/verify-') &&
             !location.pathname.includes('/choose-role') &&
+            !location.pathname.includes('/choose-account-type') &&
             !location.pathname.includes('/profile')) {
+
+            console.log('[PrivateRoute] Redirecting due to incomplete verification');
 
             let msg = verificationStatus.message || 'Vui lòng hoàn thành xác thực (xem thông tin trong hồ sơ)';
             if (location.pathname.includes('/video-call')) {

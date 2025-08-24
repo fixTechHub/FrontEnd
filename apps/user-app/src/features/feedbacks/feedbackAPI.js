@@ -70,3 +70,48 @@ export const getFeedbackStatsByTechnician = async (technicianId) => {
   );
   return res.data; // { averageRating, total, distribution }
 };
+
+
+export const getFeedbacksByFromUser = async (userId, params = {}) => {
+  const { page = 1, limit = 10 } = params;
+  console.log("userId gửi lên FE:", userId);
+  const res = await apiClient.get(`/feedbacks/from/${userId}`, {
+    params: { page, limit },
+  });
+  return res.data; // { items, page, limit, total, totalPages }
+};
+
+export const getFeedbacksByBooking = async (bookingId) => {
+  const res = await apiClient.get(`/feedbacks/by-booking/${bookingId}`);
+  return res.data; // { items, total }  (theo BE bạn vừa chuẩn hoá)
+};
+
+export const updateFeedbackAPI = async (feedbackId, payload) => {
+  const res = await apiClient.put(`/feedbacks/${feedbackId}`, payload);
+  // BE trả { message, data } => mình trả về data cho gọn
+  return res.data.data;
+};
+
+/**
+ * Lấy danh sách feedback công khai để hiển thị trên homepage
+ * params:
+ *  - limit: số lượng feedback cần lấy
+ *  - visible: true để lấy feedback công khai
+ */
+export const getPublicFeedbacks = async (params = {}) => {
+  const { limit = 10, visible = true } = params;
+  
+  const res = await apiClient.get('/feedbacks', {
+    params: {
+      isVisible: visible,
+      ...(limit ? { limit } : {}),
+    },
+  });
+  
+  // Chuyển đổi format để phù hợp với frontend
+  return {
+    success: true,
+    items: res.data.data || [],
+    total: res.data.data?.length || 0
+  };
+};

@@ -21,8 +21,7 @@ export const fetchTechnicianProfile = createAsyncThunk(
   'technician/fetchProfile',
   async (technicianId, thunkAPI) => {
     try {
-      const data = await getTechnicianProfile(technicianId); // response.data
-      console.log('--- FETCH TECHNICIAN PROFILE ---', data); // ✅ sẽ log ra { success, data }
+      const data = await getTechnicianProfile(technicianId);
       return data.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -69,9 +68,11 @@ export const completeTechnicianProfileThunk = createAsyncThunk(
       const data = await completeTechnicianProfile(technicianData);
       return data.data;
     } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.response?.data?.message || error.message
-      );
+      return thunkAPI.rejectWithValue({
+        message: error.response?.data?.message || error.message,
+        status: error.response?.status,
+        data: error.response?.data
+      });
     }
   }
 );
@@ -239,6 +240,8 @@ export const fetchScheduleByTechnicianId = createAsyncThunk(
     return res.data; // Vì API trả về: { success: true, data: schedules }
   }
 );
+
+
 
 const technicianSlice = createSlice({
   name: 'technician',

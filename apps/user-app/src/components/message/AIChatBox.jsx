@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { sendChatMessage, addUserMessage, clearConversation } from '../../features/chatbox/chatboxSlice';
 import { Button, Form } from 'react-bootstrap';
-import { MdSupportAgent } from 'react-icons/md';
+import { MdSupportAgent, MdKeyboardArrowDown, MdClose } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import './MessageBox.css';
 
@@ -162,6 +162,7 @@ const AIChatbox = () => {
   const [input, setInput] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const messageContainerRef = useRef(null);
+  const textareaRef = useRef(null);
 
   // Scroll to bottom of message container when new messages are added
   useEffect(() => {
@@ -169,6 +170,20 @@ const AIChatbox = () => {
       messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Auto-expand textarea
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      const scrollHeight = textareaRef.current.scrollHeight;
+      const maxHeight = 120; // Maximum height (about 4-5 lines)
+      textareaRef.current.style.height = Math.min(scrollHeight, maxHeight) + 'px';
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [input]);
 
   const handleSendMessage = () => {
     if (!input.trim()) {
@@ -179,10 +194,16 @@ const AIChatbox = () => {
     dispatch(addUserMessage(input));
     dispatch(sendChatMessage({ message: input }));
     setInput('');
+    
+    // Reset textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
     }
   };
@@ -203,136 +224,233 @@ const AIChatbox = () => {
 
   return (
     <div className="position-fixed bottom-0 end-0 mb-3 me-3 z-3 font-sans">
-      {/* Chat Icon */}
-      <Button
-        onClick={toggleChatbox}
-        className="rounded-circle d-flex align-items-center justify-content-center shadow-lg border-0"
-        style={{ width: '50px', height: '50px', background: '#FFA633' }}
-        aria-label={isOpen ? 'Đóng chat' : 'Mở chat'}
-      >
-        {isOpen ? (
-          <span style={{ fontSize: '20px', fontWeight: 'bold' }}>×</span>
-        ) : (
-          <MdSupportAgent className="w-100 h-100 text-white" />
-        )}
-      </Button>
-
-      {/* Chatbox */}
-      <div
-        className={`bg-white rounded-3 shadow-lg d-flex flex-column position-absolute bottom-100 end-0 border border-light-subtle ${
-          isOpen ? '' : 'd-none'
-        }`}
-        style={{ width: '400px', maxHeight: '60vh' }}
-      >
-        {/* Header */}
-        <div
-          className="p-2 rounded-top-3 text-white d-flex align-items-center justify-content-between"
-          style={{ background: '#FFA633', minHeight: '60px' }}
-        >
-          <div className="d-flex align-items-center">
-            <MdSupportAgent className="text-white" style={{ fontSize: '24px' }} />
-            <span className="fs-6 fw-semibold ms-2">Trợ lý AI</span>
+      {/* Modern AI Chat Button */}
+      <div className="ai-chat-wrapper position-relative">
+        {/* AI Badge */}
+        <div className="ai-badge">
+          <span className="ai-text">AI</span>
+          <div className="ai-sparkles">
+            <div className="sparkle sparkle-1">✨</div>
+            <div className="sparkle sparkle-2">✨</div>
+            <div className="sparkle sparkle-3">⭐</div>
           </div>
+        </div>
+        
+        {/* Speech Bubble Preview */}
+        {!isOpen && (
+          <div className="speech-bubble-preview">
+            <div className="bubble-content">
+              <div className="bubble-text">
+                <div className="bubble-title">Trợ Lý AI sẵn sàng hỗ trợ!</div>
+                <div className="bubble-subtitle">Mô tả thiết bị hỏng để tìm thợ phù hợp</div>
+              </div>
+            </div>
+            <div className="bubble-tail"></div>
+          </div>
+        )}
+        
+              <Button
+          onClick={toggleChatbox}
+          className={`modern-ai-btn rounded-circle d-flex align-items-center justify-content-center border-0 position-relative overflow-hidden ${isOpen ? 'btn-hidden' : 'btn-visible'}`}
+          style={{ width: '64px', height: '64px' }}
+          aria-label={isOpen ? 'Đóng Trợ Lý AI' : 'Mở Trợ Lý AI'}
+        >
+          <div className="ai-btn-bg"></div>
+          <div className="ai-btn-glow"></div>
+          
+                  {isOpen ? (
+            <MdKeyboardArrowDown className="close-btn-icon" style={{ 
+              fontSize: '28px', 
+              zIndex: 3,
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              color: 'white'
+            }} />
+          ) : (
+            <div className="ai-icon-wrapper" style={{ zIndex: 3 }}>
+              <MdSupportAgent className="ai-main-icon" style={{ fontSize: '30px' }} />
+              <div className="ai-thinking-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          )}
+          
+          <div className="ai-pulse-ring"></div>
+          <div className="ai-pulse-ring-2"></div>
+      </Button>
+      </div>
+
+      {/* Enhanced Chatbox */}
+      <div
+        className={`chatbox-container bg-white rounded-4 shadow-lg d-flex flex-column position-absolute bottom-100 end-0 overflow-hidden ${
+          isOpen ? 'chatbox-open' : 'd-none'
+        }`}
+        style={{ width: '420px', maxHeight: '65vh' }}
+      >
+        {/* AI Header */}
+        <div className="ai-chatbox-header p-3 text-white d-flex align-items-center justify-content-between position-relative overflow-hidden">
+          <div className="chatbox-header-bg"></div>
+          <div className="header-glow"></div>
+          
+          <div className="d-flex align-items-center position-relative" style={{ zIndex: 2 }}>
+            <div className="ai-avatar-container position-relative">
+              <div className="ai-avatar-bg"></div>
+              <MdSupportAgent className="text-white ai-avatar-icon" style={{ fontSize: '26px' }} />
+              <div className="ai-status-indicator">
+                <div className="ai-brain-wave"></div>
+              </div>
+            </div>
+            <div className="ms-3">
+              <div className="ai-title d-flex align-items-center gap-2">
+                <span className="fs-6 fw-bold">Trợ Lý AI</span>
+                <div className="ai-badge-mini">✨</div>
+              </div>
+              <div className="ai-status d-flex align-items-center gap-1" style={{ fontSize: '11px', opacity: 0.9 }}>
+                <div className="typing-indicator-mini">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <span>Sẵn sàng hỗ trợ</span>
+              </div>
+            </div>
+          </div>
+          
           <Button
             variant="link"
             onClick={toggleChatbox}
-            className="text-white text-decoration-none p-1"
-            aria-label="Đóng chat"
+            className="ai-close-btn text-white text-decoration-none rounded-circle position-relative"
+            style={{ zIndex: 2 }}
+            aria-label="Đóng Trợ Lý AI"
           >
-            <svg
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <MdClose style={{ fontSize: '20px' }} />
           </Button>
         </div>
 
-        {/* Message Area */}
+        {/* Enhanced Message Area */}
         <div
           ref={messageContainerRef}
-          className="flex-grow-1 p-2 overflow-y-auto bg-light-subtle"
+          className="chatbox-messages flex-grow-1 p-3 overflow-y-auto"
           style={{ 
-            scrollbarWidth: 'thin', 
-            scrollbarColor: '#adb5bd #e9ecef',
-            minHeight: '200px',
-            maxHeight: '400px'
+            minHeight: '220px',
+            maxHeight: '420px'
           }}
         >
           {messages.length === 0 && (
-            <div
-              className="p-2 mb-2 rounded-2 small text-start bg-white text-dark border border-light-subtle"
-              style={{ maxWidth: '80%', wordWrap: 'break-word' }}
-            >
-              <SimpleMarkdown>
-                {transformMessage('Tôi sẽ hướng dẫn bạn từng bước xử lý khi đồ gia dụng hỏng hóc, và giúp đặt lịch với thợ sửa chữa phù hợp.')}
-              </SimpleMarkdown>
+            <div className="ai-welcome-section">
+              <div className="welcome-animation">
+                <div className="ai-greeting-bubble">
+                  <div className="ai-avatar-mini">
+                    <MdSupportAgent style={{ fontSize: '16px' }} />
+                  </div>
+                  <div className="greeting-content">
+                    <div className="greeting-text">
+                      👋 Xin chào! Tôi là <strong>Trợ Lý AI</strong>
+                    </div>
+                    <div className="greeting-subtext">
+                      Hãy mô tả <strong>chi tiết tình trạng thiết bị</strong> (lỗi gì, triệu chứng ra sao) để tôi tìm thợ phù hợp và đưa ra giải pháp tốt nhất cho bạn!
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Quick Action Buttons */}
+              <div className="quick-actions">
+                <div className="quick-actions-title">💡 Ví dụ mô tả chi tiết:</div>
+                <div className="quick-action-buttons">
+                  <button 
+                    className="quick-btn"
+                    onClick={() => setInput('Máy giặt Samsung 9kg bị lỗi không vắt, quần áo vẫn ướt đẫm sau khi giặt xong. Máy không báo lỗi gì, chỉ dừng ở chế độ xả nước')}
+                  >
+                    🔧 Máy giặt chi tiết
+                  </button>
+                  <button 
+                    className="quick-btn"
+                    onClick={() => setInput('Điều hòa Daikin 1.5HP phòng 20m2, bật lên nhưng không thổi khí lạnh, quạt trong chạy bình thường, đèn báo xanh sáng')}
+                  >
+                    ❄️ Điều hòa chi tiết
+                  </button>
+                  <button 
+                    className="quick-btn"
+                    onClick={() => setInput('Tủ lạnh Electrolux 180L kêu to từ 2 ngày nay, tiếng kêu như động cơ bị kẹt, tủ vẫn lạnh bình thường')}
+                  >
+                    🧊 Tủ lạnh chi tiết
+                  </button>
+                  <button 
+                    className="quick-btn"
+                    onClick={() => setInput('Bếp từ Sunhouse bị lỗi E3, không nhận nồi, thử nhiều loại nồi từ khác nhau đều không được')}
+                  >
+                    🍳 Bếp từ chi tiết
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`p-2 mb-2 rounded-2 small text-start ${
-                msg.sender === 'user' ? 'ms-auto bg-primary-subtle text-primary-emphasis' : 'bg-white text-dark border border-light-subtle'
-              }`}
-              style={{ maxWidth: '80%', wordWrap: 'break-word' }}
-            >
-              <SimpleMarkdown>
-                {msg.sender === 'bot' ? transformMessage(msg.text) : msg.text}
-              </SimpleMarkdown>
-              <span className="text d-block small mt-1">{formatTimestamp(msg.timestamp)}</span>
-            </div>
-          ))}
-          {status === 'loading' && (
-            <div className="p-2 mb-2 bg-white rounded-2 small d-flex align-items-center border border-light-subtle">
-              <div className="d-flex gap-1 me-2">
-                <span className="d-block rounded-circle bg-primary bounce" style={{ width: '6px', height: '6px' }}></span>
-                <span 
-                  className="d-block rounded-circle bg-primary bounce" 
-                  style={{ width: '6px', height: '6px', animationDelay: '0.16s' }}
-                ></span>
-                <span 
-                  className="d-block rounded-circle bg-primary bounce" 
-                  style={{ width: '6px', height: '6px', animationDelay: '0.32s' }}
-                ></span>
+          <div className="messages-container">
+            {messages.map((msg, index) => (
+              <div
+                key={index}
+                className={`chat-message ${msg.sender === 'user' ? 'user-message' : 'bot-message'}`}
+              >
+                <div className="message-bubble">
+                  <SimpleMarkdown>
+                    {msg.sender === 'bot' ? transformMessage(msg.text) : msg.text}
+                  </SimpleMarkdown>
+                  <div className="message-time">{formatTimestamp(msg.timestamp)}</div>
+                </div>
               </div>
-              <span className="text-muted fst-italic"></span>
+            ))}
+          </div>
+          {status === 'loading' && (
+            <div className="chat-message bot-message">
+              <div className="typing-indicator">
+                <div className="typing-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <div className="typing-text">AI đang soạn tin...</div>
+              </div>
             </div>
           )}
           {error && <div className="text-danger text-center small py-2">{error}</div>}
         </div>
 
-        {/* Input Area */}
-        <div className="p-2 border-top bg-white rounded-bottom-3">
-          <div className="d-flex align-items-center gap-2">
-            <Form.Control
-              type="text"
+        {/* Enhanced Input Area */}
+        <div className="chatbox-input-area p-3 border-top">
+          <div className="input-wrapper d-flex align-items-end gap-3">
+            <textarea
+              ref={textareaRef}
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="flex-grow-1 py-1 border rounded-2 shadow-sm"
-              placeholder="Nhập vấn đề của bạn..."
+              className="chat-input flex-grow-1 border-0 shadow-none resize-none"
+              placeholder="Mô tả chi tiết thiết bị: loại gì, lỗi như thế nào, triệu chứng ra sao..."
               aria-label="Nhập tin nhắn"
+              rows={1}
+              style={{ 
+                minHeight: '42px',
+                maxHeight: '120px',
+                overflow: 'auto'
+              }}
             />
             <Button
               onClick={handleSendMessage}
-              className="d-flex align-items-center justify-content-center border-0"
-              style={{ 
-                background: '#FFA633',
-                width: '36px',
-                height: '36px'
-              }}
+              className="send-btn d-flex align-items-center justify-content-center border-0 rounded-circle position-relative overflow-hidden"
               aria-label="Gửi tin nhắn"
+              disabled={!input.trim()}
             >
+              <div className="send-btn-bg"></div>
               <svg
-                width="16"
-                height="16"
+                width="18"
+                height="18"
                 fill="currentColor"
                 viewBox="0 0 16 16"
+                style={{ zIndex: 2 }}
               >
                 <path d="M15.854.146a.5.5 0 0 1 .11.54L13.026 8.47A.5.5 0 0 1 12.5 8.75H8.75v3.75a.5.5 0 0 1-.47.474l-7.838 2.938a.5.5 0 0 1-.54-.11.5.5 0 0 1-.11-.54L2.73 7.47A.5.5 0 0 1 3.25 7.25H7V3.5a.5.5 0 0 1 .47-.474l-7.838-2.938a.5.5 0 0 1 .54.11z"/>
               </svg>

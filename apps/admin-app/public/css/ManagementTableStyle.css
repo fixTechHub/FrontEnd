@@ -74,5 +74,19 @@
   font-size: 14px;
   color: #333;
   margin-bottom: 0;
-  white-space: nowrap;
-} 
+      white-space: nowrap;
+  } 
+
+/* Custom badge colors */
+.bg-orange {
+  background-color: #fd7e14 !important;
+}
+
+/* Rating stars styling */
+.rating-stars .ti-star.filled {
+  filter: drop-shadow(0 0 2px rgba(0,0,0,0.2));
+}
+
+.rating-stars .ti-star.empty {
+  opacity: 0.3;
+}
