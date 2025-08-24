@@ -2,19 +2,19 @@ import { io } from 'socket.io-client';
 
 const rawUrl = import.meta.env.VITE_API_BASE_URL;
 const SOCKET_URL = rawUrl ? rawUrl.replace('/api', '') : '';
-console.log('SOCKET_URL:', SOCKET_URL);
+// console.log('SOCKET_URL:', SOCKET_URL);
 
 let socket = null;
 
 export const initializeSocket = (userId) => {
   if (!userId) {
-    console.warn('No userId provided for socket initialization');
+    // console.warn('No userId provided for socket initialization');
     return;
   }
 
   // If a socket instance exists and is connected, do nothing.
   if (socket?.connected) {
-    console.log(`Socket already connected: ${socket.id}`);
+    // console.log(`Socket already connected: ${socket.id}`);
     return;
   }
 
@@ -24,7 +24,7 @@ export const initializeSocket = (userId) => {
     socket.disconnect();
   }
 
-  console.log(`Initializing new socket for user: ${userId}`);
+  // console.log(`Initializing new socket for user: ${userId}`);
   socket = io(
     SOCKET_URL
     // || '/'
