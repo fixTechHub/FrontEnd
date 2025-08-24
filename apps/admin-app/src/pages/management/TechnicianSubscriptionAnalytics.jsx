@@ -47,7 +47,10 @@ import {
   StarOutlined,
   TrophyOutlined,
   FireOutlined,
-  RocketOutlined
+  RocketOutlined,
+  CloseCircleOutlined,
+  StopOutlined,
+  ExclamationCircleOutlined
 } from '@ant-design/icons';
 import {
  Chart as ChartJS,
@@ -113,7 +116,13 @@ const TechnicianSubscriptionAnalytics = () => {
         conversionRate: analytics.conversionRate || 0,
         avgRevenuePerSub: analytics.avgRevenuePerSubscription || 0,
         churnRate: analytics.churnRate || 0,
-        retentionRate: analytics.retentionRate || 0
+        retentionRate: analytics.retentionRate || 0,
+        
+        // Tỷ lệ rời bỏ chi tiết
+        customerCancellationRate: analytics.customerCancellationRate || 0,
+        totalChurnRate: analytics.totalChurnRate || 0,
+        expiredChurnRate: analytics.expiredChurnRate || 0,
+        suspendedChurnRate: analytics.suspendedChurnRate || 0
       };
     }
 
@@ -129,7 +138,13 @@ const TechnicianSubscriptionAnalytics = () => {
       conversionRate: 0,
       avgRevenuePerSub: 0,
       churnRate: 0,
-      retentionRate: 0
+      retentionRate: 0,
+      
+      // Tỷ lệ rời bỏ chi tiết
+      customerCancellationRate: 0,
+      totalChurnRate: 0,
+      expiredChurnRate: 0,
+      suspendedChurnRate: 0
     };
   }, [analytics]);
 
@@ -154,17 +169,40 @@ const TechnicianSubscriptionAnalytics = () => {
  const quarterlyData = useMemo(() => {
    // Sử dụng analytics từ BE
    if (analytics?.quarterlyMetrics) {
-     return analytics.quarterlyMetrics.map(metric => ({
+     const quarterlyMetrics = analytics.quarterlyMetrics.map(metric => ({
        name: `Q${metric.quarter}`,
        revenue: metric.revenue,
        subscriptions: metric.subscriptions,
        active: metric.activeSubscriptions,
        conversion: metric.conversionRate
      }));
+     
+     // Đảm bảo luôn có đủ 4 quý
+     const allQuarters = ['Q1', 'Q2', 'Q3', 'Q4'];
+     const completeData = allQuarters.map(quarterName => {
+       const existingData = quarterlyMetrics.find(q => q.name === quarterName);
+       return existingData || {
+         name: quarterName,
+         revenue: 0,
+         subscriptions: 0,
+         active: 0,
+         conversion: 0
+       };
+     });
+     
+     console.log('Processed quarterly data:', completeData);
+     return completeData;
    }
 
-   // Fallback mặc định nếu chưa có analytics
-   return [];
+   // Fallback mặc định nếu chưa có analytics - tạo dữ liệu mẫu cho 4 quý
+   console.warn('No quarterlyMetrics found, using default data');
+   const defaultData = [
+     { name: 'Q1', revenue: 0, subscriptions: 0, active: 0, conversion: 0 },
+     { name: 'Q2', revenue: 0, subscriptions: 0, active: 0, conversion: 0 },
+     { name: 'Q3', revenue: 0, subscriptions: 0, active: 0, conversion: 0 },
+     { name: 'Q4', revenue: 0, subscriptions: 0, active: 0, conversion: 0 }
+   ];
+   return defaultData;
  }, [analytics]);
 
   // Enhanced package distribution with revenue analysis
@@ -206,11 +244,11 @@ const TechnicianSubscriptionAnalytics = () => {
   // Chart configurations
   const chartConfig = useMemo(() => {
     const baseConfig = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'top',
+   responsive: true,
+   maintainAspectRatio: false,
+   plugins: {
+     legend: {
+       position: 'top',
           labels: {
             usePointStyle: true,
             padding: 20,
@@ -218,8 +256,8 @@ const TechnicianSubscriptionAnalytics = () => {
               size: 12
             }
           }
-        },
-        tooltip: {
+     },
+     tooltip: {
           backgroundColor: 'rgba(0, 0, 0, 0.8)',
           titleColor: '#fff',
           bodyColor: '#fff',
@@ -237,7 +275,9 @@ const TechnicianSubscriptionAnalytics = () => {
           ticks: {
             font: {
               size: 11
-            }
+            },
+            autoSkip: false, // Đảm bảo hiển thị tất cả labels
+            maxRotation: 0
           }
         },
         y: {
@@ -246,7 +286,7 @@ const TechnicianSubscriptionAnalytics = () => {
           },
           title: {
             display: true,
-            text: 'VND'
+            text: timeRange === 'quarter' ? 'Giá trị' : 'VND'
           },
           ticks: {
             font: {
@@ -264,11 +304,11 @@ const TechnicianSubscriptionAnalytics = () => {
     if (chartType === 'bar') {
       return {
         ...baseConfig,
-        scales: {
+   scales: {
           ...baseConfig.scales,
-          y: {
+     y: {
             ...baseConfig.scales.y,
-            beginAtZero: true,
+       beginAtZero: true,
             title: {
               display: true,
               text: 'VND'
@@ -288,7 +328,7 @@ scales: {
     title: {
       display: true,
     },
-    ticks: {
+       ticks: {
       callback: function(value) {
         return value; // Chỉ hiển thị số, không thêm đơn vị 'đ'
       }
@@ -307,11 +347,15 @@ scales: {
         }
       }
     };
-  }, [chartType]);
+  }, [chartType, timeRange]);
 
   // Enhanced chart data
   const getChartData = useCallback((type, metric) => {
     let labels, data;
+    
+    console.log('🔍 getChartData called with:', { type, metric, timeRange, analytics });
+    console.log('📊 monthlyData:', monthlyData);
+    console.log('📊 quarterlyData:', quarterlyData);
     
     // Sử dụng dữ liệu từ Backend
     if (timeRange === 'month') {
@@ -334,6 +378,8 @@ scales: {
       } else {
         data = quarterlyData.map(q => q.subscriptions);
       }
+      
+      console.log('📊 Quarter chart data:', { labels, data, metric });
     } else {
       // Default: Show monthly data for the year
       labels = monthlyData.map(d => d.month);
@@ -424,9 +470,18 @@ scales: {
     dispatch(fetchSubscriptionAnalytics({ year: currentYear, timeRange }));
   }, [dispatch, currentYear, timeRange]);
 
-  const handleRefresh = () => {
-    dispatch(fetchAllSubscriptions());
-    dispatch(fetchSubscriptionStats(currentYear));
+  // Debug logging cho analytics data
+  useEffect(() => {
+    if (analytics) {
+      console.log('📊 Analytics data received:', analytics);
+      console.log('📊 QuarterlyMetrics:', analytics.quarterlyMetrics);
+      console.log('📊 MonthlyMetrics:', analytics.monthlyMetrics);
+    }
+  }, [analytics]);
+
+ const handleRefresh = () => {
+   dispatch(fetchAllSubscriptions());
+   dispatch(fetchSubscriptionStats(currentYear));
     dispatch(fetchSubscriptionAnalytics({ year: currentYear, timeRange }));
   };
 
@@ -465,7 +520,7 @@ scales: {
    );
  }
 
-  return (
+ return (
     <div className="modern-page- wrapper">
       <div className="modern-content-card">
           <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
@@ -506,7 +561,7 @@ scales: {
                   </Text>
                 </div>
               </Card>
-            </Col>
+             </Col>
 
             <Col xs={24} sm={12} md={6}>
               <Card style={{ 
@@ -565,7 +620,7 @@ scales: {
               }}>
                 <Statistic
                   title={<Text style={{ color: 'white', fontSize: '14px' }}>Tỷ lệ rời bỏ</Text>}
-                  value={analyticsData.churnRate}
+                  value={analyticsData.totalChurnRate}
                   precision={1}
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
                                                 prefix={<DownOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
@@ -583,6 +638,87 @@ scales: {
             </Col>
           </Row>
 
+          {/* Detailed Churn Rate Analysis */}
+          {/* <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+            <Col xs={24} sm={12} md={8}>
+              <Card style={{ 
+                borderRadius: '16px',
+                border: 'none',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)'
+              }}>
+                <Statistic
+                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Khách hàng tự hủy</Text>}
+                  value={analyticsData.customerCancellationRate}
+                  precision={1}
+                  valueStyle={{ color: 'white', fontSize: '20px', fontWeight: 600 }}
+                  prefix={<CloseCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
+                  suffix="%"
+                />
+                <div style={{ marginTop: '8px' }}>
+                  <Tag color="red" style={{ color: 'white' }}>
+                    {analyticsData.cancelledSubscriptions}
+                  </Tag>
+                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
+                    gói đã hủy
+                  </Text>
+                </div>
+              </Card>
+            </Col>
+
+            <Col xs={24} sm={12} md={8}>
+              <Card style={{ 
+                borderRadius: '16px',
+                border: 'none',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                background: 'linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)'
+              }}>
+                <Statistic
+                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Hết hạn</Text>}
+                  value={analyticsData.expiredChurnRate}
+                  precision={1}
+                  valueStyle={{ color: 'white', fontSize: '20px', fontWeight: 600 }}
+                  prefix={<ClockCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
+                  suffix="%"
+                />
+                <div style={{ marginTop: '8px' }}>
+                  <Tag color="orange" style={{ color: 'white' }}>
+                    {analyticsData.expiredSubscriptions}
+                  </Tag>
+                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
+                    gói hết hạn
+                  </Text>
+                </div>
+              </Card>
+            </Col>
+
+            <Col xs={24} sm={12} md={8}>
+              <Card style={{ 
+                borderRadius: '16px',
+                border: 'none',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
+                background: 'linear-gradient(135deg, #d299c2 0%, #fef9d7 100%)'
+              }}>
+                <Statistic
+                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng tỷ lệ rời bỏ</Text>}
+                  value={analyticsData.totalChurnRate}
+                  precision={1}
+                  valueStyle={{ color: 'white', fontSize: '20px', fontWeight: 600 }}
+                  prefix={<ExclamationCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
+                  suffix="%"
+                />
+                <div style={{ marginTop: '8px' }}>
+                  <Tag color="purple" style={{ color: 'white' }}>
+                    {analyticsData.totalChurnRate.toFixed(1)}%
+                  </Tag>
+                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
+                    tổng hợp
+                  </Text>
+                </div>
+              </Card>
+            </Col>
+          </Row> */}
+
           {/* Main Analytics Content */}
           <Card
             style={{ 
@@ -596,37 +732,37 @@ scales: {
               <Col flex="auto">
               <div style={{ marginBottom: '8px' }}>
                 <Row justify="end">
-                  <Col>
+             <Col>
                     <Space size="small">
                       <div style={{ minWidth: '120px' }}>
                         <Text strong style={{ fontSize: '12px', display: 'block', marginBottom: '4px' }}>Thời gian:</Text>
-                        <Select
-                          value={timeRange}
-                          onChange={setTimeRange}
+                 <Select
+                   value={timeRange}
+                   onChange={setTimeRange}
                           style={{ width: '100%' }}
                           size="small"
-                        >
+                 >
                           <Option value="year">Theo tháng</Option>
-                          <Option value="quarter">Theo quý</Option>
-                        </Select>
+                   <Option value="quarter">Theo quý</Option>
+                 </Select>
                       </div>
                       <div style={{ minWidth: '100px' }}>
                         <Text strong style={{ fontSize: '12px', display: 'block', marginBottom: '4px' }}>Năm:</Text>
-                        <Select
-                          value={currentYear}
-                          onChange={setCurrentYear}
+                 <Select
+                   value={currentYear}
+                   onChange={setCurrentYear}
                           style={{ width: '100%' }}
                           size="small"
-                        >
-                          {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
-                            <Option key={year} value={year}>{year}</Option>
-                          ))}
-                        </Select>
+                 >
+                   {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i).map(year => (
+                     <Option key={year} value={year}>{year}</Option>
+                   ))}
+                 </Select>
                       </div>
-                    </Space>
-                  </Col>
-                </Row>
-              </div>
+               </Space>
+             </Col>
+           </Row>
+         </div>
               <Tabs
                 defaultActiveKey="overview"
                 type="card"
@@ -652,13 +788,13 @@ scales: {
                           <div style={{ padding: '10px' }}>
                             <div style={{ fontSize: '18px', fontWeight: '600', marginBottom: '4px' }}>
                               Biểu đồ {timeRange === 'year' ? 'theo tháng' : timeRange === 'quarter' ? 'theo quý' : 'theo tháng'}
-                            </div>
+         </div>
                             <div style={{ fontSize: '14px', color: '#8c8c8c' }}>
                               {timeRange === 'year' && `Năm ${currentYear}`}
                               {timeRange === 'quarter' && `Quý ${Math.floor(new Date().getMonth() / 3) + 1} năm ${currentYear}`}
                               {timeRange === 'month' && `Tháng ${new Date().getMonth() + 1} năm ${currentYear}`}
-                            </div>
-                          </div>
+         </div>
+         </div>
                           <Space>
                             <Radio.Group value={selectedPeriod} onChange={(e) => setSelectedPeriod(e.target.value)} size="small">
                               <Radio.Button value="revenue">Doanh thu</Radio.Button>
@@ -666,7 +802,7 @@ scales: {
                               <Radio.Button value="conversion">Tỷ lệ chuyển đổi</Radio.Button>
                             </Radio.Group>
                           </Space>
-                        </div>
+         </div>
                       }
                       style={{ borderRadius: '16px' }}
                     >
@@ -681,8 +817,8 @@ scales: {
                           );
                         })()}
                   </div>
-                </Card>
-              </Col>
+   </Card>
+ </Col>
 
                   {/* Package Distribution */}
               <Col xs={24} lg={12}>
@@ -724,9 +860,9 @@ scales: {
                             }
                           }}
                         />
-                  </div>
-                </Card>
-              </Col>
+         </div>
+   </Card>
+ </Col>
 
                   {/* Status Analysis */}
               <Col xs={24} lg={12}>
@@ -767,9 +903,9 @@ scales: {
                             }
                           }}
                         />
-                      </div>
-                </Card>
-              </Col>
+         </div>
+   </Card>
+ </Col>
                 </Row>
               )
             },
@@ -786,26 +922,30 @@ scales: {
                   {/* Quarterly Analysis */}
                   <Col span={24}>
                     <Card
-                      title="Phân tích theo quý"
+                      title={`Phân tích theo ${timeRange === 'quarter' ? 'quý' : 'tháng'}`}
                       style={{ borderRadius: '16px' }}
                     >
                       <Row gutter={[16, 16]}>
-                        {quarterlyData.map((quarter, index) => {
-                          const colors = ['#ff6384', '#36a2eb', '#ffce56', '#4bc0c0'];
-                          const quarterColor = colors[index] || '#1890ff';
+                        {(timeRange === 'quarter' ? quarterlyData : monthlyData).map((item, index) => {
+                          const colors = ['#36a2eb'];
+                          const itemColor = ['#1890ff'];
+                          const itemName = timeRange === 'quarter' ? item.name : item.month;
+                          const itemRevenue = item.revenue || 0;
+                          const itemSubscriptions = item.subscriptions || 0;
+                          const itemConversion = item.conversion || 0;
                           
                           return (
-                            <Col xs={24} sm={12} md={6} key={quarter.name || `quarter-${index}`}>
+                            <Col xs={24} sm={12} md={6} key={itemName || `item-${index}`}>
                               <Card
                                 style={{ 
                                   borderRadius: '12px',
-                                  border: `2px solid ${quarterColor}`,
+                                  border: `2px solid ${itemColor}`,
                                   textAlign: 'center'
                                 }}
                                 styles={{ body: { padding: '16px' } }}
                               >
                                 <div style={{ 
-                                  background: quarterColor, 
+                                  background: itemColor, 
                                   color: 'white',
                                   borderRadius: '50%',
                                   width: '60px',
@@ -817,35 +957,35 @@ scales: {
                                   fontSize: '20px',
                                   fontWeight: 'bold'
                                 }}>
-                                  {quarter.name}
+                                  {itemName}
                                 </div>
                                 <Statistic
                                   title="Doanh thu"
-                                  value={quarter.revenue}
+                                  value={itemRevenue}
                                   precision={0}
-                                  valueStyle={{ fontSize: '18px', color: quarterColor }}
+                                  valueStyle={{ fontSize: '18px', color: itemColor }}
                                 />
                                 <Statistic
                                   title="Lượt mua"
-                                  value={quarter.subscriptions}
+                                  value={itemSubscriptions}
                                   valueStyle={{ fontSize: '16px' }}
                                 />
                                 <Progress
-                                  percent={quarter.conversion}
+                                  percent={itemConversion}
                                   size="small"
-                                  strokeColor={quarterColor}
+                                  strokeColor={itemColor}
                                   showInfo={false}
                                 />
                                 <Text type="secondary" style={{ fontSize: '12px' }}>
-                                  Tỷ lệ chuyển đổi: {quarter.conversion.toFixed(1)}%
+                                  Tỷ lệ chuyển đổi: {itemConversion.toFixed(1)}%
                                 </Text>
                               </Card>
                             </Col>
                           );
                         })}
                       </Row>
-                </Card>
-              </Col>
+                    </Card>
+                  </Col>
 
                   {/* Package Performance */}
                   <Col span={24}>
@@ -853,23 +993,23 @@ scales: {
                       title="Hiệu suất gói đăng ký"
                       style={{ borderRadius: '16px' }}
                     >
-            <Table
+             <Table
                         dataSource={packageAnalysis}
                         rowKey={(record) => record.packageId || record.name || Math.random().toString(36)}
                         locale={{
                           emptyText: 'Chưa có dữ liệu gói đăng ký'
                         }}
-              columns={[
-                {
-                  title: 'Tên gói',
-                  dataIndex: 'name',
-                  key: 'name',
+               columns={[
+                 {
+                   title: 'Tên gói',
+                   dataIndex: 'name',
+                   key: 'name',
                             render: (text) => <Text strong>{text}</Text>
-                },
-                {
-                  title: 'Số lượng',
-                  dataIndex: 'count',
-                  key: 'count',
+                 },
+                 {
+                   title: 'Số lượng',
+                   dataIndex: 'count',
+                   key: 'count',
                             render: (value) => <Badge count={value} style={{ backgroundColor: '#1890ff' }} />
                           },
                           {
@@ -889,18 +1029,18 @@ scales: {
                             dataIndex: 'conversion',
                             key: 'conversion',
                             render: (value) => (
-                      <Progress
+                       <Progress
                                 percent={parseFloat(value)}
-                        size="small"
+                         size="small"
                                 strokeColor={parseFloat(value) > 70 ? '#52c41a' : parseFloat(value) > 40 ? '#faad14' : '#f5222d'}
                               />
                             )
                           }
-              ]}
-              pagination={false}
-              size="small"
-            />
-        </Card>
+               ]}
+               pagination={false}
+               size="small"
+             />
+         </Card>
                   </Col>
                 </Row>
               )
@@ -918,17 +1058,21 @@ scales: {
                   {/* Comparison Chart */}
                   <Col span={24}>
                     <Card
-                      title="So sánh doanh thu và lượt mua"
+                      title={`So sánh doanh thu và lượt mua theo ${timeRange === 'quarter' ? 'quý' : 'tháng'}`}
                       style={{ borderRadius: '16px' }}
                     >
                       <div style={{ height: '400px' }}>
                         <Line
                           data={{
-                            labels: monthlyData.map(d => d.month),
+                            labels: timeRange === 'quarter' 
+                              ? quarterlyData.map(q => q.name)
+                              : monthlyData.map(d => d.month),
                             datasets: [
                               {
                                 label: 'Doanh thu (VND)',
-                                data: monthlyData.map(d => d.revenue),
+                                data: timeRange === 'quarter'
+                                  ? quarterlyData.map(q => q.revenue)
+                                  : monthlyData.map(d => d.revenue),
                                 borderColor: '#1890ff',
                                 backgroundColor: 'rgba(24, 144, 255, 0.1)',
                                 yAxisID: 'y',
@@ -936,7 +1080,9 @@ scales: {
                               },
                               {
                                 label: 'Lượt mua gói',
-                                data: monthlyData.map(d => d.subscriptions),
+                                data: timeRange === 'quarter'
+                                  ? quarterlyData.map(q => q.subscriptions)
+                                  : monthlyData.map(d => d.subscriptions),
                                 borderColor: '#52c41a',
                                 backgroundColor: 'rgba(82, 196, 26, 0.1)',
                                 yAxisID: 'y1',
@@ -965,6 +1111,12 @@ scales: {
                               }
                             },
                             scales: {
+                              x: {
+                                ticks: {
+                                  autoSkip: false, // Đảm bảo hiển thị tất cả labels
+                                  maxRotation: 0
+                                }
+                              },
                               y: {
                                 type: 'linear',
                                 display: true,
@@ -981,8 +1133,7 @@ scales: {
                             }
                           }}
                         />
-                    </div>
-                    
+                      </div>
                     </Card>
                   </Col>
 
@@ -1058,7 +1209,7 @@ scales: {
             }}
           />
 
-      </div>
+     </div>
    </div>
  );
 };

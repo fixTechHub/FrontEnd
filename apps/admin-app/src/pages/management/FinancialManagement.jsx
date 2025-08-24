@@ -13,8 +13,7 @@ import {
   Space,
   Modal,
   Descriptions,
-  Divider,
-  Popconfirm
+  Divider
 } from 'antd';
 import {
   SearchOutlined,
@@ -39,7 +38,9 @@ import {
   setSelectedTechnicianId,
   clearSelectedTechnician
 } from '../../features/financialReport/financialReportSlice';
-// Không cần import userAPI, technicianAPI, serviceAPI nữa vì backend đã cung cấp names
+// Import APIs để lấy tên thực
+import { userAPI } from '../../features/users/userAPI';
+import { technicianAPI } from '../../features/technicians/techniciansAPI';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 
@@ -58,6 +59,10 @@ const FinancialManagement = () => {
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentFilter, setPaymentFilter] = useState('');
+  
+  // Phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   // Redux selectors
   const financialSummary = useSelector(state => state.financialReport.financialSummary);
@@ -65,6 +70,27 @@ const FinancialManagement = () => {
   const techniciansFinancialSummary = useSelector(state => state.financialReport.techniciansFinancialSummary);
   const loading = useSelector(state => state.financialReport.loading);
   const error = useSelector(state => state.financialReport.error);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Financial Management State:', {
+      financialSummary,
+      bookingsFinancial: bookingsFinancial?.length || 0,
+      techniciansFinancialSummary: techniciansFinancialSummary?.length || 0,
+      loading,
+      error,
+      activeTab
+    });
+  }, [financialSummary, bookingsFinancial, techniciansFinancialSummary, loading, error, activeTab]);
+
+  // Local loading states cho từng loại dữ liệu
+  const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [techniciansLoading, setTechniciansLoading] = useState(false);
+  
+  // Maps để lưu tên thực từ ID
+  const [technicianNameMap, setTechnicianNameMap] = useState({});
+  const [customerNameMap, setCustomerNameMap] = useState({});
+  const [userMap, setUserMap] = useState({});
 
   const {
     totalRevenue = 0,
@@ -74,13 +100,101 @@ const FinancialManagement = () => {
     totalWithdrawn = 0
   } = financialSummary || {};
 
+  // Tạo mapping từ technician ID sang tên
+  useEffect(() => {
+    if (techniciansFinancialSummary.length > 0) {
+      const techMap = {};
+      console.log('🔍 Creating technician mapping from technicians:', techniciansFinancialSummary);
+      techniciansFinancialSummary.forEach(tech => {
+        if (tech.technicianId) {
+          // Kiểm tra tất cả các trường có thể chứa tên technician
+          const technicianName = tech.technicianName || 
+                                tech.fullName || 
+                                tech.name ||
+                                tech.technician?.fullName ||
+                                tech.technician?.name ||
+                                'Không có tên';
+          techMap[tech.technicianId] = technicianName;
+          console.log(`🔍 Technician mapping: ${tech.technicianId} -> ${technicianName}`);
+        }
+      });
+      setTechnicianNameMap(techMap);
+    }
+  }, [techniciansFinancialSummary]);
+
+  // Tạo userMap từ userAPI.getAll() giống như BookingManagement
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const users = await userAPI.getAll();
+        const userMapData = {};
+        users.forEach(u => userMapData[u.id] = u.fullName || u.email);
+        setUserMap(userMapData);
+        console.log('✅ UserMap created successfully:', userMapData);
+      } catch (error) {
+        console.error('❌ Failed to fetch users:', error);
+      }
+    };
+    
+    fetchUsers();
+  }, []);
+
+  // Tạo mapping từ customer ID sang tên (sử dụng userMap)
+  useEffect(() => {
+    if (Object.keys(userMap).length > 0 && bookingsFinancial.length > 0) {
+      const custMap = {};
+      console.log('🔍 Creating customer mapping using userMap:', userMap);
+      
+      bookingsFinancial.forEach(booking => {
+        if (booking.customerId && !custMap[booking.customerId]) {
+          // Sử dụng userMap trước, fallback về dữ liệu có sẵn
+          const customerName = userMap[booking.customerId] || 
+                             booking.customerName || 
+                             booking.customer?.fullName || 
+                             booking.customer?.name ||
+                             `Khách hàng ${booking.customerId}`;
+          custMap[booking.customerId] = customerName;
+          console.log(`🔍 Customer mapping: ${booking.customerId} -> ${customerName}`);
+        }
+      });
+      
+      setCustomerNameMap(custMap);
+    }
+  }, [userMap, bookingsFinancial]);
+
+  // Debug logging cho mapping
+  useEffect(() => {
+    console.log('🔍 Mapping State:', {
+      userMap,
+      technicianNameMap,
+      customerNameMap,
+      sampleUser: Object.keys(userMap)[0],
+      sampleTechnician: Object.keys(technicianNameMap)[0],
+      sampleCustomer: Object.keys(customerNameMap)[0]
+    });
+    
+    // Debug chi tiết dữ liệu
+    if (bookingsFinancial.length > 0) {
+      console.log('🔍 Sample booking data:', bookingsFinancial[0]);
+      console.log('🔍 Available fields in booking:', Object.keys(bookingsFinancial[0]));
+    }
+    
+    if (techniciansFinancialSummary.length > 0) {
+      console.log('🔍 Sample technician data:', techniciansFinancialSummary[0]);
+      console.log('🔍 Available fields in technician:', Object.keys(techniciansFinancialSummary[0]));
+    }
+  }, [userMap, technicianNameMap, customerNameMap, bookingsFinancial, techniciansFinancialSummary]);
+
   // Load financial data on component mount
   useEffect(() => {
     const fetchFinancialData = async () => {
       try {
+        // Chỉ load summary trước, các dữ liệu khác sẽ load khi cần
         dispatch(fetchFinancialSummary());
-        dispatch(fetchAllBookingsFinancial());
-        dispatch(fetchAllTechniciansFinancialSummary());
+        
+        // Lazy load các dữ liệu lớn chỉ khi user thực sự cần
+        // dispatch(fetchAllBookingsFinancial());
+        // dispatch(fetchAllTechniciansFinancialSummary());
       } catch (error) {
         message.error('Failed to load financial data');
       }
@@ -88,6 +202,33 @@ const FinancialManagement = () => {
 
     fetchFinancialData();
   }, [dispatch]);
+
+  // Load bookings data chỉ khi tab được chọn
+  useEffect(() => {
+    if (activeTab === 'bookings' && bookingsFinancial.length === 0) {
+      console.log('🔍 Loading bookings data...');
+      setBookingsLoading(true);
+      dispatch(fetchAllBookingsFinancial())
+        .then((result) => {
+          console.log('✅ Bookings loaded successfully:', result);
+        })
+        .catch((error) => {
+          console.error('❌ Error loading bookings:', error);
+        })
+        .finally(() => {
+          setBookingsLoading(false);
+        });
+    }
+  }, [activeTab, bookingsFinancial.length, dispatch]);
+
+  // Load technicians data chỉ khi tab được chọn
+  useEffect(() => {
+    if (activeTab === 'technicians' && techniciansFinancialSummary.length === 0) {
+      setTechniciansLoading(true);
+      dispatch(fetchAllTechniciansFinancialSummary())
+        .finally(() => setTechniciansLoading(false));
+    }
+  }, [activeTab, techniciansFinancialSummary.length, dispatch]);
 
   // Cập nhật export data khi component mount và khi data thay đổi
   useEffect(() => {
@@ -113,26 +254,102 @@ const FinancialManagement = () => {
 
   useEffect(() => {
     if (error) {
-      message.error(error);
+      // Kiểm tra nếu error là object thì lấy message, nếu không thì dùng error trực tiếp
+      const errorMessage = typeof error === 'object' && error.message ? error.message : String(error);
+      message.error(errorMessage);
       dispatch(clearError());
     }
   }, [error, dispatch]);
 
-  // Reset filters khi chuyển tab
+  // Reset filters và phân trang khi chuyển tab
   useEffect(() => {
     setSearchText('');
     setStatusFilter('');
     setPaymentFilter('');
+    setCurrentPage(1); // Reset về trang đầu tiên
   }, [activeTab]);
 
-  const handleFilterChange = (filterType, value) => {
-    // TODO: Implement filter logic
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, statusFilter, paymentFilter]);
+
+  // Logic filter và phân trang
+  const filteredBookings = bookingsFinancial.filter(booking => {
+    const matchesSearch = !searchText || 
+      booking.bookingCode?.toLowerCase().includes(searchText.toLowerCase()) ||
+      booking.customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
+      booking.technicianName?.toLowerCase().includes(searchText.toLowerCase()) ||
+      booking.serviceName?.toLowerCase().includes(searchText.toLowerCase());
     
+    const matchesStatus = !statusFilter || booking.status === statusFilter;
+    const matchesPayment = !paymentFilter || booking.paymentStatus === paymentFilter;
+    
+    return matchesSearch && matchesStatus && matchesPayment;
+  });
+
+  const filteredTechnicians = techniciansFinancialSummary.filter(technician => {
+    const matchesSearch = !searchText || 
+      technician.fullName?.toLowerCase().includes(searchText.toLowerCase()) ||
+      technician.email?.toLowerCase().includes(searchText.toLowerCase()) ||
+      technician.phone?.toLowerCase().includes(searchText.toLowerCase());
+    
+    return matchesSearch;
+  });
+
+  // Sắp xếp data
+  const sortedBookings = [...filteredBookings].sort((a, b) => {
+    if (sortField === 'createdAt') {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    } else if (sortField === 'finalPrice') {
+      return sortOrder === 'asc' ? (a.finalPrice || 0) - (b.finalPrice || 0) : (b.finalPrice || 0) - (a.finalPrice || 0);
+    } else if (sortField === 'commissionAmount') {
+      return sortOrder === 'asc' ? (a.commissionAmount || 0) - (b.commissionAmount || 0) : (b.commissionAmount || 0) - (a.commissionAmount || 0);
+    }
+    return 0;
+  });
+
+  const sortedTechnicians = [...filteredTechnicians].sort((a, b) => {
+    if (sortField === 'totalRevenue') {
+      return sortOrder === 'asc' ? (a.totalRevenue || 0) - (b.totalRevenue || 0) : (b.totalRevenue || 0) - (a.totalRevenue || 0);
+    } else if (sortField === 'totalBookings') {
+      return sortOrder === 'asc' ? (a.totalBookings || 0) - (b.totalBookings || 0) : (b.totalBookings || 0) - (a.totalBookings || 0);
+    }
+    return 0;
+  });
+
+  // Phân trang
+  const indexOfLastBooking = currentPage * itemsPerPage;
+  const indexOfFirstBooking = indexOfLastBooking - itemsPerPage;
+  const indexOfLastTechnician = currentPage * itemsPerPage;
+  const indexOfFirstTechnician = indexOfLastTechnician - itemsPerPage;
+  
+  const currentBookings = sortedBookings.slice(indexOfFirstBooking, indexOfLastBooking);
+  const currentTechnicians = sortedTechnicians.slice(indexOfFirstTechnician, indexOfLastTechnician);
+  
+  const totalBookingsPages = Math.ceil(sortedBookings.length / itemsPerPage);
+  const totalTechniciansPages = Math.ceil(sortedTechnicians.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
+
+  const handleFilterChange = (filterType, value) => {
+    if (filterType === 'status') {
+      setStatusFilter(value);
+    } else if (filterType === 'payment') {
+      setPaymentFilter(value);
+    }
+    setCurrentPage(1); // Reset về trang đầu tiên khi filter
   };
 
   const handleClearFilters = () => {
-    // TODO: Implement clear filter logic
-    
+    setSearchText('');
+    setStatusFilter('');
+    setPaymentFilter('');
+    setCurrentPage(1); // Reset về trang đầu tiên khi clear filter
   };
 
   const handleViewBookingDetails = (booking) => {
@@ -383,32 +600,13 @@ const FinancialManagement = () => {
     }
   };
 
-  // Filter và search data
-  const filteredBookings = bookingsFinancial.filter(booking => {
-    const matchesSearch = !searchText || 
-      booking.bookingCode?.toLowerCase().includes(searchText.toLowerCase()) ||
-      booking.customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
-      booking.technicianName?.toLowerCase().includes(searchText.toLowerCase());
-    
-    const matchesStatus = !statusFilter || booking.status === statusFilter;
-    const matchesPayment = !paymentFilter || booking.paymentStatus === paymentFilter;
-    
-    return matchesSearch && matchesStatus && matchesPayment;
-  });
 
-  const filteredTechnicians = techniciansFinancialSummary.filter(technician => {
-    const matchesSearch = !searchText || 
-      technician.technicianId?.toLowerCase().includes(searchText.toLowerCase()) ||
-      technician.technicianName?.toLowerCase().includes(searchText.toLowerCase());
-    
-    return matchesSearch;
-  });
 
   const bookingColumns = [
     {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByBookingCode}>
-          CODE
+          Mã đơn hàng
           {sortField === 'bookingCode' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -428,7 +626,7 @@ const FinancialManagement = () => {
     {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByFinalPrice}>
-          FINAL PRICE
+          Giá trị đơn hàng
           {sortField === 'finalPrice' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -448,7 +646,7 @@ const FinancialManagement = () => {
     {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByBookingHoldingAmount}>
-          HOLDING
+          Số tiền giữ lại
           {sortField === 'holdingAmount' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -467,28 +665,8 @@ const FinancialManagement = () => {
     },
     {
       title: (
-        <div style={{ cursor: 'pointer' }} onClick={handleSortByCommissionAmount}>
-          COMMISSION
-          {sortField === 'commissionAmount' && (
-            <span style={{ marginLeft: 4 }}>
-              {sortOrder === 'asc' ? '▲' : '▼'}
-            </span>
-          )}
-        </div>
-      ),
-      dataIndex: 'commissionAmount',
-      key: 'commissionAmount',
-      width: 120,
-      render: (amount) => (
-        <span style={{ fontWeight: 600, color: '#1890ff' }}>
-          {formatCurrency(amount)}
-        </span>
-      ),
-    },
-    {
-      title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByTechnicianEarning}>
-          TECHNICIAN EARNING
+          Kỹ thuật viên nhận được
           {sortField === 'technicianEarning' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -506,18 +684,7 @@ const FinancialManagement = () => {
       ),
     },
     {
-      title: 'STATUS',
-      dataIndex: 'status',
-      key: 'status',
-      width: 100,
-      render: (status) => (
-        <Tag color={getStatusColor(status)}>
-          {formatStatus(status)?.toUpperCase()}
-        </Tag>
-      ),
-    },
-    {
-      title: 'PAYMENT',
+      title: 'Thanh toán',
       dataIndex: 'paymentStatus',
       key: 'paymentStatus',
       width: 100,
@@ -528,13 +695,13 @@ const FinancialManagement = () => {
       ),
     },
     {
-      title: 'ACTIONS',
+      title: 'Hành động',
       key: 'actions',
       width: 120,
       render: (_, record) => (
         <Space>
           <Button className="management-action-btn" size="middle" onClick={() => handleViewBookingDetails(record)}>
-            <EyeOutlined style={{marginRight: 4}} />View Detail
+            <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
           </Button>
         </Space>
       ),
@@ -545,7 +712,7 @@ const FinancialManagement = () => {
     {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByTechnicianName}>
-          TECHNICIAN NAME
+          Họ và tên
           {sortField === 'technicianName' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -564,7 +731,7 @@ const FinancialManagement = () => {
     {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByTotalEarning}>
-          TOTAL EARNING
+          Tổng thu nhập
           {sortField === 'totalEarning' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -582,27 +749,8 @@ const FinancialManagement = () => {
     },
     {
       title: (
-        <div style={{ cursor: 'pointer' }} onClick={handleSortByCommissionPaid}>
-          COMMISSION PAID
-          {sortField === 'totalCommissionPaid' && (
-            <span style={{ marginLeft: 4 }}>
-              {sortOrder === 'asc' ? '▲' : '▼'}
-            </span>
-          )}
-        </div>
-      ),
-      dataIndex: 'totalCommissionPaid',
-      key: 'totalCommissionPaid',
-      render: (commission) => (
-        <span style={{ fontWeight: 600, color: '#1890ff' }}>
-          {formatCurrency(commission)}
-        </span>
-      ),
-    },
-    {
-      title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByHoldingAmount}>
-          HOLDING AMOUNT
+          Số tiền giữ lại
           {sortField === 'totalHoldingAmount' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -621,7 +769,7 @@ const FinancialManagement = () => {
     {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByWithdrawn}>
-          WITHDRAWN
+          Đã rút
           {sortField === 'totalWithdrawn' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -640,7 +788,7 @@ const FinancialManagement = () => {
     {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByTotalBookings}>
-          TOTAL BOOKINGS
+          Tổng đơn hàng
           {sortField === 'totalBookings' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -657,62 +805,19 @@ const FinancialManagement = () => {
       ),
     },
     {
-      title: 'ACTIONS',
+      title: 'Hành động',
       key: 'actions',
       render: (_, record) => (
         <Space>
           <Button className="management-action-btn" size="middle" onClick={() => handleViewTechnicianDetails(record.technicianId)}>
-            <EyeOutlined style={{marginRight: 4}} />View Detail
+            <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
           </Button>
         </Space>
       ),
     },
   ];
 
-  // Sort data theo sortField/sortOrder
-  const sortedBookings = [...filteredBookings].sort((a, b) => {
-    if (sortField === 'createdAt') {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    } else if (sortField === 'bookingCode') {
-      const codeA = a.bookingCode || '';
-      const codeB = b.bookingCode || '';
-      return sortOrder === 'asc' ? codeA.localeCompare(codeB) : codeB.localeCompare(codeA);
-    } else if (sortField === 'finalPrice') {
-      return sortOrder === 'asc' ? a.finalPrice - b.finalPrice : b.finalPrice - a.finalPrice;
-    } else if (sortField === 'holdingAmount') {
-      return sortOrder === 'asc' ? a.holdingAmount - b.holdingAmount : b.holdingAmount - a.holdingAmount;
-    } else if (sortField === 'commissionAmount') {
-      return sortOrder === 'asc' ? a.commissionAmount - b.commissionAmount : b.commissionAmount - a.commissionAmount;
-    } else if (sortField === 'technicianEarning') {
-      return sortOrder === 'asc' ? a.technicianEarning - b.technicianEarning : b.technicianEarning - a.technicianEarning;
-    }
-    return 0;
-  });
 
-  const sortedTechnicians = [...filteredTechnicians].sort((a, b) => {
-    if (sortField === 'createdAt') {
-      const dateA = new Date(a.createdAt);
-      const dateB = new Date(b.createdAt);
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    } else if (sortField === 'technicianName') {
-      const nameA = a.technicianName || '';
-      const nameB = b.technicianName || '';
-      return sortOrder === 'asc' ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
-    } else if (sortField === 'totalEarning') {
-      return sortOrder === 'asc' ? a.totalEarning - b.totalEarning : b.totalEarning - a.totalEarning;
-    } else if (sortField === 'totalCommissionPaid') {
-      return sortOrder === 'asc' ? a.totalCommissionPaid - b.totalCommissionPaid : b.totalCommissionPaid - a.totalCommissionPaid;
-    } else if (sortField === 'totalHoldingAmount') {
-      return sortOrder === 'asc' ? a.totalHoldingAmount - b.totalHoldingAmount : b.totalHoldingAmount - a.totalHoldingAmount;
-    } else if (sortField === 'totalWithdrawn') {
-      return sortOrder === 'asc' ? a.totalWithdrawn - b.totalWithdrawn : b.totalWithdrawn - a.totalWithdrawn;
-    } else if (sortField === 'totalBookings') {
-      return sortOrder === 'asc' ? a.totalBookings - b.totalBookings : b.totalBookings - a.totalBookings;
-    }
-    return 0;
-  });
 
   return (
     <div className="modern-page- wrapper">
@@ -742,7 +847,7 @@ const FinancialManagement = () => {
                     color: '#666',
                     fontWeight: '600',
                     whiteSpace: 'nowrap'
-                  }}>Total Revenue</h5>
+                  }}>Tổng giá trị đơn hàng</h5>
                   <h3 style={{ 
                     color: '#1890ff', 
                     margin: 0, 
@@ -775,7 +880,7 @@ const FinancialManagement = () => {
                     color: '#666',
                     fontWeight: '600',
                     whiteSpace: 'nowrap'
-                  }}>Holding Amount</h5>
+                  }}>Tổng số tiền giữ lại</h5>
                   <h3 style={{ 
                     color: '#faad14', 
                     margin: 0, 
@@ -808,7 +913,7 @@ const FinancialManagement = () => {
                     color: '#666',
                     fontWeight: '600',
                     whiteSpace: 'nowrap'
-                  }}>Technician Earning</h5>
+                  }}>Tổng thu nhập kỹ thuật viên</h5>
                   <h3 style={{ 
                     color: '#722ed1', 
                     margin: 0, 
@@ -841,7 +946,7 @@ const FinancialManagement = () => {
                     color: '#666',
                     fontWeight: '600',
                     whiteSpace: 'nowrap'
-                  }}>Withdrawn</h5>
+                  }}>Tổng số tiền đã rút</h5>
                   <h3 style={{ 
                     color: '#f5222d', 
                     margin: 0, 
@@ -865,7 +970,7 @@ const FinancialManagement = () => {
                   <input
                     type="text"
                     className="form-control"
-                    placeholder={activeTab === 'bookings' ? "Search booking code, customer, technician" : "Search technician ID, name"}
+                    placeholder={activeTab === 'bookings' ? "Tìm mã đơn hàng, tên người dùng, mã kỹ thuật viên" : "Tìm tên, ID kỹ thuật viên"}
                     value={searchText}
                     onChange={(e) => setSearchText(e.target.value)}
                   />
@@ -874,7 +979,7 @@ const FinancialManagement = () => {
               {activeTab === 'bookings' && (
                 <>
                   <Select
-                    placeholder="Status"
+                    placeholder="Trạng thái"
                     style={{ width: 130 }}
                     allowClear
                     value={statusFilter || undefined}
@@ -892,7 +997,7 @@ const FinancialManagement = () => {
                     <Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Option>
                   </Select>
                   <Select
-                    placeholder="Payment"
+                    placeholder="Thanh toán"
                     style={{ width: 130 }}
                     allowClear
                     value={paymentFilter || undefined}
@@ -908,14 +1013,14 @@ const FinancialManagement = () => {
               )}
             </div>
             <div className="d-flex align-items-center" style={{ gap: 12 }}>
-              <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sort by:</span>
+              <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sắp xếp:</span>
               <Select
                 value={sortField === 'createdAt' && sortOrder === 'desc' ? 'lasted' : 'oldest'}
                 style={{ width: 120 }}
                 onChange={handleSortChange}
                 options={[
-                  { value: 'lasted', label: 'Lasted' },
-                  { value: 'oldest', label: 'Oldest' },
+                  { value: 'lasted', label: 'Mới nhất' },
+                  { value: 'oldest', label: 'Cũ nhất' },
                 ]}
               />
             </div>
@@ -929,51 +1034,264 @@ const FinancialManagement = () => {
                 className={`btn ${activeTab === 'bookings' ? 'btn-primary' : 'btn-outline-primary'}`}
                 onClick={() => setActiveTab('bookings')}
               >
-                Bookings
+                Đơn hàng
               </button>
               <button
                 type="button"
                 className={`btn ${activeTab === 'technicians' ? 'btn-primary' : 'btn-outline-primary'}`}
                 onClick={() => setActiveTab('technicians')}
               >
-                Technicians
+                Kỹ thuật viên
               </button>
             </div>
           </div>
 
           {/* Content Tables */}
           {activeTab === 'bookings' && (
-            <Table
-              columns={bookingColumns}
-              dataSource={sortedBookings}
-              rowKey="id"
-              loading={loading}
-              pagination={{
-                total: sortedBookings.length,
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} bookings`,
-              }}
-            />
+            <>
+              <Table
+                columns={bookingColumns}
+                dataSource={currentBookings}
+                rowKey="id"
+                loading={loading || bookingsLoading}
+                pagination={false}
+                scroll={{ x: 1200 }}
+                size="middle"
+                style={{ marginTop: 16 }}
+              />
+              
+              {/* Pagination controls cho bookings */}
+              <div className="d-flex justify-content-between align-items-center mt-3">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="text-muted">
+                    Hiển thị {indexOfFirstBooking + 1}-{Math.min(indexOfLastBooking, sortedBookings.length)} trong tổng số {sortedBookings.length} bookings
+                  </div>
+                </div>
+                {totalBookingsPages > 1 && (
+                  <nav>
+                    <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                      {/* Previous button */}
+                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px'
+                          }}
+                        >
+                          <i className="ti ti-chevron-left"></i>
+                        </button>
+                      </li>
+                      
+                      {/* Page numbers */}
+                      {[...Array(totalBookingsPages)].map((_, i) => {
+                        const pageNumber = i + 1;
+                        // Show first page, last page, current page, and pages around current page
+                        if (
+                          pageNumber === 1 || 
+                          pageNumber === totalBookingsPages || 
+                          (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                        ) {
+                          return (
+                            <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                              <button 
+                                className="page-link" 
+                                onClick={() => handlePageChange(pageNumber)}
+                                style={{ 
+                                  border: '1px solid #dee2e6',
+                                  borderRadius: '6px',
+                                  padding: '8px 12px',
+                                  minWidth: '40px',
+                                  backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                  color: currentPage === pageNumber ? 'white' : '#007bff',
+                                  borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                }}
+                              >
+                                {pageNumber}
+                              </button>
+                            </li>
+                          );
+                        } else if (
+                          pageNumber === currentPage - 2 || 
+                          pageNumber === currentPage + 2
+                        ) {
+                          return (
+                            <li key={i} className="page-item disabled">
+                              <span className="page-link" style={{ 
+                                border: '1px solid #dee2e6',
+                                borderRadius: '6px',
+                                padding: '8px 12px',
+                                minWidth: '40px',
+                                backgroundColor: '#f8f9fa',
+                                color: '#6c757d'
+                              }}>...</span>
+                            </li>
+                          );
+                        }
+                        return null;
+                      })}
+                      
+                      {/* Next button */}
+                      <li className={`page-item ${currentPage === totalBookingsPages ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalBookingsPages}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px'
+                          }}
+                        >
+                          <i className="ti ti-chevron-right"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                )}
+              </div>
+            </>
           )}
 
           {activeTab === 'technicians' && (
-            <Table
-              columns={technicianColumns}
-              dataSource={sortedTechnicians}
-              rowKey="technicianId"
-              loading={loading}
-              pagination={{
-                total: sortedTechnicians.length,
-                pageSize: 10,
-                showSizeChanger: true,
-                showQuickJumper: true,
-                showTotal: (total, range) =>
-                  `${range[0]}-${range[1]} of ${total} technicians`,
-              }}
-            />
+            <>
+              <Table
+                columns={technicianColumns}
+                dataSource={currentTechnicians}
+                rowKey="technicianId"
+                loading={loading || techniciansLoading}
+                pagination={false}
+                scroll={{ x: 1200 }}
+                size="middle"
+                style={{ marginTop: 16 }}
+              />
+              
+              {/* Pagination Info and Controls */}
+              <div className="d-flex justify-content-between align-items-center mt-3">
+                <div className="d-flex align-items-center gap-3">
+                  <div className="text-muted">
+                    Hiển thị {indexOfFirstTechnician + 1}-{Math.min(indexOfLastTechnician, sortedTechnicians.length)} trong tổng số {sortedTechnicians.length} technicians
+                  </div>
+                  <div className="text-muted">
+                    Trang {currentPage} / {Math.max(1, totalTechniciansPages)}
+                  </div>
+                </div>
+                {sortedTechnicians.length > 0 && (
+                  <nav>
+                    <ul className="pagination mb-0" style={{ gap: '2px' }}>
+                      {/* Previous button */}
+                      <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px'
+                          }}
+                        >
+                          <i className="ti ti-chevron-left"></i>
+                        </button>
+                      </li>
+                      
+                      {/* Page numbers */}
+                      {[...Array(Math.max(1, totalTechniciansPages))].map((_, i) => {
+                        const pageNumber = i + 1;
+                        // Always show at least page 1
+                        if (totalTechniciansPages <= 1) {
+                          return (
+                            <li key={i} className="page-item active">
+                              <button 
+                                className="page-link" 
+                                style={{ 
+                                  border: '1px solid #007bff',
+                                  borderRadius: '6px',
+                                  padding: '8px 12px',
+                                  minWidth: '40px',
+                                  backgroundColor: '#007bff',
+                                  color: 'white',
+                                  borderColor: '#007bff'
+                                }}
+                              >
+                                1
+                              </button>
+                            </li>
+                          );
+                        }
+                        
+                        // Show first page, last page, current page, and pages around current page
+                        if (
+                          pageNumber === 1 || 
+                          pageNumber === totalTechniciansPages || 
+                          (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                        ) {
+                          return (
+                            <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                              <button 
+                                className="page-link" 
+                                onClick={() => handlePageChange(pageNumber)}
+                                style={{ 
+                                  border: '1px solid #dee2e6',
+                                  borderRadius: '6px',
+                                  padding: '8px 12px',
+                                  minWidth: '40px',
+                                  backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                  color: currentPage === pageNumber ? 'white' : '#007bff',
+                                  borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                }}
+                              >
+                                {pageNumber}
+                              </button>
+                            </li>
+                          );
+                        } else if (
+                          pageNumber === currentPage - 2 || 
+                          pageNumber === currentPage + 2
+                        ) {
+                          return (
+                            <li key={i} className="page-item disabled">
+                              <span className="page-link" style={{ 
+                                border: '1px solid #dee2e6',
+                                borderRadius: '6px',
+                                padding: '8px 12px',
+                                minWidth: '40px',
+                                backgroundColor: '#f8f9fa',
+                                color: '#6c757d'
+                              }}>...</span>
+                            </li>
+                          );
+                        }
+                        return null;
+                      })}
+                      
+                      {/* Next button */}
+                      <li className={`page-item ${currentPage === Math.max(1, totalTechniciansPages) ? 'disabled' : ''}`}>
+                        <button 
+                          className="page-link" 
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === Math.max(1, totalTechniciansPages)}
+                          style={{ 
+                            border: '1px solid #dee2e6',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            minWidth: '40px'
+                          }}
+                        >
+                          <i className="ti ti-chevron-right"></i>
+                        </button>
+                      </li>
+                    </ul>
+                  </nav>
+                )}
+              </div>
+            </>
           )}
         </Card>
 
@@ -984,48 +1302,82 @@ const FinancialManagement = () => {
             onCancel={() => setIsBookingModalVisible(false)}
             footer={null}
             title={null}
-            width={600}
+            width={960}
+            styles={{ body: { padding: 0 } }}
           >
-            <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 32}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
-                <div style={{flex: 1}}>
-                  <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>
-                    <span style={{marginRight: 12}}>{selectedBooking.bookingCode}</span>
-                    <Tag color={getStatusColor(selectedBooking.status)} style={{fontSize: 14, padding: '2px 12px', marginRight: 8}}>
-                      {formatStatus(selectedBooking.status)?.toUpperCase()}
-                    </Tag>
-                    <Tag color={getPaymentColor(selectedBooking.paymentStatus)} style={{fontSize: 14, padding: '2px 12px'}}>
-                      {formatStatus(selectedBooking.paymentStatus)?.toUpperCase()}
+            <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
+              {/* Header */}
+              <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: 24, color: '#fff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết đơn hàng</div>
+                    <div style={{ fontSize: 13, opacity: 0.9 }}>Mã đơn hàng: {selectedBooking.bookingCode || selectedBooking.id}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>Trạng thái thanh toán: </span>
+                    <Tag color={getPaymentColor(selectedBooking.paymentStatus)} style={{ fontSize: 12, fontWeight: 600 }}>
+                      {selectedBooking.paymentStatus ? selectedBooking.paymentStatus.replace(/_/g, ' ') : ''}
                     </Tag>
                   </div>
                 </div>
               </div>
-              <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Customer</div>
-                  <div>{selectedBooking.customerName || selectedBooking.customerId || ""}</div>
+
+              {/* Body */}
+              <div style={{ padding: 24 }}>
+                <Row gutter={16}>
+                  {/* Financial Overview */}
+                  <Col span={12}>
+                    <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 12 }}>Tổng quan tài chính</div>
+                      <Descriptions size="small" column={1} bordered={false}
+                        items={[
+                          { key: 'createdAt', label: 'Ngày tạo', children: selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleDateString('vi-VN') : 'Chưa có' },
+                          { key: 'status', label: 'Trạng thái', children: selectedBooking.status || 'Chưa có' },
+                        ]}
+                      />
+                    </div>
+                  </Col>
+                  {/* People */}
+                  <Col span={12}>
+                    <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 12 }}>Thông tin đơn hàng</div>
+                      <Descriptions size="small" column={1} bordered={false}
+                        items={[
+                          { key: 'customer', label: 'Khách hàng', children: userMap[selectedBooking.customerId] || selectedBooking.customerId || 'Chưa có' },
+                          { key: 'technician', label: 'Kỹ thuật viên', children: technicianNameMap[selectedBooking.technicianId] || selectedBooking.technicianId || 'Chưa có' },
+                        ]}
+                      />
+                    </div>
+                  </Col>
+                </Row>
+
+                <Divider style={{ margin: '16px 0' }} />
+
+                {/* Financial Details */}
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>Chi tiết tài chính</div>
+                  <Row gutter={12}>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center', background: '#f6ffed', padding: 12, borderRadius: 8 }}>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Giá trị đơn hàng</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#52c41a' }}>{formatCurrency(selectedBooking.finalPrice)}</div>
+                      </div>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center', background: '#fffbe6', padding: 12, borderRadius: 8 }}>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Số tiền giữ lại</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#faad14' }}>{formatCurrency(selectedBooking.holdingAmount)}</div>
+                      </div>
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ textAlign: 'center', background: '#f9f0ff', padding: 12, borderRadius: 8 }}>
+                        <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Thu nhập KTV</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#722ed1' }}>{formatCurrency(selectedBooking.technicianEarning)}</div>
+                      </div>
+                    </Col>
+                  </Row>
                 </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Technician</div>
-                  <div>{selectedBooking.technicianName || selectedBooking.technicianId || ""}</div>
-                </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Final Price</div>
-                  <div style={{color: '#52c41a', fontWeight: 600}}>{formatCurrency(selectedBooking.finalPrice)}</div>
-                </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Holding Amount</div>
-                  <div style={{color: '#faad14', fontWeight: 600}}>{formatCurrency(selectedBooking.holdingAmount)}</div>
-                </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Commission</div>
-                  <div style={{color: '#1890ff', fontWeight: 600}}>{formatCurrency(selectedBooking.commissionAmount)}</div>
-                </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Technician Earning</div>
-                  <div style={{color: '#722ed1', fontWeight: 600}}>{formatCurrency(selectedBooking.technicianEarning)}</div>
-                </div>
+                
               </div>
             </div>
           </Modal>
@@ -1038,70 +1390,86 @@ const FinancialManagement = () => {
             onCancel={() => setIsTechnicianModalVisible(false)}
             footer={null}
             title={null}
-            width={900}
-            style={{top: 20}}
+            width={960}
+            styles={{ body: { padding: 0 } }}
           >
-            <div style={{background: '#fff', borderRadius: 12, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', padding: 24}}>
-              <div style={{display: 'flex', alignItems: 'center', gap: 24, marginBottom: 24}}>
-                <div style={{flex: 1}}>
-                  <div style={{fontSize: 22, fontWeight: 600, marginBottom: 4}}>
-                    <span style={{marginRight: 12}}>{selectedTechnician.technicianName}</span>
+            <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
+              {/* Header */}
+              <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: 24, color: '#fff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết tài chính kỹ thuật viên</div>
+                    <div style={{ fontSize: 13, opacity: 0.9 }}>ID: {selectedTechnician.technicianId}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <Tag color="blue" style={{ fontSize: 14, fontWeight: 600 }}>
+                    {selectedTechnician.technicianName || selectedTechnician.technicianId}
+                    </Tag>
                   </div>
                 </div>
               </div>
-              <div style={{borderTop: '1px solid #f0f0f0', marginBottom: 16}}></div>
-              <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16}}>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Technician ID</div>
-                  <div>{selectedTechnician.technicianId}</div>
+
+              {/* Body */}
+              <div style={{ padding: 24 }}>
+                {/* Financial Details Cards */}
+
+                {/* Performance Summary */}
+                <div style={{ background: '#fafafa', padding: 16, borderRadius: 8, marginBottom: 16 }}>
+                  <div style={{ fontWeight: 600, marginBottom: 8 }}>Tóm tắt hiệu suất</div>
+                  <Row gutter={16}>
+                    <Col span={6}>
+                      <div style={{ textAlign: 'center', padding: 12 }}>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#1890ff' }}>{selectedTechnician.totalBookings}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>Tổng đơn hàng</div>
+                      </div>
+                    </Col>
+                    <Col span={6}>
+                      <div style={{ textAlign: 'center', padding: 12 }}>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#52c41a' }}>{formatCurrency(selectedTechnician.totalEarning)}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>Tổng thu nhập</div>
+                      </div>
+                    </Col>
+                    <Col span={6}>
+                      <div style={{ textAlign: 'center', padding: 12 }}>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#666' }}>{formatCurrency(selectedTechnician.totalHoldingAmount)}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>Số tiền giữ lại</div>
+                      </div>
+                    </Col>
+                    <Col span={6}>
+                      <div style={{ textAlign: 'center', padding: 12 }}>
+                        <div style={{ fontSize: 24, fontWeight: 700, color: '#722ed1' }}>{formatCurrency(selectedTechnician.totalWithdrawn)}</div>
+                        <div style={{ fontSize: 12, color: '#666' }}>Đã rút</div>
+                      </div>
+                    </Col>
+                  </Row>
                 </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Total Bookings</div>
-                  <div style={{color: '#1890ff', fontWeight: 600}}>{selectedTechnician.totalBookings}</div>
-                </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Total Earning</div>
-                  <div style={{color: '#52c41a', fontWeight: 600}}>{formatCurrency(selectedTechnician.totalEarning)}</div>
-                </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Commission Paid</div>
-                  <div style={{color: '#1890ff', fontWeight: 600}}>{formatCurrency(selectedTechnician.totalCommissionPaid)}</div>
-                </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Holding Amount</div>
-                  <div style={{color: '#faad14', fontWeight: 600}}>{formatCurrency(selectedTechnician.totalHoldingAmount)}</div>
-                </div>
-                <div>
-                  <div style={{fontWeight: 500, color: '#888', marginBottom: 2}}>Withdrawn</div>
-                  <div style={{color: '#722ed1', fontWeight: 600}}>{formatCurrency(selectedTechnician.totalWithdrawn)}</div>
-                </div>
-              </div>
-              
-              {selectedTechnician.bookings && selectedTechnician.bookings.length > 0 && (
-                <>
-                  <Divider />
-                  <div style={{marginBottom: 16}}>
-                    <div style={{fontWeight: 500, color: '#222', marginBottom: 12, fontSize: '14px'}}>Booking History</div>
-                    <div style={{overflowX: 'auto', maxWidth: '100%', border: '1px solid #f0f0f0', borderRadius: '6px'}}>
-                      <Table
-                        columns={bookingColumns.filter(col => !['actions', 'customer', 'technician'].includes(col.key))}
-                        dataSource={selectedTechnician.bookings}
-                        rowKey="id"
-                        pagination={{
-                          pageSize: 5,
-                          showSizeChanger: true,
-                          showQuickJumper: true,
-                          size: 'small'
-                        }}
-                        size="small"
-                        scroll={{ x: 600 }}
-                        style={{minWidth: 600}}
-                        className="compact-table"
-                      />
+                
+                {/* Booking History */}
+                {selectedTechnician.bookings && selectedTechnician.bookings.length > 0 && (
+                  <>
+                    <div style={{ background: '#fafafa', padding: 16, borderRadius: 8 }}>
+                      <div style={{ fontWeight: 600, marginBottom: 12 }}>Lịch sử đơn hàng</div>
+                      <div style={{ overflowX: 'auto', maxWidth: '100%', border: '1px solid #f0f0f0', borderRadius: '6px' }}>
+                        <Table
+                          columns={bookingColumns.filter(col => !['actions', 'customer', 'technician'].includes(col.key))}
+                          dataSource={selectedTechnician.bookings}
+                          rowKey="id"
+                          pagination={{
+                            pageSize: 5,
+                            showSizeChanger: false,
+                            showQuickJumper: false,
+                            size: 'small'
+                          }}
+                          size="small"
+                          scroll={{ x: 600 }}
+                          style={{ minWidth: 600 }}
+                          className="compact-table"
+                        />
+                      </div>
                     </div>
-                  </div>
-                </>
-              )}
+                  </>
+                )}
+              </div>
             </div>
           </Modal>
         )}

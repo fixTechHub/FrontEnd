@@ -502,9 +502,9 @@ const handleSortByTechnician = () => {
                         )}
                       </td>
                      <td>
-                       <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
+                       {/* <Button className="management-action-btn" type="default" icon={<EditOutlined />} onClick={() => openEdit(w)} style={{ marginRight: 8 }}>
                           Chỉnh sửa
-                        </Button>
+                        </Button> */}
                        <Button className="management-action-btn" size="middle" onClick={() => { setSelectedWarranty(w); setShowDetailModal(true); }}>
                          <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
                        </Button>
@@ -524,7 +524,7 @@ const handleSortByTechnician = () => {
              Hiển thị {indexOfFirst + 1}-{Math.min(indexOfLast, filtered.length)} trong tổng số {filtered.length} bảo hành
            </div>
          </div>
-         {filtered.length > 0 && (
+         {totalPages > 1 && (
            <nav>
              <ul className="pagination mb-0" style={{ gap: '2px' }}>
                {/* Previous button */}
@@ -546,73 +546,50 @@ const handleSortByTechnician = () => {
                
                {/* Page numbers */}
                {[...Array(totalPages)].map((_, i) => {
-                 const pageNumber = i + 1;
-                 // Show all pages if total pages <= 7
-                 if (totalPages <= 7) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 }
-                 
-                 // Show first page, last page, current page, and pages around current page
-                 if (
-                   pageNumber === 1 || 
-                   pageNumber === totalPages || 
-                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                 ) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 } else if (
-                   pageNumber === currentPage - 2 || 
-                   pageNumber === currentPage + 2
-                 ) {
-                   return (
-                     <li key={i} className="page-item disabled">
-                       <span className="page-link" style={{ 
-                         border: '1px solid #dee2e6',
-                         borderRadius: '6px',
-                         padding: '8px 12px',
-                         minWidth: '40px',
-                         backgroundColor: '#f8f9fa',
-                         color: '#6c757d'
-                       }}>...</span>
-                     </li>
-                   );
-                 }
-                 return null;
+                   const pageNumber = i + 1;
+                   // Show first page, last page, current page, and pages around current page
+                   if (
+                       pageNumber === 1 || 
+                       pageNumber === totalPages || 
+                       (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                   ) {
+                       return (
+                           <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                               <button 
+                                   className="page-link" 
+                                   onClick={() => handlePageChange(pageNumber)}
+                                   style={{ 
+                                       border: '1px solid #dee2e6',
+                                       borderRadius: '6px',
+                                       padding: '8px 12px',
+                                       minWidth: '40px',
+                                       backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                       color: currentPage === pageNumber ? 'white' : '#007bff',
+                                       borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                   }}
+                               >
+                                   {pageNumber}
+                               </button>
+                           </li>
+                       );
+                   } else if (
+                       pageNumber === currentPage - 2 || 
+                       pageNumber === currentPage + 2
+                   ) {
+                       return (
+                           <li key={i} className="page-item disabled">
+                               <span className="page-link" style={{ 
+                                   border: '1px solid #dee2e6',
+                                   borderRadius: '6px',
+                                   padding: '8px 12px',
+                                   minWidth: '40px',
+                                   backgroundColor: '#f8f9fa',
+                                   color: '#6c757d'
+                               }}>...</span>
+                           </li>
+                       );
+                   }
+                   return null;
                })}
                
                {/* Next button */}

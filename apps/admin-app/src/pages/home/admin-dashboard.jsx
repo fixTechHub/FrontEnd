@@ -40,6 +40,7 @@ import { bookingAPI } from '../../features/bookings/bookingAPI';
 import { userAPI } from '../../features/users/userAPI';
 import { serviceAPI } from '../../features/service/serviceAPI';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
+import { technicianSubscriptionAPI } from '../../features/technicianSubscription/technicianSubscriptionAPI';
 
 // Redux actions
 import { getBookingCountByMonth } from '../../features/bookings/bookingSlice';
@@ -196,7 +197,9 @@ const AdminDashboard = () => {
           font: { size: 11, weight: '600' },
           color: '#6B7280',
           maxRotation: 0,
-          padding: 8
+          padding: 8,
+          autoSkip: false, // Đảm bảo hiển thị tất cả labels
+          minRotation: 0
         },
         border: {
           display: true,
@@ -248,6 +251,20 @@ const AdminDashboard = () => {
   const currentMonth = now.getMonth() + 1;
   const lastMonthForRevenue = currentMonth === 1 ? 12 : currentMonth - 1;
   const lastYearForRevenue = currentMonth === 1 ? lastYear : currentYear;
+
+  // Đảm bảo dữ liệu được khởi tạo đúng cách
+  useEffect(() => {
+    // Khởi tạo dữ liệu mặc định cho biểu đồ
+    if (revenueThisYear.length !== 12) {
+      setRevenueThisYear(Array(12).fill(0));
+    }
+    if (revenueLastYear.length !== 12) {
+      setRevenueLastYear(Array(12).fill(0));
+    }
+    if (revenueCounts.length !== 12) {
+      setRevenueCounts(Array(12).fill(0));
+    }
+  }, []);
 
   // Fetch dashboard data
   useEffect(() => {
@@ -309,7 +326,16 @@ const AdminDashboard = () => {
 
         // Calculate dashboard stats
         const totalUsers = bookingsData.length;
-        const totalRevenue = revenueCounts.reduce((sum, rev) => sum + rev, 0);
+        // Lấy tổng doanh thu từ Package (TechnicianSubscription) thay vì từ commission
+        let totalRevenue = 0;
+        try {
+          const revenueResponse = await technicianSubscriptionAPI.getTotalRevenue();
+          totalRevenue = revenueResponse.totalRevenue || 0;
+        } catch (error) {
+          console.error('Error fetching total revenue from packages:', error);
+          totalRevenue = 0;
+        }
+        
         const pendingBookings = bookingsData.filter(b => b.status === 'PENDING').length;
         // Count bookings with status = 'DONE' (completed jobs)
         const completedBookings = bookingsData.filter(b => b.status === 'DONE').length;
@@ -341,20 +367,25 @@ const AdminDashboard = () => {
     fetchDashboardData();
   }, []); // Empty dependency array to run only once
 
-  // Fetch revenue data
+  // Fetch revenue data - Lấy doanh thu từ Package (TechnicianSubscription) thay vì từ commission
   useEffect(() => {
     const fetchRevenueData = async () => {
       try {
         const revenueCounts = await Promise.all(
         Array.from({ length: 12 }, (_, i) =>
-            ApiBE.get(`/Dashboard/revenue?year=${currentYear}&month=${i + 1}`)
+            technicianSubscriptionAPI.getMonthlyRevenue(currentYear, i + 1)
           )
         );
         
-        const revenueData = revenueCounts.map(response => {
-          const value = response.data.revenue || 0;
+        console.log('Raw revenue response:', revenueCounts);
+        
+        const revenueData = revenueCounts.map((response, index) => {
+          console.log(`Month ${index + 1} response:`, response);
+          const value = response.revenue || response || 0;
           return typeof value === 'number' ? Math.round(value) : 0;
         });
+        
+        console.log('Processed revenue data:', revenueData);
         setRevenueCounts(revenueData);
         
         const currentMonth = new Date().getMonth();
@@ -462,15 +493,41 @@ const AdminDashboard = () => {
     fetchTechnicianCounts();
   }, [currentYear]);
 
-  // Fetch yearly revenue comparison
+  // Fetch yearly revenue comparison - Lấy doanh thu từ Package thay vì từ commission
   useEffect(() => {
     async function fetchYearlyRevenue(year) {
-      const results = await Promise.all(
+      try {
+        const results = await Promise.all(
           Array.from({ length: 12 }, (_, i) => 
-          fetchMonthlyRevenue(year, i + 1).then(res => Math.round(res.revenue || 0)).catch(() => 0)
-        )
-      );
-      return results;
+            technicianSubscriptionAPI.getMonthlyRevenue(year, i + 1)
+              .then(res => {
+                console.log(`Year ${year}, Month ${i + 1} response:`, res);
+                const revenue = res.revenue || res || 0;
+                return Math.round(revenue);
+              })
+              .catch((error) => {
+                console.warn(`Error fetching revenue for ${year}-${i + 1}:`, error);
+                return 0; // Trả về 0 nếu có lỗi
+              })
+          )
+        );
+        
+        // Đảm bảo luôn có đủ 12 tháng
+        if (results.length !== 12) {
+          console.warn(`Expected 12 months for year ${year}, got ${results.length}`);
+          // Nếu thiếu, bổ sung với 0
+          while (results.length < 12) {
+            results.push(0);
+          }
+        }
+        
+        console.log(`Revenue data for year ${year}:`, results);
+        return results;
+      } catch (error) {
+        console.error(`Error fetching yearly revenue for ${year}:`, error);
+        // Trả về mảng 12 số 0 nếu có lỗi
+        return Array(12).fill(0);
+      }
     }
     
     setRevenueChartLoading(true);
@@ -478,8 +535,14 @@ const AdminDashboard = () => {
       fetchYearlyRevenue(currentYear),
       fetchYearlyRevenue(lastYear)
     ]).then(([dataThisYear, dataLastYear]) => {
+      console.log('Final revenue data:', { currentYear: dataThisYear, lastYear: dataLastYear });
       setRevenueThisYear(dataThisYear);
       setRevenueLastYear(dataLastYear);
+    }).catch((error) => {
+      console.error('Error in yearly revenue comparison:', error);
+      // Set default data nếu có lỗi
+      setRevenueThisYear(Array(12).fill(0));
+      setRevenueLastYear(Array(12).fill(0));
     }).finally(() => setRevenueChartLoading(false));
   }, [currentYear, lastYear]);
 
@@ -775,7 +838,7 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Số liệu doanh thu</span>
+                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Số liệu doanh thu từ Package</span>
                   <div className="d-flex align-items-center gap-2">
                     
                   </div>
@@ -789,6 +852,7 @@ const AdminDashboard = () => {
               }}
             >
               <div style={{height: '320px', position: 'relative'}}>
+                
                 <Bar
                   data={{
                   labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],

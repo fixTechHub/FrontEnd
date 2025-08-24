@@ -60,27 +60,88 @@ const Sidebar = () => {
   const clearSearch = () => setSearchValue("");
 
   const managementRoutes = [
-    { label: "Dashboard", path: "/" },
-    { label: "User Management", path: "/admin/user-management" },
-    { label: "Technician Management", path: "/admin/technician-management" },
-    { label: "Booking Management", path: "/admin/booking-management" },
-    { label: "Warranty Management", path: "/admin/warranty-management" },
-    { label: "Service Management", path: "/admin/service-management" },
-    { label: "Category Management", path: "/admin/category-management" },
-    { label: "Coupon Management", path: "/admin/coupon-management" },
-    { label: "Coupon Usage Management", path: "/admin/coupon-usage-management" },
-    { label: "Booking Report", path: "/admin/report-management" },
-    { label: "System Report", path: "/admin/system-report-management" },
-    { label: "Financial Management", path: "/admin/financial-management" },
-    { label: "Commission Config Management", path: "/admin/commission-config-management" },
-    { label: "Technician Subscription Analytics", path: "/admin/technician-subscription-analytics" },
-    { label: "Booking Status Logs", path: "/admin/booking-status-log-management" },
+    { 
+      label: "Dashboard", 
+      vietnameseLabel: "Bảng điều khiển",
+      path: "/" 
+    },
+    { 
+      label: "User Management", 
+      vietnameseLabel: "Khách hàng",
+      path: "/admin/user-management" 
+    },
+    { 
+      label: "Technician Management", 
+      vietnameseLabel: "Kĩ thuật viên",
+      path: "/admin/technician-management" 
+    },
+    { 
+      label: "Booking Management", 
+      vietnameseLabel: "Đơn hàng",
+      path: "/admin/booking-management" 
+    },
+    { 
+      label: "Warranty Management", 
+      vietnameseLabel: "Bảo hành",
+      path: "/admin/warranty-management" 
+    },
+    { 
+      label: "Service Management", 
+      vietnameseLabel: "Dịch vụ",
+      path: "/admin/service-management" 
+    },
+    { 
+      label: "Category Management", 
+      vietnameseLabel: "Danh mục",
+      path: "/admin/category-management" 
+    },
+    { 
+      label: "Coupon Management", 
+      vietnameseLabel: "Mã giảm giá",
+      path: "/admin/coupon-management" 
+    },
+    { 
+      label: "Coupon Usage Management", 
+      vietnameseLabel: "Sử dụng giảm giá",
+      path: "/admin/coupon-usage-management" 
+    },
+    { 
+      label: "Booking Report", 
+      vietnameseLabel: "Báo cáo đơn",
+      path: "/admin/report-management" 
+    },
+    { 
+      label: "System Report", 
+      vietnameseLabel: "Báo cáo hệ thống",
+      path: "/admin/system-report-management" 
+    },
+    { 
+      label: "Financial Management", 
+      vietnameseLabel: "Lịch sử giao dịch",
+      path: "/admin/financial-management" 
+    },
+    { 
+      label: "Commission Config Management", 
+      vietnameseLabel: "Hoa Hồng",
+      path: "/admin/commission-config-management" 
+    },
+    { 
+      label: "Technician Subscription Analytics", 
+      vietnameseLabel: "Doanh thu",
+      path: "/admin/technician-subscription-analytics" 
+    },
+    { 
+      label: "Booking Status Logs", 
+      vietnameseLabel: "Lịch sử trạng thái",
+      path: "/admin/booking-status-log-management" 
+    },
   ];
 
   const filteredRoutes = searchValue
     ? managementRoutes.filter(
         (r) =>
           r.label.toLowerCase().includes(searchValue.toLowerCase()) ||
+          r.vietnameseLabel.toLowerCase().includes(searchValue.toLowerCase()) ||
           r.path.toLowerCase().includes(searchValue.toLowerCase())
       )
     : [];
@@ -95,10 +156,14 @@ const Sidebar = () => {
         <div className="p-4 text-center">
           <Link to="/" className="logo logo-normal">
             <img
-              src="https://dreamsrent.dreamstechnologies.com/html/template/admin/assets/img/logo.svg"
+              src="/img/logo.png"
               alt="Logo"
               className="img-fluid"
-              style={{ maxWidth: "100%" }}
+              style={{ 
+                maxWidth: "180px", 
+                height: "auto",
+                objectFit: "contain"
+              }}
             />
           </Link>
         </div>
@@ -112,7 +177,7 @@ const Sidebar = () => {
             <FaSearch className="text-secondary me-2" />
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Tìm kiếm..."
               className="border-0 bg-transparent w-100"
               style={{ outline: "none", fontSize: "14px" }}
               value={searchValue}
@@ -145,7 +210,12 @@ const Sidebar = () => {
                         className="d-block px-3 py-2 text-decoration-none text-dark sidebar-search-result-item"
                         onClick={clearSearch}
                       >
-                        {route.label}
+                        <div>
+                          <div className="fw-medium">{route.vietnameseLabel}</div>
+                          <div className="text-muted" style={{ fontSize: "12px" }}>
+                            {route.label}
+                          </div>
+                        </div>
                         <span className="text-muted ms-2" style={{ fontSize: "12px" }}>
                           {route.path}
                         </span>
@@ -267,21 +337,7 @@ const Sidebar = () => {
                   <span>Báo cáo hệ thống</span>
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/admin/financial-management"
-                  className={`d-flex align-items-center text-decoration-none py-3 px-4 ${
-                    currentPath === "/admin/financial-management" ? "" : "text-dark"
-                  }`}
-                  style={activeStyle("/admin/financial-management")}
-                >
-                  <FaDollarSign
-                    className="me-3"
-                    style={{ width: "20px", ...activeIcon("/admin/financial-management") }}
-                  />
-                  <span>Financial Report</span>
-                </Link>
-              </li>
+              
               <li>
                 <Link
                   to="/admin/technician-subscription-analytics"
@@ -357,24 +413,13 @@ const Sidebar = () => {
                   <span>Dịch vụ</span>
                 </Link>
               </li>
-              <li>
-                <Link
-                  to="/admin/commission-config-management"
-                  className={`d-flex align-items-center text-decoration-none py-3 px-4 ${
-                    currentPath === "/admin/commission-config-management" ? "" : "text-dark"
-                  }`}
-                  style={activeStyle("/admin/commission-config-management")}
-                >
-                  <FaCogs
-                    className="me-3"
-                    style={{
-                      width: "20px",
-                      ...activeIcon("/admin/commission-config-management"),
-                    }}
-                  />
+              {/* <li>
+                <Link to="/admin/commission-config-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/commission-config-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/commission-config-management" ? customStyles.activeMenuItem : {}}>
+                  <FaCogs className="me-3" style={{width: '20px', ...(currentPath === "/admin/commission-config-management" ? customStyles.activeIcon : {})}} />
                   <span>Hoa Hồng</span>
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link
                   to="/admin/feedback"
@@ -520,29 +565,20 @@ const Sidebar = () => {
             <span>Quản lí lịch sử</span>
           </li>
           <li>
-            <ul className="list-unstyled m-0 p-0">
-              <li>
-                <Link
-                  to="/admin/booking-status-log-management"
-                  className={`d-flex align-items-center text-decoration-none py-3 px-4 ${
-                    currentPath === "/admin/booking-status-log-management" ? "" : "text-dark"
-                  }`}
-                  style={activeStyle("/admin/booking-status-log-management")}
-                >
-                  <FaClipboardList
-                    className="me-3"
-                    style={{
-                      width: "20px",
-                      ...activeIcon("/admin/booking-status-log-management"),
-                    }}
-                  />
-                  <span>Lịch sử trạng thái</span>
+                 <Link to="/admin/booking-status-log-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/booking-status-log-management" ? "" : "text-dark"}`}
+                       style={currentPath === "/admin/booking-status-log-management" ? customStyles.activeMenuItem : {}}>
+                   <FaClipboardList className="me-3" style={{width: '20px', ...(currentPath === "/admin/booking-status-log-management" ? customStyles.activeIcon : {})}} />
+                   <span>Lịch sử trạng thái</span>
+                 </Link>
+               </li>
+               <li>
+                <Link to="/admin/financial-management" className={`d-flex align-items-center text-decoration-none py-3 px-4 ${currentPath === "/admin/financial-management" ? "" : "text-dark"}`}
+                      style={currentPath === "/admin/financial-management" ? customStyles.activeMenuItem : {}}>
+                  <FaDollarSign className="me-3" style={{width: '20px', ...(currentPath === "/admin/financial-management" ? customStyles.activeIcon : {})}} />
+                  <span>Lịch sử giao dịch</span>
                 </Link>
               </li>
-            </ul>
-          </li>
-
-          {/* end menu */}
+          {/* Add more menu sections as needed */}
         </ul>
       </div>
     </div>

@@ -365,18 +365,6 @@ export default function TechnicianDetail() {
                      </div>
                      
                      {/* Trend Indicator */}
-                     <div style={{
-                       position: 'absolute',
-                       top: '16px',
-                       right: '16px',
-                       background: 'rgba(255, 255, 255, 0.2)',
-                       padding: '4px 8px',
-                       borderRadius: '12px',
-                       fontSize: '10px',
-                       fontWeight: '600'
-                     }}>
-                       📈 +12.5%
-                     </div>
                    </div>
                  ) : (
                    <div style={{

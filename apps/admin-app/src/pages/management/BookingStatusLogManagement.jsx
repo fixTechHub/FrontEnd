@@ -70,6 +70,14 @@ const BookingStatusLogManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [logsPerPage, setLogsPerPage] = useState(10);
 
+  // Local loading states cho từng loại operation
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+
+  // Debounced search
+  const [searchTimeout, setSearchTimeout] = useState(null);
+
   // Sync local sort state with Redux state
   useEffect(() => {
     if (pagination?.sortDescending !== undefined) {
@@ -122,9 +130,28 @@ const BookingStatusLogManagement = () => {
     fetchData();
   }, []);
 
+  // Cleanup timeout khi component unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
+
   useEffect(() => {
     if (searchText !== filters.search) {
-      dispatch(setFilters({ search: searchText }));
+      // Clear previous timeout
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+      
+      // Set new timeout for debounced search
+      const timeout = setTimeout(() => {
+        handleSearch(searchText);
+      }, 500); // 500ms delay
+      
+      setSearchTimeout(timeout);
     }
   }, [searchText, filters.search, dispatch]);
 
@@ -137,24 +164,43 @@ const BookingStatusLogManagement = () => {
     }
   };
 
-  const handleSearch = (value) => {
+  const handleSearch = async (value) => {
     setSearchText(value);
+    setSearchLoading(true);
+    
+    try {
+      const newFilters = { ...filters, search: value };
+      dispatch(setFilters(newFilters));
+      
+      const filterData = {
+        ...newFilters,
+        page: 1,
+        pageSize: pagination.pageSize,
+        sortBy: pagination.sortBy || 'createdAt',
+        sortDescending: pagination.sortDescending !== false
+      };
+      
+      await dispatch(getFilteredBookingStatusLogs(filterData)).unwrap();
+    } catch (error) {
+      message.error('Search failed');
+    } finally {
+      setSearchLoading(false);
+    }
   };
 
-
-
-  const handleDateRangeFilter = (dates) => {
-    if (dates && dates.length === 2) {
-      const [fromDate, toDate] = dates;
-      const newFilters = {
-        ...filters,
-        fromDate: fromDate.toDate(),
-        toDate: toDate.toDate()
-      };
-      dispatch(setFilters(newFilters));
-      
-      // Gọi API với tất cả filter hiện tại
-      setTimeout(() => {
+  const handleDateRangeFilter = async (dates) => {
+    setFilterLoading(true);
+    
+    try {
+      if (dates && dates.length === 2) {
+        const [fromDate, toDate] = dates;
+        const newFilters = {
+          ...filters,
+          fromDate: fromDate.toDate(),
+          toDate: toDate.toDate()
+        };
+        dispatch(setFilters(newFilters));
+        
         const filterData = {
           ...newFilters,
           page: 1,
@@ -162,19 +208,16 @@ const BookingStatusLogManagement = () => {
           sortBy: 'createdAt',
           sortDescending: true
         };
-        dispatch(getFilteredBookingStatusLogs(filterData));
-      }, 100);
-    } else {
-      // Xóa date filter
-      const newFilters = {
-        ...filters,
-        fromDate: null,
-        toDate: null
-      };
-      dispatch(setFilters(newFilters));
-      
-      // Gọi API với filter mới
-      setTimeout(() => {
+        await dispatch(getFilteredBookingStatusLogs(filterData)).unwrap();
+      } else {
+        // Xóa date filter
+        const newFilters = {
+          ...filters,
+          fromDate: null,
+          toDate: null
+        };
+        dispatch(setFilters(newFilters));
+        
         const filterData = {
           ...newFilters,
           page: 1,
@@ -182,8 +225,12 @@ const BookingStatusLogManagement = () => {
           sortBy: 'createdAt',
           sortDescending: true
         };
-        dispatch(getFilteredBookingStatusLogs(filterData));
-      }, 100);
+        await dispatch(getFilteredBookingStatusLogs(filterData)).unwrap();
+      }
+    } catch (error) {
+      message.error('Filter failed');
+    } finally {
+      setFilterLoading(false);
     }
   };
 
@@ -430,14 +477,28 @@ const BookingStatusLogManagement = () => {
                       placeholder="Tìm kiếm đơn hàng..."
                       value={searchText}
                       onChange={e => setSearchText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearch(searchText);
+                        }
+                      }}
                     />
+                    {searchLoading && (
+                      <span className="input-icon-right">
+                        <Spin size="small" />
+                      </span>
+                    )}
                   </div>
                 </div>
                 <RangePicker
                   placeholder={['Từ ngày', 'Đến ngày']}
                   onChange={handleDateRangeFilter}
                   style={{ width: 200, marginRight: 8 }}
+                  disabled={filterLoading}
                 />
+                {filterLoading && (
+                  <Spin size="small" style={{ marginRight: 8 }} />
+                )}
                 <Select
                   placeholder="Từ trạng thái"
                   value={filters.fromStatus || undefined}
