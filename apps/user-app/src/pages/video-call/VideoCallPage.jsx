@@ -146,18 +146,6 @@ const VideoCallPage = () => {
       }
       setStream(currentStream);
       setIsStreamReady(true);
-      if (myVideo.current) {
-        myVideo.current.srcObject = currentStream;
-        console.log('Local stream attached to myVideo');
-        try {
-          await myVideo.current.play();
-          console.log('Local video playing successfully');
-        } catch (playError) {
-          console.warn('Video autoplay failed:', playError);
-          toast.warn('Local video failed to play. Please interact with the page or check browser settings.');
-          // Fallback: Add a play button or retry logic if needed
-        }
-      }
       console.log('Stream initialized successfully');
       hasStopped.current = false;
     } catch (error) {
@@ -176,6 +164,17 @@ const VideoCallPage = () => {
       }
     }
   };
+
+  useEffect(() => {
+    if (myVideo.current && stream && !hasStopped.current) {
+      console.log('Attaching stream to myVideo');
+      myVideo.current.srcObject = stream;
+      myVideo.current.play().catch((error) => {
+        console.warn('Local video autoplay failed:', error);
+        toast.warn('Local video failed to play. Please click "Start Camera" to enable it.');
+      });
+    }
+  }, [stream, myVideo, hasStopped]);
 
   const createPeer = (initiator, stream) => {
     const iceConfig = getIceConfiguration();
@@ -519,6 +518,19 @@ const VideoCallPage = () => {
     return 'waiting';
   };
 
+  const handleStartCamera = () => {
+    if (myVideo.current && stream && !myVideo.current.paused) {
+      console.log('Camera already playing');
+      return;
+    }
+    if (myVideo.current && stream) {
+      myVideo.current.play().catch((error) => {
+        console.error('Manual play failed:', error);
+        toast.error('Failed to start camera. Check permissions or browser settings.');
+      });
+    }
+  };
+
   return (
     <div className="custom-video-call-container">
       <div className="custom-video-container">
@@ -536,7 +548,7 @@ const VideoCallPage = () => {
         <div className="custom-video-wrapper local">
           <span className="custom-video-label">Bạn</span>
           {stream && !hasStopped.current ? (
-            <video className="custom-video" playsInline muted ref={myVideo} autoPlay />
+            <video className="custom-video" playsInline muted ref={myVideo} />
           ) : (
             <div className="custom-waiting-message">Đang khởi tạo camera...</div>
           )}
@@ -563,11 +575,15 @@ const VideoCallPage = () => {
           <div>Stream Stopped: {hasStopped.current ? 'Yes' : 'No'}</div>
           <div>Is Stream Ready: {isStreamReady ? 'Yes' : 'No'}</div>
           <div>User: {user ? 'Available' : 'Not Available'}</div>
+          <div>myVideo Paused: {myVideo.current && myVideo.current.paused ? 'Yes' : 'No'}</div>
         </div>
       )}
       <div className="custom-controls">
         <button className="custom-btn-hangup" onClick={leaveCall}>
           <MdCallEnd size={24} color="white" />
+        </button>
+        <button className="custom-btn-camera" onClick={handleStartCamera}>
+          📷
         </button>
       </div>
     </div>
