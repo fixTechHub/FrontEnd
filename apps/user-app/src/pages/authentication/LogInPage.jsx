@@ -153,11 +153,12 @@ function LogInPage() {
       // Dispatch authSuccess để cập nhật user vào Redux state
       dispatch(authSuccess({
         user: result.user,
+        technician: result.technician,
         verificationStatus: result.verificationStatus
       }));
 
-      if (result.user.role?.name === "TECHNICIAN") {
-        localStorage.setItem("technician", JSON.stringify(result.user));
+      if (result.user.role?.name === "TECHNICIAN" && result.technician) {
+        localStorage.setItem("technician", JSON.stringify(result.technician));
       }
 
       // Hiển thị thông báo thành công
@@ -207,11 +208,12 @@ function LogInPage() {
             // Dispatch authSuccess để cập nhật user vào Redux state
             dispatch(authSuccess({
               user: result.user,
+              technician: result.technician,
               verificationStatus: result.verificationStatus
             }));
 
-            if (result.user.role?.name === "TECHNICIAN") {
-              localStorage.setItem("technician", JSON.stringify(result.user));
+            if (result.user.role?.name === "TECHNICIAN" && result.technician) {
+              localStorage.setItem("technician", JSON.stringify(result.technician));
             }
 
             // Thông báo tuỳ theo trạng thái

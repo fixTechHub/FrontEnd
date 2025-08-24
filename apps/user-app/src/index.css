@@ -3913,7 +3913,6 @@ body {
   min-height: 100vh !important;
 }
 
-<<<<<<< Updated upstream
 /* Step Xác nhận thông tin đặt lịch */
 /* .banner-confirm-container {
   padding: 20px 0;
@@ -4225,6 +4224,20 @@ body {
 /* Add top padding to body to account for fixed header */
 body {
   padding-top: 80px !important;
+}
+
+/* Remove body padding and fixed header for login/register pages */
+.main-wrapper.login-body {
+  position: relative;
+  top: -80px;
+  margin-bottom: -80px;
+}
+
+/* Reset log-header to normal positioning for login/register pages */
+.main-wrapper.login-body .log-header {
+  position: static !important;
+  background: #ffffff;
+  box-shadow: 0px 4px 24px rgba(225, 225, 225, 0.25);
 }
 
 /* Fix Modal z-index to appear above fixed header */
