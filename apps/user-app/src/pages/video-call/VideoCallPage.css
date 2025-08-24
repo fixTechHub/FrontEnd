@@ -1,10 +1,10 @@
+
 /* Custom Video Call Container */
 .custom-video-call-container {
     display: flex;
     flex-direction: column;
     height: 100vh;
     background: #000;
-    overflow: hidden;
     position: relative;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
@@ -15,7 +15,6 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    overflow: hidden;
 }
 
 /* Custom Remote Video Wrapper */
@@ -33,10 +32,10 @@
     position: absolute;
     bottom: 20px;
     right: 20px;
-    width: 150px;
-    height: 100px;
+    width: 240px; /* Increased to 16:9 aspect ratio (240x135) */
+    height: 135px;
     border-radius: 8px;
-    overflow: hidden;
+    overflow: visible; /* Changed from hidden to ensure video isn’t clipped */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     z-index: 1000;
     border: 2px solid #fff;
@@ -46,9 +45,10 @@
 .custom-video {
     width: 100%;
     height: 100%;
-    object-fit: cover;
+    object-fit: contain; /* Changed to contain to avoid cropping, ensuring full video is visible */
     display: block;
     background: #000;
+    visibility: visible; /* Ensure the video is explicitly visible */
 }
 
 /* Custom Video Label */
@@ -150,9 +150,9 @@
     }
 
     .custom-video-wrapper.local {
-        width: 120px;
-        height: 80px;
-        bottom: 80px; /* Adjusted to avoid overlap with larger buttons */
+        width: 180px; /* Adjusted 16:9 (180x101.25) */
+        height: 101.25px;
+        bottom: 100px; /* Increased to avoid overlap with larger buttons */
         right: 15px;
     }
 
@@ -168,7 +168,7 @@
     .custom-controls {
         bottom: 15px;
         padding: 0.75rem;
-        gap: 1.25rem; /* Increased gap for larger buttons */
+        gap: 1.25rem;
     }
 
     .custom-btn-hangup,
@@ -177,14 +177,14 @@
         width: 64px;
         height: 64px;
         font-size: 1.5rem;
-      }
+    }
 }
 
 @media (max-width: 480px) {
     .custom-video-wrapper.local {
-        width: 100px;
-        height: 70px;
-        bottom: 75px; /* Adjusted to avoid overlap */
+        width: 150px; /* Adjusted 16:9 (150x84.375) */
+        height: 84.375px;
+        bottom: 90px; /* Adjusted to avoid overlap */
         right: 10px;
     }
 
@@ -206,7 +206,7 @@
         padding: 0;
         flex-shrink: 0;
     }
-    
+
     .custom-controls {
         bottom: 20px;
         gap: 1.5rem;
