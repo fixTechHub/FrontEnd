@@ -144,7 +144,9 @@ function BookingWarranty() {
     }, [dispatch, bookingWarrantyId, user?._id]);
 
     useEffect(() => {
-        if (isChecking && isAuthorized === false) {
+        if (isChecking) return;
+
+        if (isAuthorized === false) {
             const redirectPath = location.state?.from?.pathname || '/';
             toast.warn(` ${authError || 'Bạn không có quyền truy cập trang này.'}`, {
                 position: 'top-right',
@@ -234,10 +236,16 @@ function BookingWarranty() {
         }
     };
 
-    if (!isAuthorized) {
-        return authError ? <div>Error: {authError}</div> : null;
-    }
-
+    
+    // if (!isAuthorized) {
+    //     if (authError) {
+    //         toast.error(` ${authError || 'Đã xảy ra lỗi'}`, {
+                
+    //         });
+           
+    //     }
+    //     return null;
+    // }
     return (
         <>
             <Header />

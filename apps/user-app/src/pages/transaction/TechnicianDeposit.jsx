@@ -453,7 +453,7 @@ const TechnicianDeposit = () => {
                       <Button
                         className="btn"
                         onClick={handleDepositSubmit}
-                        disabled={transactionLoading || technician.debBalance <= 0}
+                        disabled={transactionLoading || technician?.debBalance <= 0}
                       >
                         {transactionLoading ? 'Đang xử lý...' : 'Thanh toán nợ'}
                       </Button>

@@ -323,44 +323,44 @@ export default function SearchComponent() {
   };
 
   return (
-    <div className="search-container-enhanced">
+    <div className="nhp-search-container-enhanced">
       {/* Hero Search Title */}
-      <div className="search-hero-title">
-        <div className="search-badge">
-          <Sparkles size={20} className="sparkle-icon" />
+      <div className="nhp-search-hero-title">
+        <div className="nhp-search-badge">
+          <Sparkles size={20} className="nhp-sparkle-icon" />
           <span>TÌM KIẾM THÔNG MINH</span>
-          <Magic size={20} className="magic-icon" />
+          <Magic size={20} className="nhp-magic-icon" />
         </div>
-        <h2 className="search-main-title">
+        <h2 className="nhp-search-main-title">
           Mô tả tình trạng - Tìm thợ phù hợp
         </h2>
-        <p className="search-subtitle">
-          <Rocket size={16} /> AI sẽ phân tích mô tả của bạn và đề xuất các thợ chuyên môn phù hợp nhất
+        <p className="nhp-search-subtitle">
+          <Rocket size={16} /> AI sẽ phân tích mô tả của bạn và đề xuất các dịch vụ, cũng như thợ có chuyên môn phù hợp nhất
         </p>
       </div>
 
       {/* Enhanced Search Box */}
-      <div className={`search-box-enhanced ${isSearchFocused ? "focused" : ""} ${isTyping ? "typing" : ""}`}>
-        <div className="search-glow-effect"></div>
-        <form className="search-input-enhanced" onSubmit={handleSearch}>
-          <div className="search-icon-enhanced">
-            <Search
+      <div className={`nhp-search-box-enhanced ${isSearchFocused ? "focused" : ""} ${isTyping ? "typing" : ""}`}>
+        <div className="nhp-search-glow-effect"></div>
+        <form className="nhp-search-input-enhanced" onSubmit={handleSearch}>
+          <div className="nhp-search-icon-enhanced">
+              <Search
               size={28}
-              className="search-icon-main"
-              style={{
+              className="nhp-search-icon-main"
+                style={{
                 transform: isSearchFocused ? "scale(1.2) rotate(12deg)" : "scale(1)",
                 transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
-            <div className="search-pulse-ring"></div>
-          </div>
+                }}
+              />
+            <div className="nhp-search-pulse-ring"></div>
+            </div>
 
-          <div className="search-input-wrapper">
+          <div className="nhp-search-input-wrapper">
             <input
               ref={searchInputRef}
               name="descriptionSearch"
               type="text"
-              className="search-field-enhanced"
+              className="nhp-search-field-enhanced"
               placeholder={placeholderTexts[placeholderIndex]}
               value={searchValue}
               onChange={e => {
@@ -461,13 +461,13 @@ export default function SearchComponent() {
               </div>
             )}
 
-            <div className="search-typing-indicator">
-              {isTyping && <span className="typing-dots">AI đang phân tích...</span>}
+            <div className="nhp-search-typing-indicator">
+              {isTyping && <span className="nhp-typing-dots">AI đang phân tích...</span>}
             </div>
           </div>
 
-          <div className="search-actions-enhanced">
-            <button className={`btn ${searchLoading ? 'btn-secondary' : 'btn-primary'} btn-search-enhanced`}
+          <div className="nhp-search-actions-enhanced">
+            <button className={`btn ${searchLoading ? 'btn-secondary' : 'btn-primary'} nhp-btn-search-enhanced`}
               type="submit"
               disabled={searchLoading}
             >
@@ -480,12 +480,12 @@ export default function SearchComponent() {
                 </>
               ) : (
                 <>
-                  <div className="btn-search-content">
-                    <Fire size={22} className="fire-icon" />
-                    <span className="search-text-enhanced">Tìm thợ ngay</span>
-                    <Star size={18} className="star-icon" />
-                  </div>
-                  <div className="btn-search-bg"></div>
+                  <div className="nhp-btn-search-content">
+                    <Fire size={22} className="nhp-fire-icon" />
+                    <span className="nhp-search-text-enhanced">Tìm thợ ngay</span>
+                    <Star size={18} className="nhp-star-icon" />
+        </div>
+                  <div className="nhp-btn-search-bg"></div>
                 </>
               )}
 
@@ -494,56 +494,56 @@ export default function SearchComponent() {
         </form>
 
         {/* Enhanced Popular Searches */}
-        <div className="popular-searches-enhanced">
-          <div className="popular-label">
-            <Lightbulb size={16} className="lightbulb-icon" />
+        <div className="nhp-popular-searches-enhanced">
+          <div className="nhp-popular-label">
+            <Lightbulb size={16} className="nhp-lightbulb-icon" />
             <span>Mô tả phổ biến:</span>
           </div>
-          <div className="popular-tags">
+          <div className="nhp-popular-tags">
             {popularSearches.map((search, i) => (
               <button
                 key={i}
-                className="popular-tag-enhanced"
+                className="nhp-popular-tag-enhanced"
                 onClick={() => setSearchValue(search.text)}
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
-                <search.icon size={16} className="tag-icon" />
-                <span className="tag-text">{search.text}</span>
-                <Sparkles size={12} className="tag-sparkle" />
-              </button>
-            ))}
+                <search.icon size={16} className="nhp-tag-icon" />
+                <span className="nhp-tag-text">{search.text}</span>
+                <Sparkles size={12} className="nhp-tag-sparkle" />
+            </button>
+          ))}
           </div>
         </div>
 
         {/* Trust Indicators */}
-        <div className="search-trust-indicators">
-          <div className="trust-item">
-            <Flash size={20} className="trust-icon" />
+        <div className="nhp-search-trust-indicators">
+          <div className="nhp-trust-item">
+            <Flash size={24} className="nhp-trust-icon" />
             <span>Tức thì</span>
           </div>
-          <div className="trust-item">
-            <Target size={20} className="trust-icon" />
+          <div className="nhp-trust-item">
+            <Target size={24} className="nhp-trust-icon" />
             <span>Chính xác</span>
           </div>
-          <div className="trust-item">
-            <Trophy size={20} className="trust-icon" />
+          <div className="nhp-trust-item">
+            <Trophy size={24} className="nhp-trust-icon" />
             <span>Uy tín</span>
           </div>
         </div>
       </div>
 
       {/* Floating elements for visual appeal */}
-      <div className="search-floating-elements">
-        <div className="floating-sparkle floating-sparkle-1">
+      <div className="nhp-search-floating-elements">
+        <div className="nhp-floating-sparkle nhp-floating-sparkle-1">
           <Sparkles size={20} />
         </div>
-        <div className="floating-sparkle floating-sparkle-2">
+        <div className="nhp-floating-sparkle nhp-floating-sparkle-2">
           <Star size={20} />
         </div>
-        <div className="floating-sparkle floating-sparkle-3">
+        <div className="nhp-floating-sparkle nhp-floating-sparkle-3">
           <Magic size={20} />
         </div>
-        <div className="floating-sparkle floating-sparkle-4">
+        <div className="nhp-floating-sparkle nhp-floating-sparkle-4">
           <Wrench size={20} />
         </div>
       </div>

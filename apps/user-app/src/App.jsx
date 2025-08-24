@@ -8,7 +8,6 @@ import { fetchAllRoles } from './features/roles/roleSlice';
 import { fetchTopBookedServices } from './features/bookings/bookingSlice';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
-import './styles/hero-banner.css';
 import SystemReportButton from './components/common/SystemReportButton';
 
 function App() {
@@ -34,10 +33,10 @@ function App() {
 
     useEffect(() => {
         if (user) {
-            console.log('--- Initializing socket for user:', user._id);
+            // console.log('--- Initializing socket for user:', user._id);
             initializeSocket(user._id);
         } else {
-            console.log('--- Disconnecting socket on logout ---');
+            // console.log('--- Disconnecting socket on logout ---');
             disconnectSocket();
         }
     }, [user, dispatch]);
