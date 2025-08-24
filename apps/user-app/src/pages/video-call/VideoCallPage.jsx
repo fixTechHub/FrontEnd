@@ -541,7 +541,7 @@ const VideoCallPage = () => {
           ) : (
             <div className={`custom-waiting-message ${getConnectionStatusClass()}`}>
               {getConnectionStatusText()}
-              {isConnecting && <div className="loading-spinner">⟳</div>}
+              {isConnecting && <div className="loading-spinner"></div>}
             </div>
           )}
         </div>
@@ -582,8 +582,10 @@ const VideoCallPage = () => {
         <button className="custom-btn-hangup" onClick={leaveCall}>
           <MdCallEnd size={24} color="white" />
         </button>
-        <button className="custom-btn-camera" onClick={handleStartCamera}>
-          📷
+        <button 
+        // className="custom-btn-camera"
+         onClick={handleStartCamera}>
+          {/* 📷 */}
         </button>
       </div>
     </div>
