@@ -33,6 +33,18 @@ export default function WithdrawAdmin() {
     dispatch(fetchWithdrawLogsThunk({ page: 1, limit: 10, status: "PENDING" }));
   }, [dispatch]);
 
+  // Cleanup filters when component unmounts
+  useEffect(() => {
+    return () => {
+      // Reset local states when leaving the page
+      setSearchText("");
+      setFilterStatus("PENDING");
+      setRevealMap({});
+      // Reset Redux query state
+      dispatch(setWithdrawQuery({ page: 1, limit: 10, status: "PENDING" }));
+    };
+  }, [dispatch]);
+
   const refetch = (patch = {}) => {
     const q = { ...(lastQuery || {}), ...patch };
     if (!q.search?.trim()) delete q.search;
@@ -41,6 +53,24 @@ export default function WithdrawAdmin() {
     dispatch(setWithdrawQuery(q));
     dispatch(fetchWithdrawLogsThunk(q));
   };
+
+  // Sync local state with Redux state when component mounts
+  useEffect(() => {
+    // Reset local states to default values when component mounts
+    setSearchText("");
+    setFilterStatus("PENDING");
+    setRevealMap({});
+    // Reset Redux query state
+    dispatch(setWithdrawQuery({ page: 1, limit: 10, status: "PENDING" }));
+  }, [dispatch]);
+
+  // Sync local state with Redux state when lastQuery changes
+  useEffect(() => {
+    if (lastQuery) {
+      setSearchText(lastQuery.search || "");
+      setFilterStatus(lastQuery.status || "PENDING");
+    }
+  }, [lastQuery]);
 
   const handleSearch = () => refetch({ search: searchText, page: 1, status: filterStatus || null });
 
@@ -74,7 +104,7 @@ export default function WithdrawAdmin() {
   const startIndex = useMemo(() => (page - 1) * (limit || 10), [page, limit]);
 
   return (
-    <div className="modern-page-wrapper">
+    <div className="modern-page- wrapper">
       <div className="modern-content-card">
         {/* ------ Header & Breadcrumb ------ */}
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">

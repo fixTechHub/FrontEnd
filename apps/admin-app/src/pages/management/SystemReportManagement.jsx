@@ -146,6 +146,18 @@ const SystemReportManagement = () => {
    fetchAdminUsers();
  }, [dispatch]);
 
+ // Cleanup filters when component unmounts
+ useEffect(() => {
+   return () => {
+     // Reset filters when leaving the page
+     dispatch(clearFilters());
+     // Reset local states
+     setCurrentPage(1);
+     setSortField('createdAt');
+     setSortOrder('desc');
+   };
+ }, [dispatch]);
+
 
  useEffect(() => {
    // Lấy tên user cho tất cả submittedBy
@@ -219,11 +231,13 @@ const SystemReportManagement = () => {
 
  const getStatusColor = (status) => {
    switch (status) {
-     case 'pending':
+     case 'PENDING':
        return 'orange';
-     case 'resolved':
+     case 'IN_PROGRESS':
+       return 'blue';
+     case 'RESOLVED':
        return 'green';
-     case 'rejected':
+     case 'REJECTED':
        return 'red';
      default:
        return 'default';
@@ -243,6 +257,39 @@ const SystemReportManagement = () => {
        return 'yellow';
      default:
        return 'default';
+   }
+ };
+
+
+ // Mapping functions for Vietnamese display
+ const getTagDisplay = (tag) => {
+   switch (tag) {
+     case 'UI':
+       return 'Giao diện';
+     case 'SYSTEM':
+       return 'Hệ thống';
+     case 'PAYMENT':
+       return 'Thanh toán';
+     case 'OTHER':
+       return 'Khác';
+     default:
+       return tag?.toUpperCase() || '';
+   }
+ };
+
+
+ const getStatusDisplay = (status) => {
+   switch (status) {
+     case 'PENDING':
+       return 'Đang chờ';
+     case 'IN_PROGRESS':
+       return 'Đang xử lý';
+     case 'RESOLVED':
+       return 'Đã giải quyết';
+     case 'REJECTED':
+       return 'Đã từ chối';
+     default:
+       return status?.replace(/_/g, ' ').toUpperCase() || '';
    }
  };
 
@@ -335,33 +382,34 @@ const SystemReportManagement = () => {
      dataIndex: 'tag',
      key: 'tag',
      render: (tag) => {
-       let icon;
-       if (tag === 'UI') {
-         icon = <PictureOutlined />;
-       } else if (tag === 'SYSTEM') {
-         icon = <SettingOutlined />;
-       } else if (tag === 'PAYMENT') {
-         icon = <DollarOutlined />;
-       } else {
-         icon = <FileTextOutlined />; // Default icon
-       }
+       if (!tag) return '-';
        
        return (
-         <Tag color={getTagColor(tag)} icon={icon}>
-           {tag?.toUpperCase()}
-         </Tag>
+         <div className="d-flex align-items-center">
+           <div className="me-2" style={{ 
+               width: '8px', 
+               height: '8px', 
+               borderRadius: '50%',
+               backgroundColor: getTagColor(tag) === 'blue' ? '#1890ff' : 
+                              getTagColor(tag) === 'red' ? '#ff4d4f' : 
+                              getTagColor(tag) === 'green' ? '#52c41a' : 
+                              getTagColor(tag) === 'yellow' ? '#faad14' : '#6c757d'
+           }}></div>
+           <span style={{ 
+               color: getTagColor(tag) === 'blue' ? '#1890ff' : 
+                      getTagColor(tag) === 'red' ? '#ff4d4f' : 
+                      getTagColor(tag) === 'green' ? '#52c41a' : 
+                      getTagColor(tag) === 'yellow' ? '#faad14' : '#6c757d',
+               fontWeight: '500',
+               fontSize: '13px',
+               textTransform: 'uppercase',
+               letterSpacing: '0.5px'
+           }}>
+             {getTagDisplay(tag)}
+           </span>
+         </div>
        );
      },
-   },
-   {
-     title: 'Mô tả',
-     dataIndex: 'description',
-     key: 'description',
-     render: (text) => (
-       <div style={{ maxWidth: 300 }}>
-         {text?.length > 100 ? `${text.substring(0, 100)}...` : text}
-       </div>
-     ),
    },
    {
      title: 'Trạng thái',
@@ -369,7 +417,7 @@ const SystemReportManagement = () => {
      key: 'status',
       render: (status) => (
         <Tag color={getStatusColor(status)}>
-          {String(status || '').replace(/_/g, ' ').toUpperCase()}
+          {getStatusDisplay(status)}
         </Tag>
       ),
    },
@@ -409,21 +457,19 @@ const SystemReportManagement = () => {
  useEffect(() => {
    if (filteredSystemReports.length > 0) {
      const exportColumns = [
-       { title: 'ID', dataIndex: 'id', key: 'id' },
-       { title: 'Tiêu đề', dataIndex: 'title', key: 'title' },
-       { title: 'Loại', dataIndex: 'tag', key: 'tag' },
-       { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
-       { title: 'Người báo cáo', dataIndex: 'submittedBy', key: 'submittedBy' },
-       { title: 'Thời gian tạo', dataIndex: 'createdAt', key: 'createdAt' },
+       { title: 'Tiêu đề', dataIndex: 'Tiêu đề' },
+       { title: 'Phân loại', dataIndex: 'Phân loại' },
+       { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+       { title: 'Người báo cáo', dataIndex: 'Người báo cáo' },
+       { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
      ];
 
      const exportData = sortedSystemReports.map((report) => ({
-       id: report.id,
-       title: report.title || '',
-       tag: report.tag || '',
-       status: report.status || '',
-       submittedBy: userMap[report.submittedBy] || report.submittedBy || '',
-       createdAt: formatDateTime(report.createdAt),
+       'Tiêu đề': report.title || '',
+       'Phân loại': getTagDisplay(report.tag) || '',
+       'Trạng thái': getStatusDisplay(report.status) || '',
+       'Người báo cáo': userMap[report.submittedBy] || report.submittedBy || '',
+       'Thời gian tạo': formatDateTime(report.createdAt),
      }));
 
      createExportData(exportData, exportColumns, 'system_reports', 'SystemReports');
@@ -493,27 +539,99 @@ const SystemReportManagement = () => {
                placeholder="Phân loại"
                value={filters.tag || undefined}
                onChange={value => handleFilterChange('tag', value)}
-               style={{ width: 130 }}
+               style={{ width: 160 }}
                allowClear
              >
-               <Option value="SYSTEM">SYSTEM</Option>
-               <Option value="PAYMENT">PAYMENT</Option>
-               <Option value="UI">UI</Option>
-               <Option value="OTHER">OTHER</Option>
-               
+               <Option value="UI">
+                 <div className="d-flex align-items-center">
+                   <div className="me-2" style={{ 
+                       width: '8px', 
+                       height: '8px', 
+                       borderRadius: '50%',
+                       backgroundColor: '#1890ff'
+                   }}></div>
+                   <span style={{ 
+                       color: '#1890ff',
+                       fontWeight: '500',
+                       fontSize: '13px',
+                       textTransform: 'uppercase',
+                       letterSpacing: '0.5px'
+                   }}>
+                     Giao diện
+                   </span>
+                 </div>
+               </Option>
+               <Option value="SYSTEM">
+                 <div className="d-flex align-items-center">
+                   <div className="me-2" style={{ 
+                       width: '8px', 
+                       height: '8px', 
+                       borderRadius: '50%',
+                       backgroundColor: '#ff4d4f'
+                   }}></div>
+                   <span style={{ 
+                       color: '#ff4d4f',
+                       fontWeight: '500',
+                       fontSize: '13px',
+                       textTransform: 'uppercase',
+                       letterSpacing: '0.5px'
+                   }}>
+                     Hệ thống
+                   </span>
+                 </div>
+               </Option>
+               <Option value="PAYMENT">
+                 <div className="d-flex align-items-center">
+                   <div className="me-2" style={{ 
+                       width: '8px', 
+                       height: '8px', 
+                       borderRadius: '50%',
+                       backgroundColor: '#52c41a'
+                   }}></div>
+                   <span style={{ 
+                       color: '#52c41a',
+                       fontWeight: '500',
+                       fontSize: '13px',
+                       textTransform: 'uppercase',
+                       letterSpacing: '0.5px'
+                   }}>
+                     Thanh toán
+                   </span>
+                 </div>
+               </Option>
+               <Option value="OTHER">
+                 <div className="d-flex align-items-center">
+                   <div className="me-2" style={{ 
+                       width: '8px', 
+                       height: '8px', 
+                       borderRadius: '50%',
+                       backgroundColor: '#faad14'
+                   }}></div>
+                   <span style={{ 
+                       color: '#faad14',
+                       fontWeight: '500',
+                       fontSize: '13px',
+                       textTransform: 'uppercase',
+                       letterSpacing: '0.5px'
+                   }}>
+                     Khác
+                   </span>
+                 </div>
+               </Option>
              </Select>
              <Select
                placeholder="Trạng thái"
                value={filters.status || undefined}
                onChange={value => handleFilterChange('status', value)}
-               style={{ width: 130 }}
+               style={{ width: 150 }}
                allowClear
-             >
-               <Option value="PENDING">PENDING</Option>
-               <Option value="IN_PROGRESS">IN PROGRESS</Option>
-               <Option value="RESOLVED">RESOLVED</Option>
-               <Option value="REJECTED">REJECTED</Option>
-             </Select>
+               options={[
+                 { value: 'PENDING', label: 'Đang chờ' },
+                 { value: 'IN_PROGRESS', label: 'Đang xử lý' },
+                 { value: 'RESOLVED', label: 'Đã giải quyết' },
+                 { value: 'REJECTED', label: 'Đã từ chối' },
+               ]}
+             />
            </div>
            <div className="d-flex align-items-center" style={{ gap: 12 }}>
              <span className="sort-label" style={{ marginRight: 8, fontWeight: 500, color: '#222', fontSize: 15 }}>Sắp xếp:</span>
@@ -542,13 +660,13 @@ const SystemReportManagement = () => {
              {filters.tag && (
                <span className="badge bg-info-transparent">
                  <i className="ti ti-tag me-1"></i>
-                 Phân loại: {filters.tag}
+                 Phân loại: {getTagDisplay(filters.tag)}
                </span>
              )}
              {filters.status && (
                <span className="badge bg-warning-transparent">
                  <i className="ti ti-filter me-1"></i>
-                 Trạng thái: {filters.status.replace(/_/g, ' ')}
+                 Trạng thái: {getStatusDisplay(filters.status)}
                </span>
              )}
              <button 
@@ -714,9 +832,8 @@ const SystemReportManagement = () => {
                   <div style={{ fontSize: 20, fontWeight: 700 }}>
                     {selectedSystemReport?.title || 'SYSTEM REPORT'}
                   </div>
-                  <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
-                    
-                    {(selectedSystemReport?.status ? String(selectedSystemReport.status).replace(/_/g, ' ').toUpperCase() : 'N/A')}
+                  <Tag color={getStatusColor(selectedSystemReport?.status)}>
+                    {getStatusDisplay(selectedSystemReport?.status)}
                   </Tag>
                 </div>
                 {selectedSystemReport?.id && (
@@ -741,10 +858,30 @@ const SystemReportManagement = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Phân loại</span>
                           <span style={{ fontWeight: 600 }}>
-                                                            <Tag color={getTagColor(selectedSystemReport?.tag)}>
-                                <span style={{ fontWeight: 600 }}>{selectedSystemReport?.tag?.toUpperCase()}</span>
-                              </Tag>
-                            </span>
+                            <div className="d-flex align-items-center">
+                              <div className="me-2" style={{ 
+                                  width: '8px', 
+                                  height: '8px', 
+                                  borderRadius: '50%',
+                                  backgroundColor: getTagColor(selectedSystemReport?.tag) === 'blue' ? '#1890ff' : 
+                                                 getTagColor(selectedSystemReport?.tag) === 'red' ? '#ff4d4f' : 
+                                                 getTagColor(selectedSystemReport?.tag) === 'green' ? '#52c41a' : 
+                                                 getTagColor(selectedSystemReport?.tag) === 'yellow' ? '#faad14' : '#6c757d'
+                              }}></div>
+                              <span style={{ 
+                                  color: getTagColor(selectedSystemReport?.tag) === 'blue' ? '#1890ff' : 
+                                         getTagColor(selectedSystemReport?.tag) === 'red' ? '#ff4d4f' : 
+                                         getTagColor(selectedSystemReport?.tag) === 'green' ? '#52c41a' : 
+                                         getTagColor(selectedSystemReport?.tag) === 'yellow' ? '#faad14' : '#6c757d',
+                                  fontWeight: '500',
+                                  fontSize: '13px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px'
+                              }}>
+                                {getTagDisplay(selectedSystemReport?.tag)}
+                              </span>
+                            </div>
+                          </span>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                           <span style={{ color: '#8c8c8c' }}>Thời gian tạo</span>
@@ -785,7 +922,7 @@ const SystemReportManagement = () => {
                     }}>
                       <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Mô tả</div>
                       <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
-                        {selectedSystemReport?.description || 'No description'}
+                        {selectedSystemReport?.description || 'Không có mô tả'}
                       </div>
                     </div>
                   </div>

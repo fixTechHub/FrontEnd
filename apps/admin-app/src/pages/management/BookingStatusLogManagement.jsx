@@ -78,12 +78,44 @@ const BookingStatusLogManagement = () => {
   // Debounced search
   const [searchTimeout, setSearchTimeout] = useState(null);
 
+  // State cho date range picker
+  const [dateRange, setDateRange] = useState(null);
+
   // Sync local sort state with Redux state
   useEffect(() => {
     if (pagination?.sortDescending !== undefined) {
       setLocalSortOrder(pagination.sortDescending ? 'lasted' : 'oldest');
     }
   }, [pagination?.sortDescending]);
+
+  // Sync local search state with Redux filters
+  useEffect(() => {
+    setSearchText(filters.search || '');
+  }, [filters.search]);
+
+  // Handle search with debouncing
+  const handleSearch = (searchValue) => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    const timeout = setTimeout(() => {
+      dispatch(setFilters({ search: searchValue }));
+      setSearchLoading(true);
+      
+      // Không gọi API filter nữa, chỉ dùng local filter
+      setSearchLoading(false);
+    }, 500);
+    
+    setSearchTimeout(timeout);
+  };
+
+  // Handle search input change
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchText(value);
+    handleSearch(value);
+  };
 
   // Status colors mapping
   const getStatusColor = (status) => {
@@ -96,6 +128,7 @@ const BookingStatusLogManagement = () => {
         return 'blue';
       case 'AWAITING DONE':
       case 'WAITING CONFIRM':
+      case 'AWAITING_CONFIRM':
         return 'gold';
       case 'DONE':
         return 'green';
@@ -126,11 +159,42 @@ const BookingStatusLogManagement = () => {
     return status.replace(/_/g, ' ').toUpperCase();
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Get status display text in Vietnamese
+  const getStatusDisplayText = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return 'Chờ xử lý';
+      case 'CANCELLED':
+        return 'Đã hủy';
+      case 'WAITING_CONFIRM':
+        return 'Chờ xác nhận';
+      case 'AWAITING_CONFIRM':
+        return 'Chờ xác nhận';
+      case 'IN_PROGRESS':
+        return 'Đang thực hiện';
+      case 'CONFIRMED':
+        return 'Đã xác nhận';
+      case 'DONE':
+        return 'Hoàn thành';
+      case 'AWAITING_DONE':
+        return 'Chờ hoàn thành';
+      case 'CONFIRM_ADDITIONAL':
+        return 'Xác nhận bổ sung';
+      case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL':
+        return 'Chờ khách hàng xác nhận bổ sung';
+      case 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL':
+        return 'Chờ kỹ thuật viên xác nhận bổ sung';
+      default:
+        return status;
+    }
+  };
 
-  // Cleanup timeout khi component unmount
+  // Fetch data on component mount
+  useEffect(() => {
+    dispatch(getAllBookingStatusLogs());
+  }, [dispatch]);
+
+  // Cleanup timeout when component unmounts
   useEffect(() => {
     return () => {
       if (searchTimeout) {
@@ -139,108 +203,35 @@ const BookingStatusLogManagement = () => {
     };
   }, [searchTimeout]);
 
+  // Cleanup filters when component unmounts
   useEffect(() => {
-    if (searchText !== filters.search) {
-      // Clear previous timeout
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-      
-      // Set new timeout for debounced search
-      const timeout = setTimeout(() => {
-        handleSearch(searchText);
-      }, 500); // 500ms delay
-      
-      setSearchTimeout(timeout);
-    }
-  }, [searchText, filters.search, dispatch]);
-
-  const fetchData = async () => {
-    try {
-      await dispatch(getAllBookingStatusLogs()).unwrap();
-    } catch (error) {
-      message.error('Failed to fetch booking status logs');
-      console.error('Error fetching data:', error);
-    }
-  };
-
-  const handleSearch = async (value) => {
-    setSearchText(value);
-    setSearchLoading(true);
-    
-    try {
-      const newFilters = { ...filters, search: value };
-      dispatch(setFilters(newFilters));
-      
-      const filterData = {
-        ...newFilters,
-        page: 1,
-        pageSize: pagination.pageSize,
-        sortBy: pagination.sortBy || 'createdAt',
-        sortDescending: pagination.sortDescending !== false
-      };
-      
-      await dispatch(getFilteredBookingStatusLogs(filterData)).unwrap();
-    } catch (error) {
-      message.error('Search failed');
-    } finally {
-      setSearchLoading(false);
-    }
-  };
+    return () => {
+      // Reset filters when leaving the page
+      dispatch(clearFilters());
+      // Reset local states
+      setSearchText('');
+      setDateRange(null);
+      setCurrentPage(1);
+    };
+  }, [dispatch]);
 
   const handleDateRangeFilter = async (dates) => {
-    setFilterLoading(true);
+    setDateRange(dates); // Cập nhật local state
     
-    try {
-      if (dates && dates.length === 2) {
-        const [fromDate, toDate] = dates;
-        const newFilters = {
-          ...filters,
-          fromDate: fromDate.toDate(),
-          toDate: toDate.toDate()
-        };
-        dispatch(setFilters(newFilters));
-        
-        const filterData = {
-          ...newFilters,
-          page: 1,
-          pageSize: pagination.pageSize,
-          sortBy: 'createdAt',
-          sortDescending: true
-        };
-        await dispatch(getFilteredBookingStatusLogs(filterData)).unwrap();
-      } else {
-        // Xóa date filter
-        const newFilters = {
-          ...filters,
-          fromDate: null,
-          toDate: null
-        };
-        dispatch(setFilters(newFilters));
-        
-        const filterData = {
-          ...newFilters,
-          page: 1,
-          pageSize: pagination.pageSize,
-          sortBy: 'createdAt',
-          sortDescending: true
-        };
-        await dispatch(getFilteredBookingStatusLogs(filterData)).unwrap();
-      }
-    } catch (error) {
-      message.error('Filter failed');
-    } finally {
-      setFilterLoading(false);
+    if (!dates || dates.length === 0) {
+      dispatch(setFilters({ fromDate: null, toDate: null }));
+      return;
     }
+
+    const [fromDate, toDate] = dates;
+    
+    dispatch(setFilters({ 
+      fromDate: fromDate?.toDate(), 
+      toDate: toDate?.toDate() 
+    }));
+    
+    // Không gọi API filter, chỉ dùng local filter
   };
-
-  const handleClearFilters = () => {
-    dispatch(clearFilters());
-    setSearchText('');
-    fetchData();
-  };
-
-
 
   const handleTableChange = (paginationInfo, filters, sorter) => {
     if (sorter.field) {
@@ -324,7 +315,7 @@ const BookingStatusLogManagement = () => {
               borderRadius: '4px'
             }}
           >
-            {formatStatusDisplay(record.fromStatus)}
+            {getStatusDisplayText(record.fromStatus)}
           </Tag>
           <div style={{ 
             display: 'flex', 
@@ -343,7 +334,7 @@ const BookingStatusLogManagement = () => {
               borderRadius: '4px'
             }}
           >
-            {formatStatusDisplay(record.toStatus)}
+            {getStatusDisplayText(record.toStatus)}
           </Tag>
         </div>
       )
@@ -476,7 +467,7 @@ const BookingStatusLogManagement = () => {
                       className="form-control"
                       placeholder="Tìm kiếm đơn hàng..."
                       value={searchText}
-                      onChange={e => setSearchText(e.target.value)}
+                      onChange={handleSearchChange}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
                           handleSearch(searchText);
@@ -492,6 +483,7 @@ const BookingStatusLogManagement = () => {
                 </div>
                 <RangePicker
                   placeholder={['Từ ngày', 'Đến ngày']}
+                  value={dateRange}
                   onChange={handleDateRangeFilter}
                   style={{ width: 200, marginRight: 8 }}
                   disabled={filterLoading}
@@ -504,62 +496,42 @@ const BookingStatusLogManagement = () => {
                   value={filters.fromStatus || undefined}
                   onChange={(value) => {
                     dispatch(setFilters({ fromStatus: value }));
-                    setTimeout(() => {
-                      const filterData = {
-                        ...filters,
-                        fromStatus: value,
-                        page: 1,
-                        pageSize: pagination.pageSize,
-                        sortBy: 'createdAt',
-                        sortDescending: true
-                      };
-                      dispatch(getFilteredBookingStatusLogs(filterData));
-                    }, 100);
+                    // Không gọi API filter, chỉ dùng local filter
                   }}
                   allowClear
-                  style={{ width: 150, marginRight: 8 }}
+                  style={{ width: 250, marginRight: 8 }}
                 >
-                  <Option value="PENDING">PENDING</Option>
-                  <Option value="CONFIRMED">CONFIRMED</Option>
-                  <Option value="IN_PROGRESS">IN PROGRESS</Option>
-                  <Option value="AWAITING_DONE">AWAITING DONE</Option>
-                  <Option value="WAITING_CONFIRM">WAITING CONFIRM</Option>
-                  <Option value="DONE">DONE</Option>
-                  <Option value="CANCELLED">CANCELLED</Option>
-                  <Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Option>
-                  <Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Option>
-                  <Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Option>
+                  <Option value="PENDING">Chờ xử lý</Option>
+                  <Option value="CONFIRMED">Đã xác nhận</Option>
+                  <Option value="IN_PROGRESS">Đang thực hiện</Option>
+                  <Option value="AWAITING_DONE">Chờ hoàn thành</Option>
+                  <Option value="WAITING_CONFIRM">Chờ xác nhận</Option>
+                  <Option value="DONE">Hoàn thành</Option>
+                  <Option value="CANCELLED">Đã hủy</Option>
+                  <Option value="CONFIRM_ADDITIONAL">Xác nhận bổ sung</Option>
+                  <Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">Chờ khách hàng xác nhận bổ sung</Option>
+                  <Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">Chờ kỹ thuật viên xác nhận bổ sung</Option>
                 </Select>
                 <Select
                   placeholder="Đến trạng thái"
                   value={filters.toStatus || undefined}
                   onChange={(value) => {
                     dispatch(setFilters({ toStatus: value }));
-                    setTimeout(() => {
-                      const filterData = {
-                        ...filters,
-                        toStatus: value,
-                        page: 1,
-                        pageSize: pagination.pageSize,
-                        sortBy: 'createdAt',
-                        sortDescending: true
-                      };
-                      dispatch(getFilteredBookingStatusLogs(filterData));
-                    }, 100);
+                    // Không gọi API filter, chỉ dùng local filter
                   }}
                   allowClear
-                  style={{ width: 150, marginRight: 8 }}
+                  style={{ width: 250, marginRight: 8 }}
                 >
-                  <Option value="PENDING">PENDING</Option>
-                  <Option value="CONFIRMED">CONFIRMED</Option>
-                  <Option value="IN_PROGRESS">IN PROGRESS</Option>
-                  <Option value="AWAITING_DONE">AWAITING DONE</Option>
-                  <Option value="WAITING_CONFIRM">WAITING CONFIRM</Option>
-                  <Option value="DONE">DONE</Option>
-                  <Option value="CANCELLED">CANCELLED</Option>
-                  <Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Option>
-                  <Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Option>
-                  <Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Option>
+                  <Option value="PENDING">Chờ xử lý</Option>
+                  <Option value="CONFIRMED">Đã xác nhận</Option>
+                  <Option value="IN_PROGRESS">Đang thực hiện</Option>
+                  <Option value="AWAITING_DONE">Chờ hoàn thành</Option>
+                  <Option value="WAITING_CONFIRM">Chờ xác nhận</Option>
+                  <Option value="DONE">Hoàn thành</Option>
+                  <Option value="CANCELLED">Đã hủy</Option>
+                  <Option value="CONFIRM_ADDITIONAL">Xác nhận bổ sung</Option>
+                  <Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">Chờ khách hàng xác nhận bổ sung</Option>
+                  <Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">Chờ kỹ thuật viên xác nhận bổ sung</Option>
                 </Select>
               </div>
               <div className="d-flex align-items-center">
@@ -585,18 +557,7 @@ const BookingStatusLogManagement = () => {
                     dispatch(setSortBy('createdAt'));
                     dispatch(setSortOrder(newSortDescending ? 'desc' : 'asc'));
                     
-                    // Gọi API với sort mới
-                    setTimeout(() => {
-                      const filterData = {
-                        ...filters,
-                        page: 1,
-                        pageSize: pagination?.pageSize || 10,
-                        sortBy: 'createdAt',
-                        sortDescending: newSortDescending
-                      };
-                      console.log('Calling API with sort data:', filterData);
-                      dispatch(getFilteredBookingStatusLogs(filterData));
-                    }, 100);
+                    // Không gọi API, chỉ dùng local sort
                   }}
                   options={[
                     { value: 'lasted', label: 'Mới nhất' },
@@ -619,13 +580,13 @@ const BookingStatusLogManagement = () => {
                 {filters.fromStatus && (
                   <span className="badge bg-info-transparent">
                     <i className="ti ti-arrow-right me-1"></i>
-                    Từ trạng thái: {filters.fromStatus.replace(/_/g, ' ')}
+                    Từ trạng thái: {getStatusDisplayText(filters.fromStatus)}
                   </span>
                 )}
                 {filters.toStatus && (
                   <span className="badge bg-warning-transparent">
                     <i className="ti ti-arrow-left me-1"></i>
-                    Đến trạng thái: {filters.toStatus.replace(/_/g, ' ')}
+                    Đến trạng thái: {getStatusDisplayText(filters.toStatus)}
                   </span>
                 )}
                 {filters.fromDate && (
@@ -643,23 +604,10 @@ const BookingStatusLogManagement = () => {
                 <button 
                   className="btn btn-sm btn-outline-secondary"
                   onClick={() => {
+                    dispatch(clearFilters());
                     setSearchText('');
-                    dispatch(setFilters({
-                      fromStatus: '',
-                      toStatus: '',
-                      fromDate: null,
-                      toDate: null
-                    }));
-                    // Gọi API để lấy lại dữ liệu ban đầu
-                    setTimeout(() => {
-                      const resetFilterData = {
-                        page: 1,
-                        pageSize: pagination.pageSize,
-                        sortBy: 'createdAt',
-                        sortDescending: true
-                      };
-                      dispatch(getFilteredBookingStatusLogs(resetFilterData));
-                    }, 100);
+                    setDateRange(null); // Reset date range picker
+                    // Không gọi getAll, giữ nguyên dữ liệu gốc
                   }}
                 >
                   <i className="ti ti-x me-1"></i>
@@ -864,13 +812,13 @@ const BookingStatusLogManagement = () => {
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span style={{ color: '#8c8c8c' }}>Từ trạng thái</span>
                             <Tag color={getStatusColor(selectedLog.fromStatus)} style={{ fontSize: 12, fontWeight: 600 }}>
-                              {formatStatusDisplay(selectedLog.fromStatus) || ''}
+                              {getStatusDisplayText(selectedLog.fromStatus) || ''}
                             </Tag>
                           </div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span style={{ color: '#8c8c8c' }}>Đến trạng thái</span>
                             <Tag color={getStatusColor(selectedLog.toStatus)} style={{ fontSize: 12, fontWeight: 600 }}>
-                              {formatStatusDisplay(selectedLog.toStatus) || ''}
+                              {getStatusDisplayText(selectedLog.toStatus) || ''}
                             </Tag>
                           </div>
                         </div>

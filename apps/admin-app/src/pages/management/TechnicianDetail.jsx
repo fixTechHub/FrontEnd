@@ -24,15 +24,161 @@ const statusTag = (status) => {
     VERIFIED: 'blue',
     BLOCKED: 'red',
   };
-  return <Tag color={colorMap[status] || 'default'}>{status || 'UNKNOWN'}</Tag>;
+  const mappedStatus = statusMapping[status] || status || 'UNKNOWN';
+  return <Tag color={colorMap[status] || 'default'}>{mappedStatus}</Tag>;
+};
+
+// Mapping availability từ tiếng Anh sang tiếng Việt
+const availabilityMapping = {
+  1: 'Đang Rảnh',
+  2: 'Bận',
+  0: 'Đang làm việc',
+  'FREE': 'Đang Rảnh',
+  'BUSY': 'Bận',
+  'ONJOB': 'Đang làm việc'
+};
+
+// Mapping status từ tiếng Anh sang tiếng Việt
+const statusMapping = {
+  'APPROVED': 'Đã duyệt',
+  'REJECTED': 'Từ chối',
+  'PENDING': 'Đang chờ',
+  'INACTIVE': 'Không hoạt động',
+  'VERIFIED': 'Đã xác minh',
+  'BLOCKED': 'Bị chặn',
+  'approved': 'Đã duyệt',
+  'rejected': 'Từ chối',
+  'pending': 'Đang chờ',
+  'inactive': 'Không hoạt động',
+  'verified': 'Đã xác minh',
+  'blocked': 'Bị chặn'
+};
+
+// Function để lấy màu sắc cho availability
+const getAvailabilityColor = (availability) => {
+  if (availability === 'FREE' || availability === 1) {
+    return '#198754'; // Xanh lá đậm - Rảnh rỗi
+  } else if (availability === 'ONJOB' || availability === 0) {
+    return '#0d6efd'; // Xanh dương đậm - Đang làm việc
+  } else if (availability === 'BUSY' || availability === 2) {
+    return '#dc3545'; // Đỏ đậm - Bận
+  } else {
+    return '#6c757d'; // Xám - Không xác định
+  }
 };
 
 const availabilityTag = (availability) => {
-  const color = availability === 'FREE' ? 'blue' : availability === 'ONJOB' ? 'yellow' : availability === 'BUSY' ? 'red' : 'default';
-  return <Tag color={color}>{availability || 'UNKNOWN'}</Tag>;
+  const mappedAvailability = availabilityMapping[availability] || availability || 'UNKNOWN';
+  const color = getAvailabilityColor(availability);
+  return (
+    <span style={{
+      color: color,
+      fontWeight: '600',
+      textTransform: 'uppercase',
+      letterSpacing: '0.5px'
+    }}>
+      {mappedAvailability}
+    </span>
+  );
 };
 
 const formatStatusLabel = (status) => (status ? String(status).replace(/_/g, ' ') : '');
+
+// Mapping trạng thái đơn hàng từ tiếng Anh sang tiếng Việt
+const bookingStatusMapping = {
+  'PENDING': 'Đang chờ',
+  'CANCELLED': 'Đã hủy',
+  'WAITING_CONFIRM': 'Chờ xác nhận',
+  'IN_PROGRESS': 'Đang xử lý',
+  'CONFIRMED': 'Đã xác nhận',
+  'DONE': 'Hoàn thành',
+  'AWAITING_CONFIRM': 'Chờ xác nhận',
+  'CONFIRM_ADDITIONAL': 'Xác nhận bổ sung',
+  'WAITING_CUSTOMER_CONFIRM_ADDITIONAL': 'Chờ khách hàng xác nhận bổ sung',
+  'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL': 'Chờ kỹ thuật viên xác nhận bổ sung',
+  'AWAITING_DONE': 'Chờ hoàn thành'
+};
+
+// Function để lấy màu sắc cho trạng thái đơn hàng
+const getBookingStatusColor = (status) => {
+  switch (status) {
+    case 'PENDING':
+    case 'WAITING_CONFIRM':
+    case 'AWAITING_CONFIRM':
+    case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL':
+    case 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL':
+    case 'AWAITING_DONE':
+      return 'orange';
+    case 'IN_PROGRESS':
+      return 'blue';
+    case 'CONFIRMED':
+    case 'CONFIRM_ADDITIONAL':
+      return 'green';
+    case 'DONE':
+      return 'green';
+    case 'CANCELLED':
+      return 'red';
+    default:
+      return 'default';
+  }
+};
+
+// Mapping trạng thái thanh toán từ tiếng Anh sang tiếng Việt
+const paymentStatusMapping = {
+  'PAID': 'Đã thanh toán',
+  'PENDING': 'Đang chờ',
+  'CANCELLED': 'Đã hủy',
+  'FAILED': 'Thất bại',
+  'REFUNDED': 'Đã hoàn tiền'
+};
+
+// Function để lấy màu sắc cho trạng thái thanh toán
+const getPaymentStatusColor = (status) => {
+  switch (status) {
+    case 'PAID':
+      return 'green';
+    case 'PENDING':
+      return 'orange';
+    case 'CANCELLED':
+      return 'red';
+    case 'FAILED':
+      return 'red';
+    case 'REFUNDED':
+      return 'blue';
+    default:
+      return 'default';
+  }
+};
+
+// Function để lấy màu sắc cho trạng thái technician
+const getTechnicianStatusColor = (status) => {
+  switch (status?.toUpperCase()) {
+    case 'APPROVED':
+    case 'VERIFIED':
+      return 'green';
+    case 'PENDING':
+      return 'orange';
+    case 'REJECTED':
+    case 'BLOCKED':
+      return 'red';
+    case 'INACTIVE':
+      return 'default';
+    default:
+      return 'default';
+  }
+};
+
+// Function để lấy CSS class cho status badge giống TechnicianManagement.jsx
+const getStatusBadgeClass = (status) => {
+  switch ((status || '').toUpperCase()) {
+    case 'APPROVED':
+      return 'bg-success-transparent';
+    case 'REJECTED':
+      return 'bg-danger-transparent';
+    default:
+      return 'bg-secondary-transparent';
+  }
+};
 
 export default function TechnicianDetail() {
   const { id } = useParams();
@@ -110,7 +256,11 @@ export default function TechnicianDetail() {
         key: 'serviceName',
         render: (_, r) => serviceMap[r.serviceId] || r.serviceName || r.serviceId,
       },
-      { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => <Tag>{formatStatusLabel(s)}</Tag> },
+      { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => (
+        <Tag color={getBookingStatusColor(s)}>
+          {bookingStatusMapping[s] || s?.replace(/_/g, ' ')}
+        </Tag>
+      ) },
       { title: 'Thời gian tạo đơn hàng', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
     ],
     [serviceMap]
@@ -219,12 +369,18 @@ export default function TechnicianDetail() {
 
   useEffect(() => {
     if (!bookings || bookings.length === 0) return;
-    const exportColumns = bookingColumns.map((c) => ({ title: c.title, dataIndex: c.dataIndex }));
+    const exportColumns = [
+      ...bookingColumns.map((c) => ({ title: c.title, dataIndex: c.dataIndex })),
+      { title: 'Trạng thái KTV', dataIndex: 'technicianStatus' },
+      { title: 'Tình trạng KTV', dataIndex: 'technicianAvailability' }
+    ];
     const exportData = filteredBookings.map((b) => ({
       bookingCode: b.bookingCode,
       serviceName: serviceMap[b.serviceId] || b.serviceName || b.serviceId,
       status: formatStatusLabel(b.status),
       createdAt: formatDateTime(b.createdAt),
+      technicianStatus: statusMapping[technician?.status] || technician?.status || '',
+      technicianAvailability: availabilityMapping[technician?.availability] || technician?.availability || '',
     }));
     createExportData(exportData, exportColumns, `technician_${id}_bookings`, 'TechnicianBookings');
   }, [filteredBookings, bookingColumns, id, serviceMap]);
@@ -256,7 +412,7 @@ export default function TechnicianDetail() {
         <div className="container-fluid">
           <Space direction="vertical" size={16} style={{ width: '100%' }}>
             <Space align="center" style={{ justifyContent: 'space-between', width: '100%' }}>
-              <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
+              <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
             </Space>
 
             <Card title="Thông tin kỹ thuật viên" variant="borderless" style={{ borderRadius: 12 }}>
@@ -389,10 +545,13 @@ export default function TechnicianDetail() {
               </div>
 
               <Descriptions column={2} bordered>
-                <Descriptions.Item label="Họ và tên">{technician.fullName || user?.fullName || ''}</Descriptions.Item>
                 <Descriptions.Item label="Email">{technician.email || user?.email || ''}</Descriptions.Item>
                 <Descriptions.Item label="SĐT">{technician.phone || user?.phone || ''}</Descriptions.Item>
-                <Descriptions.Item label="Trạng thái">{statusTag(technician.status)}</Descriptions.Item>
+                <Descriptions.Item label="Trạng thái">
+                  <span className={`badge ${getStatusBadgeClass(technician.status)} text-dark`}>
+                    {statusMapping[technician.status] || technician.status || 'N/A'}
+                  </span>
+                </Descriptions.Item>
                 <Descriptions.Item label="Tình trạng">{availabilityTag(technician.availability)}</Descriptions.Item>
                 <Descriptions.Item label="Đánh giá">
                   <div className="d-flex align-items-center gap-2">
@@ -448,7 +607,6 @@ export default function TechnicianDetail() {
                 </Descriptions.Item>
                 <Descriptions.Item label="Số công việc hoàn thành">{technician.jobCompleted ?? 0}</Descriptions.Item>
                 <Descriptions.Item label="Năm kinh nghiệm">{technician.experienceYears || 0} năm</Descriptions.Item>
-                <Descriptions.Item label="Số lần bị báo cáo">{reportCount}</Descriptions.Item>
               </Descriptions>
 
               {/* Specialties Section */}
@@ -751,7 +909,7 @@ export default function TechnicianDetail() {
                               placeholder="Dịch vụ"
                               value={filterService || undefined}
                               onChange={(value) => setFilterService(value)}
-                              style={{ width: 150 }}
+                              style={{ width: 250 }}
                               allowClear
                             >
                               {allServices.map(s => (
@@ -766,21 +924,22 @@ export default function TechnicianDetail() {
                               placeholder="Trạng thái"
                               value={filterStatus || undefined}
                               onChange={(value) => setFilterStatus(value)}
-                              style={{ width: 130 }}
+                              style={{ width: 250 }}
                               allowClear
-                            >
-                              <Select.Option value="PENDING">PENDING</Select.Option>
-                              <Select.Option value="CANCELLED">CANCELLED</Select.Option>
-                              <Select.Option value="WAITING_CONFIRM">WAITING CONFIRM</Select.Option>
-                              <Select.Option value="IN_PROGRESS">IN PROGRESS</Select.Option>
-                              <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
-                              <Select.Option value="DONE">DONE</Select.Option>
-                              <Select.Option value="AWAITING_CONFIRM">AWAITING CONFIRM</Select.Option>
-                              <Select.Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Select.Option>
-                              <Select.Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Select.Option>
-                              <Select.Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Select.Option>
-                              <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
-                            </Select>
+                              options={[
+                                { value: 'PENDING', label: 'Đang chờ' },
+                                { value: 'CANCELLED', label: 'Đã hủy' },
+                                { value: 'WAITING_CONFIRM', label: 'Chờ xác nhận' },
+                                { value: 'IN_PROGRESS', label: 'Đang xử lý' },
+                                { value: 'CONFIRMED', label: 'Đã xác nhận' },
+                                { value: 'DONE', label: 'Hoàn thành' },
+                                { value: 'AWAITING_CONFIRM', label: 'Chờ xác nhận' },
+                                { value: 'CONFIRM_ADDITIONAL', label: 'Xác nhận bổ sung' },
+                                { value: 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL', label: 'Chờ khách hàng xác nhận bổ sung' },
+                                { value: 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL', label: 'Chờ kỹ thuật viên xác nhận bổ sung' },
+                                { value: 'AWAITING_DONE', label: 'Chờ hoàn thành' }
+                              ]}
+                            />
                           </div>
                         </div>
 
@@ -803,7 +962,7 @@ export default function TechnicianDetail() {
                             {filterStatus && (
                               <span className="badge bg-warning-transparent">
                                 <i className="ti ti-filter me-1"></i>
-                                Trạng thái: {filterStatus.replace(/_/g, ' ')}
+                                Trạng thái: {bookingStatusMapping[filterStatus] || filterStatus.replace(/_/g, ' ')}
                               </span>
                             )}
                             <button 
@@ -873,7 +1032,7 @@ export default function TechnicianDetail() {
                               placeholder="Dịch vụ"
                               value={financialFilterService || undefined}
                               onChange={(value) => setFinancialFilterService(value)}
-                              style={{ width: 150 }}
+                              style={{ width: 250 }}
                               allowClear
                             >
                               {allServices.map(s => (
@@ -888,15 +1047,16 @@ export default function TechnicianDetail() {
                               placeholder="Trạng thái thanh toán"
                               value={financialFilterStatus || undefined}
                               onChange={(value) => setFinancialFilterStatus(value)}
-                              style={{ width: 150 }}
+                              style={{ width: 250 }}
                               allowClear
-                            >
-                              <Select.Option value="PAID">PAID</Select.Option>
-                              <Select.Option value="PENDING">PENDING</Select.Option>
-                              <Select.Option value="CANCELLED">CANCELLED</Select.Option>
-                              <Select.Option value="FAILED">FAILED</Select.Option>
-                              <Select.Option value="REFUNDED">REFUNDED</Select.Option>
-                            </Select>
+                              options={[
+                                { value: 'PAID', label: 'Đã thanh toán' },
+                                { value: 'PENDING', label: 'Đang chờ' },
+                                { value: 'CANCELLED', label: 'Đã hủy' },
+                                { value: 'FAILED', label: 'Thất bại' },
+                                { value: 'REFUNDED', label: 'Đã hoàn tiền' }
+                              ]}
+                            />
                           </div>
                         </div>
 
@@ -921,7 +1081,7 @@ export default function TechnicianDetail() {
                             {financialFilterStatus && (
                               <span className="badge bg-warning-transparent">
                                 <i className="ti ti-filter me-1"></i>
-                                Trạng thái thanh toán: {financialFilterStatus}
+                                Trạng thái thanh toán: {paymentStatusMapping[financialFilterStatus] || financialFilterStatus}
                               </span>
                             )}
                             <button 
@@ -967,7 +1127,11 @@ export default function TechnicianDetail() {
                                      title: 'Thanh toán',
                                      dataIndex: 'paymentStatus',
                                      key: 'paymentStatus',
-                                     render: (status) => <Tag color={status === 'PAID' ? 'green' : 'orange'}>{status}</Tag>,
+                                     render: (status) => (
+                                       <Tag color={getPaymentStatusColor(status)}>
+                                         {paymentStatusMapping[status] || status}
+                                       </Tag>
+                                     ),
                                    },
                                    {
                                      title: 'Ngày tạo',

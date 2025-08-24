@@ -116,6 +116,18 @@ const ReportManagement = () => {
    fetchReports();
  }, [dispatch]);
 
+ // Cleanup filters when component unmounts
+ useEffect(() => {
+   return () => {
+     // Reset filters when leaving the page
+     dispatch(clearFilters());
+     // Reset local states
+     setCurrentPage(1);
+     setSortField('createdAt');
+     setSortOrder('desc');
+   };
+ }, [dispatch]);
+
 
  useEffect(() => {
    let timeout;
@@ -266,7 +278,7 @@ const ReportManagement = () => {
      case 'NO_SHOW':
        return 'red';
      case 'LATE':
-       return 'orange';
+       return 'yellow';
      case 'RUDE':
        return 'red';
      case 'ISSUE':
@@ -274,11 +286,11 @@ const ReportManagement = () => {
      case 'OTHER':
        return 'default';
      case 'WARRANTY_DENIED':
-       return 'red';
+       return 'green';
      case 'WARRANTY_DELAY':
-       return 'orange';
+       return 'green';
      case 'POOR_FIX':
-       return 'red';
+       return 'orange';
      default:
        return 'default';
    }
@@ -291,21 +303,30 @@ const ReportManagement = () => {
      dataIndex: 'type',
      key: 'type',
      render: (type) => {
-       let icon;
-       if (type === 'BOOKING') {
-         icon = <FileTextOutlined />;
-       } else if (type === 'WARRANTY') {
-         icon = <SafetyOutlined />;
-       } else if (type === 'VIOLATION') {
-         icon = <ExclamationCircleOutlined />;
-       } else {
-         icon = <FileTextOutlined />; // Default icon
-       }
-       
        return (
-         <Tag color={getTypeColor(type)} icon={icon}>
-           {type}
-         </Tag>
+         <div className="d-flex align-items-center">
+           <div className="me-2" style={{ 
+               width: '8px', 
+               height: '8px', 
+               borderRadius: '50%',
+               backgroundColor: getTypeColor(type) === 'blue' ? '#1890ff' : 
+                              getTypeColor(type) === 'red' ? '#ff4d4f' : 
+                              getTypeColor(type) === 'green' ? '#52c41a' : '#6c757d'
+           }}></div>
+           <span style={{ 
+               color: getTypeColor(type) === 'blue' ? '#1890ff' : 
+                      getTypeColor(type) === 'red' ? '#ff4d4f' : 
+                      getTypeColor(type) === 'green' ? '#52c41a' : '#6c757d',
+               fontWeight: '500',
+               fontSize: '13px',
+               textTransform: 'uppercase',
+               letterSpacing: '0.5px'
+           }}>
+             {type === 'BOOKING' ? 'Đặt lịch' : 
+              type === 'VIOLATION' ? 'Vi phạm' : 
+              type === 'WARRANTY' ? 'Bảo hành' : type}
+           </span>
+         </div>
        );
      },
    },
@@ -318,7 +339,15 @@ const ReportManagement = () => {
        
        return (
          <Tag color={getTagColor(tag)}>
-           {tag.replace(/_/g, ' ')}
+           {tag === 'NO_SHOW' ? 'Không xuất hiện' :
+            tag === 'LATE' ? 'Đến muộn' :
+            tag === 'RUDE' ? 'Thô lỗ' :
+            tag === 'ISSUE' ? 'Vấn đề' :
+            tag === 'OTHER' ? 'Khác' :
+            tag === 'WARRANTY_DENIED' ? 'Từ chối bảo hành' :
+            tag === 'WARRANTY_DELAY' ? 'Chậm bảo hành' :
+            tag === 'POOR_FIX' ? 'Sửa chữa kém' :
+            tag.replace(/_/g, ' ')}
          </Tag>
        );
      },
@@ -339,7 +368,11 @@ const ReportManagement = () => {
      key: 'status',
      render: (status) => (
        <Tag color={getStatusColor(status)}>
-         {status?.replace(/_/g, ' ').toUpperCase()}
+         {status === 'PENDING' ? 'Đang chờ' : 
+          status === 'AWAITING_RESPONSE' ? 'Chờ phản hồi' : 
+          status === 'RESOLVED' ? 'Đã giải quyết' : 
+          status === 'REJECTED' ? 'Đã từ chối' : 
+          status?.replace(/_/g, ' ').toUpperCase()}
        </Tag>
      ),
    },
@@ -398,39 +431,48 @@ const ReportManagement = () => {
 
  // Set export data và columns
  useEffect(() => {
-   if (filteredReports.length > 0) {
-     const exportColumns = [
-       { title: 'ID', dataIndex: 'id', key: 'id' },
-       { title: 'Loại báo cáo', dataIndex: 'type', key: 'type' },
-       { title: 'Tag', dataIndex: 'tag', key: 'tag' },
-       { title: 'Trạng thái', dataIndex: 'status', key: 'status' },
-       { title: 'Người báo cáo', dataIndex: 'reporterId', key: 'reporterId' },
-       { title: 'Người bị báo cáo', dataIndex: 'reportedUserId', key: 'reportedUserId' },
-       { title: 'Số lần bị report', dataIndex: 'reportCount', key: 'reportCount' },
-       { title: 'Thời gian tạo', dataIndex: 'createdAt', key: 'createdAt' },
-     ];
+   const exportColumns = [
+     { title: 'Loại báo cáo', dataIndex: 'Loại báo cáo' },
+     { title: 'Tag', dataIndex: 'Tag' },
+     { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+     { title: 'Người báo cáo', dataIndex: 'Người báo cáo' },
+     { title: 'Người bị báo cáo', dataIndex: 'Người bị báo cáo' },
+     { title: 'Số lần bị report', dataIndex: 'Số lần bị report' },
+     { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
+   ];
 
-     const exportData = sortedReports.map((report) => {
-       // Đếm số lần user này bị report
-       const reportCount = filteredReports.filter(
-         r => r.reportedUserId === report.reportedUserId
-       ).length;
-       
-       return {
-         id: report.id,
-         type: report.type || '',
-         tag: report.tag || '',
-         status: report.status || '',
-         reporterId: userMap[report.reporterId] || report.reporterId || '',
-         reportedUserId: userMap[report.reportedUserId] || report.reportedUserId || '',
-         reportCount: reportCount,
-         createdAt: formatDateTime(report.createdAt),
-       };
-     });
+   const exportData = filteredReports.map((report) => {
+     // Đếm số lần user này bị report
+     const reportCount = filteredReports.filter(
+       r => r.reportedUserId === report.reportedUserId
+     ).length;
+     
+     return {
+       'Loại báo cáo': report.type === 'BOOKING' ? 'Đặt lịch' : 
+                       report.type === 'VIOLATION' ? 'Vi phạm' : 
+                       report.type === 'WARRANTY' ? 'Bảo hành' : report.type || '',
+       'Tag': report.tag === 'NO_SHOW' ? 'Không xuất hiện' :
+              report.tag === 'LATE' ? 'Đến muộn' :
+              report.tag === 'RUDE' ? 'Thô lỗ' :
+              report.tag === 'ISSUE' ? 'Vấn đề' :
+              report.tag === 'OTHER' ? 'Khác' :
+              report.tag === 'WARRANTY_DENIED' ? 'Từ chối bảo hành' :
+              report.tag === 'WARRANTY_DELAY' ? 'Chậm bảo hành' :
+              report.tag === 'POOR_FIX' ? 'Sửa chữa kém' :
+              report.tag || '',
+       'Trạng thái': report.status === 'PENDING' ? 'Đang chờ' : 
+                     report.status === 'AWAITING_RESPONSE' ? 'Chờ phản hồi' : 
+                     report.status === 'RESOLVED' ? 'Đã giải quyết' : 
+                     report.status === 'REJECTED' ? 'Đã từ chối' : report.status || '',
+       'Người báo cáo': userMap[report.reporterId] || report.reporterId || '',
+       'Người bị báo cáo': userMap[report.reportedUserId] || report.reportedUserId || '',
+       'Số lần bị report': reportCount,
+       'Thời gian tạo': formatDateTime(report.createdAt),
+     };
+   });
 
-     createExportData(exportData, exportColumns, 'reports', 'Reports');
-   }
- }, [filteredReports, userMap, sortedReports]);
+   createExportData(exportData, exportColumns, 'reports_export', 'Reports');
+ }, [filteredReports, userMap]);
 
 
  return (
@@ -495,24 +537,78 @@ const ReportManagement = () => {
                placeholder="Vấn đề"
                value={filters.type || undefined}
                onChange={value => handleFilterChange('type', value)}
-               style={{ width: 130 }}
+               style={{ width: 160 }}
                allowClear
              >
-               <Option value="BOOKING">BOOKING</Option>
-               <Option value="VIOLATION">VIOLATION</Option>
-               <Option value="WARRANTY">WARRANTY</Option>
+               <Option value="BOOKING">
+                 <div className="d-flex align-items-center">
+                   <div className="me-2" style={{ 
+                       width: '8px', 
+                       height: '8px', 
+                       borderRadius: '50%',
+                       backgroundColor: '#1890ff'
+                   }}></div>
+                   <span style={{ 
+                       color: '#1890ff',
+                       fontWeight: '500',
+                       fontSize: '13px',
+                       textTransform: 'uppercase',
+                       letterSpacing: '0.5px'
+                   }}>
+                     Đặt lịch
+                   </span>
+                 </div>
+               </Option>
+               <Option value="VIOLATION">
+                 <div className="d-flex align-items-center">
+                   <div className="me-2" style={{ 
+                       width: '8px', 
+                       height: '8px', 
+                       borderRadius: '50%',
+                       backgroundColor: '#ff4d4f'
+                   }}></div>
+                   <span style={{ 
+                       color: '#ff4d4f',
+                       fontWeight: '500',
+                       fontSize: '13px',
+                       textTransform: 'uppercase',
+                       letterSpacing: '0.5px'
+                   }}>
+                     Vi phạm
+                   </span>
+                 </div>
+               </Option>
+               <Option value="WARRANTY">
+                 <div className="d-flex align-items-center">
+                   <div className="me-2" style={{ 
+                       width: '8px', 
+                       height: '8px', 
+                       borderRadius: '50%',
+                       backgroundColor: '#52c41a'
+                   }}></div>
+                   <span style={{ 
+                       color: '#52c41a',
+                       fontWeight: '500',
+                       fontSize: '13px',
+                       textTransform: 'uppercase',
+                       letterSpacing: '0.5px'
+                   }}>
+                     Bảo hành
+                   </span>
+                 </div>
+               </Option>
              </Select>
              <Select
                placeholder="Trạng thái"
                value={filters.status || undefined}
                onChange={value => handleFilterChange('status', value)}
-               style={{ width: 130 }}
+               style={{ width: 150 }}
                allowClear
              >
-               <Option value="PENDING">PENDING</Option>
-               <Option value="AWAITING_RESPONSE">AWAITING RESPONSE</Option>
-               <Option value="RESOLVED">RESOLVED</Option>
-               <Option value="REJECTED">REJECTED</Option>
+               <Option value="PENDING">Đang chờ</Option>
+               <Option value="AWAITING_RESPONSE">Chờ phản hồi</Option>
+               <Option value="RESOLVED">Đã giải quyết</Option>
+               <Option value="REJECTED">Đã từ chối</Option>
              </Select>
            </div>
            <div className="d-flex align-items-center" style={{ gap: 12 }}>
@@ -542,13 +638,39 @@ const ReportManagement = () => {
              {filters.type && (
                <span className="badge bg-info-transparent">
                  <i className="ti ti-alert-circle me-1"></i>
-                 Vấn đề: {filters.type}
+                 Vấn đề: <span className="ms-1" style={{ 
+                     color: getTypeColor(filters.type) === 'blue' ? '#1890ff' : 
+                            getTypeColor(filters.type) === 'red' ? '#ff4d4f' : 
+                            getTypeColor(filters.type) === 'green' ? '#52c41a' : '#6c757d',
+                     fontSize: '11px',
+                     fontWeight: '600',
+                     textTransform: 'uppercase',
+                     letterSpacing: '0.5px'
+                 }}>
+                   <span className="d-inline-flex align-items-center">
+                     <span className="me-2" style={{ 
+                         width: '6px', 
+                         height: '6px', 
+                         borderRadius: '50%',
+                         backgroundColor: getTypeColor(filters.type) === 'blue' ? '#1890ff' : 
+                                        getTypeColor(filters.type) === 'red' ? '#ff4d4f' : 
+                                        getTypeColor(filters.type) === 'green' ? '#52c41a' : '#6c757d'
+                     }}></span>
+                     {filters.type === 'BOOKING' ? 'Đặt lịch' : 
+                      filters.type === 'VIOLATION' ? 'Vi phạm' : 
+                      filters.type === 'WARRANTY' ? 'Bảo hành' : filters.type}
+                   </span>
+                 </span>
                </span>
              )}
              {filters.status && (
                <span className="badge bg-warning-transparent">
                  <i className="ti ti-filter me-1"></i>
-                 Trạng thái: {filters.status?.replace(/_/g, ' ').toUpperCase()}
+                 Trạng thái: {filters.status === 'PENDING' ? 'Đang chờ' : 
+                              filters.status === 'AWAITING_RESPONSE' ? 'Chờ phản hồi' : 
+                              filters.status === 'RESOLVED' ? 'Đã giải quyết' : 
+                              filters.status === 'REJECTED' ? 'Đã từ chối' : 
+                              filters.status?.replace(/_/g, ' ').toUpperCase()}
                </span>
              )}
              <button 
@@ -711,13 +833,38 @@ const ReportManagement = () => {
                 color: '#fff'
               }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontSize: 20, fontWeight: 700 }}>
-                    {selectedReport.type || 'BÁO CÁO'}
+                  <div style={{ fontSize: 20, fontWeight: 700, display: 'flex', alignItems: 'center' }}>
+                    <div className="me-2" style={{ 
+                        width: '12px', 
+                        height: '12px', 
+                        borderRadius: '50%',
+                        backgroundColor: getTypeColor(selectedReport.type) === 'blue' ? '#1890ff' : 
+                                       getTypeColor(selectedReport.type) === 'red' ? '#ff4d4f' : 
+                                       getTypeColor(selectedReport.type) === 'green' ? '#52c41a' : '#6c757d'
+                    }}></div>
+                    <span style={{ 
+                        color: getTypeColor(selectedReport.type) === 'blue' ? '#1890ff' : 
+                               getTypeColor(selectedReport.type) === 'red' ? '#ff4d4f' : 
+                               getTypeColor(selectedReport.type) === 'green' ? '#52c41a' : '#6c757d',
+                               fontWeight: '700',
+                               fontSize: '20px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                    }}>
+                      {selectedReport.type === 'BOOKING' ? 'Đặt lịch' : 
+                       selectedReport.type === 'VIOLATION' ? 'Vi phạm' : 
+                       selectedReport.type === 'WARRANTY' ? 'Bảo hành' : 
+                       selectedReport.type || 'BÁO CÁO'}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
-                      {selectedReport.status?.replace(/_/g, ' ').toUpperCase()}
-                      </Tag>
+                    <Tag color={getStatusColor(selectedReport.status)}>
+                      {selectedReport.status === 'PENDING' ? 'Đang chờ' : 
+                       selectedReport.status === 'AWAITING_RESPONSE' ? 'Chờ phản hồi' : 
+                       selectedReport.status === 'RESOLVED' ? 'Đã giải quyết' : 
+                       selectedReport.status === 'REJECTED' ? 'Đã từ chối' : 
+                       selectedReport.status?.replace(/_/g, ' ').toUpperCase()}
+                    </Tag>
                   </div>
                 </div>
                 {selectedReport.id && (
@@ -764,8 +911,16 @@ const ReportManagement = () => {
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                               <span style={{ color: '#8c8c8c' }}>Tag</span>
                             <span style={{ fontWeight: 600 }}>
-                              <Tag color={selectedReport.tag ? 'green' : 'red'}>
-                                <span style={{ fontWeight: 600 }}>{selectedReport.tag?.replace(/_/g, ' ').toUpperCase() || ''}</span>
+                              <Tag color={getTagColor(selectedReport.tag)}>
+                                {selectedReport.tag === 'NO_SHOW' ? 'Không xuất hiện' :
+                                 selectedReport.tag === 'LATE' ? 'Đến muộn' :
+                                 selectedReport.tag === 'RUDE' ? 'Thô lỗ' :
+                                 selectedReport.tag === 'ISSUE' ? 'Vấn đề' :
+                                 selectedReport.tag === 'OTHER' ? 'Khác' :
+                                 selectedReport.tag === 'WARRANTY_DENIED' ? 'Từ chối bảo hành' :
+                                 selectedReport.tag === 'WARRANTY_DELAY' ? 'Chậm bảo hành' :
+                                 selectedReport.tag === 'POOR_FIX' ? 'Sửa chữa kém' :
+                                 selectedReport.tag?.replace(/_/g, ' ').toUpperCase() || ''}
                               </Tag>
                             </span>
                           </div>
@@ -853,7 +1008,7 @@ const ReportManagement = () => {
                     }}>
                       <div style={{ fontSize: 12, letterSpacing: '.04em', textTransform: 'uppercase', color: '#8c8c8c', marginBottom: 8 }}>Mô tả</div>
                       <div style={{ background: '#fafafa', borderRadius: 8, padding: 12, lineHeight: 1.6 }}>
-                        {selectedReport.description || 'No description'}
+                        {selectedReport.description || 'Không có mô tả'}
                       </div>
                     </div>
                   </div>
