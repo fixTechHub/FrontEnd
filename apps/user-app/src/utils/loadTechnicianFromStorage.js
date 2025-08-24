@@ -1,14 +1,24 @@
 export const loadTechnicianFromStorage = (store) => (next) => (action) => {
-  // Gọi khi app khởi tạo hoặc login thành công
-  if (action.type === "@@INIT" || action.type === "auth/authSuccess") {
+  // Call first to allow the action to be processed
+  const result = next(action);
+  
+  // Only load from storage on app init, not after login
+  // because login already sets technician from API response
+  if (action.type === "@@INIT") {
     const technician = localStorage.getItem("technician");
     if (technician) {
-      store.dispatch({
-        type: "auth/setTechnician",
-        payload: JSON.parse(technician),
-      });
+      try {
+        const technicianData = JSON.parse(technician);
+        store.dispatch({
+          type: "auth/setTechnician",
+          payload: technicianData,
+        });
+      } catch (error) {
+        console.error("Error parsing technician from localStorage:", error);
+        localStorage.removeItem("technician"); // Clean up corrupted data
+      }
     }
   }
 
-  return next(action);
+  return result;
 };

@@ -40,56 +40,425 @@ const UserCoupons = ()=>{
   const valLabel=(c)=> c.type==='PERCENT'?`${c.value}%`: `${c.value.toLocaleString('vi-VN')}₫`;
 
   return(
-    <div className="content py-4">
-      <div className="container-xl">
-        <h4 className="fw-semibold mb-3">Phiếu giảm giá của tôi</h4>
-        {/* filter bar */}
-        <Form className="d-flex flex-wrap gap-3 align-items-end p-3 shadow-sm bg-light rounded-3 mb-4">
-          <Form.Group style={{minWidth:'180px'}}>
-            <Form.Label>Loại</Form.Label>
-            <Form.Select size="sm" value={typeFilter} onChange={e=>setTypeFilter(e.target.value)}>
+    <div className="coupons-list-modern">
+      <style jsx>{`
+        .coupons-list-modern {
+          padding: 2rem 0;
+          min-height: 100vh;
+          background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        }
+        
+        .coupons-header {
+          text-align: center;
+          margin-bottom: 3rem;
+        }
+        
+        .coupons-title {
+          font-size: 2.5rem;
+          font-weight: 900;
+          background: linear-gradient(135deg, #ff6b6b, #ffa500);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          margin-bottom: 0.5rem;
+        }
+        
+        .coupons-subtitle {
+          color: #64748b;
+          font-size: 1.1rem;
+          font-weight: 500;
+        }
+        
+        .filters-section {
+          background: #ffffff;
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          padding: 1rem;
+          margin-bottom: 1.5rem;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filters-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 1rem;
+          align-items: end;
+        }
+        
+        .filter-group {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          height: 4.25rem;
+          min-height: 4.25rem;
+        }
+        
+        .filter-label {
+          display: block;
+          font-weight: 600;
+          color: #374151;
+          margin-bottom: 0.5rem;
+          font-size: 0.875rem;
+          letter-spacing: 0.025em;
+          height: 1.25rem;
+          line-height: 1.25rem;
+          margin-top: auto;
+        }
+        
+        .filter-input, .filter-select {
+          width: 100%;
+          padding: 0.5rem 0.75rem;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          transition: border-color 0.2s ease;
+          background: #ffffff;
+          color: #374151;
+          height: 2.5rem;
+          box-sizing: border-box;
+        }
+        
+        .filter-input:focus, .filter-select:focus {
+          outline: none;
+          border-color: #ff6b6b;
+          box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.1);
+        }
+        
+        .search-wrapper {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-end;
+          height: 4.25rem;
+          min-height: 4.25rem;
+        }
+        
+        .clear-btn {
+          background: linear-gradient(135deg, #6b7280, #4b5563);
+          border: none;
+          color: white;
+          padding: 0.625rem 1.25rem;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          height: 2.5rem;
+          align-self: flex-end;
+          margin-top: 1.75rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .clear-btn:hover {
+          background: linear-gradient(135deg, #4b5563, #374151);
+          transform: translateY(-1px);
+        }
+        
+        .coupons-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+          gap: 1.5rem;
+          margin-top: 2rem;
+        }
+        
+        .coupon-card {
+          background: #ffffff;
+          border-radius: 16px;
+          padding: 1.5rem;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          transition: all 0.3s ease;
+          position: relative;
+          overflow: hidden;
+        }
+        
+        .coupon-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        .coupon-percent {
+          border-left: 4px solid #16a34a;
+        }
+        
+        .coupon-amount {
+          border-left: 4px solid #d97706;
+        }
+        
+        .coupon-value {
+          position: absolute;
+          top: 1rem;
+          right: 1rem;
+          padding: 0.375rem 0.75rem;
+          border-radius: 20px;
+          font-size: 0.875rem;
+          font-weight: 700;
+          color: white;
+        }
+        
+        .value-percent {
+          background: linear-gradient(135deg, #16a34a, #15803d);
+        }
+        
+        .value-amount {
+          background: linear-gradient(135deg, #d97706, #b45309);
+        }
+        
+        .coupon-code {
+          font-size: 1.25rem;
+          font-weight: 700;
+          color: #1f2937;
+          margin-bottom: 0.5rem;
+          margin-right: 5rem;
+        }
+        
+        .coupon-description {
+          color: #6b7280;
+          font-size: 0.875rem;
+          margin-bottom: 1rem;
+          line-height: 1.5;
+        }
+        
+        .coupon-details {
+          display: grid;
+          gap: 0.5rem;
+        }
+        
+        .detail-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 0.5rem 0;
+          border-bottom: 1px solid #f3f4f6;
+          font-size: 0.875rem;
+        }
+        
+        .detail-item:last-child {
+          border-bottom: none;
+        }
+        
+        .detail-label {
+          color: #6b7280;
+          font-weight: 500;
+        }
+        
+        .detail-value {
+          color: #1f2937;
+          font-weight: 600;
+        }
+        
+        .loading-state {
+          text-align: center;
+          padding: 4rem 2rem;
+          color: #6b7280;
+        }
+        
+        .empty-state {
+          text-align: center;
+          padding: 4rem 2rem;
+          background: #ffffff;
+          border: 2px dashed #e5e7eb;
+          border-radius: 16px;
+          margin-top: 2rem;
+        }
+        
+        .empty-icon {
+          font-size: 4rem;
+          color: #d1d5db;
+          margin-bottom: 1rem;
+        }
+        
+        .empty-title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: #374151;
+          margin-bottom: 0.5rem;
+        }
+        
+        .empty-text {
+          color: #6b7280;
+          font-size: 1rem;
+        }
+        
+        .error-state {
+          text-align: center;
+          padding: 2rem;
+          background: #fef2f2;
+          border: 1px solid #fecaca;
+          border-radius: 8px;
+          color: #dc2626;
+          font-weight: 600;
+        }
+        
+        .pagination-controls {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          gap: 1rem;
+          margin-top: 2rem;
+        }
+        
+        .pagination-btn {
+          background: #ffffff;
+          border: 1px solid #d1d5db;
+          color: #374151;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          font-size: 0.875rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .pagination-btn:hover:not(:disabled) {
+          background: #f3f4f6;
+          border-color: #9ca3af;
+        }
+        
+        .pagination-btn:disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+        }
+        
+        .pagination-info {
+          color: #6b7280;
+          font-size: 0.875rem;
+          font-weight: 500;
+        }
+      `}</style>
+      
+      <div className="container">
+        <div className="coupons-header">
+          <h1 className="coupons-title">Phiếu giảm giá của tôi</h1>
+          <p className="coupons-subtitle">Quản lý và sử dụng các phiếu giảm giá hiệu quả</p>
+        </div>
+        
+        <div className="filters-section">
+          <div className="filters-grid">
+            <div className="filter-group">
+              <label className="filter-label">Loại phiếu</label>
+              <select 
+                className="filter-select" 
+                value={typeFilter} 
+                onChange={e=>setTypeFilter(e.target.value)}
+              >
               <option value="ALL">Tất cả</option>
-              <option value="PERCENT">Phần trăm</option>
-              <option value="AMOUNT">Tiền</option>
-            </Form.Select>
-          </Form.Group>
-          {/* status filter removed */}
-          <Form.Group className="flex-grow-1" style={{minWidth:'220px'}}>
-            <Form.Label>Tìm mã</Form.Label>
-            <Form.Control size="sm" placeholder="Nhập mã..." value={search} onChange={e=>setSearch(e.target.value)} />
-          </Form.Group>
-          <Button variant="outline-secondary" size="sm" className="mt-4" onClick={()=>{setSearch('');setTypeFilter('ALL');}}>Xoá lọc</Button>
-        </Form>
+                <option value="PERCENT">Giảm phần trăm</option>
+                <option value="FIXED">Giảm tiền mặt</option>
+              </select>
+            </div>
+            <div className="search-wrapper">
+              <label className="filter-label">Tìm kiếm</label>
+              <input
+                type="text"
+                className="filter-input"
+                placeholder="Nhập mã coupon..."
+                value={search}
+                onChange={e=>setSearch(e.target.value)}
+              />
+            </div>
+            <div className="filter-group">
+              <button 
+                className="clear-btn" 
+                onClick={()=>{setSearch('');setTypeFilter('ALL');}}
+              >
+                Xóa bộ lọc
+              </button>
+            </div>
+          </div>
+        </div>
 
-        {loading && <div className="text-center py-5"><Spinner animation="border"/></div>}
-        {!!error && <p className="text-danger fw-semibold">{error}</p>}
+        {loading && (
+          <div className="loading-state">
+            <div className="spinner-border text-primary" role="status">
+              <span className="visually-hidden">Loading...</span>
+            </div>
+            <p className="mt-3">Đang tải phiếu giảm giá...</p>
+          </div>
+        )}
+        
+        {!!error && (
+          <div className="error-state">
+            {error}
+          </div>
+        )}
 
-        {!loading && filtered.length===0 && <p className="text-muted fw-semibold">Không có phiếu giảm giá phù hợp.</p>}
+        {!loading && filtered.length === 0 && (
+          <div className="empty-state">
+            <div className="empty-icon">🎫</div>
+            <h3 className="empty-title">Không có phiếu giảm giá</h3>
+            <p className="empty-text">Bạn chưa có phiếu giảm giá nào phù hợp với bộ lọc hiện tại.</p>
+          </div>
+        )}
 
-        <div className="row">
-          {paginated.map(c=> (
-            <div className="col-md-6" key={c._id}>
-              <div className="p-3 mb-3 position-relative coupon-card-hover border rounded shadow-sm" style={{borderColor:cardBorder(c),background:'#fff'}}>
-              <span className={`badge ${badgeClass(c)} position-absolute top-0 end-0 mt-2 me-2`} style={{color:'#fff'}}>{valLabel(c)}</span>
-              <h5 className="fw-semibold text-dark mb-1">{c.code}</h5>
-              {c.description && <p className="mb-2" style={{color:'#475569'}}>{c.description}</p>}
-              <ul className="list-unstyled mb-0 small" style={{color:'#1e293b'}}>
-                <li>Giá trị: <strong>{valLabel(c)}</strong></li>
-                {c.maxDiscount && <li>Giảm tối đa: <strong>{c.maxDiscount.toLocaleString('vi-VN')}₫</strong></li>}
-                {c.minOrderValue>0 && <li>Đơn tối thiểu: <strong>{c.minOrderValue.toLocaleString('vi-VN')}₫</strong></li>}
-                <li>HSD: {formatDate(c.endDate)}</li>
-              </ul>
+        {!loading && paginated.length > 0 && (
+          <div className="coupons-grid">
+            {paginated.map(c => (
+              <div 
+                className={`coupon-card ${c.type === 'PERCENT' ? 'coupon-percent' : 'coupon-amount'}`} 
+                key={c._id}
+              >
+                <div className={`coupon-value ${c.type === 'PERCENT' ? 'value-percent' : 'value-amount'}`}>
+                  {valLabel(c)}
+                </div>
+                
+                <h3 className="coupon-code">{c.code}</h3>
+                
+                {c.description && (
+                  <p className="coupon-description">{c.description}</p>
+                )}
+                
+                <div className="coupon-details">
+                  <div className="detail-item">
+                    <span className="detail-label">Giá trị</span>
+                    <span className="detail-value">{valLabel(c)}</span>
+                  </div>
+                  
+                  {c.maxDiscount && (
+                    <div className="detail-item">
+                      <span className="detail-label">Giảm tối đa</span>
+                      <span className="detail-value">{c.maxDiscount.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                  )}
+                  
+                  {c.minOrderValue > 0 && (
+                    <div className="detail-item">
+                      <span className="detail-label">Đơn tối thiểu</span>
+                      <span className="detail-value">{c.minOrderValue.toLocaleString('vi-VN')}₫</span>
+                    </div>
+                  )}
+                  
+                  <div className="detail-item">
+                    <span className="detail-label">Hạn sử dụng</span>
+                    <span className="detail-value">{formatDate(c.endDate)}</span>
+                  </div>
             </div>
           </div>
           ))}
         </div>
+        )}
 
         {/* pagination */}
-        {filtered.length>limit && (
-          <div className="d-flex justify-content-center mt-3 gap-2">
-            <Button size="sm" variant="outline-secondary" disabled={page===0} onClick={()=>setPage(p=>p-1)}>Trước</Button>
-            <span className="align-self-center">{page+1}/{Math.ceil(filtered.length/limit)}</span>
-            <Button size="sm" variant="outline-secondary" disabled={(page+1)*limit>=filtered.length} onClick={()=>setPage(p=>p+1)}>Sau</Button>
+        {filtered.length > limit && (
+          <div className="pagination-controls">
+            <button 
+              className="pagination-btn" 
+              disabled={page === 0} 
+              onClick={() => setPage(p => p - 1)}
+            >
+              Trước
+            </button>
+            <span className="pagination-info">
+              {page + 1} / {Math.ceil(filtered.length / limit)}
+            </span>
+            <button 
+              className="pagination-btn" 
+              disabled={(page + 1) * limit >= filtered.length} 
+              onClick={() => setPage(p => p + 1)}
+            >
+              Sau
+            </button>
           </div>
         )}
       </div>
