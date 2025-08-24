@@ -582,11 +582,11 @@ const VideoCallPage = () => {
         <button className="custom-btn-hangup" onClick={leaveCall}>
           <MdCallEnd size={24} color="white" />
         </button>
-        <button 
-        // className="custom-btn-camera"
+        {/* <button 
+        className="custom-btn-camera"
          onClick={handleStartCamera}>
-          {/* 📷 */}
-        </button>
+          📷
+        </button> */}
       </div>
     </div>
   );
