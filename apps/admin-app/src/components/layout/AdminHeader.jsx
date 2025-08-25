@@ -193,6 +193,7 @@ const AdminHeader = () => {
           <FaDownload /> Export
         </button>
         <Notifications
+        userId={userInfo?.id}
         // style={{ fontSize: 22, color: '#FFA726', marginLeft: 8, cursor: 'pointer' }}
         />
         <div ref={dropdownRef} style={{ position: 'relative' }}>
