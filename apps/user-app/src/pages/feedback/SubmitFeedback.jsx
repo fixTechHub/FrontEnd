@@ -10,6 +10,7 @@ import BookingReportButton from '../../components/common/BookingReportButton';
 import FavoriteTechnicianButton from '../../components/common/FavoriteTechnicianButton';
 import ImageUploader from "../booking/common/ImageUploader";
 import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 const SubmitFeedback = () => {
   const dispatch = useDispatch();
@@ -56,7 +57,19 @@ const SubmitFeedback = () => {
     files.forEach((file) => formData.append('files', file)); // key 'files' phải trùng multer.array('files')
 
     dispatch(submitFeedbackThunk({ bookingId, formData }));
-    toast.success('Bạn đã đánh giá thành công thợ!')
+    Swal.fire({
+      icon: 'success',
+      title: 'Thành công',
+      text: 'Bạn đã đánh giá thành công thợ!',
+      timer: 3000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+      position: 'bottom-right',
+      pauseOnHover: true,
+      allowOutsideClick: true,
+      toast: true,
+      
+    });
   };
   useEffect(() => {
     if (successMessage) {
@@ -71,13 +84,18 @@ const SubmitFeedback = () => {
       dispatch(clearMessages()); // Clear message after showing toast
     }
     if (errorMessage) {
-      toast.error(errorMessage, {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: errorMessage,
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        position: 'bottom right',
         pauseOnHover: true,
-        draggable: true,
+        allowOutsideClick: true,
+        toast: true,
+        
       });
       dispatch(clearMessages()); // Clear message after showing toast
     }

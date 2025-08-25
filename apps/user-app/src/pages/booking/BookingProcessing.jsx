@@ -16,6 +16,7 @@ import { BOOKING_STATUS } from "../../constants/bookingConstants";
 import { Modal, Button, Alert } from "react-bootstrap";
 import { FaSpinner } from "react-icons/fa";
 import { toast } from "react-toastify";
+import Swal from "sweetalert2";
 
 function BookingProcessing() {
     const navigate = useNavigate();
@@ -105,7 +106,13 @@ function BookingProcessing() {
         if (isChecking) return;
 
         if (isAuthorized === false) {
-            toast.error("Bạn không có quyền truy cập trang này.");
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Bạn không có quyền truy cập trang này.',
+                timer: 2000,
+                showConfirmButton: false
+              });
             // Redirect to the original page or default to '/'
             const redirectPath = location.state?.from?.pathname || '/';
             navigate(redirectPath, { replace: true });

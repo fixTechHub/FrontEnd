@@ -57,7 +57,7 @@ const ReceiptPage = () => {
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const limit = 5;
-
+  
   // Debounced search handler using custom debounce
   const debouncedSearch = useDebounce((value) => {
     setSearchTerm(value);
@@ -499,7 +499,7 @@ const ReceiptPage = () => {
           </div>
         )}
 
-        {!status === 'loading' && !error && (!Array.isArray(receipts) || receipts.length === 0) && (
+        {!error && (!Array.isArray(receipts) || receipts?.length === 0) && (
           <div className="empty-state">
             <div className="empty-icon">📄</div>
             <h3 className="empty-title">Chưa có hóa đơn</h3>
@@ -507,18 +507,18 @@ const ReceiptPage = () => {
           </div>
         )}
 
-        {!status === 'loading' && !error && Array.isArray(receipts) && receipts.length > 0 && (
+        {!error && Array.isArray(receipts) && receipts?.length > 0 && (
           <>
             <div className="receipts-grid">
               {receipts.map((receipt) => (
-                <div className="receipt-card" key={receipt._id}>
+                <div className="receipt-card" key={receipt?._id}>
                   <div className="receipt-header">
                     <div>
                       <div className="receipt-code">
-                        {receipt.receiptCode || `HD-${receipt._id?.slice(-6)}`}
+                        {receipt.receiptCode || `HD-${receipt?._id?.slice(-6)}`}
                       </div>
                       <div className="booking-code">
-                        Mã đơn: {receipt.bookingId?.bookingCode || 'N/A'}
+                        Mã đơn: {receipt?.bookingId?.bookingCode || 'N/A'}
                   </div>
                 </div>
                     <div className={`payment-badge ${receipt.paymentMethod === 'BANK' ? 'badge-bank' : 'badge-cash'}`}>
@@ -530,28 +530,28 @@ const ReceiptPage = () => {
                     <div className="detail-row">
                       <span className="detail-label">Dịch vụ</span>
                       <span className="detail-value">
-                                  {receipt.bookingId?.serviceId?.serviceName || 'N/A'}
+                                  {receipt?.bookingId?.serviceId?.serviceName || 'N/A'}
                       </span>
                     </div>
                     
                     <div className="detail-row">
                       <span className="detail-label">Khách hàng</span>
                       <span className="detail-value">
-                        {receipt.customer?.fullName || 'N/A'}
+                        {receipt?.customer?.fullName || 'N/A'}
                       </span>
                     </div>
                     
                     <div className="detail-row">
                       <span className="detail-label">Ngày xuất hóa đơn</span>
                       <span className="detail-value">
-                        {formatDate(receipt.issuedDate)}
+                        {formatDate(receipt?.issuedDate)}
                       </span>
                     </div>
                     
                     <div className="detail-row">
                       <span className="detail-label">Tổng tiền</span>
                       <span className="detail-value amount-value">
-                        {formatCurrency(receipt.paidAmount || 0)}
+                        {formatCurrency(receipt?.paidAmount || 0)}
                       </span>
                     </div>
                   </div>

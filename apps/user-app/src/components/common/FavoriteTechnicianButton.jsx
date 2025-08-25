@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { addFavoriteThunk, removeFavoriteThunk, getFavoritesThunk } from '../../features/favorites/favoriteSlice';
-import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 const FavoriteTechnicianButton = ({ technicianId }) => {
   const dispatch = useDispatch();
@@ -27,12 +27,28 @@ const FavoriteTechnicianButton = ({ technicianId }) => {
     if (fav) {
       dispatch(removeFavoriteThunk(technicianId)).then(() => {
         dispatch(getFavoritesThunk());
-        toast.info('Đã xóa khỏi yêu thích');
+        Swal.fire({
+          icon: 'info',
+          title: 'Thông báo',
+          text: 'Đã xóa khỏi yêu thích',
+          timer: 2000,
+          showConfirmButton: false,
+          toast:true,
+          position:'bottom-right'
+        });
       });
     } else {
       dispatch(addFavoriteThunk(technicianId)).then(() => {
         dispatch(getFavoritesThunk());
-        toast.success('Đã thêm vào yêu thích');
+        Swal.fire({
+          icon: 'success',
+          title: 'Thành công',
+          text: 'Đã thêm vào yêu thích',
+          timer: 2000,
+          showConfirmButton: false,
+             toast:true,
+          position:'bottom-right'
+        });
       });
     }
     setFav(!fav);
