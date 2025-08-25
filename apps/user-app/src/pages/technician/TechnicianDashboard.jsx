@@ -64,17 +64,12 @@ const WidgetItem = ({ icon, title, value, color, link }) => (
 
 // ---------- Widgets Row ----------
 const WidgetsRow = () => {
-  const bookingsState = useSelector((state) => state.technician.bookings);
-  const { technician } = useSelector((state) => state.auth);
+   const {  earnings = [], loading, error } = useSelector((s) => s.technician);
+   const technician = useSelector((state) => state.auth);
+   console.log("tech", technician);
+   
 
-  // Normalize bookings
-  const bookings = useMemo(() => {
-    return Array.isArray(bookingsState)
-      ? bookingsState
-      : (Array.isArray(bookingsState?.data) ? bookingsState.data : []);
-  }, [bookingsState]);
-
-  const bookingCount = bookings.length;
+  const bookingCount = Array.isArray(earnings) ? earnings.length : 0;
 
   const feedbackItems = useSelector((s) => s.feedback?.items) || [];
   const reviewCount = Number(
@@ -83,7 +78,7 @@ const WidgetsRow = () => {
       : (Array.isArray(feedbackItems) ? feedbackItems.length : 0)
   );
 
-  // Thu nhập hôm nay (chỉ demo)
+  // check cùng ngày
   const isSameDate = (d1, d2) => {
     const a = new Date(d1), b = new Date(d2);
     return a.getFullYear() === b.getFullYear()
@@ -91,27 +86,33 @@ const WidgetsRow = () => {
       && a.getDate() === b.getDate();
   };
 
+  // tính thu nhập hôm nay từ earnings
   const todayIncomeNumber = useMemo(() => {
-    const today = new Date();
-    const done = new Set(['DONE', 'COMPLETED']);
-    return bookings.reduce((sum, b) => {
-      const status = String(b?.status || '').toUpperCase();
-      const when = b?.schedule?.startTime || b?.createdAt;
-      if (!when || !done.has(status)) return sum;
-      if (isSameDate(when, today)) {
-        const earning =
-          (b?.technicianEarning != null ? Number(b.technicianEarning) : null) ??
-          (b?.finalPrice != null && b?.quote?.commissionRate != null
-            ? Number(b.finalPrice) * (1 - Number(b.quote.commissionRate))
-            : (b?.finalPrice != null ? Number(b.finalPrice) : 0));
-        return sum + (Number.isFinite(earning) ? earning : 0);
-      }
-      return sum;
-    }, 0);
-  }, [bookings]);
+  const today = new Date();
+  if (!Array.isArray(earnings)) return 0;
 
-  // ✅ sửa format: dùng số gốc rồi toLocaleString một lần
-  const walletBalanceNum = Number(technician?.balance || 0);
+  const result = earnings.reduce((sum, e) => {
+    const when = e?.schedule?.expectedEnd || e?.createdAt;
+    const amount = Number(e?.technicianEarning || 0);
+
+    console.log({
+      bookingCode: e?.bookingCode,
+      when,
+      isToday: isSameDate(when, today),
+      rawEarning: e?.technicianEarning,
+      amount,
+    });
+
+    if (!when || !isSameDate(when, today)) return sum;
+    return sum + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
+
+  console.log('👉 todayIncomeNumber:', result);
+  return result;
+}, [earnings]);
+
+  // format
+  const walletBalanceNum = Number(technician?.technician?.balance || 0);
   const walletBalanceStr = `${walletBalanceNum.toLocaleString('vi-VN')}\u00A0VND`;
   const todayIncomeStr = `${todayIncomeNumber.toLocaleString('vi-VN')}\u00A0VND`;
 
@@ -157,6 +158,8 @@ function ViewEarningAndCommission() {
   useEffect(() => {
     if (techId) dispatch(fetchEarningAndCommission(techId));
   }, [dispatch, techId]);
+
+  // console.log(JSON.stringify(earnings, null, 2));
 
   if (loading) return <p>Đang tải...</p>;
   // ✅ chỉ show lỗi khi đã có techId
@@ -377,22 +380,22 @@ const AvailabilitySwitch = () => {
   const disabled = !techId || pending || globalLoading || currentStatus == null;
 
   // 🔁 THAY cho DONE_SET / allJobsDone
-const ONGOING_SET = new Set([
-  'PENDING',
-  'AWAITING_CONFIRM',
-  'IN_PROGRESS',
-  'WAITING_CUSTOMER_CONFIRM_ADDITIONAL',
-  'CONFIRM_ADDITIONAL',
-  'AWAITING_DONE',
-]);
+  const ONGOING_SET = new Set([
+    'PENDING',
+    'AWAITING_CONFIRM',
+    'IN_PROGRESS',
+    'WAITING_CUSTOMER_CONFIRM_ADDITIONAL',
+    'CONFIRM_ADDITIONAL',
+    'AWAITING_DONE',
+  ]);
 
-const norm = (s) => String(s || '').toUpperCase().trim();
+  const norm = (s) => String(s || '').toUpperCase().trim();
 
-// true nếu CÒN bất kỳ đơn đang xử lý
-const hasOngoing = Array.isArray(bookings) && bookings.some(b => ONGOING_SET.has(norm(b?.status)));
+  // true nếu CÒN bất kỳ đơn đang xử lý
+  const hasOngoing = Array.isArray(bookings) && bookings.some(b => ONGOING_SET.has(norm(b?.status)));
 
-// Giữ nguyên
-const isSwitchOn = currentStatus === 'FREE' || currentStatus === 'ONJOB';
+  // Giữ nguyên
+  const isSwitchOn = currentStatus === 'FREE' || currentStatus === 'ONJOB';
 
   const handleToggle = async () => {
     if (disabled) return;
