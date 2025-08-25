@@ -1189,7 +1189,7 @@ const CheckoutPage = () => {
                                                         }}>
                                                             <h6 style={{ color: '#2c3e50', fontSize: '15px', fontWeight: '600', margin: '0' }}>
                                                                 <i className="bx bx-cart" style={{ color: '#ff6200', marginRight: '8px' }}></i>
-                                                                Tổng Tiền (Bao gồm thuế)
+                                                                Tổng Tiền (Bao gồm thuế) {formatCurrency(subTotal*0.08)}
                                                             </h6>
                                                             <p style={{ color: '#495057', fontSize: '14px', fontWeight: '600', margin: '0' }}>
                                                                 {formatCurrency(subTotal + subTotal*0.08)} VND
