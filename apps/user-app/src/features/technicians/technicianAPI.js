@@ -39,7 +39,7 @@ export const updateTechnicianAvailability = async (technicianId, status) => {
   const response = await apiClient.put(`/technicians/${technicianId}/availability`, {
     availability: status,
   });
-  return response.data.availability;
+  return response?.data?.data?.availability;
 };
 
 export const getTechnicians = async () => {

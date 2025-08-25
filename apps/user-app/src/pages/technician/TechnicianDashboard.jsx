@@ -3,7 +3,7 @@ import Header from "../../components/common/Header";
 import Footer from "../../components/common/Footer";
 // import { useParams } from 'react-router-dom'; // <-- không dùng
 import { useDispatch, useSelector } from 'react-redux';
-import { useEffect, useMemo, useState  } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import React from "react";
 import {
   fetchEarningAndCommission,
@@ -64,17 +64,12 @@ const WidgetItem = ({ icon, title, value, color, link }) => (
 
 // ---------- Widgets Row ----------
 const WidgetsRow = () => {
-  const bookingsState = useSelector((state) => state.technician.bookings);
-  const { technician } = useSelector((state) => state.auth);
+   const {  earnings = [], loading, error } = useSelector((s) => s.technician);
+   const technician = useSelector((state) => state.auth);
+   console.log("tech", technician);
+   
 
-  // Normalize bookings
-  const bookings = useMemo(() => {
-    return Array.isArray(bookingsState)
-      ? bookingsState
-      : (Array.isArray(bookingsState?.data) ? bookingsState.data : []);
-  }, [bookingsState]);
-
-  const bookingCount = bookings.length;
+  const bookingCount = Array.isArray(earnings) ? earnings.length : 0;
 
   const feedbackItems = useSelector((s) => s.feedback?.items) || [];
   const reviewCount = Number(
@@ -83,7 +78,7 @@ const WidgetsRow = () => {
       : (Array.isArray(feedbackItems) ? feedbackItems.length : 0)
   );
 
-  // Thu nhập hôm nay (chỉ demo)
+  // check cùng ngày
   const isSameDate = (d1, d2) => {
     const a = new Date(d1), b = new Date(d2);
     return a.getFullYear() === b.getFullYear()
@@ -91,27 +86,33 @@ const WidgetsRow = () => {
       && a.getDate() === b.getDate();
   };
 
+  // tính thu nhập hôm nay từ earnings
   const todayIncomeNumber = useMemo(() => {
-    const today = new Date();
-    const done = new Set(['DONE', 'COMPLETED']);
-    return bookings.reduce((sum, b) => {
-      const status = String(b?.status || '').toUpperCase();
-      const when = b?.schedule?.startTime || b?.createdAt;
-      if (!when || !done.has(status)) return sum;
-      if (isSameDate(when, today)) {
-        const earning =
-          (b?.technicianEarning != null ? Number(b.technicianEarning) : null) ??
-          (b?.finalPrice != null && b?.quote?.commissionRate != null
-            ? Number(b.finalPrice) * (1 - Number(b.quote.commissionRate))
-            : (b?.finalPrice != null ? Number(b.finalPrice) : 0));
-        return sum + (Number.isFinite(earning) ? earning : 0);
-      }
-      return sum;
-    }, 0);
-  }, [bookings]);
+  const today = new Date();
+  if (!Array.isArray(earnings)) return 0;
 
-  // ✅ sửa format: dùng số gốc rồi toLocaleString một lần
-  const walletBalanceNum = Number(technician?.balance || 0);
+  const result = earnings.reduce((sum, e) => {
+    const when = e?.schedule?.expectedEnd || e?.createdAt;
+    const amount = Number(e?.technicianEarning || 0);
+
+    console.log({
+      bookingCode: e?.bookingCode,
+      when,
+      isToday: isSameDate(when, today),
+      rawEarning: e?.technicianEarning,
+      amount,
+    });
+
+    if (!when || !isSameDate(when, today)) return sum;
+    return sum + (Number.isFinite(amount) ? amount : 0);
+  }, 0);
+
+  console.log('👉 todayIncomeNumber:', result);
+  return result;
+}, [earnings]);
+
+  // format
+  const walletBalanceNum = Number(technician?.technician?.balance || 0);
   const walletBalanceStr = `${walletBalanceNum.toLocaleString('vi-VN')}\u00A0VND`;
   const todayIncomeStr = `${todayIncomeNumber.toLocaleString('vi-VN')}\u00A0VND`;
 
@@ -157,6 +158,8 @@ function ViewEarningAndCommission() {
   useEffect(() => {
     if (techId) dispatch(fetchEarningAndCommission(techId));
   }, [dispatch, techId]);
+
+  // console.log(JSON.stringify(earnings, null, 2));
 
   if (loading) return <p>Đang tải...</p>;
   // ✅ chỉ show lỗi khi đã có techId
@@ -365,7 +368,7 @@ const AvailabilitySwitch = () => {
     return null;
   };
   const currentStatus = normalizeStatus(availabilityState);
-  const isSwitchOn = currentStatus === 'FREE' || currentStatus === 'ONJOB';
+  // const isSwitchOn = currentStatus === 'FREE' || currentStatus === 'ONJOB';
 
   useEffect(() => {
     if (!techId) return;
@@ -373,21 +376,35 @@ const AvailabilitySwitch = () => {
     dispatch(fetchTechnicianJobs(techId));
   }, [dispatch, techId]);
 
-  const DONE_SET = new Set(['DONE', 'COMPLETED']);
-  const allJobsDone =
-    bookings.length === 0
-      ? true
-      : bookings.every(b => DONE_SET.has(String(b?.status || '').toUpperCase()));
-
   const [pending, setPending] = React.useState(false);
   const disabled = !techId || pending || globalLoading || currentStatus == null;
+
+  // 🔁 THAY cho DONE_SET / allJobsDone
+  const ONGOING_SET = new Set([
+    'PENDING',
+    'AWAITING_CONFIRM',
+    'IN_PROGRESS',
+    'WAITING_CUSTOMER_CONFIRM_ADDITIONAL',
+    'CONFIRM_ADDITIONAL',
+    'AWAITING_DONE',
+  ]);
+
+  const norm = (s) => String(s || '').toUpperCase().trim();
+
+  // true nếu CÒN bất kỳ đơn đang xử lý
+  const hasOngoing = Array.isArray(bookings) && bookings.some(b => ONGOING_SET.has(norm(b?.status)));
+
+  // Giữ nguyên
+  const isSwitchOn = currentStatus === 'FREE' || currentStatus === 'ONJOB';
 
   const handleToggle = async () => {
     if (disabled) return;
 
-    // Nếu đang bật (FREE/ONJOB) -> tắt BUSY thì phải xong hết đơn
-    if (isSwitchOn && !allJobsDone) {
-      toast.error('Không thể chuyển sang "Tạm ngưng" khi vẫn còn đơn chưa hoàn thành.', { position: 'top-right', autoClose: 3000, theme: 'colored' });
+    // Nếu đang bật (FREE/ONJOB) -> tắt (BUSY) thì chỉ chặn khi CÒN đơn đang xử lý
+    if (isSwitchOn && hasOngoing) {
+      toast.error('Không thể chuyển sang "Tạm ngưng" khi vẫn còn đơn đang xử lý.', {
+        position: 'top-right', autoClose: 3000, theme: 'colored'
+      });
       return;
     }
 
@@ -399,13 +416,18 @@ const AvailabilitySwitch = () => {
         dispatch(fetchTechnicianAvailability(techId)),
         dispatch(fetchTechnicianJobs(techId)),
       ]);
-      toast.success(next === 'BUSY' ? 'Đã chuyển sang: Tạm ngưng' : 'Đã chuyển sang: Nhận việc', { position: 'top-right', autoClose: 2000, theme: 'colored' });
+      toast.success(next === 'BUSY' ? 'Đã chuyển sang: Tạm ngưng' : 'Đã chuyển sang: Nhận việc', {
+        position: 'top-right', autoClose: 2000, theme: 'colored'
+      });
     } catch {
-      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại!', { position: 'top-right', autoClose: 3000, theme: 'colored' });
+      toast.error('Cập nhật trạng thái thất bại. Vui lòng thử lại!', {
+        position: 'top-right', autoClose: 3000, theme: 'colored'
+      });
     } finally {
       setPending(false);
     }
   };
+
 
   return (
     <>
@@ -423,7 +445,7 @@ const AvailabilitySwitch = () => {
           className={`tch-switch ${isSwitchOn ? 'on' : ''}`}
           title={
             isSwitchOn
-              ? (allJobsDone ? 'Bấm để tạm ngưng (BUSY)' : 'Còn đơn chưa hoàn thành — không thể tạm ngưng')
+              ? (hasOngoing ? 'Bấm để tạm ngưng (BUSY)' : 'Còn đơn chưa hoàn thành — không thể tạm ngưng')
               : 'Bấm để nhận việc (FREE)'
           }
         >
@@ -560,51 +582,51 @@ function TechnicianDashboard() {
 
   return (
     <>
-    <div className="main-wrapper">
-      <Header />
-      <BreadcrumbSection />
+      <div className="main-wrapper">
+        <Header />
+        <BreadcrumbSection />
 
-      <div className="dashboard-section">
-        <div className="container">
-          <div className="row">
-            <div className="col-lg-12">
-              <div className="dashboard-menu">
-                <ul>
-                  <li>
-                    <Link to={`/technician`} className="active">
-                      <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
-                      <span>Bảng điểu khiển</span>
-                    </Link>
-                  </li>
-                  <li><Link to={`/technician/booking`} ><img src="/img/icons/booking-icon.svg" alt="Icon" /><span>Đơn hàng</span></Link></li>
-                  <li><Link to="/technician/feedback"><img src="/img/icons/review-icon.svg" alt="Icon" /><span>Đánh giá</span></Link></li>
-                  <li><Link to={`/technician/${techId}/certificate`}><img style={{ height: '28px' }} src="/img/cer.png" alt="Icon" /><span>Chứng chỉ</span></Link></li>
-                  <li><Link to="/technician/schedule"><img src="/img/icons/booking-icon.svg" alt="Icon" /><span>Lịch trình</span></Link></li>
-                  <li><Link to="/technician/deposit"><img src="/img/icons/wallet-icon.svg" alt="Icon" /><span>Ví của tôi</span></Link></li>
-                  <li><Link to={`/technician/earning`}><img src="/img/icons/payment-icon.svg" alt="Icon" /><span>Thu nhập</span></Link></li>
-                </ul>
+        <div className="dashboard-section">
+          <div className="container">
+            <div className="row">
+              <div className="col-lg-12">
+                <div className="dashboard-menu">
+                  <ul>
+                    <li>
+                      <Link to={`/technician`} className="active">
+                        <img src="/img/icons/dashboard-icon.svg" alt="Icon" />
+                        <span>Bảng điểu khiển</span>
+                      </Link>
+                    </li>
+                    <li><Link to={`/technician/booking`} ><img src="/img/icons/booking-icon.svg" alt="Icon" /><span>Đơn hàng</span></Link></li>
+                    <li><Link to="/technician/feedback"><img src="/img/icons/review-icon.svg" alt="Icon" /><span>Đánh giá</span></Link></li>
+                    <li><Link to={`/technician/${techId}/certificate`}><img style={{ height: '28px' }} src="/img/cer.png" alt="Icon" /><span>Chứng chỉ</span></Link></li>
+                    <li><Link to="/technician/schedule"><img src="/img/icons/booking-icon.svg" alt="Icon" /><span>Lịch trình</span></Link></li>
+                    <li><Link to="/technician/deposit"><img src="/img/icons/wallet-icon.svg" alt="Icon" /><span>Ví của tôi</span></Link></li>
+                    <li><Link to={`/technician/earning`}><img src="/img/icons/payment-icon.svg" alt="Icon" /><span>Thu nhập</span></Link></li>
+                  </ul>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="content dashboard-content">
-        <div className="container">
-          <div className="content-header d-flex align-items-center justify-content-between">
-            <h4>Bảng điều khiển</h4>
-            <AvailabilitySwitch />
+        <div className="content dashboard-content">
+          <div className="container">
+            <div className="content-header d-flex align-items-center justify-content-between">
+              <h4>Bảng điều khiển</h4>
+              <AvailabilitySwitch />
+            </div>
+            <WidgetsRow />
+            <TechnicianJobList />
+            <CardsRow />
           </div>
-          <WidgetsRow />
-          <TechnicianJobList />
-          <CardsRow />
         </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
 
 
-  {/* Modal thông báo đăng ký gói */}
+      {/* Modal thông báo đăng ký gói */}
       {showSubModal && (
         <div className="subscr-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="subscr-modal-title">
           <div className="subscr-modal">
@@ -633,7 +655,7 @@ function TechnicianDashboard() {
         </div>
       )}
 
-       {/* CSS tối giản cho modal */}
+      {/* CSS tối giản cho modal */}
       <style>{`
         .subscr-modal-overlay{
           position:fixed; inset:0; background:rgba(0,0,0,.45);
@@ -651,7 +673,7 @@ function TechnicianDashboard() {
           padding:12px 18px; border-top:1px solid #eee;
         }
       `}</style>
-       </>
+    </>
   );
 }
 
