@@ -9,6 +9,48 @@ import { fetchAllPublicServices } from '../../features/services/serviceSlice';
 import ImageDropZone from '../../components/common/ImageDropZone';
 import apiClient from '../../services/apiClient';
 
+// Custom hook for HERE Address Autocomplete
+function useHereAddressAutocomplete(query) {
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const controllerRef = useRef();
+
+  React.useEffect(() => {
+    if (!query || query.trim().length < 3) {
+      setSuggestions([]);
+      setError(null);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    if (controllerRef.current) controllerRef.current.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const fetchSuggestions = async () => {
+      try {
+        const apiKey = import.meta.env.VITE_HERE_API_KEY;
+        // Đà Nẵng: lat=16.0544, lng=108.2022
+        const url = `https://autosuggest.search.hereapi.com/v1/autosuggest?at=16.0544,108.2022&limit=5&q=${encodeURIComponent(query)}&lang=vi-VN&apiKey=${apiKey}`;
+        const res = await fetch(url, { signal: controller.signal });
+        const data = await res.json();
+        // Lọc chỉ lấy kết quả là đường phố hoặc địa chỉ
+        const streets = (data.items || []).filter(
+          item => item.resultType === 'street' || item.resultType === 'houseNumber' || item.resultType === 'address'
+        );
+        setSuggestions(streets);
+      } catch (err) {
+        if (err.name !== 'AbortError') setError('Lỗi khi lấy gợi ý địa chỉ');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSuggestions();
+    return () => controller.abort();
+  }, [query]);
+  return { suggestions, loading, error };
+}
+
 const CompleteProfile = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -74,12 +116,11 @@ const CompleteProfile = () => {
 
     // Address & suggestion states
     const [addressInput, setAddressInput] = useState('');
-    const [addressSuggestions, setAddressSuggestions] = useState([]);
-    const [addressLoading, setAddressLoading] = useState(false);
-    const [addressError, setAddressError] = useState('');
     const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
     const locationInputRef = useRef(null);
-    const suggestControllerRef = useRef(null);
+    
+    // Use HERE Address Autocomplete hook
+    const { suggestions: addressSuggestions, loading: addressLoading, error: addressError } = useHereAddressAutocomplete(addressInput);
 
     // helper validation
     const isServiceDetailsValid = Object.keys(serviceDetails).length > 0 &&
@@ -121,81 +162,51 @@ const CompleteProfile = () => {
     useEffect(() => {
     }, [uploadCounter]);
 
-    // Address autosuggest via HERE API
-    useEffect(() => {
-        const query = addressInput;
-        if (!query || query.trim().length < 3) {
-            setAddressSuggestions([]);
-            setAddressError('');
-            return;
-        }
-        setAddressLoading(true);
-        setAddressError('');
-        if (suggestControllerRef.current) suggestControllerRef.current.abort();
-        const controller = new AbortController();
-        suggestControllerRef.current = controller;
-        const fetchSuggestions = async () => {
-            try {
-                // Gọi API backend thay vì trực tiếp HERE API  
-                const url = `http://localhost:3000/api/services/address-suggestions?query=${encodeURIComponent(query)}`;
-                const res = await fetch(url, { 
-                    signal: controller.signal,
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                }
-                
-                const data = await res.json();
-                
-                if (data.success && Array.isArray(data.data)) {
-                    setAddressSuggestions(data.data);
-                    setAddressError(''); // Clear any previous errors
-                } else {
-                    setAddressSuggestions([]);
-                    setAddressError(data.message || 'Không có gợi ý địa chỉ');
-                }
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error('Address suggestion error:', err);
-                    setAddressError(`Lỗi khi lấy gợi ý địa chỉ: ${err.message}`);
-                }
-                setAddressSuggestions([]);
-            } finally {
-                setAddressLoading(false);
-            }
-        };
-        fetchSuggestions();
-        return () => controller.abort();
-    }, [addressInput]);
 
-    // Geocode selected address to coordinates using backend API
-    const geocodeAddressToCoords = async (addrLabel) => {
+
+    // Geocode selected address to coordinates using HERE API directly
+    const geocodeAddressToCoords = async (selectedSuggestion) => {
         try {
-            const response = await fetch('http://localhost:3000/api/services/geocode-address', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ address: addrLabel })
-            });
-            
-            const data = await response.json();
-            
-            if (data.success && data.data?.coordinates) {
+            // If suggestion has position coordinates, use them directly
+            if (selectedSuggestion.position) {
+                const { lat, lng } = selectedSuggestion.position;
+                const geoJsonPoint = {
+                    type: "Point",
+                    coordinates: [lng, lat] // GeoJSON format [longitude, latitude]
+                };
+                
                 setFormData(prev => ({
                     ...prev,
-                    currentLocation: data.data.coordinates
+                    currentLocation: geoJsonPoint
+                }));
+                return true;
+            }
+            
+            // Fallback: Use HERE Geocoding API if no position available
+            const apiKey = import.meta.env.VITE_HERE_API_KEY;
+            const address = selectedSuggestion.address?.label || selectedSuggestion.title;
+            const url = `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(address)}&apiKey=${apiKey}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.items && data.items.length > 0) {
+                const { lat, lng } = data.items[0].position;
+                const geoJsonPoint = {
+                    type: "Point",
+                    coordinates: [lng, lat] // GeoJSON format [longitude, latitude]
+                };
+                
+                setFormData(prev => ({
+                    ...prev,
+                    currentLocation: geoJsonPoint
                 }));
                 return true;
             } else {
                 return false;
             }
         } catch (error) {
+            console.error('Geocoding error:', error);
             return false;
         }
     };
@@ -1119,16 +1130,17 @@ const CompleteProfile = () => {
                                                                         <li
                                                                             key={s.id || s.title + idx}
                                                                             className="list-group-item list-group-item-action"
+                                                                            style={{ cursor: 'pointer' }}
                                                                             onMouseDown={async () => {
                                                                                 const label = s.address?.label || s.title;
                                                                                 setAddressInput(label);
                                                                                 setShowAddressSuggestions(false);
-                                                                                // Geocode to coords
-                                                                                const ok = await geocodeAddressToCoords(label);
+                                                                                // Geocode to coords using the full suggestion object
+                                                                                const ok = await geocodeAddressToCoords(s);
                                                                                 if (!ok) {
-                                                                                    setAddressError('Không thể xác định toạ độ từ địa chỉ. Vui lòng thử địa chỉ khác.');
+                                                                                    toast.error('Không thể xác định toạ độ từ địa chỉ. Vui lòng thử địa chỉ khác.');
                                                                                 } else {
-                                                                                    setAddressError('');
+                                                                                    toast.success('Đã xác định tọa độ địa chỉ thành công!');
                                                                                 }
                                                                                 setTimeout(() => locationInputRef.current?.blur(), 0);
                                                                             }}
