@@ -43,6 +43,15 @@ export default function CertificateAdmin() {
         dispatch(fetchAllCertificatesThunk({ page: 1, limit }));
     }, [dispatch]); // limit đã có trong lastQuery lần đầu
 
+    // Cleanup filters when component unmounts
+    useEffect(() => {
+        return () => {
+            // Reset local states when leaving the page
+            setSearchText("");
+            setFilterStatus(null);
+        };
+    }, []);
+
     // Giữ nguyên query cũ + patch
     const refetch = (patch = {}) => {
         const query = { ...(lastQuery || {}), limit, ...patch };

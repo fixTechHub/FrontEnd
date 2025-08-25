@@ -8,35 +8,69 @@ export const selectBookingStatusLogsPagination = (state) => state.bookingStatusL
 export const selectBookingStatusLogsSortBy = (state) => state.bookingStatusLogs.sortBy;
 export const selectBookingStatusLogsSortOrder = (state) => state.bookingStatusLogs.sortOrder;
 
-// Filtered logs based on search text
+// Filtered logs based on all filters
 export const selectFilteredBookingStatusLogs = (state) => {
     const logs = selectAllBookingStatusLogs(state);
     const filters = selectBookingStatusLogsFilters(state);
     
-    if (!filters.search) return logs;
+    let filteredLogs = logs;
     
-    const searchLower = filters.search.toLowerCase();
-    return logs.filter(log => {
-        const bookingId = (log.bookingId || '').toLowerCase();
-        const changedBy = (log.changedBy || '').toLowerCase();
-        const role = (log.role || '').toLowerCase();
-        const fromStatus = (log.fromStatus || '').toLowerCase();
-        const toStatus = (log.toStatus || '').toLowerCase();
-        const note = (log.note || '').toLowerCase();
-        const bookingCode = (log.bookingCode || '').toLowerCase();
-        const changedByUserName = (log.changedByUserName || '').toLowerCase();
-        
-        return (
-            bookingId.includes(searchLower) ||
-            changedBy.includes(searchLower) ||
-            role.includes(searchLower) ||
-            fromStatus.includes(searchLower) ||
-            toStatus.includes(searchLower) ||
-            note.includes(searchLower) ||
-            bookingCode.includes(searchLower) ||
-            changedByUserName.includes(searchLower)
+    // Filter by search text
+    if (filters.search) {
+        const searchLower = filters.search.toLowerCase();
+        filteredLogs = filteredLogs.filter(log => {
+            const bookingId = (log.bookingId || '').toLowerCase();
+            const changedBy = (log.changedBy || '').toLowerCase();
+            const role = (log.role || '').toLowerCase();
+            const fromStatus = (log.fromStatus || '').toLowerCase();
+            const toStatus = (log.toStatus || '').toLowerCase();
+            const note = (log.note || '').toLowerCase();
+            const bookingCode = (log.bookingCode || '').toLowerCase();
+            const changedByUserName = (log.changedByUserName || '').toLowerCase();
+            
+            return (
+                bookingId.includes(searchLower) ||
+                changedBy.includes(searchLower) ||
+                role.includes(searchLower) ||
+                fromStatus.includes(searchLower) ||
+                toStatus.includes(searchLower) ||
+                note.includes(searchLower) ||
+                bookingCode.includes(searchLower) ||
+                changedByUserName.includes(searchLower)
+            );
+        });
+    }
+    
+    // Filter by fromStatus
+    if (filters.fromStatus) {
+        filteredLogs = filteredLogs.filter(log => 
+            log.fromStatus === filters.fromStatus
         );
-    });
+    }
+    
+    // Filter by toStatus
+    if (filters.toStatus) {
+        filteredLogs = filteredLogs.filter(log => 
+            log.toStatus === filters.toStatus
+        );
+    }
+    
+    // Filter by date range
+    if (filters.fromDate) {
+        const fromDate = new Date(filters.fromDate);
+        filteredLogs = filteredLogs.filter(log => 
+            new Date(log.createdAt) >= fromDate
+        );
+    }
+    
+    if (filters.toDate) {
+        const toDate = new Date(filters.toDate);
+        filteredLogs = filteredLogs.filter(log => 
+            new Date(log.createdAt) <= toDate
+        );
+    }
+    
+    return filteredLogs;
 };
 
 // Get logs by specific filters

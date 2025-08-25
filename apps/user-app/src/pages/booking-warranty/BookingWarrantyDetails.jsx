@@ -499,7 +499,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                                 <div className="booking-details-card-content">
                                                     <div className="booking-details-card-label">Lịch đề xuất</div>
                                                     <div className="booking-details-card-value">
-                                                        {formatDateOnly(warranty.proposedSchedule)} {formatTimeOnly(warranty.proposedSchedule)}
+                                                        {formatDateOnly(warranty?.proposedSchedule)} {formatTimeOnly(warranty?.proposedSchedule)}
                                                     </div>
                                                 </div>
                                             </div>

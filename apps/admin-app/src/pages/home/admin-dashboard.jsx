@@ -838,7 +838,7 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Số liệu doanh thu từ Package</span>
+                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Số liệu doanh thu</span>
                   <div className="d-flex align-items-center gap-2">
                     
                   </div>
@@ -1028,7 +1028,7 @@ const AdminDashboard = () => {
                       key={booking.id} 
                       className="d-flex align-items-center justify-content-between p-3"
                       style={{
-                        background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa', 
+                        background: index === 0 ? 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)' : '#f8f9fa', 
                         borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
@@ -1143,7 +1143,7 @@ const AdminDashboard = () => {
                       key={tech.id} 
                       className="d-flex align-items-center p-3"
                       style={{
-                        background: index === 0 ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f8f9fa',
+                        background: index === 0 ? 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)' : '#f8f9fa',
                         borderRadius: '8px',
                         cursor: 'pointer',
                         transition: 'all 0.3s ease',
@@ -1216,14 +1216,14 @@ const AdminDashboard = () => {
             <div style={{background: '#fff', borderRadius: 12, overflow: 'hidden'}}>
               {/* Header */}
               <div style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
                 padding: 24,
-                color: '#fff'
+                color: '#black'
               }}>
                 <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
                 <div>
-                    <div style={{fontSize: 22, fontWeight: 700}}>Chi tiết đơn hàng</div>
-                    <div style={{fontSize: 13, opacity: 0.9}}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
+                    <div style={{fontSize: 22, fontWeight: 700, color: '#black'}}>Chi tiết đơn hàng</div>
+                    <div style={{fontSize: 13, opacity: 0.9, color: '#black'}}>ID: {selectedBooking.bookingCode || selectedBooking.id}</div>
                       </div>
                   <div style={{textAlign: 'right'}}>
                     <Tag color={getStatusColor(selectedBooking.status)} style={{fontSize: 12, fontWeight: 600}}>

@@ -542,7 +542,7 @@ scales: {
                 borderRadius: '16px',
                 border: 'none', 
                 boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)'
               }}>
                 <Statistic
                   title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng doanh thu</Text>}
