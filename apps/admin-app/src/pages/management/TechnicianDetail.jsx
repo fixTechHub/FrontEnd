@@ -203,7 +203,6 @@ export default function TechnicianDetail() {
   const { reportCount, loading: reportLoading, error: reportError } = useSelector((state) => state.reports);
   const [notificationContent, setNotificationContent] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-
   useEffect(() => {
     const load = async () => {
       try {
@@ -267,10 +266,11 @@ export default function TechnicianDetail() {
   );
   //Load Number of times the technician has been reported 
   useEffect(() => {
-    if (technician?.id) {
-      dispatch(fetchReportCounts(technician.id));
+    if (technician?.userId) {
+   dispatch(fetchReportCounts(technician.userId));
+     
     }
-  }, [technician?.id, dispatch]);
+  }, [technician?.userId, dispatch]);
 
   const handleSendWarningToUser = async () => {
     if (!notificationContent.trim()) {
