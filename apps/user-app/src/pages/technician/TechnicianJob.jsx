@@ -517,10 +517,10 @@ const TechnicianJobList = () => {
                                                                     <i className="fas fa-ellipsis-vertical"></i>
                                                                 </a>
                                                                 <div className="dropdown-menu dropdown-menu-end">
-                                                                    <Link to={`/technician/booking/${id}`} className="dropdown-item">
-                                                                        <i className="feather-eye"></i> View
+                                                                    <Link to={`/booking/booking-processing?bookingId=${id}`} className="dropdown-item">
+                                                                        <i className="feather-eye"></i> Tiến trình
                                                                     </Link>
-                                                                    
+                                                        
                                                                 </div>
                                                             </div>
                                                         </td>
