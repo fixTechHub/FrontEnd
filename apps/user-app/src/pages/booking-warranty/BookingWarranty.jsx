@@ -282,7 +282,7 @@ function BookingWarranty() {
                         </div>
                     </div>
                     <div className="text-end my-4">
-                        {user?.role?.name === 'CUSTOMER' && warranty.proposedSchedule && warranty.confirmedSchedule && warranty.status === 'CONFIRMED' && (
+                        {user?.role?.name === 'CUSTOMER'&& warranty  && warranty?.proposedSchedule && warranty?.confirmedSchedule && warranty?.status === 'CONFIRMED' && (
                             <button
                                 className="btn btn-primary me-2"
                                 onClick={handleConfirm}
@@ -290,7 +290,7 @@ function BookingWarranty() {
                                 Xác nhận bảo hành thành công
                             </button>
                         )}
-                        {user?.role?.name === 'TECHNICIAN' && warranty.status === 'DONE' && (
+                        {user?.role?.name === 'TECHNICIAN' && warranty  && warranty?.status === 'DONE' && (
                             <button
                                 className="btn btn-primary"
                                 onClick={() => setShowResolveModal(true)}
