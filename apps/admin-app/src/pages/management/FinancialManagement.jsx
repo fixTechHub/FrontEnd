@@ -1483,7 +1483,7 @@ const FinancialManagement = () => {
           >
             <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
               {/* Header */}
-              <div style={{ background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)', padding: 24, color: '#fff' }}>
+              <div style={{ background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)', padding: 24, color: 'black' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết đơn hàng</div>
@@ -1571,7 +1571,7 @@ const FinancialManagement = () => {
           >
             <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
               {/* Header */}
-              <div style={{ background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)', padding: 24, color: '#fff' }}>
+              <div style={{ background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)', padding: 24, color: 'black' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết tài chính kỹ thuật viên</div>

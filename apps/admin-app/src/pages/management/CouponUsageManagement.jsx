@@ -592,7 +592,7 @@ const handleSortByUsedAt = () => {
            <div style={{
              background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
              padding: '20px 24px',
-             color: '#fff'
+             color: 'black'
            }}>
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                <div style={{ fontSize: 20, fontWeight: 700 }}>
