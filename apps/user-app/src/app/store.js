@@ -24,6 +24,7 @@ import technicianSubscriptionReducer from '../features/package/packageSlice';
 import suggestionReducer from '../features/suggestions/suggestionSlice';
 import { loadTechnicianFromStorage } from '../utils/loadTechnicianFromStorage';
 import systemReportReducer from '../features/systemReports/systemReportSlice';
+import technicianScheduleReducer from '../features/technicianSchedule/technicianScheduleSlice';
 
 export const store = configureStore({
   reducer: {
@@ -51,6 +52,7 @@ export const store = configureStore({
     technicianSubscription: technicianSubscriptionReducer,
     suggestions: suggestionReducer,
     systemReport: systemReportReducer,
+    technicianSchedule: technicianScheduleReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

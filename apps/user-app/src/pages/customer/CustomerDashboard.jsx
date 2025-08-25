@@ -488,39 +488,233 @@ const CardsRow = ({ bookings, coupons, onSelectTab }) => (
 
 // ---------- Favorite Technicians Section -----------
 const FavoriteTechniciansSection = ({ favorites, loading, onRemove }) => (
-	<div className="card user-card flex-fill mt-4">
-		<div className="card-header d-flex justify-content-between align-items-center">
-			<h5 className="mb-0">Kỹ thuật viên yêu thích</h5>
-			{/* Could add link to full list if needed */}
-		</div>
-		<div className="card-body">
+	<div className="favorites-list-modern">
+		<style jsx>{`
+			.favorites-list-modern {
+				padding: 2rem 0;
+				min-height: 100vh;
+				background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+			}
+			
+			.favorites-header {
+				text-align: center;
+				margin-bottom: 3rem;
+			}
+			
+			.favorites-title {
+				font-size: 2.5rem;
+				font-weight: 900;
+				background: linear-gradient(135deg, #ff6b6b, #ffa500);
+				-webkit-background-clip: text;
+				-webkit-text-fill-color: transparent;
+				background-clip: text;
+				margin-bottom: 0.5rem;
+			}
+			
+			.favorites-subtitle {
+				color: #64748b;
+				font-size: 1.1rem;
+				font-weight: 500;
+			}
+			
+			.favorites-grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+				gap: 1.5rem;
+				margin-top: 2rem;
+			}
+			
+			.favorite-card {
+				background: #ffffff;
+				border: 1px solid #e5e7eb;
+				border-radius: 16px;
+				padding: 2rem;
+				box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+				transition: all 0.3s ease;
+				text-align: center;
+			}
+			
+			.favorite-card:hover {
+				transform: translateY(-4px);
+				box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+			}
+			
+			.favorite-avatar {
+				width: 100px;
+				height: 100px;
+				border-radius: 50%;
+				object-fit: cover;
+				margin: 0 auto 1.5rem;
+				border: 4px solid #fff;
+				box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+			}
+			
+			.favorite-name {
+				font-size: 1.25rem;
+				font-weight: 700;
+				color: #1f2937;
+				margin-bottom: 0.5rem;
+			}
+			
+			.favorite-stats {
+				display: flex;
+				justify-content: space-between;
+				margin: 1rem 0;
+				padding: 1rem;
+				background: #f8fafc;
+				border-radius: 8px;
+			}
+			
+			.stat-item {
+				text-align: center;
+			}
+			
+			.stat-value {
+				font-size: 1.125rem;
+				font-weight: 700;
+				color: #1f2937;
+				display: block;
+			}
+			
+			.stat-label {
+				font-size: 0.75rem;
+				color: #6b7280;
+				margin-top: 0.25rem;
+			}
+			
+			.favorite-rating {
+				display: flex;
+				justify-content: center;
+				gap: 0.25rem;
+				margin-bottom: 1.5rem;
+			}
+			
+			.star {
+				color: #fbbf24;
+			}
+			
+			.star-empty {
+				color: #d1d5db;
+			}
+			
+			.remove-btn {
+				background: linear-gradient(135deg, #ef4444, #dc2626);
+				border: none;
+				color: white;
+				padding: 0.75rem 1.5rem;
+				border-radius: 8px;
+				font-weight: 600;
+				font-size: 0.875rem;
+				cursor: pointer;
+				transition: all 0.2s ease;
+				width: 100%;
+			}
+			
+			.remove-btn:hover {
+				background: linear-gradient(135deg, #dc2626, #b91c1c);
+				transform: translateY(-1px);
+			}
+			
+			.empty-state {
+				text-align: center;
+				padding: 4rem 2rem;
+				background: #ffffff;
+				border: 2px dashed #e5e7eb;
+				border-radius: 16px;
+				margin-top: 2rem;
+			}
+			
+			.empty-icon {
+				font-size: 4rem;
+				color: #d1d5db;
+				margin-bottom: 1rem;
+			}
+			
+			.empty-title {
+				font-size: 1.5rem;
+				font-weight: 700;
+				color: #374151;
+				margin-bottom: 0.5rem;
+			}
+			
+			.empty-text {
+				color: #6b7280;
+				font-size: 1rem;
+			}
+			
+			.loading-state {
+				text-align: center;
+				padding: 4rem 2rem;
+				color: #6b7280;
+			}
+		`}</style>
+		
+		<div className="container">
+			<div className="favorites-header">
+				<h1 className="favorites-title">Kỹ thuật viên yêu thích</h1>
+				<p className="favorites-subtitle">Danh sách các kỹ thuật viên bạn đã đánh dấu yêu thích</p>
+			</div>
+			
 			{loading ? (
-				<p>Loading...</p>
+				<div className="loading-state">
+					<div className="spinner-border text-primary" role="status">
+						<span className="visually-hidden">Loading...</span>
+					</div>
+					<p className="mt-3">Đang tải danh sách...</p>
+				</div>
 			) : favorites.length === 0 ? (
-				<p>Bạn chưa có kỹ thuật viên yêu thích.</p>
+				<div className="empty-state">
+					<div className="empty-icon">💙</div>
+					<h3 className="empty-title">Chưa có kỹ thuật viên yêu thích</h3>
+					<p className="empty-text">Hãy đánh dấu yêu thích các kỹ thuật viên ưng ý để dễ dàng tìm lại sau này!</p>
+				</div>
 			) : (
-				<div className="row">
+				<div className="favorites-grid">
 					{favorites.map(fav => {
 						const tech = fav.technicianId;
 						if (!tech) return null;
 						const user = tech.userId || {};
 						return (
-							<div className="col-md-4 mb-4" key={fav._id}>
-                              <div className="card border-0 shadow-sm hover-lift h-100 text-center p-3" style={{background:'#ffffff'}}> 
-                                <img src={user.avatar} alt="avatar" style={{width:80,height:80,borderRadius:'50%',objectFit:'cover',margin:'0 auto',boxShadow:'0 2px 6px rgba(0,0,0,.1)'}} />
-                                <h6 className="fw-semibold mt-3 mb-1" style={{color:'#0f172a'}}>{user.fullName}</h6>
-                                <small style={{color:'#475569'}}>Kinh nghiệm {tech.experienceYears} năm</small>
-                                <small className="d-block" style={{color:'#475569'}}>Đơn hoàn thành: {tech.completedBookings||0}</small>
-                                {tech.rating && (
-                                  <div className="mb-2" style={{color:'#f59e0b'}}>
-                                    {Array.from({length:5}).map((_,i)=>(<i key={i} className={i<tech.rating?"fa fa-star":"fa fa-star-o"}></i>))}
-                                  </div>
-                                )}
-                                <button className="btn btn-sm btn-outline-danger mt-auto w-100" onClick={()=>onRemove(tech._id)}>
-                                  <i className="fa fa-heart-broken me-1"></i>Bỏ yêu thích
-                                </button>
-                              </div>
-                            </div>
+							<div className="favorite-card" key={fav._id}>
+								<img 
+									src={user.avatar || '/img/default-avatar.png'} 
+									alt="avatar" 
+									className="favorite-avatar"
+								/>
+								<h5 className="favorite-name">{user.fullName || 'Chưa cập nhật'}</h5>
+								
+								<div className="favorite-stats">
+									<div className="stat-item">
+										<span className="stat-value">{tech.experienceYears || 0}</span>
+										<div className="stat-label">Năm kinh nghiệm</div>
+									</div>
+									<div className="stat-item">
+										<span className="stat-value">{tech.jobCompleted || 0}</span>
+										<div className="stat-label">Đơn hoàn thành</div>
+									</div>
+									<div className="stat-item">
+										<span className="stat-value">{tech.ratingAverage?.toFixed(1) || '0.0'}</span>
+										<div className="stat-label">Đánh giá</div>
+									</div>
+								</div>
+								
+								<div className="favorite-rating">
+									{Array.from({length: 5}).map((_, i) => (
+										<i 
+											key={i} 
+											className={`fa fa-star ${i < (tech.ratingAverage || 0) ? 'star' : 'star-empty'}`}
+										></i>
+									))}
+								</div>
+								
+								<button 
+									onClick={() => onRemove(tech._id)} 
+									className="remove-btn"
+								>
+									<i className="fa fa-heart-broken me-2"></i>
+									Bỏ yêu thích
+								</button>
+							</div>
 						);
 					})}
 				</div>
@@ -535,8 +729,7 @@ function CustomerDashboard() {
 	const { list: favorites, loading: favLoading } = useSelector(state => state.favorites);
 	const { user } = useSelector(state => state.auth);
 	const [bookingsCount, setBookingsCount] = useState(0);
-	const warrantyState = useSelector(state => state.warranty);
-	const warrantyCount = warrantyState?.warranty ? 1 : 0; // Hiện tại chỉ có 1 bản ghi khi yêu cầu, sau này có thể thay bằng mảng
+	const [warrantyCount, setWarrantyCount] = useState(0);
 	const { list: userCoupons, loading: couponsLoading } = useSelector(state => state.coupons);
 	const couponsCount = userCoupons.length;
 
@@ -555,17 +748,35 @@ function CustomerDashboard() {
 		if (user?._id) {
 			dispatch(fetchUserCouponsThunk(user._id));
 		}
-		// fetch last 5 bookings
+
+		// Fetch counts và recent data
 		(async () => {
 			try {
-				const res = await apiClient.get('/bookings/user?limit=5');
-				const sorted = (res.data.bookings || []).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+				// 1. Lấy TOTAL bookings count
+				const totalBookingsRes = await apiClient.get('/bookings/user');
+				const totalBookings = totalBookingsRes.data.bookings || [];
+				setBookingsCount(totalBookings.length);
+
+				// 2. Lấy 5 recent bookings để hiển thị
+				const recentBookingsRes = await apiClient.get('/bookings/user?limit=5');
+				const sorted = (recentBookingsRes.data.bookings || []).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
 				setRecentBookings(sorted);
-				setBookingsCount(sorted.length);
+
+				// 3. Lấy warranty count 
+				try {
+					const warrantyRes = await apiClient.get('/warranties');
+					const warranties = warrantyRes.data || []; // Response trực tiếp là array, không có wrapper
+					setWarrantyCount(warranties.length);
+					console.log('Warranty count:', warranties.length, warranties);
+				} catch (warrantyErr) {
+					console.log('Warranty API error:', warrantyErr);
+					setWarrantyCount(0);
+				}
+
 			} catch (err) {
-				console.error('Fetch bookings error:', err);
-			} finally {
-				// setLoadingBookings(false); // This line is removed
+				console.error('Fetch dashboard data error:', err);
+				setBookingsCount(0);
+				setWarrantyCount(0);
 			}
 		})();
 

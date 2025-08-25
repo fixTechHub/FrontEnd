@@ -63,7 +63,13 @@ const ServiceManagement = () => {
 
   useEffect(() => {
     if (error) {
-      message.error(error.title || 'Đã có lỗi xảy ra. Vui lòng thử lại!');
+      // Handle validation errors from backend
+      if (error.errors) {
+        const processed = processErrors(error.errors);
+        setValidationErrors(processed);
+      } else {
+        message.error(error.title || 'Đã có lỗi xảy ra. Vui lòng thử lại!');
+      }
       dispatch(resetServiceState());
     }
     if (success) {
@@ -71,6 +77,8 @@ const ServiceManagement = () => {
       setShowAddModal(false);
       setShowEditModal(false);
       setShowDeleteModal(false);
+      setFormData(initialFormState);
+      setValidationErrors({});
       dispatch(resetServiceState());
       dispatch(fetchServices());
     }
@@ -139,12 +147,14 @@ const ServiceManagement = () => {
   };
 
   const handleAddService = () => {
+    setSelectedService(null); // Reset selected service for add mode
     setFormData(initialFormState);
     setValidationErrors({});
     setShowAddModal(true);
   };
 
   const handleEditService = (service) => {
+    setSelectedService(service); // CRITICAL FIX: This was missing!
     setFormData({
       serviceName: service.serviceName || '',
       categoryId: service.categoryId || '',
@@ -168,15 +178,33 @@ const ServiceManagement = () => {
   const confirmDelete = () => {
     if (selectedService) {
       // Use DELETE endpoint which now properly handles soft delete
-      dispatch(deleteService(selectedService.id));
+      dispatch(deleteService(selectedService.id)).then((action) => {
+        if (action.error && action.error.message) {
+          message.error(action.error.message);
+        } else {
+          message.success('Xóa dịch vụ thành công');
+          setShowDeleteModal(false);
+          dispatch(resetServiceState());
+          dispatch(fetchServices());
+        }
+      });
     }
   };
 
   const deletedServices = useSelector((state) => state.service.deletedServices) || [];
 
   const handleRestoreService = async (id) => {
-    await dispatch(restoreService(id));
-    setShowRestoreModal(false);
+    dispatch(restoreService(id)).then((action) => {
+      if (action.error && action.error.message) {
+        message.error(action.error.message);
+      } else {
+        message.success('Khôi phục dịch vụ thành công');
+        setShowRestoreModal(false);
+        dispatch(resetServiceState());
+        dispatch(fetchServices());
+        dispatch(fetchDeletedServices());
+      }
+    });
   };
   const handleOpenRestoreModal = () => {
     dispatch(fetchDeletedServices());
@@ -186,26 +214,21 @@ const ServiceManagement = () => {
   // Set export data và columns
   useEffect(() => {
     const exportColumns = [
-      { title: 'Tên dịch vụ', dataIndex: 'serviceName' },
-      { title: 'Danh mục', dataIndex: 'categoryName' },
-      { title: 'Trạn thái', dataIndex: 'status' },
-      { title: 'Mô tả', dataIndex: 'description' },
-      { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+      { title: 'Tên dịch vụ', dataIndex: 'Tên dịch vụ' },
+      { title: 'Danh mục', dataIndex: 'Danh mục' },
+      { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+      { title: 'Mô tả', dataIndex: 'Mô tả' },
+      { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
     ];
 
     const exportData = sortedServices.map(service => {
       const category = categories.find(cat => cat.id === service.categoryId);
       return {
-        serviceName: service.serviceName,
-        categoryName: category?.categoryName || service.categoryId,
-        status: service.isActive ? 'ACTIVE' : 'INACTIVE',
-        description: service.description,
-        fontFamily: service.fontFamily || 'Arial',
-        fontSize: service.fontSize || '14',
-        textAlign: service.textAlign || 'left',
-        embeddingDimensions: service.embedding?.length || 0,
-        createdAt: formatDateTime(service.createdAt),
-        updatedAt: formatDateTime(service.updatedAt),
+        'Tên dịch vụ': service.serviceName,
+        'Danh mục': category?.categoryName || service.categoryId,
+        'Trạng thái': service.isActive ? 'Hoạt động' : 'Không hoạt động',
+        'Mô tả': service.description,
+        'Thời gian tạo': formatDateTime(service.createdAt),
       };
     });
 
@@ -291,7 +314,7 @@ const ServiceManagement = () => {
     return newErrors;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setValidationErrors({});
     
@@ -306,6 +329,7 @@ const ServiceManagement = () => {
       setValidationErrors({ general: 'Nhập vào các trường * bắt buộc' });
       return;
     }
+    
     // Chuẩn bị data gửi lên BE - chuyển đổi từ camelCase sang PascalCase
     const dataToSend = {
       ServiceName: formData.serviceName,
@@ -315,15 +339,11 @@ const ServiceManagement = () => {
       IsActive: formData.isActive,
       Embedding: formData.embedding || []
     };
-    try {
-      if (showAddModal) {
-        await dispatch(createService(dataToSend));
-      } else if (showEditModal && selectedService) {
-        await dispatch(updateService({ id: selectedService.id, serviceData: dataToSend }));
-      }
-    } catch (error) {
-      console.error('Error in handleSubmit:', error);
-      message.error('Có lỗi xảy ra');
+    
+    if (showAddModal) {
+      dispatch(createService(dataToSend));
+    } else if (showEditModal && selectedService) {
+      dispatch(updateService({ id: selectedService.id, serviceData: dataToSend }));
     }
   };
 
@@ -365,7 +385,7 @@ const ServiceManagement = () => {
               placeholder="Danh mục"
               value={filterCategory || undefined}
               onChange={value => setFilterCategory(value)}
-              style={{ width: 150 }}
+              style={{ width: 180 }}
               allowClear
             >
               {categories.map(cat => (
@@ -376,11 +396,11 @@ const ServiceManagement = () => {
               placeholder="Trạng thái"
               value={filterStatus || undefined}
               onChange={value => setFilterStatus(value)}
-              style={{ width: 130 }}
+              style={{ width: 150 }}
               allowClear
             >
-              <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-              <Select.Option value="INACTIVE">INACTIVE</Select.Option>
+              <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+              <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
             </Select>
           </div>
           <div className="d-flex align-items-center">
@@ -416,7 +436,7 @@ const ServiceManagement = () => {
             {filterStatus && (
               <span className="badge bg-warning-transparent">
                 <i className="ti ti-filter me-1"></i>
-                Trạng thái: {filterStatus}
+                Trạng thái: {filterStatus === 'ACTIVE' ? 'Hoạt động' : filterStatus === 'INACTIVE' ? 'Không hoạt động' : filterStatus}
               </span>
             )}
             <button 
@@ -494,7 +514,7 @@ const ServiceManagement = () => {
                         <td>{category ? category.categoryName : '-'}</td>
                         <td>
                           <span className={`badge ${svc.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                            {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
+                            {svc.isActive ? 'Hoạt động' : 'Không hoạt động'}
                           </span>
                         </td>
                         <td>
@@ -636,6 +656,10 @@ const ServiceManagement = () => {
         onCancel={() => {
           setShowAddModal(false);
           setShowEditModal(false);
+          setSelectedService(null);
+          setFormData(initialFormState);
+          setValidationErrors({});
+          dispatch(resetServiceState());
         }}
         footer={null}
         width={800}
@@ -730,8 +754,8 @@ const ServiceManagement = () => {
                     name="isActive"
                     checked={formData.isActive}
                     onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                    checkedChildren="Active"
-                    unCheckedChildren="Inactive"
+                    checkedChildren="Hoạt động"
+                    unCheckedChildren="Không hoạt động"
                   />
                   <div style={{
                     fontSize: 12,
@@ -848,6 +872,10 @@ const ServiceManagement = () => {
               onClick={() => {
                 setShowAddModal(false);
                 setShowEditModal(false);
+                setSelectedService(null);
+                setFormData(initialFormState);
+                setValidationErrors({});
+                dispatch(resetServiceState());
               }} 
               style={{ marginRight: 12 }}
               size="large"
@@ -867,7 +895,10 @@ const ServiceManagement = () => {
       {/* Delete Modal */}
       <Modal
         open={showDeleteModal}
-        onCancel={() => setShowDeleteModal(false)}
+        onCancel={() => {
+          setShowDeleteModal(false);
+          dispatch(resetServiceState());
+        }}
         footer={null}
         title="Xóa dịch vụ"
       >
@@ -876,7 +907,10 @@ const ServiceManagement = () => {
           <h4 className="mb-1">Xóa dịch vụ</h4>
           <p className="mb-3">Bạn có chắc muốn xóa dịch vụ này?</p>
           <div className="d-flex justify-content-center">
-            <button type="button" className="btn btn-light me-3" onClick={() => setShowDeleteModal(false)}>Hủy</button>
+            <button type="button" className="btn btn-light me-3" onClick={() => {
+              setShowDeleteModal(false);
+              dispatch(resetServiceState());
+            }}>Hủy</button>
             <button type="button" className="btn btn-danger" onClick={confirmDelete}>Xóa</button>
           </div>
         </div>
@@ -884,7 +918,10 @@ const ServiceManagement = () => {
       {/* Restore Modal */}
       <Modal
         open={showRestoreModal}
-        onCancel={() => setShowRestoreModal(false)}
+        onCancel={() => {
+          setShowRestoreModal(false);
+          dispatch(resetServiceState());
+        }}
         footer={null}
         title="Khôi phục dịch vụ"
         width={800}
@@ -906,7 +943,7 @@ const ServiceManagement = () => {
                   <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || '-'}</td>
                   <td>
                     <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
-                      {svc.isActive ? 'Active' : 'Inactive'}
+                      {svc.isActive ? 'Hoạt động' : 'Không hoạt động'}
                     </span>
                   </td>
                   <td>
@@ -920,7 +957,10 @@ const ServiceManagement = () => {
           </table>
         </div>
         <div className="d-flex justify-content-end mt-3">
-          <button type="button" className="btn btn-light" onClick={() => setShowRestoreModal(false)}>Đóng</button>
+          <button type="button" className="btn btn-light" onClick={() => {
+            setShowRestoreModal(false);
+            dispatch(resetServiceState());
+          }}>Đóng</button>
         </div>
       </Modal>
     </div>

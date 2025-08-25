@@ -43,6 +43,15 @@ export default function CertificateAdmin() {
         dispatch(fetchAllCertificatesThunk({ page: 1, limit }));
     }, [dispatch]); // limit đã có trong lastQuery lần đầu
 
+    // Cleanup filters when component unmounts
+    useEffect(() => {
+        return () => {
+            // Reset local states when leaving the page
+            setSearchText("");
+            setFilterStatus(null);
+        };
+    }, []);
+
     // Giữ nguyên query cũ + patch
     const refetch = (patch = {}) => {
         const query = { ...(lastQuery || {}), limit, ...patch };
@@ -97,7 +106,7 @@ export default function CertificateAdmin() {
 
     return (
         <>
-        <div className="modern-page-wrapper">
+        <div className="modern-page- wrapper">
             <div className="modern-content-card">
                 {/* ------ Header & Breadcrumb (giống package) ------ */}
                 <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
@@ -153,7 +162,7 @@ export default function CertificateAdmin() {
                         </Button>
                     </div>
 
-                    {/* Slot “Sort” bên phải — bỏ qua để không thay đổi backend */}
+                    {/* Slot “Sort” bên phải  bỏ qua để không thay đổi backend */}
                     <div />
                 </div>
 
@@ -222,7 +231,7 @@ export default function CertificateAdmin() {
                                             <td>{startIndex + idx + 1}</td>
                                             <td>
                                                 <div className="fw-semibold">
-                                                    {item?.technicianId?.userId?.fullName || "—"}
+                                                    {item?.technicianId?.userId?.fullName || ""}
                                                 </div>
                                                 <div className="text-muted" style={{ fontSize: 12 }}>
                                                     {item?.technicianId?.userId?.email || ""}
@@ -252,13 +261,13 @@ export default function CertificateAdmin() {
                                                             }}
                                                         />
                                                     )
-                                                ) : "—"}
+                                                ) : ""}
                                             </td>
 
                                             <td>
                                                 {item.createdAt
                                                     ? new Date(item.createdAt).toLocaleDateString("vi-VN")
-                                                    : "—"}
+                                                    : ""}
                                             </td>
                                             <td>
                                                 <span
@@ -300,7 +309,7 @@ export default function CertificateAdmin() {
                                                         </Button>
                                                     </>
                                                 ) : (
-                                                    <span className="text-muted">—</span>
+                                                    <span className="text-muted"></span>
                                                 )}
                                             </td>
                                         </tr>

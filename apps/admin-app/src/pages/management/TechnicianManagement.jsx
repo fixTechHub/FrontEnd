@@ -9,6 +9,7 @@ import {
   setError,
   setFilters,
   updateTechnician,
+  clearFilters,
 } from '../../features/technicians/technicianSlice';
 import {
   selectFilteredTechnicians,
@@ -32,7 +33,9 @@ const TechnicianManagement = () => {
   const error = useSelector(selectTechnicianError);
 
 
-  const [searchText, setSearchText] = useState(filters.search || '');
+
+
+  const [searchText, setSearchText] = useState('');
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedTechnician, setSelectedTechnician] = useState(null);
   const [statusData, setStatusData] = useState({ status: '', note: '' });
@@ -48,9 +51,12 @@ const TechnicianManagement = () => {
 
 
   const filteredTechnicians = technicians.filter(tech => {
-    // Filter by availability
-    if (filterAvailability && tech.availability !== filterAvailability) {
-      return false;
+    // Filter by availability - so sánh cả string và number
+    if (filters.availability) {
+      const techAvailability = tech.availability;
+      if (filters.availability === '0' && techAvailability !== 0 && techAvailability !== 'ONJOB') return false;
+      if (filters.availability === '1' && techAvailability !== 1 && techAvailability !== 'FREE') return false;
+      if (filters.availability === '2' && techAvailability !== 2 && techAvailability !== 'BUSY') return false;
     }
     
     // Filter by status
@@ -59,8 +65,8 @@ const TechnicianManagement = () => {
     }
     
     // Filter by search text
-    if (searchText) {
-      const searchLower = searchText.toLowerCase();
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
       const fullName = (tech.fullName || '').toLowerCase();
       const email = (tech.email || '').toLowerCase();
       if (!fullName.includes(searchLower) && !email.includes(searchLower)) {
@@ -130,34 +136,33 @@ const TechnicianManagement = () => {
   // Set export data và columns
   useEffect(() => {
     const exportColumns = [
-      { title: 'Họ và tên', dataIndex: 'fullName' },
-      { title: 'Email', dataIndex: 'email' },
-      { title: 'SĐT', dataIndex: 'phone' },
-      { title: 'Trạng thái', dataIndex: 'status' },
-      { title: 'Tình trạng', dataIndex: 'availability' },
-      { title: 'Đánh giá', dataIndex: 'rating' },
-      { title: 'Số công việc hoàn thành', dataIndex: 'jobsCompleted' },
-      { title: 'Tổng thu nhập', dataIndex: 'totalEarning' },
-      { title: 'Tổng phí hoa hồng', dataIndex: 'totalCommissionPaid' },
-      { title: 'Tổng số tiền bị giữ lại', dataIndex: 'totalHoldingAmount' },
-      { title: 'Tổng số tiền đã rút', dataIndex: 'totalWithdrawn' },
-      { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+      { title: 'Họ và tên', dataIndex: 'Họ và tên' },
+      { title: 'Email', dataIndex: 'Email' },
+      { title: 'SĐT', dataIndex: 'SĐT' },
+      { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+      { title: 'Tình trạng', dataIndex: 'Tình trạng' },
+      { title: 'Đánh giá', dataIndex: 'Đánh giá' },
+      { title: 'Số công việc hoàn thành', dataIndex: 'Số công việc hoàn thành' },
+      { title: 'Tổng thu nhập', dataIndex: 'Tổng thu nhập' },
+      { title: 'Tổng phí hoa hồng', dataIndex: 'Tổng phí hoa hồng' },
+      { title: 'Tổng số tiền bị giữ lại', dataIndex: 'Tổng số tiền bị giữ lại' },
+      { title: 'Tổng số tiền đã rút', dataIndex: 'Tổng số tiền đã rút' },
+      { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
     ];
 
     const exportData = sortedTechnicians.map(technician => ({
-      fullName: technician.fullName,
-      email: technician.email,
-      phone: technician.phone,
-      status: technician.status,
-      availability: technician.availability,
-      rating: technician.ratingAverage || 0,
-      jobsCompleted: technician.jobCompleted || 0,
-      totalEarning: formatCurrency(technician.totalEarning || 0),
-      totalCommissionPaid: formatCurrency(technician.totalCommissionPaid || 0),
-      totalHoldingAmount: formatCurrency(technician.totalHoldingAmount || 0),
-      totalWithdrawn: formatCurrency(technician.totalWithdrawn || 0),
-      createdAt: formatDateTime(technician.createdAt),
-      updatedAt: formatDateTime(technician.updatedAt),
+      'Họ và tên': technician.fullName,
+      Email: technician.email,
+      SĐT: technician.phone,
+      'Trạng thái': statusMapping[technician.status] || technician.status,
+      'Tình trạng': getTechnicianAvailability(technician.availability),
+      'Đánh giá': technician.ratingAverage || 0,
+      'Số công việc hoàn thành': technician.jobCompleted || 0,
+      'Tổng thu nhập': formatCurrency(technician.totalEarning || 0),
+      'Tổng phí hoa hồng': formatCurrency(technician.totalCommissionPaid || 0),
+      'Tổng số tiền bị giữ lại': formatCurrency(technician.totalHoldingAmount || 0),
+      'Tổng số tiền đã rút': formatCurrency(technician.totalWithdrawn || 0),
+      'Thời gian tạo': formatDateTime(technician.createdAt),
     }));
 
     createExportData(exportData, exportColumns, 'technicians_export', 'Technicians');
@@ -192,12 +197,29 @@ const TechnicianManagement = () => {
   // Reset to first page when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [technicians.length, filterAvailability, filters.status, searchText]);
+  }, [technicians.length, filters.availability, filters.status, filters.search]);
 
-
+  // Đồng bộ local state với Redux state khi component mount
   useEffect(() => {
-    dispatch(setFilters({ search: searchText }));
-  }, [searchText, dispatch]);
+    setFilterAvailability(filters.availability || '');
+  }, [filters.availability]);
+
+  // Đồng bộ searchText với Redux state khi component mount
+  useEffect(() => {
+    setSearchText(filters.search || '');
+  }, [filters.search]);
+
+  // Cleanup filters when component unmounts
+  useEffect(() => {
+    return () => {
+      // Reset filters when leaving the page
+      dispatch(clearFilters());
+      // Reset local states
+      setSearchText('');
+      setFilterAvailability('');
+      setCurrentPage(1);
+    };
+  }, [dispatch]);
 
 
   useEffect(() => {
@@ -374,15 +396,42 @@ const TechnicianManagement = () => {
     return TECHNICIAN_STATUS_MAP[status] || status || 'Chưa cập nhật';
   }
 
-  // Thêm hàm chuyển đổi availability nếu chưa có
+  // Mapping availability từ tiếng Anh sang tiếng Việt
   const TECHNICIAN_AVAILABILITY_MAP = {
-    1: 'FREE',
-    2: 'BUSY',
-    0: 'ONJOB',
+    1: 'Đang rảnh',
+    2: 'Bận',
+    0: 'Đang làm việc',
+    'FREE': 'Đang rảnh',
+    'BUSY': 'Bận',
+    'ONJOB': 'Đang làm việc'
   };
+  
   function getTechnicianAvailability(availability) {
     return TECHNICIAN_AVAILABILITY_MAP[availability] || availability || 'Chưa cập nhật';
   }
+
+  // Function để lấy màu sắc cho availability
+  const getAvailabilityColor = (availability) => {
+    if (availability === 'FREE' || availability === 1 || availability === '1') {
+      return '#198754'; // Xanh lá đậm - Rảnh rỗi
+    } else if (availability === 'ONJOB' || availability === 0 || availability === '0') {
+      return '#0d6efd'; // Xanh dương đậm - Đang làm việc
+    } else if (availability === 'BUSY' || availability === 2 || availability === '2') {
+      return '#dc3545'; // Đỏ đậm - Bận
+    } else {
+      return '#6c757d'; // Xám - Không xác định
+    }
+  };
+  
+  // Mapping status từ tiếng Anh sang tiếng Việt
+  const statusMapping = {
+    'APPROVED': 'Đã duyệt',
+    'REJECTED': 'Từ chối',
+    'PENDING': 'Đang chờ',
+    'approved': 'Đã duyệt',
+    'rejected': 'Từ chối',
+    'pending': 'Đang chờ'
+  };
 
   // Thêm hàm getStatusBadgeClass giống UserManagement
   const getStatusBadgeClass = (status) => {
@@ -425,25 +474,82 @@ const TechnicianManagement = () => {
                 <span className="input-icon">
                   <i className="ti ti-search"></i>
                 </span>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder="Tìm kiếm tên, email"
-                  value={searchText}
-                  onChange={e => setSearchText(e.target.value)}
-                />
+                                 <input
+                   type="text"
+                   className="form-control"
+                   placeholder="Tìm kiếm tên, email"
+                   value={filters.search || ''}
+                   onChange={e => dispatch(setFilters({ ...filters, search: e.target.value }))}
+                 />
               </div>
             </div>
-            <Select
-              placeholder="Tình trạng"
-              value={filterAvailability || undefined}
-              onChange={value => setFilterAvailability(value)}
-              style={{ width: 150, marginRight: 8 }}
-              allowClear
-            >
-              <Select.Option value="ONJOB">ONJOB</Select.Option>
-              <Select.Option value="FREE">FREE</Select.Option>
-              <Select.Option value="BUSY">BUSY</Select.Option>
+                         <Select
+               placeholder="Tình trạng"
+               value={filters.availability || undefined}
+               onChange={value => {
+                 setFilterAvailability(value);
+                 dispatch(setFilters({ ...filters, availability: value }));
+               }}
+               style={{ width: 160, marginRight: 8 }}
+               allowClear
+             >
+              <Select.Option value="0">
+                <div className="d-flex align-items-center">
+                  <div className="me-2" style={{ 
+                      width: '8px', 
+                      height: '8px', 
+                      borderRadius: '50%',
+                      backgroundColor: getAvailabilityColor('0')
+                  }}></div>
+                  <span style={{ 
+                      color: getAvailabilityColor('0'),
+                      fontWeight: '500',
+                      fontSize: '13px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                  }}>
+                    Đang làm việc
+                  </span>
+                </div>
+              </Select.Option>
+              <Select.Option value="1">
+                <div className="d-flex align-items-center">
+                  <div className="me-2" style={{ 
+                      width: '8px', 
+                      height: '8px', 
+                      borderRadius: '50%',
+                      backgroundColor: getAvailabilityColor('1')
+                  }}></div>
+                  <span style={{ 
+                      color: getAvailabilityColor('1'),
+                      fontWeight: '500',
+                      fontSize: '13px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                  }}>
+                    Đang rảnh
+                  </span>
+                </div>
+              </Select.Option>
+              <Select.Option value="2">
+                <div className="d-flex align-items-center">
+                  <div className="me-2" style={{ 
+                      width: '8px', 
+                      height: '8px', 
+                      borderRadius: '50%',
+                      backgroundColor: getAvailabilityColor('2')
+                  }}></div>
+                  <span style={{ 
+                      color: getAvailabilityColor('2'),
+                      fontWeight: '500',
+                      fontSize: '13px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px'
+                  }}>
+                    Bận
+                  </span>
+                </div>
+              </Select.Option>
             </Select>
             <Select
               placeholder="Trạng thái"
@@ -452,9 +558,9 @@ const TechnicianManagement = () => {
               style={{ width: 130, marginRight: 8 }}
               allowClear
             >
-              <Select.Option value="PENDING">PENDING</Select.Option>
-              <Select.Option value="APPROVED">APPROVED</Select.Option>
-              <Select.Option value="REJECTED">REJECTED</Select.Option>
+              <Select.Option value="PENDING">Đang chờ</Select.Option>
+              <Select.Option value="APPROVED">Đã duyệt</Select.Option>
+              <Select.Option value="REJECTED">Từ chối</Select.Option>
             </Select>
 
           </div>
@@ -471,41 +577,57 @@ const TechnicianManagement = () => {
             />
           </div>
         </div>
-        {/* Filter Info */}
-        {(filterAvailability || filters.status || searchText) && (
-          <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
-            <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
-            {searchText && (
-              <span className="badge bg-primary-transparent">
-                <i className="ti ti-search me-1"></i>
-                Tìm kiếm: "{searchText}"
-              </span>
-            )}
-            {filterAvailability && (
-              <span className="badge bg-info-transparent">
-                <i className="ti ti-filter me-1"></i>
-                Tình trạng: {getTechnicianAvailability(filterAvailability)}
-              </span>
-            )}
-            {filters.status && (
-              <span className="badge bg-warning-transparent">
-                <i className="ti ti-filter me-1"></i>
-                Trạng thái: {getTechnicianStatus(filters.status)}
-              </span>
-            )}
-            <button 
-              className="btn btn-sm btn-outline-secondary"
-              onClick={() => {
-                setSearchText('');
-                setFilterAvailability('');
-                dispatch(setFilters({ ...filters, status: undefined }));
-              }}
-            >
-              <i className="ti ti-x me-1"></i>
-              Xóa tất cả
-            </button>
-          </div>
-        )}
+                 {/* Filter Info */}
+         {(filters.search || filters.availability || filters.status) && (
+           <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+             <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+             {filters.search && (
+               <span className="badge bg-primary-transparent">
+                 <i className="ti ti-search me-1"></i>
+                 Tìm kiếm: "{filters.search}"
+               </span>
+             )}
+             {filters.availability && (
+               <span className="badge bg-info-transparent">
+                 <i className="ti ti-filter me-1"></i>
+                 Tình trạng: <span className="ms-1" style={{ 
+                     color: getAvailabilityColor(filters.availability),
+                     fontSize: '11px',
+                     fontWeight: '600',
+                     textTransform: 'uppercase',
+                     letterSpacing: '0.5px'
+                 }}>
+                   <span className="d-inline-flex align-items-center">
+                     <span className="me-2" style={{ 
+                         width: '6px', 
+                         height: '6px', 
+                         borderRadius: '50%',
+                         backgroundColor: getAvailabilityColor(filters.availability)
+                     }}></span>
+                     {getTechnicianAvailability(filters.availability)}
+                   </span>
+                 </span>
+               </span>
+             )}
+             {filters.status && (
+               <span className="badge bg-warning-transparent">
+                 <i className="ti ti-filter me-1"></i>
+                 Trạng thái: {statusMapping[filters.status] || filters.status}
+               </span>
+             )}
+             <button 
+               className="btn btn-sm btn-outline-secondary"
+               onClick={() => {
+                 dispatch(setFilters({ search: '', availability: undefined, status: undefined }));
+                 setSearchText('');
+                 setFilterAvailability('');
+               }}
+             >
+               <i className="ti ti-x me-1"></i>
+               Xóa tất cả
+             </button>
+           </div>
+         )}
         {/* Table */}
         <div className="custom-datatable-filter table-responsive">
           <table className="table datatable">
@@ -528,6 +650,7 @@ const TechnicianManagement = () => {
                   )}
                 </th>
                 <th>Trạng thái</th>
+                <th>Tình trạng</th>
                 <th style={{ cursor: 'pointer' }} onClick={handleSortByRating}>
                   Đánh giá
                   {sortField === 'rating' && (
@@ -542,11 +665,11 @@ const TechnicianManagement = () => {
             <tbody>
               {loading && technicians.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center"><Spin /></td>
+                  <td colSpan={6} className="text-center"><Spin /></td>
                 </tr>
               ) : filteredTechnicians.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-muted py-4">
+                  <td colSpan={6} className="text-center text-muted py-4">
                     <div>
                       <i className="ti ti-users" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
                       <p className="mb-0">Không có kỹ thuật viên nào</p>
@@ -555,7 +678,7 @@ const TechnicianManagement = () => {
                 </tr>
               ) : currentTechnicians.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center text-muted py-4">
+                  <td colSpan={6} className="text-center text-muted py-4">
                     <div>
                       <i className="ti ti-search" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
                       <p className="mb-0">Không tìm thấy kỹ thuật viên nào phù hợp</p>
@@ -580,11 +703,30 @@ const TechnicianManagement = () => {
                     </td>
                     <td>{tech.email}</td>
                     <td>
-                      <span className={`badge ${getStatusBadgeClass(getTechnicianStatus(tech.status))} text-dark`}>
-                        {getTechnicianStatus(tech.status)}
+                      <span className={`badge ${getStatusBadgeClass(tech.status)} text-dark`}>
+                        {statusMapping[tech.status] || tech.status}
                       </span>
                     </td>
-                                         <td>
+                    <td>
+                      <div className="d-flex align-items-center">
+                        <div className="me-2" style={{ 
+                            width: '8px', 
+                            height: '8px', 
+                            borderRadius: '50%',
+                            backgroundColor: getAvailabilityColor(tech.availability)
+                        }}></div>
+                        <span style={{ 
+                            color: getAvailabilityColor(tech.availability),
+                            fontWeight: '500',
+                            fontSize: '13px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                        }}>
+                          {getTechnicianAvailability(tech.availability)}
+                        </span>
+                      </div>
+                    </td>
+                    <td>
                      <div className="d-flex align-items-center gap-2">
                          <span className={`badge text-white ${
                            (tech.ratingAverage || 0) >= 4 ? 'bg-success' : 

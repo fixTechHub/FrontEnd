@@ -14,6 +14,42 @@ const CouponUsageManagement = () => {
  const dispatch = useDispatch();
  const { usages = [], loading = false, error = null, filters = {} } = useSelector(state => state.couponUsage) || {};
 
+ // Helper functions for Vietnamese text
+ const getStatusDisplayText = (status) => {
+   if (!status) return 'Chưa có thông tin';
+   
+   switch (status.toUpperCase()) {
+     case 'USED':
+       return 'Đã sử dụng';
+     case 'ACTIVE':
+       return 'Hoạt động';
+     case 'INACTIVE':
+       return 'Không hoạt động';
+     case 'EXPIRED':
+       return 'Hết hạn';
+     case 'CANCELLED':
+       return 'Đã hủy';
+     default:
+       return status;
+   }
+ };
+
+ const getStatusColor = (status) => {
+   switch ((status || '').toUpperCase()) {
+     case 'USED':
+     case 'ACTIVE':
+       return 'green';
+     case 'INACTIVE':
+       return 'default';
+     case 'EXPIRED':
+       return 'orange';
+     case 'CANCELLED':
+       return 'red';
+     default:
+       return 'default';
+   }
+ };
+
 
  const [userMap, setUserMap] = useState({});
  const [couponMap, setCouponMap] = useState({});
@@ -199,21 +235,21 @@ const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Mã giảm giá', dataIndex: 'couponCode' },
-    { title: 'Khách hàng', dataIndex: 'userName' },
-    { title: 'Đơn hàng', dataIndex: 'bookingCode' },
-    { title: 'Thời gian sử dụng', dataIndex: 'usedAt' },
-    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+    { title: 'Mã giảm giá', dataIndex: 'Mã giảm giá' },
+    { title: 'Khách hàng', dataIndex: 'Khách hàng' },
+    { title: 'Đơn hàng', dataIndex: 'Đơn hàng' },
+    { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+    { title: 'Thời gian sử dụng', dataIndex: 'Thời gian sử dụng' },
+    { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
   ];
 
   const exportData = sortedUsages.map(usage => ({
-    couponCode: couponMap[usage.couponId] || usage.couponId,
-    userName: userMap[usage.userId] || usage.userId,
-    bookingCode: bookingMap[usage.bookingId] || usage.bookingId,
-    discountApplied: formatCurrency(usage.discountApplied || 0),
-    usedAt: formatDateTime(usage.usedAt),
-    createdAt: formatDateTime(usage.createdAt),
-    updatedAt: formatDateTime(usage.updatedAt),
+    'Mã giảm giá': couponMap[usage.couponId] || usage.couponId,
+    'Khách hàng': userMap[usage.userId] || usage.userId,
+    'Đơn hàng': bookingMap[usage.bookingId] || usage.bookingId,
+    'Trạng thái': getStatusDisplayText('USED'),
+    'Thời gian sử dụng': formatDateTime(usage.usedAt),
+    'Thời gian tạo': formatDateTime(usage.createdAt),
   }));
 
   createExportData(exportData, exportColumns, 'coupon_usages_export', 'Coupon Usages');
@@ -451,7 +487,7 @@ const handleSortByUsedAt = () => {
              Hiển thị {indexOfFirst + 1}-{Math.min(indexOfLast, filteredUsages.length)} trong tổng số {filteredUsages.length} lịch sử sử dụng
            </div>
          </div>
-         {filteredUsages.length > 0 && (
+         {totalPages > 1 && (
            <nav>
              <ul className="pagination mb-0" style={{ gap: '2px' }}>
                {/* Previous button */}
@@ -473,73 +509,50 @@ const handleSortByUsedAt = () => {
                
                {/* Page numbers */}
                {[...Array(totalPages)].map((_, i) => {
-                 const pageNumber = i + 1;
-                 // Show all pages if total pages <= 7
-                 if (totalPages <= 7) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 }
-                 
-                 // Show first page, last page, current page, and pages around current page
-                 if (
-                   pageNumber === 1 || 
-                   pageNumber === totalPages || 
-                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                 ) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 } else if (
-                   pageNumber === currentPage - 2 || 
-                   pageNumber === currentPage + 2
-                 ) {
-                   return (
-                     <li key={i} className="page-item disabled">
-                       <span className="page-link" style={{ 
-                         border: '1px solid #dee2e6',
-                         borderRadius: '6px',
-                         padding: '8px 12px',
-                         minWidth: '40px',
-                         backgroundColor: '#f8f9fa',
-                         color: '#6c757d'
-                       }}>...</span>
-                     </li>
-                   );
-                 }
-                 return null;
+                   const pageNumber = i + 1;
+                   // Show first page, last page, current page, and pages around current page
+                   if (
+                       pageNumber === 1 || 
+                       pageNumber === totalPages || 
+                       (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                   ) {
+                       return (
+                           <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                               <button 
+                                   className="page-link" 
+                                   onClick={() => handlePageChange(pageNumber)}
+                                   style={{ 
+                                       border: '1px solid #dee2e6',
+                                       borderRadius: '6px',
+                                       padding: '8px 12px',
+                                       minWidth: '40px',
+                                       backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                       color: currentPage === pageNumber ? 'white' : '#007bff',
+                                       borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                   }}
+                               >
+                                   {pageNumber}
+                               </button>
+                           </li>
+                       );
+                   } else if (
+                       pageNumber === currentPage - 2 || 
+                       pageNumber === currentPage + 2
+                   ) {
+                       return (
+                           <li key={i} className="page-item disabled">
+                               <span className="page-link" style={{ 
+                                   border: '1px solid #dee2e6',
+                                   borderRadius: '6px',
+                                   padding: '8px 12px',
+                                   minWidth: '40px',
+                                   backgroundColor: '#f8f9fa',
+                                   color: '#6c757d'
+                               }}>...</span>
+                           </li>
+                       );
+                   }
+                   return null;
                })}
                
                {/* Next button */}
@@ -577,7 +590,7 @@ const handleSortByUsedAt = () => {
        >
          <div style={{ background: '#fff', borderRadius: 16 }}>
            <div style={{
-             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+             background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
              padding: '20px 24px',
              color: '#fff'
            }}>
@@ -586,7 +599,7 @@ const handleSortByUsedAt = () => {
                  Chi tiết sử dụng mã giảm giá
                </div>
                <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
-                 USED
+                 {getStatusDisplayText('USED')}
                </Tag>
              </div>
              {selectedUsage.id && (
@@ -614,7 +627,7 @@ const handleSortByUsedAt = () => {
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                        <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
-                       <span style={{ fontWeight: 600, color: '#52c41a' }}>ACTIVE</span>
+                       <span style={{ fontWeight: 600, color: '#52c41a' }}>{getStatusDisplayText('ACTIVE')}</span>
                      </div>
                    </div>
                  </div>

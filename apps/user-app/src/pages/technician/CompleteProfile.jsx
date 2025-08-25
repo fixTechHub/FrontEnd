@@ -9,11 +9,56 @@ import { fetchAllPublicServices } from '../../features/services/serviceSlice';
 import ImageDropZone from '../../components/common/ImageDropZone';
 import apiClient from '../../services/apiClient';
 
+// Custom hook for HERE Address Autocomplete
+function useHereAddressAutocomplete(query) {
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const controllerRef = useRef();
+
+  React.useEffect(() => {
+    if (!query || query.trim().length < 3) {
+      setSuggestions([]);
+      setError(null);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    if (controllerRef.current) controllerRef.current.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const fetchSuggestions = async () => {
+      try {
+        const apiKey = import.meta.env.VITE_HERE_API_KEY;
+        // Đà Nẵng: lat=16.0544, lng=108.2022
+        const url = `https://autosuggest.search.hereapi.com/v1/autosuggest?at=16.0544,108.2022&limit=5&q=${encodeURIComponent(query)}&lang=vi-VN&apiKey=${apiKey}`;
+        const res = await fetch(url, { signal: controller.signal });
+        const data = await res.json();
+        // Lọc chỉ lấy kết quả là đường phố hoặc địa chỉ
+        const streets = (data.items || []).filter(
+          item => item.resultType === 'street' || item.resultType === 'houseNumber' || item.resultType === 'address'
+        );
+        setSuggestions(streets);
+      } catch (err) {
+        if (err.name !== 'AbortError') setError('Lỗi khi lấy gợi ý địa chỉ');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSuggestions();
+    return () => controller.abort();
+  }, [query]);
+  return { suggestions, loading, error };
+}
+
 const CompleteProfile = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    const { user } = useSelector((state) => state.auth);
+    const { user, registrationData } = useSelector((state) => state.auth);
     const { loading } = useSelector((state) => state.technician);
+    
+    // Get account type from user or registrationData
+    const accountType = user?.accountType || registrationData?.accountType || 'INDIVIDUAL';
     const categories = useSelector((state) => state.categories.categories);
     const services = useSelector((state) => state.services.services);
 
@@ -38,8 +83,14 @@ const CompleteProfile = () => {
     const [serviceDetails, setServiceDetails] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
     const [inspectionFee, setInspectionFee] = useState('');
+    const [focusedPriceFields, setFocusedPriceFields] = useState(new Set());
     const [frontImage, setFrontImage] = useState(null);
     const [backImage, setBackImage] = useState(null);
+    
+    // Business account states
+    const [businessLicenseImage, setBusinessLicenseImage] = useState(null);
+    const [taxCode, setTaxCode] = useState('');
+    const [taxCodeErrors, setTaxCodeErrors] = useState('');
     
     // Track upload attempts to force OCR re-trigger
     const [uploadCounter, setUploadCounter] = useState(0);
@@ -65,12 +116,11 @@ const CompleteProfile = () => {
 
     // Address & suggestion states
     const [addressInput, setAddressInput] = useState('');
-    const [addressSuggestions, setAddressSuggestions] = useState([]);
-    const [addressLoading, setAddressLoading] = useState(false);
-    const [addressError, setAddressError] = useState('');
     const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
     const locationInputRef = useRef(null);
-    const suggestControllerRef = useRef(null);
+    
+    // Use HERE Address Autocomplete hook
+    const { suggestions: addressSuggestions, loading: addressLoading, error: addressError } = useHereAddressAutocomplete(addressInput);
 
     // helper validation
     const isServiceDetailsValid = Object.keys(serviceDetails).length > 0 &&
@@ -81,7 +131,19 @@ const CompleteProfile = () => {
         && formData.currentLocation.coordinates.length === 2
         && Number(formData.currentLocation.coordinates[0]) !== 0
         && Number(formData.currentLocation.coordinates[1]) !== 0;
-    const isStep1Valid = identification.length > 0 && !cccdErrors && !cccdOcrError && Number(experienceYears) > 0 && frontImage && backImage && addressInput.trim().length >= 3 && hasValidCoordinates;
+    
+    // Different validation based on account type
+    const isIndividualStep1Valid = accountType === 'INDIVIDUAL' &&
+        identification.length > 0 && !cccdErrors && !cccdOcrError && 
+        Number(experienceYears) > 0 && frontImage && backImage && 
+        addressInput.trim().length >= 3 && hasValidCoordinates;
+        
+    const isBusinessStep1Valid = accountType === 'BUSINESS' &&
+        taxCode.length > 0 && !taxCodeErrors && 
+        Number(experienceYears) > 0 && businessLicenseImage && 
+        addressInput.trim().length >= 3 && hasValidCoordinates;
+        
+    const isStep1Valid = isIndividualStep1Valid || isBusinessStep1Valid;
     const isStep2Valid = selectedCategories.length > 0 && isServiceDetailsValid;
     const isStep3Valid = formData.bankAccount.bankName && formData.bankAccount.accountNumber && 
                         formData.bankAccount.accountHolder;
@@ -98,86 +160,49 @@ const CompleteProfile = () => {
 
     // Debug: log upload counter changes
     useEffect(() => {
-        console.log('[CCCD] Upload counter changed:', uploadCounter);
     }, [uploadCounter]);
 
-    // Address autosuggest via HERE API
-    useEffect(() => {
-        const query = addressInput;
-        if (!query || query.trim().length < 3) {
-            setAddressSuggestions([]);
-            setAddressError('');
-            return;
-        }
-        setAddressLoading(true);
-        setAddressError('');
-        if (suggestControllerRef.current) suggestControllerRef.current.abort();
-        const controller = new AbortController();
-        suggestControllerRef.current = controller;
-        const fetchSuggestions = async () => {
-            try {
-                // Gọi API backend thay vì trực tiếp HERE API  
-                const url = `http://localhost:3000/api/services/address-suggestions?query=${encodeURIComponent(query)}`;
-                console.log('Calling API:', url); // Debug log
-                const res = await fetch(url, { 
-                    signal: controller.signal,
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-                
-                if (!res.ok) {
-                    throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-                }
-                
-                const data = await res.json();
-                console.log('Address suggestions response:', data); // Debug log
-                
-                if (data.success && Array.isArray(data.data)) {
-                    setAddressSuggestions(data.data);
-                    setAddressError(''); // Clear any previous errors
-                } else {
-                    setAddressSuggestions([]);
-                    setAddressError(data.message || 'Không có gợi ý địa chỉ');
-                }
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error('Address suggestion error:', err);
-                    setAddressError(`Lỗi khi lấy gợi ý địa chỉ: ${err.message}`);
-                }
-                setAddressSuggestions([]);
-            } finally {
-                setAddressLoading(false);
-            }
-        };
-        fetchSuggestions();
-        return () => controller.abort();
-    }, [addressInput]);
 
-    // Geocode selected address to coordinates using backend API
-    const geocodeAddressToCoords = async (addrLabel) => {
+
+    // Geocode selected address to coordinates using HERE API directly
+    const geocodeAddressToCoords = async (selectedSuggestion) => {
         try {
-            const response = await fetch('http://localhost:3000/api/services/geocode-address', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ address: addrLabel })
-            });
-            
-            const data = await response.json();
-            console.log('Geocode response:', data); // Debug log
-            
-            if (data.success && data.data?.coordinates) {
+            // If suggestion has position coordinates, use them directly
+            if (selectedSuggestion.position) {
+                const { lat, lng } = selectedSuggestion.position;
+                const geoJsonPoint = {
+                    type: "Point",
+                    coordinates: [lng, lat] // GeoJSON format [longitude, latitude]
+                };
+                
                 setFormData(prev => ({
                     ...prev,
-                    currentLocation: data.data.coordinates
+                    currentLocation: geoJsonPoint
                 }));
-                console.log('Successfully set coordinates:', data.data.coordinates);
+                return true;
+            }
+            
+            // Fallback: Use HERE Geocoding API if no position available
+            const apiKey = import.meta.env.VITE_HERE_API_KEY;
+            const address = selectedSuggestion.address?.label || selectedSuggestion.title;
+            const url = `https://geocode.search.hereapi.com/v1/geocode?q=${encodeURIComponent(address)}&apiKey=${apiKey}`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data.items && data.items.length > 0) {
+                const { lat, lng } = data.items[0].position;
+                const geoJsonPoint = {
+                    type: "Point",
+                    coordinates: [lng, lat] // GeoJSON format [longitude, latitude]
+                };
+                
+                setFormData(prev => ({
+                    ...prev,
+                    currentLocation: geoJsonPoint
+                }));
                 return true;
             } else {
-                console.error('Geocoding failed:', data);
                 return false;
             }
         } catch (error) {
@@ -250,6 +275,47 @@ const CompleteProfile = () => {
         return '';
     };
 
+    // Tax Code Validation function
+    const validateTaxCode = (taxCode) => {
+        // Remove all non-digit characters and hyphens
+        const cleanCode = taxCode.replace(/[^\d-]/g, '');
+        
+        if (cleanCode.length === 0) {
+            return 'Vui lòng nhập mã số thuế';
+        }
+        
+        // Vietnamese business tax code can be:
+        // - 10 digits for main enterprises
+        // - 13 digits for branches/representative offices
+        // - 14 digits for some special cases
+        const digitsOnly = cleanCode.replace(/-/g, '');
+        
+        if (digitsOnly.length < 10 || digitsOnly.length > 14) {
+            return 'Mã số thuế phải có từ 10-14 chữ số';
+        }
+        
+        // Check if it's not all same digits
+        if (/^(\d)\1+$/.test(digitsOnly)) {
+            return 'Mã số thuế không hợp lệ (không được toàn bộ cùng 1 số)';
+        }
+        
+        // Check for common invalid patterns
+        const invalidPatterns = [
+            '0123456789',
+            '1234567890', 
+            '9876543210',
+            '0000000000',
+            '1111111111',
+            '9999999999'
+        ];
+        
+        if (invalidPatterns.includes(digitsOnly.substring(0, 10))) {
+            return 'Mã số thuế không hợp lệ';
+        }
+        
+        return '';
+    };
+
     // Handle CCCD input change
     const handleCCCDChange = (value) => {
         // Format CCCD with spaces for better readability
@@ -266,9 +332,23 @@ const CompleteProfile = () => {
         }
     };
 
+    // Handle Tax Code input change
+    const handleTaxCodeChange = (value) => {
+        // Allow digits and hyphens only
+        const cleanValue = value.replace(/[^\d-]/g, '');
+        
+        setTaxCode(cleanValue);
+        const error = validateTaxCode(cleanValue);
+        setTaxCodeErrors(error);
+    };
+
+    // Handle business license image selection
+    const handleBusinessLicenseSelect = (file) => {
+        setBusinessLicenseImage(file);
+    };
+
     // Handle file selection for front image (with OCR reset)
     const handleFrontImageSelect = (file) => {
-        console.log('[CCCD] New front image selected:', file?.name);
         
         // Show notification if there was a previous CCCD number
         if (identification.trim().length > 0) {
@@ -289,7 +369,6 @@ const CompleteProfile = () => {
 
     // Handle file selection for back image  
     const handleBackImageSelect = (file) => {
-        console.log('[CCCD] New back image selected:', file?.name);
         setBackImage(file);
         // Reset OCR error when new image is selected (either front or back can trigger OCR)
         setCccdOcrError('');
@@ -299,7 +378,6 @@ const CompleteProfile = () => {
 
     // Handle OCR result from CCCD images
     const handleOCRResult = (result) => {
-        console.log('[OCR] Processing result:', result);
         
         // Stop OCR loading state
         setIsOcrProcessing(false);
@@ -388,24 +466,30 @@ const CompleteProfile = () => {
         return numbers;
     };
 
-    // Price input handler with Vietnamese keyboard support
+    // Simple price input - no real-time formatting to avoid conflicts
     const handlePriceInput = (serviceId, event) => {
         const rawValue = event.target.value;
-        const cleanValue = extractNumbers(rawValue);
         
-        // Update the service details with clean numeric value
+        // Chỉ giữ lại số, loại bỏ mọi ký tự khác
+        const cleanValue = rawValue.replace(/[^\d]/g, '');
+        
+        // Giới hạn độ dài tối đa (10 số = 9,999,999,999)
+        const maxLength = 10;
+        const limitedValue = cleanValue.slice(0, maxLength);
+        
+        // Update state với raw value
         setServiceDetails(prev => ({
             ...prev,
             [serviceId]: {
                 ...prev[serviceId],
-                price: cleanValue
+                price: limitedValue
             }
         }));
         
-        // Validate immediately
+        // Validate
         setFieldErrors(prevErrs => {
             const newErrs = { ...prevErrs };
-            const priceVal = Number(cleanValue);
+            const priceVal = Number(limitedValue);
             if (priceVal <= 0 || isNaN(priceVal)) {
                 newErrs[`${serviceId}-price`] = 'Giá dịch vụ phải lớn hơn 0';
             } else {
@@ -415,12 +499,36 @@ const CompleteProfile = () => {
         });
     };
 
+    // Handle focus - show raw value for editing
+    const handlePriceFocus = (serviceId) => {
+        setFocusedPriceFields(prev => new Set([...prev, serviceId]));
+    };
+
+    // Handle blur - can format if needed
+    const handlePriceBlur = (serviceId) => {
+        setFocusedPriceFields(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(serviceId);
+            return newSet;
+        });
+    };
+
+    // Get display value based on focus state
+    const getPriceDisplayValue = (serviceId) => {
+        const rawValue = serviceDetails[serviceId]?.price || '';
+        const isFocused = focusedPriceFields.has(serviceId);
+        
+        // Khi focus: hiển thị raw (80000)
+        // Khi blur: hiển thị formatted (80.000) 
+        return isFocused ? rawValue : formatNumberWithDots(rawValue);
+    };
+
     const handleServiceDetailChange = (serviceId, field, value) => {
         let processedValue = value;
         
-        // Format price fields with dots - handle Vietnamese keyboard input
+        // For price fields, extract only numbers (no formatting)
         if (field === 'price') {
-            processedValue = extractNumbers(value);
+            processedValue = value.replace(/[^\d]/g, '');
         }
 
         setServiceDetails(prev => ({
@@ -472,13 +580,19 @@ const CompleteProfile = () => {
             toast.error('Vui lòng chọn địa chỉ từ gợi ý để xác định tọa độ');
             return;
         }
+
+        // Additional safety check for coordinates
+        const coords = formData.currentLocation?.coordinates;
+        if (!coords || coords[0] === 0 || coords[1] === 0) {
+            toast.error('Địa chỉ chưa được xác định tọa độ. Vui lòng chọn lại từ gợi ý địa chỉ.');
+            return;
+        }
         // Removed inspection fee validation
 
         try {
             const formDataAll = new FormData();
             
-            // Append real form data
-            formDataAll.append('identification', identification);
+            // Append common form data
             formDataAll.append('experienceYears', experienceYears);
             formDataAll.append('specialtiesCategories', JSON.stringify(selectedCategories));
             formDataAll.append('bankAccount', JSON.stringify(formData.bankAccount));
@@ -489,46 +603,93 @@ const CompleteProfile = () => {
             formDataAll.append('address', addressInput);
             // Removed inspectionFee
 
-            // Append image files
+            // Append account type specific data
+            if (accountType === 'BUSINESS') {
+                // Business account: tax code and business license
+                formDataAll.append('taxCode', taxCode);
+                if (businessLicenseImage) {
+                    formDataAll.append('businessLicenseImage', businessLicenseImage);
+                } else {
+                    console.warn('⚠️ Business account missing business license image');
+                }
+            } else {
+                // Individual account: CCCD identification and images
+                formDataAll.append('identification', identification);
             if (frontImage) {
                 formDataAll.append('frontIdImage', frontImage);
+                } else {
+                    console.warn('⚠️ Individual account missing front ID image');
             }
             if (backImage) {
                 formDataAll.append('backIdImage', backImage);
+                } else {
+                    console.warn('⚠️ Individual account missing back ID image');
+                }
             }
 
-            // Append certificates
+            // Append certificates (only for individual accounts)
+            if (accountType === 'INDIVIDUAL') {
             certificates.forEach((cert, index) => {
                 formDataAll.append('certificates', cert);
             });
+            }
 
-            console.log('Submitting real data to API...');
-            console.log('FormData contents:', {
-                identification,
+            const logData = {
+                accountType: accountType,
                 experienceYears,
                 addressInput,
                 currentLocation: formData.currentLocation,
                 selectedCategories,
-                serviceDetails
-            });
+                serviceDetails,
+                hasRequiredImages: accountType === 'BUSINESS' ? !!businessLicenseImage : !!(frontImage && backImage)
+            };
+            
+            if (accountType === 'BUSINESS') {
+                logData.taxCode = taxCode;
+                logData.businessLicenseImage = businessLicenseImage?.name;
+            } else {
+                logData.identification = identification;
+                logData.frontImage = frontImage?.name;
+                logData.backImage = backImage?.name;
+            }
             
             // Call the Redux thunk to submit to backend
             const result = await dispatch(completeTechnicianProfileThunk(formDataAll));
             
             if (completeTechnicianProfileThunk.fulfilled.match(result)) {
                 toast.success('Hồ sơ đã được hoàn thành thành công!');
-                // Refresh user data and technician profile
+                
+                // Enhanced refresh strategy with multiple retries
                 await dispatch(checkAuthThunk());
-                // Wait a bit for the user data to be updated, then navigate
-                setTimeout(() => {
-                    navigate('/profile');
-                }, 500);
+                
+                // Wait for backend to fully process, then refresh again
+                setTimeout(async () => {
+                    await dispatch(checkAuthThunk());
+                    
+                    // Third refresh to ensure verification status is updated
+                    setTimeout(async () => {
+                        await dispatch(checkAuthThunk());
+                        
+                        // Navigate home after all auth refreshes
+                        navigate('/', { replace: true });
+                    }, 1500);
+                }, 2000);
             } else {
-                throw new Error(result.payload?.message || 'Có lỗi xảy ra');
+                throw new Error(result.payload?.message || result.payload || 'Có lỗi xảy ra');
             }
         } catch (error) {
-            console.error('Submit error:', error);
-            toast.error(error.message || 'Có lỗi xảy ra khi hoàn thành hồ sơ');
+            // Show more specific error messages
+            let errorMessage = 'Có lỗi xảy ra khi hoàn thành hồ sơ';
+            
+            if (error.response?.status === 401) {
+                errorMessage = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+            } else if (error.response?.status === 400) {
+                errorMessage = error.response?.data?.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại thông tin.';
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+            
+            toast.error(errorMessage);
         }
     };
 
@@ -714,8 +875,12 @@ const CompleteProfile = () => {
                                                             )}
                                                         </div>
                                                         <div>
-                                                            <div className="fw-semibold">Thông tin cá nhân</div>
-                                                            <small className="opacity-75">CCCD & Kinh nghiệm</small>
+                                                            <div className="fw-semibold">
+                                                                {accountType === 'BUSINESS' ? 'Thông tin doanh nghiệp' : 'Thông tin cá nhân'}
+                                                            </div>
+                                                            <small className="opacity-75">
+                                                                {accountType === 'BUSINESS' ? 'Mã số thuế & Kinh nghiệm' : 'CCCD & Kinh nghiệm'}
+                                                            </small>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -800,18 +965,27 @@ const CompleteProfile = () => {
                                     {/* Main Content */}
                                     <div className="col-md-8 col-lg-9">
                                         <div className="p-4">
-                                            {/* Step 1: Personal Information */}
+                                            {/* Step 1: Personal/Business Information */}
                                             {currentStep === 1 && (
                                                 <>
                                 <div className="mb-4">
-                                                        <h4 className="fw-bold text-dark mb-2">Thông tin cá nhân</h4>
-                                                        <p className="text-muted">Nhập thông tin CCCD và kinh nghiệm làm việc</p>
+                                                        <h4 className="fw-bold text-dark mb-2">
+                                                            {accountType === 'BUSINESS' ? 'Thông tin doanh nghiệp' : 'Thông tin cá nhân'}
+                                                        </h4>
+                                                        <p className="text-muted">
+                                                            {accountType === 'BUSINESS' 
+                                                                ? 'Nhập mã số thuế, giấy đăng ký kinh doanh và kinh nghiệm làm việc'
+                                                                : 'Nhập thông tin CCCD và kinh nghiệm làm việc'
+                                                            }
+                                                        </p>
                                                     </div>
 
-                                                    {/* CCCD Upload */}
+                                                    {/* Document Upload */}
                                                     <div className="mb-5">
                                                         <h6 className="fw-semibold mb-3">
-                                                            Căn cước công dân (CCCD)
+                                                            {accountType === 'BUSINESS' ? 'Giấy tờ doanh nghiệp' : 'Căn cước công dân (CCCD)'}
+                                                            {accountType === 'INDIVIDUAL' && (
+                                                                <>
                                                             <span className="ms-2 badge bg-info">
                                                                 <i className="bi bi-magic me-1"></i>
                                                                 Tự động nhận diện
@@ -823,9 +997,14 @@ const CompleteProfile = () => {
                                                                     </div>
                                                                     Đang nhận diện...
                                                                 </span>
+                                                                    )}
+                                                                </>
                                                             )}
                                                         </h6>
                                                 <div className="row g-4">
+                                                    {/* Individual Account - CCCD Images */}
+                                                    {accountType === 'INDIVIDUAL' && (
+                                                        <>
                                                             <div className="col-md-6">
                                                                 <div className="position-relative">
                                                                     <ImageDropZone
@@ -883,17 +1062,40 @@ const CompleteProfile = () => {
                                                                     showSelectButton={false}
                                                                 />
                                                             </div>
+                                                        </>
+                                                    )}
+
+                                                    {/* Business Account - Business License */}
+                                                    {accountType === 'BUSINESS' && (
+                                                        <div className="col-12">
+                                                            <ImageDropZone
+                                                                key={`business-license-${businessLicenseImage ? businessLicenseImage.name + businessLicenseImage.size : 'empty'}`}
+                                                                label="Giấy đăng ký kinh doanh"
+                                                                currentFile={businessLicenseImage}
+                                                                onFileSelect={handleBusinessLicenseSelect}
+                                                                onRemove={() => {
+                                                                    setBusinessLicenseImage(null);
+                                                                    toast.info('🗑️ Đã gỡ giấy đăng ký kinh doanh.');
+                                                                }}
+                                                                accept="image/*"
+                                                                maxSize={10 * 1024 * 1024} // 10MB
+                                                                showSelectButton={false}
+                                                            />
+                                                        </div>
+                                                    )}
                                                         </div>
                                                     </div>
 
-                                                    {/* Personal Details */}
+                                                    {/* Personal/Business Details */}
                                             <div className="mb-5">
-                                                        <h6 className="fw-semibold mb-3">Thông tin cá nhân</h6>
+                                                        <h6 className="fw-semibold mb-3">
+                                                            {accountType === 'BUSINESS' ? 'Thông tin doanh nghiệp' : 'Thông tin cá nhân'}
+                                                        </h6>
                                                         <div className="row g-4">
                                                     {/* Address input with suggestions */}
                                                     <div className="col-12">
                                                         <label className="form-label fw-medium">
-                                                            Địa chỉ làm việc
+                                                            {accountType === 'BUSINESS' ? 'Địa chỉ văn phòng' : 'Địa chỉ làm việc'}
                                                             <span className="text-danger ms-1">*</span>
                                                         </label>
                                                         <div style={{ position: 'relative' }}>
@@ -904,7 +1106,7 @@ const CompleteProfile = () => {
                                                                         ? (addressInput.trim().length >= 3 && hasValidCoordinates ? 'is-valid' : 'is-invalid')
                                                                         : ''
                                                                 }`}
-                                                                placeholder="Nhập địa chỉ, ví dụ: 105 Lê Duẩn, Đà Nẵng"
+                                                                placeholder={accountType === 'BUSINESS' ? "Địa chỉ văn phòng, VD: 105 Lê Duẩn, Đà Nẵng" : "Nhập địa chỉ, ví dụ: 105 Lê Duẩn, Đà Nẵng"}
                                                                 value={addressInput}
                                                                 onChange={(e) => {
                                                                     setAddressInput(e.target.value);
@@ -928,16 +1130,17 @@ const CompleteProfile = () => {
                                                                         <li
                                                                             key={s.id || s.title + idx}
                                                                             className="list-group-item list-group-item-action"
+                                                                            style={{ cursor: 'pointer' }}
                                                                             onMouseDown={async () => {
                                                                                 const label = s.address?.label || s.title;
                                                                                 setAddressInput(label);
                                                                                 setShowAddressSuggestions(false);
-                                                                                // Geocode to coords
-                                                                                const ok = await geocodeAddressToCoords(label);
+                                                                                // Geocode to coords using the full suggestion object
+                                                                                const ok = await geocodeAddressToCoords(s);
                                                                                 if (!ok) {
-                                                                                    setAddressError('Không thể xác định toạ độ từ địa chỉ. Vui lòng thử địa chỉ khác.');
+                                                                                    toast.error('Không thể xác định toạ độ từ địa chỉ. Vui lòng thử địa chỉ khác.');
                                                                                 } else {
-                                                                                    setAddressError('');
+                                                                                    toast.success('Đã xác định tọa độ địa chỉ thành công!');
                                                                                 }
                                                                                 setTimeout(() => locationInputRef.current?.blur(), 0);
                                                                             }}
@@ -958,6 +1161,8 @@ const CompleteProfile = () => {
                                                             )}
                                                         </div>
                                                     </div>
+                                                    {/* Individual Account - CCCD */}
+                                                    {accountType === 'INDIVIDUAL' && (
                                                     <div className="col-md-6">
                                                                 <label className="form-label fw-medium">
                                                                     Số CCCD
@@ -1025,9 +1230,48 @@ const CompleteProfile = () => {
                                                             </div>
                                                         )}
                                         </div>
+                                    )}
+
+                                    {/* Business Account - Tax Code */}
+                                    {accountType === 'BUSINESS' && (
                                         <div className="col-md-6">
                                                                 <label className="form-label fw-medium">
-                                                                    Số năm kinh nghiệm
+                                                Mã số thuế doanh nghiệp
+                                                <span className="text-danger ms-1">*</span>
+                                            </label>
+                                            <div className="input-group input-group-modern">
+                                                <span className="input-group-text">
+                                                    <i className="bi bi-building"></i>
+                                                </span>
+                                                <input
+                                                    type="text"
+                                                    className={`form-control ${
+                                                        taxCode.length > 0 && !taxCodeErrors 
+                                                            ? 'is-valid' 
+                                                            : taxCodeErrors 
+                                                                ? 'is-invalid' 
+                                                                : ''
+                                                    }`}
+                                                    placeholder="VD: 0123456789 (10 số) hoặc 0123456789001 (13 số)"
+                                                    value={taxCode}  
+                                                    onChange={(e) => handleTaxCodeChange(e.target.value)}
+                                                />
+                                            </div>
+                                            {taxCodeErrors && (
+                                                <div className="invalid-feedback d-block">{taxCodeErrors}</div>
+                                            )}
+                                            {taxCode.length > 0 && !taxCodeErrors && (
+                                                <div className="valid-feedback d-block">
+                                                    <i className="bi bi-check-circle me-1"></i>
+                                                                                                                        Mã số thuế doanh nghiệp hợp lệ
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    <div className="col-md-6">
+                                                                <label className="form-label fw-medium">
+                                                                    Kinh nghiệm làm việc
                                                                     <span className="text-danger ms-1">*</span>
                                                                 </label>
                                                                 <div className="input-group input-group-modern">
@@ -1041,7 +1285,7 @@ const CompleteProfile = () => {
                                                             ? (experienceYears > 0 ? 'is-valid' : 'is-invalid')
                                                             : ''
                                                     }`}
-                                                    placeholder="Nhập số năm"
+                                                    placeholder="VD: 5"
                                                     value={experienceYears || ''}
                                                     onChange={(e) => {
                                                         setExperienceYears(e.target.value === '' ? '' : Number(e.target.value));
@@ -1054,12 +1298,12 @@ const CompleteProfile = () => {
                                                                     <span className="input-group-text">năm</span>
                                                                 </div>
                                                                 {fieldTouched.experienceYears && (experienceYears === '' || experienceYears <= 0) && (
-                                                                    <div className="invalid-feedback d-block">Vui lòng nhập số năm kinh nghiệm</div>
+                                                                    <div className="invalid-feedback d-block">Vui lòng nhập số năm kinh nghiệm làm việc</div>
                                                                 )}
                                                                 {fieldTouched.experienceYears && experienceYears > 0 && (
                                                                     <div className="valid-feedback d-block">
                                                                         <i className="bi bi-check-circle me-1"></i>
-                                                                        {experienceYears} năm kinh nghiệm
+                                                                        {experienceYears} năm kinh nghiệm làm việc
                                             </div>
                                                                 )}
                                         </div>
@@ -1189,6 +1433,14 @@ const CompleteProfile = () => {
                                                                                         delete newDetails[svc._id];
                                                                                         return newDetails;
                                                                                     });
+                                                                                    
+                                                                                    // Remove focus state if any
+                                                                                    setFocusedPriceFields(prev => {
+                                                                                        const newSet = new Set(prev);
+                                                                                        newSet.delete(svc._id);
+                                                                                        return newSet;
+                                                                                    });
+                                                                                    
                                                                                     // Clear errors
                                                                                     setFieldErrors(prev => {
                                                                                         const newErrs = { ...prev };
@@ -1244,13 +1496,14 @@ const CompleteProfile = () => {
                                                                                     <div className="input-group input-group-modern">
                                                                                         <input
                                                                                             type="text"
-                                                                                            className={`form-control ${
+                                                                                            className={`form-control price-input ${
                                                                                                 fieldErrors[`${serviceId}-price`] ? 'is-invalid' : ''
                                                                                             }`}
-                                                                                            placeholder="0"
-                                                                                            value={formatNumberWithDots(serviceDetails[serviceId]?.price || '')}
+                                                                                            placeholder="Nhập giá dịch vụ"
+                                                                                            value={getPriceDisplayValue(serviceId)}
                                                                                             onChange={e => handlePriceInput(serviceId, e)}
-                                                                                            onCompositionEnd={e => handlePriceInput(serviceId, e)}
+                                                                                            onFocus={() => handlePriceFocus(serviceId)}
+                                                                                            onBlur={() => handlePriceBlur(serviceId)}
                                                                                             inputMode="numeric"
                                                                                         />
                                                                                         <span className="input-group-text">VNĐ</span>
@@ -1358,7 +1611,7 @@ const CompleteProfile = () => {
                                                             ...prev,
                                                             bankAccount: { ...prev.bankAccount, accountNumber: e.target.value }
                                                         }));
-                                                        setBankFieldTouched(prev => ({ ...prev, accountNumber: true }));
+                                                        setFieldTouched(prev => ({ ...prev, accountNumber: true }));
                                                     }}
                                                 />
                                                 {fieldTouched.accountNumber && !formData.bankAccount.accountNumber && (
@@ -1382,7 +1635,7 @@ const CompleteProfile = () => {
                                                             ...prev,
                                                             bankAccount: { ...prev.bankAccount, accountHolder: e.target.value.toUpperCase() }
                                                         }));
-                                                        setBankFieldTouched(prev => ({ ...prev, accountHolder: true }));
+                                                        setFieldTouched(prev => ({ ...prev, accountHolder: true }));
                                                     }}
                                                 />
                                                 {fieldTouched.accountHolder && !formData.bankAccount.accountHolder && (
@@ -1477,18 +1730,32 @@ const CompleteProfile = () => {
                                                             <div className="card border-0 bg-light h-100">
                                                                 <div className="card-body">
                                                                     <div className="d-flex align-items-center mb-3">
-                                                                        <i className="bi bi-person-circle text-primary me-2 fs-5"></i>
-                                                                        <h6 className="mb-0 fw-semibold">Thông tin cá nhân</h6>
+                                                                        <i className={`text-primary me-2 fs-5 ${accountType === 'BUSINESS' ? 'bi bi-building' : 'bi bi-person-circle'}`}></i>
+                                                                        <h6 className="mb-0 fw-semibold">
+                                                                            {accountType === 'BUSINESS' ? 'Thông tin doanh nghiệp' : 'Thông tin cá nhân'}
+                                                                        </h6>
                                                                     </div>
                                                                     <div className="small">
                                                                         <div className="mb-2">
-                                                                            <strong>CCCD:</strong> {identification || 'Chưa nhập'}
+                                                                            <strong>
+                                                                                {accountType === 'BUSINESS' ? 'Mã số thuế doanh nghiệp:' : 'CCCD:'}
+                                                                            </strong>{' '}
+                                                                            {accountType === 'BUSINESS' 
+                                                                                ? (taxCode || 'Chưa nhập')
+                                                                                : (identification || 'Chưa nhập')
+                                                                            }
                                                                         </div>
                                                                         <div className="mb-2">
-                                                                            <strong>Kinh nghiệm:</strong> {experienceYears || 0} năm
+                                                                            <strong>Kinh nghiệm làm việc:</strong> {experienceYears || 0} năm
                                                                         </div>
                                                                         <div>
-                                                                            <strong>Hình ảnh CCCD:</strong> {frontImage && backImage ? '✅ Đã upload' : '❌ Chưa upload'}
+                                                                            <strong>
+                                                                                {accountType === 'BUSINESS' ? 'Giấy đăng ký kinh doanh:' : 'Hình ảnh CCCD:'}
+                                                                            </strong>{' '}
+                                                                            {accountType === 'BUSINESS'
+                                                                                ? (businessLicenseImage ? '✅ Đã upload' : '❌ Chưa upload')
+                                                                                : (frontImage && backImage ? '✅ Đã upload' : '❌ Chưa upload')
+                                                                            }
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -1584,7 +1851,8 @@ const CompleteProfile = () => {
                                                         )}
                                                     </div>
 
-                                                    {/* Certificate Upload (Optional) */}
+                                                    {/* Certificate Upload (Optional - Individual only) */}
+                                                    {accountType === 'INDIVIDUAL' && (
                                                     <div className="mb-5">
                                                         <div className="card border-0 bg-light">
                                                             <div className="card-body">
@@ -1673,6 +1941,7 @@ const CompleteProfile = () => {
                                                             </div>
                                                         </div>
                                                     </div>
+                                                    )}
                                                     
                                                     {/* Navigation Buttons */}
                                                     <div className="d-flex justify-content-between align-items-center mb-4">
@@ -1734,6 +2003,20 @@ const CompleteProfile = () => {
                     </div>
                 </div>
             </div>
+            
+            {/* Custom CSS for better placeholder styling */}
+            <style>{`
+                .price-input::placeholder {
+                    color: #9ca3af !important;
+                    opacity: 0.7 !important;
+                    font-style: italic;
+                }
+                
+                .price-input:focus::placeholder {
+                    color: #d1d5db !important;
+                    opacity: 0.5 !important;
+                }
+            `}</style>
         </>
     );
 };

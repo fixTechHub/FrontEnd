@@ -29,6 +29,7 @@ import ContractStatus from '../../components/contracts/ContractStatus';
 import apiClient from "../../services/apiClient";
 import TechnicianOnboardingModal from "../../components/common/TechnicianOnboardingModal";
 import { FaCheckCircle, FaTimesCircle, FaUserCircle } from 'react-icons/fa';
+import ServicePricing from '../../components/technician/ServicePricing';
 
 // ------- GLOBAL FLAG --------
 // Đánh dấu đã lấy thông tin technician thành công để tránh dispatch lặp
@@ -965,11 +966,18 @@ function ProfilePage() {
           </NavLink>
         </NavItem>
         {user?.role?.name === 'TECHNICIAN' && (
-          <NavItem>
-            <NavLink href="#" active={activeTab === 'contract'} onClick={(e) => {e.preventDefault(); setActiveTab('contract');}}>
-              <i className="bi bi-file-earmark-text-fill"></i> Trạng thái hợp đồng
-            </NavLink>
-          </NavItem>
+          <>
+            <NavItem>
+              <NavLink href="#" active={activeTab === 'contract'} onClick={(e) => {e.preventDefault(); setActiveTab('contract');}}>
+                <i className="bi bi-file-earmark-text-fill"></i> Trạng thái hợp đồng
+              </NavLink>
+            </NavItem>
+            <NavItem>
+              <NavLink href="#" active={activeTab === 'services'} onClick={(e) => {e.preventDefault(); setActiveTab('services');}}>
+                <i className="bi bi-tools"></i> Quản lý giá dịch vụ
+              </NavLink>
+            </NavItem>
+          </>
         )}
       </NavMenu>
     </SettingsSidebar>
@@ -980,6 +988,15 @@ function ProfilePage() {
         <SectionTitle>Trạng thái hợp đồng</SectionTitle>
       </SectionHeader>
       <ContractStatus />
+    </Section>
+  );
+
+  const renderServicesContent = () => (
+    <Section>
+      <SectionHeader>
+        <SectionTitle>Quản lý giá dịch vụ</SectionTitle>
+      </SectionHeader>
+      <ServicePricing />
     </Section>
   );
   const renderProfileContent = () => (
@@ -1810,6 +1827,7 @@ function ProfilePage() {
               {activeTab === 'profile' && renderProfileContent()}
               {activeTab === 'security' && renderSecurityContent()}
               {activeTab === 'contract' && user?.role?.name === 'TECHNICIAN' && renderContractContent()}
+              {activeTab === 'services' && user?.role?.name === 'TECHNICIAN' && renderServicesContent()}
             </SettingsContent>
           </SettingsWrapper>
         </div>

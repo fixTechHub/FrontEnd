@@ -97,17 +97,15 @@ const currentCategories = sortedCategories.slice(indexOfFirstCategory, indexOfLa
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Tên danh mục', dataIndex: 'categoryName' },
-    { title: 'Trạng thái', dataIndex: 'status' },
-    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+    { title: 'Tên danh mục', dataIndex: 'Tên danh mục' },
+    { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+    { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
   ];
 
   const exportData = sortedCategories.map(category => ({
-    categoryName: category.categoryName,
-    icon: category.icon,
-    status: category.isActive ? 'ACTIVE' : 'INACTIVE',
-    createdAt: formatDateTime(category.createdAt),
-    updatedAt: formatDateTime(category.updatedAt),
+    'Tên danh mục': category.categoryName,
+    'Trạng thái': category.isActive ? 'Hoạt động' : 'Không hoạt động',
+    'Thời gian tạo': formatDateTime(category.createdAt),
   }));
 
   createExportData(exportData, exportColumns, 'categories_export', 'Categories');
@@ -285,11 +283,11 @@ const isDataReady = categories.length > 0;
              placeholder="Trạng thái"
              value={filterStatus || undefined}
              onChange={value => setFilterStatus(value)}
-             style={{ width: 130 }}
+             style={{ width: 150 }}
              allowClear
            >
-             <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-             <Select.Option value="INACTIVE">INACTIVE</Select.Option>
+             <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+             <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center" style={{ gap: 12 }}>
@@ -319,7 +317,7 @@ const isDataReady = categories.length > 0;
            {filterStatus && (
              <span className="badge bg-warning-transparent">
                <i className="ti ti-filter me-1"></i>
-               Trạng thái: {filterStatus}
+               Trạng thái: {filterStatus === 'ACTIVE' ? 'Hoạt động' : filterStatus === 'INACTIVE' ? 'Không hoạt động' : filterStatus}
              </span>
            )}
            <button 
@@ -390,7 +388,7 @@ const isDataReady = categories.length > 0;
                      </td>
                      <td>
                        <span className={`badge ${cat.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                         {cat.isActive ? 'ACTIVE' : 'INACTIVE'}
+                         {cat.isActive ? 'Hoạt động' : 'Không hoạt động'}
                        </span>
                      </td>
                      <td>
@@ -585,8 +583,8 @@ const isDataReady = categories.length > 0;
                      name="isActive"
                      checked={formData.isActive}
                      onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                     checkedChildren="Active"
-                     unCheckedChildren="Inactive"
+                     checkedChildren="Hoạt động"
+                     unCheckedChildren="Không hoạt động"
                    />
                  </div>
                </Form.Item>
@@ -707,8 +705,8 @@ const isDataReady = categories.length > 0;
                      name="isActive"
                      checked={formData.isActive}
                      onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                     checkedChildren="Active"
-                     unCheckedChildren="Inactive"
+                     checkedChildren="Hoạt động"
+                     unCheckedChildren="Không hoạt động"
                    />
                  </div>
                </Form.Item>
@@ -818,7 +816,7 @@ const isDataReady = categories.length > 0;
                  </td>
                  <td>
                    <span className={`badge ${cat.isActive ? 'bg-success' : 'bg-danger'}`}>
-                     {cat.isActive ? 'Active' : 'Inactive'}
+                     {cat.isActive ? 'Hoạt động' : 'Không hoạt động'}
                    </span>
                  </td>
                  <td>

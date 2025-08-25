@@ -32,6 +32,12 @@ const [filterStatus,  setFilterStatus] = useState('');
 const [allServices, setAllServices] = useState([]);
 const [loading, setLoading] = useState(true);
 const [error, setError] = useState(null);
+
+// Separate loading states for better UX
+const [bookingsLoading, setBookingsLoading] = useState(false);
+const [usersLoading, setUsersLoading] = useState(false);
+const [servicesLoading, setServicesLoading] = useState(false);
+const [techniciansLoading, setTechniciansLoading] = useState(false);
   const getStatusColor = (status) => {
     switch ((status || '').toUpperCase()) {
       case 'PENDING':
@@ -42,6 +48,7 @@ const [error, setError] = useState(null);
         return 'blue';
       case 'AWAITING_DONE':
       case 'WAITING_CONFIRM':
+      case 'AWAITING_CONFIRM':
         return 'gold';
       case 'DONE':
         return 'green';
@@ -52,45 +59,155 @@ const [error, setError] = useState(null);
     }
   };
 
-
- useEffect(() => {
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const [users, services, technicians, bookingsData] = await Promise.all([
-        userAPI.getAll(),
-        serviceAPI.getAll(), // chỉ dùng serviceAPI.getAll()
-        technicianAPI.getAll(),
-        bookingAPI.getAll()
-      ]);
-      const userMapData = {};
-      users.forEach(u => userMapData[u.id] = u.fullName || u.email);
-      setUserMap(userMapData);
-
-      const serviceMapData = {};
-      services.forEach(s => serviceMapData[s.id] = s.serviceName || s.name); // lấy đúng tên service
-      setServiceMap(serviceMapData);
-      setAllServices(services); // cho dropdown filter
-
-      const technicianMapData = {};
-      technicians.forEach(t => technicianMapData[t.id] = t.fullName || t.email);
-      setTechnicianMap(technicianMapData);
-      setBookings(bookingsData);
-    } catch (error) {
-      setError(error);
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
+  const getStatusDisplayText = (status) => {
+    switch (status) {
+      case 'PENDING':
+        return 'Chờ xử lý';
+      case 'CANCELLED':
+        return 'Đã hủy';
+      case 'WAITING_CONFIRM':
+        return 'Chờ xác nhận';
+      case 'AWAITING_CONFIRM':
+        return 'Chờ xác nhận';
+      case 'IN_PROGRESS':
+        return 'Đang thực hiện';
+      case 'CONFIRMED':
+        return 'Đã xác nhận';
+      case 'DONE':
+        return 'Hoàn thành';
+      case 'AWAITING_DONE':
+        return 'Chờ hoàn thành';
+      case 'CONFIRM_ADDITIONAL':
+        return 'Xác nhận bổ sung';
+      case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL':
+        return 'Chờ khách hàng xác nhận bổ sung';
+      case 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL':
+        return 'Chờ kỹ thuật viên xác nhận bổ sung';
+      default:
+        return status;
     }
   };
 
-  fetchData();
-}, []);
+  const getPaymentStatusDisplayText = (paymentStatus) => {
+    if (!paymentStatus) return 'Chưa có thông tin';
+    
+    switch (paymentStatus.toUpperCase()) {
+      case 'PENDING':
+        return 'Chờ thanh toán';
+      case 'PAID':
+        return 'Đã thanh toán';
+      case 'FAILED':
+        return 'Thanh toán thất bại';
+      case 'CANCELLED':
+        return 'Đã hủy thanh toán';
+      case 'REFUNDED':
+        return 'Đã hoàn tiền';
+      case 'PARTIALLY_PAID':
+        return 'Thanh toán một phần';
+      case 'OVERDUE':
+        return 'Quá hạn thanh toán';
+      default:
+        return paymentStatus;
+    }
+  };
+
+
+   // Load essential data first (users and services for filters)
+  useEffect(() => {
+    const fetchEssentialData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        // Load users and services first (essential for filters)
+        setUsersLoading(true);
+        setServicesLoading(true);
+        const [users, services] = await Promise.all([
+          userAPI.getAll(),
+          serviceAPI.getAll()
+        ]);
+        
+        const userMapData = {};
+        users.forEach(u => userMapData[u.id] = u.fullName || u.email);
+        setUserMap(userMapData);
+
+        const serviceMapData = {};
+        services.forEach(s => serviceMapData[s.id] = s.serviceName || s.name);
+        setServiceMap(serviceMapData);
+        setAllServices(services);
+        
+        console.log('✅ Essential data loaded (users, services)');
+      } catch (error) {
+        setError(error);
+        console.error('❌ Error loading essential data:', error);
+      } finally {
+        setLoading(false);
+        setUsersLoading(false);
+        setServicesLoading(false);
+      }
+    };
+
+    fetchEssentialData();
+  }, []);
+
+  // Load technicians data when needed
+  useEffect(() => {
+    const fetchTechnicians = async () => {
+      if (Object.keys(technicianMap).length === 0) {
+        try {
+          setTechniciansLoading(true);
+          const technicians = await technicianAPI.getAll();
+          const technicianMapData = {};
+          technicians.forEach(t => technicianMapData[t.id] = t.fullName || t.email);
+          setTechnicianMap(technicianMapData);
+          console.log('✅ Technicians data loaded');
+        } catch (error) {
+          console.error('❌ Error loading technicians:', error);
+        } finally {
+          setTechniciansLoading(false);
+        }
+      }
+    };
+
+    fetchTechnicians();
+  }, [technicianMap]);
+
+  // Load bookings data when needed
+  useEffect(() => {
+    const fetchBookings = async () => {
+      if (bookings.length === 0) {
+        try {
+          setBookingsLoading(true);
+          const bookingsData = await bookingAPI.getAll();
+          setBookings(bookingsData);
+          console.log('✅ Bookings data loaded');
+        } catch (error) {
+          console.error('❌ Error loading bookings:', error);
+        } finally {
+          setBookingsLoading(false);
+        }
+      }
+    };
+
+    fetchBookings();
+  }, [bookings]);
 
 useEffect(() => {
   setCurrentPage(1);
 }, [filterService, filterStatus, searchText]);
+
+// Cleanup filters when component unmounts
+useEffect(() => {
+  return () => {
+    // Reset local states when leaving the page
+    setSearchText('');
+    setFilterService('');
+    setFilterStatus('');
+    setCurrentPage(1);
+    setSortField('createdAt');
+    setSortOrder('desc');
+  };
+}, []);
 
 
  const filteredBookings = bookings.filter(b => {
@@ -156,24 +273,25 @@ const currentBookings = sortedBookings.slice(indexOfFirstBooking, indexOfLastBoo
  // Set export data và columns
  useEffect(() => {
   const exportColumns = [
-    { title: 'Mã đơn hàng', dataIndex: 'bookingCode' },
-    { title: 'Khách hàng', dataIndex: 'customerName' },
-    { title: 'Dịch vụ', dataIndex: 'serviceName' },
-    { title: 'Trạng thái', dataIndex: 'status' },
-    { title: 'Kỹ thuật viên', dataIndex: 'technicianName' },
-    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
-    { title: 'Mô tả', dataIndex: 'description' },
+    { title: 'Mã đơn hàng', dataIndex: 'Mã đơn hàng' },
+    { title: 'Khách hàng', dataIndex: 'Khách hàng' },
+    { title: 'Dịch vụ', dataIndex: 'Dịch vụ' },
+    { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+    { title: 'Trạng thái thanh toán', dataIndex: 'Trạng thái thanh toán' },
+    { title: 'Kỹ thuật viên', dataIndex: 'Kỹ thuật viên' },
+    { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
+    { title: 'Mô tả', dataIndex: 'Mô tả' },
   ];
 
   const exportData = sortedBookings.map(b => ({
-    bookingCode: b.bookingCode,
-    customerName: userMap[b.customerId],
-    serviceName: serviceMap[b.serviceId],
-    status: formatStatus(b.status),
-    technicianName: technicianMap[b.technicianId],
-    createdAt: formatDateTime(b.createdAt),
-    updatedAt: formatDateTime(b.updatedAt),
-    description: b.description,
+    'Mã đơn hàng': b.bookingCode,
+    'Khách hàng': userMap[b.customerId],
+    'Dịch vụ': serviceMap[b.serviceId],
+    'Trạng thái': getStatusDisplayText(b.status),
+    'Trạng thái thanh toán': getPaymentStatusDisplayText(b.paymentStatus),
+    'Kỹ thuật viên': technicianMap[b.technicianId],
+    'Thời gian tạo': formatDateTime(b.createdAt),
+    'Mô tả': b.description,
   }));
 
   createExportData(exportData, exportColumns, 'bookings_export', 'Bookings');
@@ -227,30 +345,6 @@ const isServiceMapReady = bookings.every(b => !b.serviceId || serviceMap[b.servi
 const isDataReady = isUserMapReady && isServiceMapReady;
 
 
- // Định nghĩa các cột export cho booking
- const exportColumns = [
-   { title: 'Mã đơn hàng', dataIndex: 'bookingCode' },
-   { title: 'Khách hàng', dataIndex: 'customerName' },
-   { title: 'Dịch vụ', dataIndex: 'serviceName' },
-   { title: 'Trạng thái', dataIndex: 'status' },
-   { title: 'Kỹ thuật viên', dataIndex: 'technicianName' },
-   { title: 'Thời gian tạo', dataIndex: 'createdAt' },
-   { title: 'Mô tả', dataIndex: 'description' },
- ];
-
- // Chuẩn hóa dữ liệu export (map id sang tên, format ngày...)
- const exportData = sortedBookings.map(b => ({
-   bookingCode: b.bookingCode,
-   customerName: userMap[b.customerId],
-   serviceName: serviceMap[b.serviceId],
-   status: b.status,
-   technicianName: technicianMap[b.technicianId],
-   createdAt: b.createdAt,
-   updatedAt: b.updatedAt,
-   description: b.description,
- }));
-
-
  return (
    <div className="modern-page- wrapper">
      <div className="modern-content-card">
@@ -263,6 +357,16 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                <li className="breadcrumb-item active">Đơn hàng</li>
              </ol>
            </nav>
+         </div>
+         <div className="d-flex align-items-center gap-2">
+           {bookingsLoading && (
+             <div className="d-flex align-items-center text-muted">
+               <div className="spinner-border spinner-border-sm me-2" role="status">
+                 <span className="visually-hidden">Loading...</span>
+               </div>
+               <span>Đang tải danh sách đơn hàng...</span>
+             </div>
+           )}
          </div>
        </div>
        <div className="d-flex align-items-center justify-content-between flex-wrap row-gap-3 mb-3">
@@ -282,11 +386,13 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              </div>
            </div>
            <Select
-             placeholder="Dịch vụ"
+             placeholder={servicesLoading ? "Đang tải..." : "Dịch vụ"}
              value={filterService || undefined}
              onChange={value => setFilterService(value)}
-             style={{ width: 150, marginRight: 8 }}
+             style={{ width: 250, marginRight: 8 }}
              allowClear
+             loading={servicesLoading}
+             disabled={servicesLoading}
            >
              {allServices.map(s => (
                <Select.Option key={s.id} value={s.id}>{s.serviceName || s.name}</Select.Option>
@@ -296,19 +402,20 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              placeholder="Trạng thái"
              value={filterStatus || undefined}
              onChange={value => setFilterStatus(value)}
-             style={{ width: 130, marginRight: 8 }}
+             style={{ width: 250, marginRight: 8 }}
              allowClear
            >
-             <Select.Option value="PENDING">PENDING</Select.Option>
-             <Select.Option value="CANCELLED">CANCELLED</Select.Option>
-             <Select.Option value="WAITING_CONFIRM">WAITING CONFIRM</Select.Option>
-             <Select.Option value="IN_PROGRESS">IN PROGRESS</Select.Option>
-             <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
-             <Select.Option value="DONE">DONE</Select.Option>
-             <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
-             <Select.Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Select.Option>
-             <Select.Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Select.Option>
-             <Select.Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Select.Option>
+             <Select.Option value="PENDING">Chờ xử lý</Select.Option>
+             <Select.Option value="CANCELLED">Đã hủy</Select.Option>
+             <Select.Option value="WAITING_CONFIRM">Chờ xác nhận</Select.Option>
+             <Select.Option value="AWAITING_CONFIRM">Chờ xác nhận</Select.Option>
+             <Select.Option value="IN_PROGRESS">Đang thực hiện</Select.Option>
+             <Select.Option value="CONFIRMED">Đã xác nhận</Select.Option>
+             <Select.Option value="DONE">Hoàn thành</Select.Option>
+             <Select.Option value="AWAITING_DONE">Chờ hoàn thành</Select.Option>
+             <Select.Option value="CONFIRM_ADDITIONAL">Xác nhận bổ sung</Select.Option>
+             <Select.Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">Chờ khách hàng xác nhận bổ sung</Select.Option>
+             <Select.Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">Chờ kỹ thuật viên xác nhận bổ sung</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center">
@@ -338,13 +445,13 @@ const isDataReady = isUserMapReady && isServiceMapReady;
            {filterService && (
              <span className="badge bg-info-transparent">
                <i className="ti ti-tools me-1"></i>
-               Dịch vụ: {serviceMap[filterService] || filterService}
+               Dịch vụ: {serviceMap[filterService] || 'Không xác định'}
              </span>
            )}
            {filterStatus && (
              <span className="badge bg-warning-transparent">
                <i className="ti ti-filter me-1"></i>
-               Trạng thái: {filterStatus.replace(/_/g, ' ')}
+               Trạng thái: {getStatusDisplayText(filterStatus)}
              </span>
            )}
            <button 
@@ -405,7 +512,24 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                </tr>
              ) : error ? (
                <tr>
-                 <td colSpan={5} style={{ color: 'red' }}>{error.message || 'Không thể tải các đơn hàng.'}</td>
+                 <td colSpan={5} className="text-center text-danger py-4">
+                   <div>
+                     <i className="ti ti-alert-circle" style={{ fontSize: '48px', color: '#ff4d4f', marginBottom: '16px' }}></i>
+                     <p className="mb-0 fw-medium">Đã xảy ra lỗi khi tải dữ liệu</p>
+                     <p className="mb-0 text-muted small">{error.message || 'Không thể tải danh sách đơn hàng. Vui lòng thử lại sau.'}</p>
+                   </div>
+                 </td>
+               </tr>
+             ) : bookingsLoading ? (
+               <tr>
+                 <td colSpan={5} className="text-center">
+                   <div className="spinner-border text-primary" role="status">
+                     <span className="visually-hidden">Loading...</span>
+                   </div>
+                   <div className="mt-2 text-muted">
+                     Đang tải danh sách đơn hàng...
+                   </div>
+                 </td>
                </tr>
              ) : filteredBookings.length === 0 ? (
                <tr>
@@ -431,7 +555,11 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                    <td>{b.bookingCode}</td>
                    <td>{userMap[b.customerId]}</td>
                    <td>{serviceMap[b.serviceId]}</td>
-                   <td>{b.status ? b.status.replace(/_/g, ' ') : ''}</td>
+                   <td>
+                     <Tag color={getStatusColor(b.status)} style={{ fontSize: 12, fontWeight: 600 }}>
+                       {getStatusDisplayText(b.status)}
+                     </Tag>
+                   </td>
                    {/* <td>
                       {b.schedule && typeof b.schedule === 'object' && b.schedule.startTime
                         ? `${dayjs(b.schedule.startTime).tz('Asia/Ho_Chi_Minh').format('DD/MM/YYYY, HH:mm:ss')} - ${
@@ -462,7 +590,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
              Hiển thị {indexOfFirstBooking + 1}-{Math.min(indexOfLastBooking, filteredBookings.length)} trong tổng số {filteredBookings.length} đơn hàng
            </div>
          </div>
-         {filteredBookings.length > 0 && (
+         {totalPages > 1 && (
            <nav>
              <ul className="pagination mb-0" style={{ gap: '2px' }}>
                {/* Previous button */}
@@ -482,76 +610,53 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                  </button>
                </li>
                
-               {/* Page numbers */}
-               {[...Array(totalPages)].map((_, i) => {
-                 const pageNumber = i + 1;
-                 // Show all pages if total pages <= 7
-                 if (totalPages <= 7) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 }
-                 
-                 // Show first page, last page, current page, and pages around current page
-                 if (
-                   pageNumber === 1 || 
-                   pageNumber === totalPages || 
-                   (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
-                 ) {
-                   return (
-                     <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
-                       <button 
-                         className="page-link" 
-                         onClick={() => handlePageChange(pageNumber)}
-                         style={{ 
-                           border: '1px solid #dee2e6',
-                           borderRadius: '6px',
-                           padding: '8px 12px',
-                           minWidth: '40px',
-                           backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
-                           color: currentPage === pageNumber ? 'white' : '#007bff',
-                           borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
-                         }}
-                       >
-                         {pageNumber}
-                       </button>
-                     </li>
-                   );
-                 } else if (
-                   pageNumber === currentPage - 2 || 
-                   pageNumber === currentPage + 2
-                 ) {
-                   return (
-                     <li key={i} className="page-item disabled">
-                       <span className="page-link" style={{ 
-                         border: '1px solid #dee2e6',
-                         borderRadius: '6px',
-                         padding: '8px 12px',
-                         minWidth: '40px',
-                         backgroundColor: '#f8f9fa',
-                         color: '#6c757d'
-                       }}>...</span>
-                     </li>
-                   );
-                 }
-                 return null;
-               })}
+                               {/* Page numbers */}
+                {[...Array(totalPages)].map((_, i) => {
+                    const pageNumber = i + 1;
+                    // Show first page, last page, current page, and pages around current page
+                    if (
+                        pageNumber === 1 || 
+                        pageNumber === totalPages || 
+                        (pageNumber >= currentPage - 1 && pageNumber <= currentPage + 1)
+                    ) {
+                        return (
+                            <li key={i} className={`page-item ${currentPage === pageNumber ? 'active' : ''}`}>
+                                <button 
+                                    className="page-link" 
+                                    onClick={() => handlePageChange(pageNumber)}
+                                    style={{ 
+                                        border: '1px solid #dee2e6',
+                                        borderRadius: '6px',
+                                        padding: '8px 12px',
+                                        minWidth: '40px',
+                                        backgroundColor: currentPage === pageNumber ? '#007bff' : 'white',
+                                        color: currentPage === pageNumber ? 'white' : '#007bff',
+                                        borderColor: currentPage === pageNumber ? '#007bff' : '#dee2e6'
+                                    }}
+                                >
+                                    {pageNumber}
+                                </button>
+                            </li>
+                        );
+                    } else if (
+                        pageNumber === currentPage - 2 || 
+                        pageNumber === currentPage + 2
+                    ) {
+                        return (
+                            <li key={i} className="page-item disabled">
+                                <span className="page-link" style={{ 
+                                    border: '1px solid #dee2e6',
+                                    borderRadius: '6px',
+                                    padding: '8px 12px',
+                                    minWidth: '40px',
+                                    backgroundColor: '#f8f9fa',
+                                    color: '#6c757d'
+                                }}>...</span>
+                            </li>
+                        );
+                    }
+                    return null;
+                })}
                
                {/* Next button */}
                <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
@@ -586,7 +691,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
         >
           <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
             {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: 24, color: '#fff' }}>
+            <div style={{ background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)', padding: 24, color: '#fff' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết đơn hàng</div>
@@ -594,7 +699,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                 </div>
                 <div style={{ textAlign: 'right' }}>
                   <Tag color={getStatusColor(selectedBooking.status)} style={{ fontSize: 12, fontWeight: 600 }}>
-                    {selectedBooking.status ? selectedBooking.status.replace(/_/g, ' ') : ''}
+                    {getStatusDisplayText(selectedBooking.status)}
                   </Tag>
                 </div>
               </div>
@@ -647,7 +752,7 @@ const isDataReady = isUserMapReady && isServiceMapReady;
                   <Col span={6}>
                     <div style={{ textAlign: 'center', background: '#e6f7ff', padding: 12, borderRadius: 8 }}>
                       <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Trạng thái thanh toán</div>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || ''}</div>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{getPaymentStatusDisplayText(selectedBooking.paymentStatus)}</div>
                     </div>
                   </Col>
                   <Col span={6}>

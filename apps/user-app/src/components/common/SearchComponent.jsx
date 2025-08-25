@@ -195,6 +195,50 @@ export default function SearchComponent() {
     setBookingImages(files);
   };
 
+  // Validate và chuyển sang bước 3: Xác nhận
+  const handleProceedToConfirm = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    setFormError("");
+    setErrors({});
+
+    const selectedService = searchResults[selectedServiceIdx];
+    const bookingData = {
+      service: selectedService,
+      description: bookingDescription,
+      scheduleDate: bookingDate,
+      startTime: bookingTime,
+      endTime: bookingType === 'scheduled' ? bookingEndTime : bookingTime,
+      images: bookingImages
+    };
+
+    let newErrors = {};
+    if (bookingType === 'scheduled') {
+      newErrors = validateBookingData(
+        bookingData,
+        bookingLocation,
+        true,
+        bookingType
+      );
+    } else {
+      if (!bookingLocation || bookingLocation.trim().length < 5) newErrors.addressInput = 'Vui lòng nhập địa chỉ hợp lệ của bạn.';
+      if (!selectedService) newErrors.service = 'Vui lòng chọn dịch vụ.';
+      if (!bookingDescription || bookingDescription.trim().length < 10) newErrors.description = 'Vui lòng nhập mô tả chi tiết (tối thiểu 10 ký tự).';
+      if (bookingImages && bookingImages.length > 5) newErrors.images = 'Chỉ được tải lên tối đa 5 ảnh.';
+    }
+
+    if (!selectedService) {
+      newErrors.service = 'Vui lòng chọn dịch vụ.';
+    }
+
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) {
+      setFormError('Vui lòng kiểm tra lại thông tin!');
+      return;
+    }
+
+    setStep(3);
+  };
+
   const handleSubmitBooking = async (e) => {
     e.preventDefault();
     setFormError("");
@@ -279,44 +323,44 @@ export default function SearchComponent() {
   };
 
   return (
-    <div className="search-container-enhanced">
+    <div className="nhp-search-container-enhanced">
       {/* Hero Search Title */}
-      <div className="search-hero-title">
-        <div className="search-badge">
-          <Sparkles size={20} className="sparkle-icon" />
+      <div className="nhp-search-hero-title">
+        <div className="nhp-search-badge">
+          <Sparkles size={20} className="nhp-sparkle-icon" />
           <span>TÌM KIẾM THÔNG MINH</span>
-          <Magic size={20} className="magic-icon" />
+          <Magic size={20} className="nhp-magic-icon" />
         </div>
-        <h2 className="search-main-title">
+        <h2 className="nhp-search-main-title">
           Mô tả tình trạng - Tìm thợ phù hợp
         </h2>
-        <p className="search-subtitle">
-          <Rocket size={16} /> AI sẽ phân tích mô tả của bạn và đề xuất các thợ chuyên môn phù hợp nhất
+        <p className="nhp-search-subtitle">
+          <Rocket size={16} /> AI sẽ phân tích mô tả của bạn và đề xuất các dịch vụ, cũng như thợ có chuyên môn phù hợp nhất
         </p>
       </div>
 
       {/* Enhanced Search Box */}
-      <div className={`search-box-enhanced ${isSearchFocused ? "focused" : ""} ${isTyping ? "typing" : ""}`}>
-        <div className="search-glow-effect"></div>
-        <form className="search-input-enhanced" onSubmit={handleSearch}>
-          <div className="search-icon-enhanced">
-            <Search
+      <div className={`nhp-search-box-enhanced ${isSearchFocused ? "focused" : ""} ${isTyping ? "typing" : ""}`}>
+        <div className="nhp-search-glow-effect"></div>
+        <form className="nhp-search-input-enhanced" onSubmit={handleSearch}>
+          <div className="nhp-search-icon-enhanced">
+              <Search
               size={28}
-              className="search-icon-main"
-              style={{
+              className="nhp-search-icon-main"
+                style={{
                 transform: isSearchFocused ? "scale(1.2) rotate(12deg)" : "scale(1)",
                 transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
-              }}
-            />
-            <div className="search-pulse-ring"></div>
-          </div>
+                }}
+              />
+            <div className="nhp-search-pulse-ring"></div>
+            </div>
 
-          <div className="search-input-wrapper">
+          <div className="nhp-search-input-wrapper">
             <input
               ref={searchInputRef}
               name="descriptionSearch"
               type="text"
-              className="search-field-enhanced"
+              className="nhp-search-field-enhanced"
               placeholder={placeholderTexts[placeholderIndex]}
               value={searchValue}
               onChange={e => {
@@ -417,13 +461,13 @@ export default function SearchComponent() {
               </div>
             )}
 
-            <div className="search-typing-indicator">
-              {isTyping && <span className="typing-dots">AI đang phân tích...</span>}
+            <div className="nhp-search-typing-indicator">
+              {isTyping && <span className="nhp-typing-dots">AI đang phân tích...</span>}
             </div>
           </div>
 
-          <div className="search-actions-enhanced">
-            <button className={`btn ${searchLoading ? 'btn-secondary' : 'btn-primary'} btn-search-enhanced`}
+          <div className="nhp-search-actions-enhanced">
+            <button className={`btn ${searchLoading ? 'btn-secondary' : 'btn-primary'} nhp-btn-search-enhanced`}
               type="submit"
               disabled={searchLoading}
             >
@@ -436,12 +480,12 @@ export default function SearchComponent() {
                 </>
               ) : (
                 <>
-                  <div className="btn-search-content">
-                    <Fire size={22} className="fire-icon" />
-                    <span className="search-text-enhanced">Tìm thợ ngay</span>
-                    <Star size={18} className="star-icon" />
-                  </div>
-                  <div className="btn-search-bg"></div>
+                  <div className="nhp-btn-search-content">
+                    <Fire size={22} className="nhp-fire-icon" />
+                    <span className="nhp-search-text-enhanced">Tìm thợ ngay</span>
+                    <Star size={18} className="nhp-star-icon" />
+        </div>
+                  <div className="nhp-btn-search-bg"></div>
                 </>
               )}
 
@@ -450,56 +494,56 @@ export default function SearchComponent() {
         </form>
 
         {/* Enhanced Popular Searches */}
-        <div className="popular-searches-enhanced">
-          <div className="popular-label">
-            <Lightbulb size={16} className="lightbulb-icon" />
+        <div className="nhp-popular-searches-enhanced">
+          <div className="nhp-popular-label">
+            <Lightbulb size={16} className="nhp-lightbulb-icon" />
             <span>Mô tả phổ biến:</span>
           </div>
-          <div className="popular-tags">
+          <div className="nhp-popular-tags">
             {popularSearches.map((search, i) => (
               <button
                 key={i}
-                className="popular-tag-enhanced"
+                className="nhp-popular-tag-enhanced"
                 onClick={() => setSearchValue(search.text)}
                 style={{ animationDelay: `${i * 0.1}s` }}
               >
-                <search.icon size={16} className="tag-icon" />
-                <span className="tag-text">{search.text}</span>
-                <Sparkles size={12} className="tag-sparkle" />
-              </button>
-            ))}
+                <search.icon size={16} className="nhp-tag-icon" />
+                <span className="nhp-tag-text">{search.text}</span>
+                <Sparkles size={12} className="nhp-tag-sparkle" />
+            </button>
+          ))}
           </div>
         </div>
 
         {/* Trust Indicators */}
-        <div className="search-trust-indicators">
-          <div className="trust-item">
-            <Flash size={20} className="trust-icon" />
+        <div className="nhp-search-trust-indicators">
+          <div className="nhp-trust-item">
+            <Flash size={24} className="nhp-trust-icon" />
             <span>Tức thì</span>
           </div>
-          <div className="trust-item">
-            <Target size={20} className="trust-icon" />
+          <div className="nhp-trust-item">
+            <Target size={24} className="nhp-trust-icon" />
             <span>Chính xác</span>
           </div>
-          <div className="trust-item">
-            <Trophy size={20} className="trust-icon" />
+          <div className="nhp-trust-item">
+            <Trophy size={24} className="nhp-trust-icon" />
             <span>Uy tín</span>
           </div>
         </div>
       </div>
 
       {/* Floating elements for visual appeal */}
-      <div className="search-floating-elements">
-        <div className="floating-sparkle floating-sparkle-1">
+      <div className="nhp-search-floating-elements">
+        <div className="nhp-floating-sparkle nhp-floating-sparkle-1">
           <Sparkles size={20} />
         </div>
-        <div className="floating-sparkle floating-sparkle-2">
+        <div className="nhp-floating-sparkle nhp-floating-sparkle-2">
           <Star size={20} />
         </div>
-        <div className="floating-sparkle floating-sparkle-3">
+        <div className="nhp-floating-sparkle nhp-floating-sparkle-3">
           <Magic size={20} />
         </div>
-        <div className="floating-sparkle floating-sparkle-4">
+        <div className="nhp-floating-sparkle nhp-floating-sparkle-4">
           <Wrench size={20} />
         </div>
       </div>
@@ -518,6 +562,7 @@ export default function SearchComponent() {
             {step === 0 && 'Kết quả dịch vụ phù hợp'}
             {step === 1 && 'Chọn loại đặt lịch'}
             {step === 2 && 'Đặt lịch dịch vụ'}
+            {step === 3 && 'Xác nhận thông tin'}
           </Modal.Title>
         </Modal.Header>
         <Modal.Body className="banner-modal-body" style={{paddingBottom: 5}}>
@@ -732,7 +777,7 @@ export default function SearchComponent() {
 
                 <div className="mb-3" style={{ position: 'relative' }}>
                   <label className="form-label banner-form-label">
-                    Vị trí <span className="text-danger">*</span>
+                    Địa chỉ <span className="text-danger">*</span>
                   </label>
                   <input
                     type="text"
@@ -866,6 +911,38 @@ export default function SearchComponent() {
                   </label> */}
                   <ImageUploader onFilesSelect={handleBookingImages} />
                   {errors.images && <div className="banner-form-error">{errors.images}</div>}
+                  
+                  {/* Hiển thị hình ảnh đã upload */}
+                  {bookingImages && bookingImages.length > 0 && (
+                    <div className="banner-uploaded-images">
+                      <div className="banner-uploaded-images-title">
+                        <i className="bx bx-image" style={{ fontSize: '16px', marginRight: '8px' }}></i>
+                        Hình ảnh đã chọn ({bookingImages.length})
+                      </div>
+                      <div className="banner-uploaded-images-grid">
+                        {bookingImages.map((file, index) => (
+                          <div key={index} className="banner-uploaded-image-item">
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={`Hình ảnh ${index + 1}`}
+                              className="banner-uploaded-image"
+                            />
+                            <button
+                              type="button"
+                              className="banner-remove-image-btn"
+                              onClick={() => {
+                                const newImages = bookingImages.filter((_, i) => i !== index);
+                                setBookingImages(newImages);
+                              }}
+                              title="Xóa hình ảnh"
+                            >
+                              <i className="bx bx-x"></i>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {formError && (
@@ -875,6 +952,58 @@ export default function SearchComponent() {
                   </div>
                 )}
               </form>
+            </div>
+          )}
+
+          {/* Bước 4: Xác nhận thông tin */}
+          {step === 3 && (
+            <div className="banner-confirm-container">
+              <div className="banner-info-header">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                  <i className="bx bx-check-circle banner-info-header-icon"></i>
+                  <div className="banner-info-header-title">
+                    Xác nhận thông tin đặt lịch
+                  </div>
+                </div>
+                <div className="banner-info-header-subtitle">
+                  Vui lòng kiểm tra lại trước khi xác nhận.
+                </div>
+              </div>
+
+              <div className="banner-confirm-summary">
+                <div className="alert alert-light" role="alert">
+                  <div><strong>Dịch vụ:</strong> <span>{searchResults[selectedServiceIdx]?.serviceName}</span></div>
+                  <div><strong>Loại đặt:</strong> <span>{bookingType === 'urgent' ? 'Đặt ngay' : 'Đặt lịch'}</span></div>
+                  {bookingType === 'scheduled' && (
+                    <>
+                      <div><strong>Ngày:</strong> <span>{bookingDate ? new Date(bookingDate).toLocaleDateString('vi-VN') : ''}</span></div>
+                      <div><strong>Thời gian:</strong> <span>{bookingTime} - {bookingEndTime}</span></div>
+                    </>
+                  )}
+                  <div><strong>Địa chỉ:</strong> <span>{bookingLocation}</span></div>
+                  <div><strong>Mô tả:</strong> <span>{bookingDescription}</span></div>
+                  {bookingImages && bookingImages.length > 0 && (
+                    <div><strong>Hình ảnh:</strong> 
+                      <div className="banner-confirm-images">
+                        {bookingImages.map((file, index) => (
+                          <div key={index} className="banner-confirm-image-item">
+                            <img 
+                              src={URL.createObjectURL(file)} 
+                              alt={`Hình ảnh ${index + 1}`}
+                              className="banner-confirm-image"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="banner-confirm-note">
+                <i className="bx bx-info-circle banner-info-icon"></i>
+                <span>Nhấn "Xác nhận đặt lịch" để tạo yêu cầu và chuyển sang bước chọn kỹ thuật viên.</span>
+              </div>
             </div>
           )}
         </Modal.Body>
@@ -909,12 +1038,22 @@ export default function SearchComponent() {
           )}
           {step === 2 && (
             <button
-              type="submit"
+              type="button"
+              onClick={handleProceedToConfirm}
+              disabled={submitting}
+              className="banner-btn-primary"
+            >
+              Tiếp tục
+            </button>
+          )}
+          {step === 3 && (
+            <button
+              type="button"
               onClick={handleSubmitBooking}
               disabled={submitting}
               className="banner-btn-primary"
             >
-              {submitting ? 'Đang xử lý...' : 'Đặt lịch & chọn kỹ thuật viên'}
+              {submitting ? 'Đang xử lý...' : 'Xác nhận đặt lịch'}
             </button>
           )}
           <button

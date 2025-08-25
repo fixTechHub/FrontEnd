@@ -12,13 +12,14 @@ import TechnicianProfile from '../../components/profile/TechnicianProfile';
 import Slider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
 import { formatDateOnly, formatTimeOnly } from '../../utils/formatDate';
-import { onBookingRequestAccepted, onBookingRequestRejected, onBookingRequestStatusUpdate } from '../../services/socket';
+import { onBookingRequestAccepted, onBookingRequestRejected, onBookingRequestStatusUpdate, onTechniciansFoundUpdated } from '../../services/socket';
 
 function ChooseTechnician() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { newBooking, status: createBookingStatus, requests, booking } = useSelector(state => state.booking);
     const { techniciansFound, status: techniciansFoundStatus } = useSelector(state => state.booking);
+    const { user } = useSelector(state => state.auth);
     const { bookingId, stepsForCurrentUser } = useBookingParams();
     const [confirming, setConfirming] = useState(false);
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -108,6 +109,32 @@ function ChooseTechnician() {
         }
     }, [bookingId, dispatch]);
 
+    // Theo dõi trạng thái loading và log để debug
+    useEffect(() => {
+        if (techniciansFoundStatus === 'loading') {
+            console.log('Đang tải danh sách thợ...');
+        } else if (techniciansFoundStatus === 'succeeded') {
+            console.log('Đã tải xong danh sách thợ:', techniciansFound?.length || 0, 'thợ');
+
+            // Kiểm tra tính đầy đủ của dữ liệu
+            if (techniciansFound && techniciansFound.length > 0) {
+                const hasCompleteData = techniciansFound.every(tech =>
+                    tech.estimatedArrivalTime &&
+                    tech.isSubscribe !== undefined &&
+                    tech.subscriptionStatus
+                );
+
+                if (!hasCompleteData) {
+                    console.log('⚠️ Dữ liệu thợ chưa đầy đủ, sẽ được cập nhật tự động...');
+                } else {
+                    console.log('✅ Dữ liệu thợ đã đầy đủ');
+                }
+            }
+        } else if (techniciansFoundStatus === 'failed') {
+            console.log('Lỗi khi tải danh sách thợ');
+        }
+    }, [techniciansFoundStatus, techniciansFound]);
+
     // Socket listeners cho booking request status updates
     useEffect(() => {
         if (!bookingId) return;
@@ -139,11 +166,20 @@ function ChooseTechnician() {
             }
         });
 
+        // Lắng nghe khi có cập nhật danh sách thợ
+        const unsubscribeTechniciansUpdated = onTechniciansFoundUpdated((data) => {
+            if (data.bookingId === bookingId) {
+                // Refresh danh sách thợ
+                dispatch(fetchTechniciansFound(bookingId));
+            }
+        });
+
         // Cleanup listeners khi component unmount hoặc bookingId thay đổi
         return () => {
             unsubscribeAccepted();
             unsubscribeRejected();
             unsubscribeStatusUpdate();
+            unsubscribeTechniciansUpdated();
         };
     }, [bookingId, dispatch]);
 
@@ -323,7 +359,7 @@ function ChooseTechnician() {
                                             </div>
                                         </Form.Group>
 
-                                        <Form.Group className='mb-3'>
+                                        {/* <Form.Group className='mb-3'>
                                             <Form.Label><strong>Trạng thái</strong></Form.Label>
                                             <div className="mb-2">
                                                 <Form.Check
@@ -356,7 +392,7 @@ function ChooseTechnician() {
                                                     onChange={e => setStatus(e.target.value)}
                                                 />
                                             </div>
-                                        </Form.Group>
+                                        </Form.Group> */}
 
                                         <Form.Group className='mb-3'>
                                             <Form.Label><strong>Xếp hạng</strong></Form.Label>
@@ -407,10 +443,15 @@ function ChooseTechnician() {
                                 <div className="col-lg-9">
                                     <div className="row">
                                         {/* Hiển thị spinner khi đang tìm thợ */}
-                                        {techniciansFound && techniciansFound.length === 0 && (
+                                        {techniciansFoundStatus === 'loading' && (
                                             <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: 200 }}>
                                                 <Spinner animation="border" role="status" />
                                                 <div className="mt-3">Hệ thống đang tìm thợ phù hợp với yêu cầu của bạn...</div>
+                                            </div>
+                                        )}
+                                        {techniciansFound && techniciansFound.length === 0 && techniciansFoundStatus !== 'loading' && (
+                                            <div className="w-100 d-flex flex-column align-items-center justify-content-center" style={{ minHeight: 200 }}>
+                                                <div className="mt-3">Chưa tìm thấy thợ phù hợp. Hệ thống sẽ tiếp tục tìm kiếm...</div>
                                             </div>
                                         )}
                                         {/* {createBookingStatus === 'loading' && (
@@ -430,7 +471,7 @@ function ChooseTechnician() {
                                                 <div className="card">
                                                     <div className="blog-widget d-flex">
                                                         <div className="blog-img">
-                                                            <a href="listing-details.html">
+                                                            <a onClick={(e) => { e.preventDefault(); handleShowProfile(technician); }}>
                                                                 <img
                                                                     style={{ width: 230, height: 194 }}
                                                                     src={technician?.userInfo?.avatar || ''}
@@ -506,17 +547,39 @@ function ChooseTechnician() {
 
                                                                         <li title={'Kinh nghiệm: ' + technician?.experienceYears + ' năm'}>
                                                                             <span>
-                                                                                <i className="feather-clock me-2" />
+                                                                                <i className="feather-briefcase me-2" />
                                                                             </span>
                                                                             <p>{technician?.experienceYears} năm</p>
                                                                         </li>
 
-                                                                        <li title={'Trạng thái: ' + technician?.availability}>
+                                                                        <li title={'Thời gian bảo hành: ' + technician?.warrantyDuration + ' tháng'}>
+                                                                            <span>
+                                                                                <i className="feather-shield me-2" />
+                                                                            </span>
+                                                                            <p>{technician?.warrantyDuration} tháng</p>
+                                                                        </li>
+
+                                                                        <li title={'Thời gian đến dự kiến: ' + (technician?.estimatedArrivalTime?.formattedTime || 'Đang tính toán...')}>
+                                                                            <span>
+                                                                                <i className="feather-clock me-2" />
+                                                                            </span>
+                                                                            <p>
+                                                                                Thời gian đến dự kiến: {
+                                                                                    technician?.estimatedArrivalTime?.formattedTime
+                                                                                        ? technician.estimatedArrivalTime.formattedTime
+                                                                                        : techniciansFoundStatus === 'loading'
+                                                                                            ? <span className="text-muted">Đang tính toán...</span>
+                                                                                            : <span className="text-muted">Đang cập nhật...</span>
+                                                                                }
+                                                                            </p>
+                                                                        </li>
+
+                                                                        {/* <li title={'Trạng thái: ' + technician?.availability}>
                                                                             <span>
                                                                                 <i className="feather-activity me-2" />
                                                                             </span>
-                                                                            <p>{technician?.availability === 'FREE' ? 'Sẵn sàng nhận việc' : 'Đang có việc – có thể nhận sau'}</p>
-                                                                        </li>
+                                                                            <p>{technician?.availability === 'FREE' ? 'Sẵn sàng nhận việc' : 'Bận – có thể tiếp nhận thêm yêu cầu'}</p>
+                                                                        </li> */}
 
                                                                     </ul>
                                                                 </div>
@@ -530,7 +593,7 @@ function ChooseTechnician() {
                                                                                 </h6>
                                                                             </div>
                                                                             <div className="list-km">
-                                                                                <span style={{display: 'flex'}} className="km-count">
+                                                                                <span style={{ display: 'flex' }} className="km-count">
                                                                                     <img src="/img/icons/map-pin.svg" alt="author" />
                                                                                     {technician?.distanceInKm + 'km'}
                                                                                 </span>
@@ -558,6 +621,16 @@ function ChooseTechnician() {
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                        {technician?.subscriptionStatus === 'PREMIUM' && (
+                                                            <div className="feature-text">
+                                                                <span className="bg-warning">ƯU TIÊN</span>
+                                                            </div>
+                                                        )}
+                                                        {technician?.isFavorite === true && technician?.subscriptionStatus !== 'PREMIUM' && (
+                                                            <div className="feature-text">
+                                                                <span className="bg-danger">BẠN ĐÃ THÍCH</span>
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>

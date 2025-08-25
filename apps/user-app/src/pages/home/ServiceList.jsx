@@ -75,6 +75,7 @@ function ServiceList() {
     const [formError, setFormError] = useState("");
     const [errors, setErrors] = useState({});
     const [showAddressSuggestions, setShowAddressSuggestions] = useState(false);
+    const [step, setStep] = useState(1); 
 
     const locationInputRef = useRef();
     const { suggestions: addressSuggestions, loading: addressLoading, error: addressError } = useHereAddressAutocomplete(bookingLocation);
@@ -121,6 +122,7 @@ function ServiceList() {
         setBookingTime("");
         setBookingEndTime("");
         setBookingImages([]);
+        setStep(1); // Reset step to 1 when opening modal
     };
 
     // Xử lý đóng modal
@@ -136,6 +138,7 @@ function ServiceList() {
         setBookingTime("");
         setBookingEndTime("");
         setBookingImages([]);
+        setStep(1); // Reset step to 1 when closing modal
     };
 
     // Xử lý upload ảnh
@@ -154,28 +157,22 @@ function ServiceList() {
             return;
         }
 
-        // Validate
-        let newErrors = {};
-        if (bookingType === 'scheduled') {
-            const bookingData = {
-                service: selectedService,
-                description: bookingDescription,
-                scheduleDate: bookingDate,
-                startTime: bookingTime,
-                endTime: bookingEndTime,
-                images: bookingImages
-            };
-            newErrors = validateBookingData(
-                bookingData,
-                bookingLocation,
-                true,
-                bookingType
-            );
-        } else {
-            if (!bookingLocation || bookingLocation.trim().length < 5) newErrors.addressInput = 'Vui lòng nhập địa chỉ hợp lệ của bạn.';
-            if (!bookingDescription || bookingDescription.trim().length < 10) newErrors.description = 'Vui lòng nhập mô tả chi tiết (tối thiểu 10 ký tự).';
-            if (bookingImages && bookingImages.length > 5) newErrors.images = 'Chỉ được tải lên tối đa 5 ảnh.';
-        }
+        // Validate sử dụng validateBookingData như SearchComponent
+        const bookingData = {
+            service: selectedService,
+            description: bookingDescription,
+            scheduleDate: bookingDate,
+            startTime: bookingTime,
+            endTime: bookingEndTime,
+            images: bookingImages
+        };
+
+        const newErrors = validateBookingData(
+            bookingData,
+            bookingLocation,
+            bookingType === 'scheduled',
+            bookingType
+        );
 
         setErrors(newErrors);
         if (Object.keys(newErrors).length > 0) {
@@ -183,6 +180,12 @@ function ServiceList() {
             return;
         }
 
+        // Chuyển sang step 2 để xác nhận thông tin
+        setStep(2);
+    };
+
+    // Xử lý xác nhận đặt lịch
+    const handleConfirmBooking = async () => {
         setSubmitting(true);
         try {
             const formData = new FormData();
@@ -400,245 +403,374 @@ function ServiceList() {
             <Modal show={showBookingModal} onHide={handleCloseBookingModal} size="lg">
                 <Modal.Header closeButton className="service-list-modal-header">
                     <Modal.Title className="service-list-modal-title">
-                        Đặt lịch dịch vụ - {selectedService?.serviceName}
+                        {step === 1 ? `Đặt lịch dịch vụ - ${selectedService?.serviceName}` : 'Xác nhận thông tin đặt lịch'}
                     </Modal.Title>
                 </Modal.Header>
                 <Modal.Body className="service-list-modal-body">
-                    <form onSubmit={handleSubmitBooking}>
-                        {/* Hiển thị dịch vụ đã chọn */}
-                        <div className="service-list-selected-service">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                <i className="bx bx-check-circle" style={{ fontSize: '18px' }}></i>
-                                <div className="service-list-selected-service-title">
-                                    Dịch vụ đã chọn
+                    {step === 1 && (
+                        <div>
+                            {/* Hiển thị dịch vụ đã chọn */}
+                            <div className="service-list-selected-service">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <i className="bx bx-check-circle" style={{ fontSize: '18px' }}></i>
+                                    <div className="service-list-selected-service-title">
+                                        Dịch vụ đã chọn
+                                    </div>
+                                </div>
+                                <div className="service-list-selected-service-info">
+                                    {selectedService?.serviceName}
+                                    {selectedService?.price && (
+                                        <span> - {selectedService.price.toLocaleString()} VNĐ</span>
+                                    )}
                                 </div>
                             </div>
-                            <div className="service-list-selected-service-info">
-                                {selectedService?.serviceName}
-                                {selectedService?.price && (
-                                    <span> - {selectedService.price.toLocaleString()} VNĐ</span>
+
+                            {/* Loại đặt lịch */}
+                            <div className="service-list-info-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <i className="bx bx-calendar service-list-info-header-icon"></i>
+                                    <div className="service-list-info-header-title">
+                                        Chọn loại đặt lịch
+                                    </div>
+                                </div>
+                                <div className="service-list-info-header-subtitle">
+                                    Bạn muốn đặt lịch ngay hay lên lịch trước?
+                                </div>
+                            </div>
+
+                            <div className="service-list-booking-cards">
+                                <div
+                                    className={`service-list-booking-card ${bookingType === 'urgent' ? 'selected' : ''}`}
+                                    onClick={() => setBookingType('urgent')}
+                                >
+                                    <div className="service-list-booking-content">
+                                        <div className="service-list-booking-icon service-list-booking-icon-urgent">
+                                            <i className="bx bxs-bolt"></i>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div className="service-list-booking-title">
+                                                Đặt ngay
+                                            </div>
+                                            <div className="service-list-booking-subtitle">
+                                                Kỹ thuật viên sẽ đến trong 20-40 phút
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div
+                                    className={`service-list-booking-card ${bookingType === 'scheduled' ? 'selected' : ''}`}
+                                    onClick={() => setBookingType('scheduled')}
+                                >
+                                    <div className="service-list-booking-content">
+                                        <div className="service-list-booking-icon service-list-booking-icon-scheduled">
+                                            <i className="bx bx-calendar"></i>
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <div className="service-list-booking-title">
+                                                Đặt lịch
+                                            </div>
+                                            <div className="service-list-booking-subtitle">
+                                                Chọn thời gian linh hoạt theo lịch của bạn
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Địa chỉ */}
+                            <div className="mb-3" style={{ position: 'relative' }}>
+                                <label className="form-label service-list-form-label">
+                                    Địa chỉ <span className="text-danger">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    className={`form-control service-list-form-input ${errors.addressInput ? 'error' : ''}`}
+                                    value={bookingLocation}
+                                    onChange={e => {
+                                        setBookingLocation(e.target.value);
+                                        if (e.target.value.trim().length >= 3) {
+                                            setShowAddressSuggestions(true);
+                                        } else {
+                                            setShowAddressSuggestions(false);
+                                        }
+                                    }}
+                                    onFocus={() => {
+                                        if (bookingLocation.trim().length >= 3) {
+                                            setShowAddressSuggestions(true);
+                                        }
+                                    }}
+                                    onBlur={() => setTimeout(() => setShowAddressSuggestions(false), 200)}
+                                    ref={locationInputRef}
+                                    required
+                                    autoComplete="off"
+                                    placeholder="Nhập địa chỉ của bạn ( ví dụ: 105 Lê Duẩn, TP. Đà Nẵng )"
+                                />
+                                {addressLoading && <div className="service-list-form-loading">Đang tìm gợi ý...</div>}
+                                {addressError && <div className="service-list-form-error">{addressError}</div>}
+                                {showAddressSuggestions && addressSuggestions.length > 0 && (
+                                    <ul className="service-list-address-suggestions">
+                                        {addressSuggestions.map((s, idx) => (
+                                            <li
+                                                key={s.id || s.title + idx}
+                                                className="service-list-address-item"
+                                                onMouseDown={() => {
+                                                    setBookingLocation(s.address?.label || s.title);
+                                                    setShowAddressSuggestions(false);
+                                                    setTimeout(() => locationInputRef.current?.blur(), 0);
+                                                }}
+                                            >
+                                                {s.address?.label || s.title}
+                                            </li>
+                                        ))}
+                                    </ul>
                                 )}
+                                {errors.addressInput && <div className="service-list-form-error">{errors.addressInput}</div>}
                             </div>
-                        </div>
 
-                        {/* Loại đặt lịch */}
-                        <div className="service-list-info-header">
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
-                                <i className="bx bx-calendar service-list-info-header-icon"></i>
-                                <div className="service-list-info-header-title">
-                                    Chọn loại đặt lịch
+                            {/* Mô tả */}
+                            <div className="mb-3">
+                                <label className="form-label service-list-form-label">
+                                    Mô tả tình trạng <span className="text-danger">*</span>
+                                </label>
+                                <textarea
+                                    className={`form-control service-list-form-textarea ${errors.description ? 'error' : ''}`}
+                                    value={bookingDescription}
+                                    onChange={e => setBookingDescription(e.target.value)}
+                                    required
+                                    placeholder="Mô tả chi tiết tình trạng bạn gặp phải..."
+                                />
+                                {errors.description && <div className="service-list-form-error">{errors.description}</div>}
+                            </div>
+
+                            {/* Nếu là scheduled thì nhập ngày, giờ bắt đầu, giờ kết thúc */}
+                            {bookingType === 'scheduled' && (
+                                <div className="service-list-schedule-section">
+                                    <div className="service-list-schedule-header">
+                                        <i className="bx bx-time service-list-info-header-icon"></i>
+                                        <span className="service-list-schedule-title">Thông tin lịch hẹn</span>
+                                    </div>
+
+                                    <div className="service-list-schedule-inputs">
+                                        <div className="service-list-schedule-input-group">
+                                            <label className="form-label service-list-form-label">
+                                                Ngày đặt lịch <span className="text-danger">*</span>
+                                            </label>
+                                            <input
+                                                type="date"
+                                                className={`form-control service-list-form-input ${errors.scheduleDate ? 'error' : ''}`}
+                                                value={bookingDate}
+                                                onChange={e => setBookingDate(e.target.value)}
+                                                required
+                                            />
+                                            {errors.scheduleDate && <div className="service-list-form-error">{errors.scheduleDate}</div>}
+                                        </div>
+                                    </div>
+
+                                    <div className="service-list-schedule-time-inputs">
+                                        <div className="service-list-schedule-time-label">
+                                            <label className="form-label service-list-form-label">
+                                                Thời gian <span className="text-danger">*</span>
+                                            </label>
+                                        </div>
+                                        <div className="service-list-schedule-time-inputs-row">
+                                            <div className="service-list-schedule-input-group">
+                                                <input
+                                                    type="time"
+                                                    className={`form-control service-list-form-input ${errors.startTime ? 'error' : ''}`}
+                                                    value={bookingTime}
+                                                    onChange={e => setBookingTime(e.target.value)}
+                                                    required
+                                                    placeholder="Từ"
+                                                />
+                                                {errors.startTime && <div className="service-list-form-error">{errors.startTime}</div>}
+                                            </div>
+                                            <div className="service-list-schedule-input-separator">
+                                                <span>đến</span>
+                                            </div>
+                                            <div className="service-list-schedule-input-group">
+                                                <input
+                                                    type="time"
+                                                    className={`form-control service-list-form-input ${errors.endTime ? 'error' : ''}`}
+                                                    value={bookingEndTime}
+                                                    onChange={e => setBookingEndTime(e.target.value)}
+                                                    required
+                                                    placeholder="Đến"
+                                                />
+                                                {errors.endTime && <div className="service-list-form-error">{errors.endTime}</div>}
+                                            </div>
+                                        </div>
+                                        <div className="banner-info-box">
+                                            <i className="bx bx-info-circle banner-info-icon"></i>
+                                            <span>
+                                                Lưu ý: Đây là khoảng thời gian bạn mong muốn thợ đến, không phải thời gian sửa chữa chính xác.
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className="service-list-info-header-subtitle">
-                                Bạn muốn đặt lịch ngay hay lên lịch trước?
-                            </div>
-                        </div>
-
-                        <div className="service-list-booking-cards">
-                            <div
-                                className={`service-list-booking-card ${bookingType === 'urgent' ? 'selected' : ''}`}
-                                onClick={() => setBookingType('urgent')}
-                            >
-                                <div className="service-list-booking-content">
-                                    <div className="service-list-booking-icon service-list-booking-icon-urgent">
-                                        <i className="bx bxs-bolt"></i>
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div className="service-list-booking-title">
-                                            Đặt ngay
-                                        </div>
-                                        <div className="service-list-booking-subtitle">
-                                            Kỹ thuật viên sẽ đến trong 20-40 phút
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div
-                                className={`service-list-booking-card ${bookingType === 'scheduled' ? 'selected' : ''}`}
-                                onClick={() => setBookingType('scheduled')}
-                            >
-                                <div className="service-list-booking-content">
-                                    <div className="service-list-booking-icon service-list-booking-icon-scheduled">
-                                        <i className="bx bx-calendar"></i>
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div className="service-list-booking-title">
-                                            Đặt lịch
-                                        </div>
-                                        <div className="service-list-booking-subtitle">
-                                            Chọn thời gian linh hoạt theo lịch của bạn
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Địa chỉ */}
-                        <div className="mb-3" style={{ position: 'relative' }}>
-                            <label className="form-label service-list-form-label">
-                                Vị trí <span className="text-danger">*</span>
-                            </label>
-                            <input
-                                type="text"
-                                className={`form-control service-list-form-input ${errors.addressInput ? 'error' : ''}`}
-                                value={bookingLocation}
-                                onChange={e => {
-                                    setBookingLocation(e.target.value);
-                                    if (e.target.value.trim().length >= 3) {
-                                        setShowAddressSuggestions(true);
-                                    } else {
-                                        setShowAddressSuggestions(false);
-                                    }
-                                }}
-                                onFocus={() => {
-                                    if (bookingLocation.trim().length >= 3) {
-                                        setShowAddressSuggestions(true);
-                                    }
-                                }}
-                                onBlur={() => setTimeout(() => setShowAddressSuggestions(false), 200)}
-                                ref={locationInputRef}
-                                required
-                                autoComplete="off"
-                                placeholder="Nhập địa chỉ của bạn ( ví dụ: 105 Lê Duẩn, TP. Đà Nẵng )"
-                            />
-                            {addressLoading && <div className="service-list-form-loading">Đang tìm gợi ý...</div>}
-                            {addressError && <div className="service-list-form-error">{addressError}</div>}
-                            {showAddressSuggestions && addressSuggestions.length > 0 && (
-                                <ul className="service-list-address-suggestions">
-                                    {addressSuggestions.map((s, idx) => (
-                                        <li
-                                            key={s.id || s.title + idx}
-                                            className="service-list-address-item"
-                                            onMouseDown={() => {
-                                                setBookingLocation(s.address?.label || s.title);
-                                                setShowAddressSuggestions(false);
-                                                setTimeout(() => locationInputRef.current?.blur(), 0);
-                                            }}
-                                        >
-                                            {s.address?.label || s.title}
-                                        </li>
-                                    ))}
-                                </ul>
                             )}
-                            {errors.addressInput && <div className="service-list-form-error">{errors.addressInput}</div>}
-                        </div>
 
-                        {/* Mô tả */}
-                        <div className="mb-3">
-                            <label className="form-label service-list-form-label">
-                                Mô tả tình trạng <span className="text-danger">*</span>
-                            </label>
-                            <textarea
-                                className={`form-control service-list-form-textarea ${errors.description ? 'error' : ''}`}
-                                value={bookingDescription}
-                                onChange={e => setBookingDescription(e.target.value)}
-                                required
-                                placeholder="Mô tả chi tiết tình trạng bạn gặp phải..."
-                            />
-                            {errors.description && <div className="service-list-form-error">{errors.description}</div>}
-                        </div>
+                            {/* Upload ảnh */}
+                            <div className="mb-3">
+                                {/* <label className="form-label service-list-form-label">
+                                    Hình ảnh (tùy chọn)
+                                </label> */}
+                                <ImageUploader onFilesSelect={handleBookingImages} />
+                                {errors.images && <div className="service-list-form-error">{errors.images}</div>}
+                            </div>
 
-                        {/* Nếu là scheduled thì nhập ngày, giờ bắt đầu, giờ kết thúc */}
-                        {bookingType === 'scheduled' && (
-                            <div className="service-list-schedule-section">
-                                <div className="service-list-schedule-header">
-                                    <i className="bx bx-time service-list-info-header-icon"></i>
-                                    <span className="service-list-schedule-title">Thông tin lịch hẹn</span>
-                                </div>
-
-                                <div className="service-list-schedule-inputs">
-                                    <div className="service-list-schedule-input-group">
-                                        <label className="form-label service-list-form-label">
-                                            Ngày đặt lịch <span className="text-danger">*</span>
-                                        </label>
-                                        <input
-                                            type="date"
-                                            className={`form-control service-list-form-input ${errors.scheduleDate ? 'error' : ''}`}
-                                            value={bookingDate}
-                                            onChange={e => setBookingDate(e.target.value)}
-                                            required
-                                        />
-                                        {errors.scheduleDate && <div className="service-list-form-error">{errors.scheduleDate}</div>}
+                            {/* Hiển thị hình ảnh đã upload */}
+                            {bookingImages && bookingImages.length > 0 && (
+                                <div className="banner-uploaded-images">
+                                    <div className="banner-uploaded-images-title">
+                                        <i className="bx bx-image" style={{ fontSize: '16px', marginRight: '8px' }}></i>
+                                        Hình ảnh đã chọn ({bookingImages.length})
+                                    </div>
+                                    <div className="banner-uploaded-images-grid">
+                                        {bookingImages.map((file, index) => (
+                                            <div key={index} className="banner-uploaded-image-item">
+                                                <img
+                                                    src={URL.createObjectURL(file)}
+                                                    alt={`Hình ảnh ${index + 1}`}
+                                                    className="banner-uploaded-image"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className="banner-remove-image-btn"
+                                                    onClick={() => {
+                                                        const newImages = bookingImages.filter((_, i) => i !== index);
+                                                        setBookingImages(newImages);
+                                                    }}
+                                                    title="Xóa hình ảnh"
+                                                >
+                                                    <i className="bx bx-x"></i>
+                                                </button>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
+                            )}
 
-                                <div className="service-list-schedule-time-inputs">
-                                    <div className="service-list-schedule-time-label">
-                                        <label className="form-label service-list-form-label">
-                                            Thời gian <span className="text-danger">*</span>
-                                        </label>
+                            {formError && (
+                                <div className="alert alert-danger service-list-alert-danger">
+                                    <i className="bx bx-error-circle"></i>
+                                    {formError}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div className="banner-confirm-container">
+                            <div className="banner-info-header">
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                    <i className="bx bx-check-circle banner-info-header-icon"></i>
+                                    <div className="banner-info-header-title">
+                                        Xác nhận thông tin đặt lịch
                                     </div>
-                                    <div className="service-list-schedule-time-inputs-row">
-                                        <div className="service-list-schedule-input-group">
-                                            <input
-                                                type="time"
-                                                className={`form-control service-list-form-input ${errors.startTime ? 'error' : ''}`}
-                                                value={bookingTime}
-                                                onChange={e => setBookingTime(e.target.value)}
-                                                required
-                                                placeholder="Từ"
-                                            />
-                                            {errors.startTime && <div className="service-list-form-error">{errors.startTime}</div>}
-                                        </div>
-                                        <div className="service-list-schedule-input-separator">
-                                            <span>đến</span>
-                                        </div>
-                                        <div className="service-list-schedule-input-group">
-                                            <input
-                                                type="time"
-                                                className={`form-control service-list-form-input ${errors.endTime ? 'error' : ''}`}
-                                                value={bookingEndTime}
-                                                onChange={e => setBookingEndTime(e.target.value)}
-                                                required
-                                                placeholder="Đến"
-                                            />
-                                            {errors.endTime && <div className="service-list-form-error">{errors.endTime}</div>}
-                                        </div>
-                                    </div>
-                                    <div className="banner-info-box">
-                                        <i className="bx bx-info-circle banner-info-icon"></i>
-                                        <span>
-                                            Lưu ý: Đây là khoảng thời gian bạn mong muốn thợ đến, không phải thời gian sửa chữa chính xác.
-                                        </span>
-                                    </div>
+                                </div>
+                                <div className="banner-info-header-subtitle">
+                                    Vui lòng kiểm tra lại trước khi xác nhận.
                                 </div>
                             </div>
-                        )}
 
-                        {/* Upload ảnh */}
-                        <div className="mb-3">
-                            {/* <label className="form-label service-list-form-label">
-                                Hình ảnh (tùy chọn)
-                            </label> */}
-                            <ImageUploader onFilesSelect={handleBookingImages} />
-                            {errors.images && <div className="service-list-form-error">{errors.images}</div>}
-                        </div>
-
-                        {formError && (
-                            <div className="alert alert-danger service-list-alert-danger">
-                                <i className="bx bx-error-circle"></i>
-                                {formError}
+                            <div className="banner-confirm-summary">
+                                <div className="alert alert-light" role="alert">
+                                    <div><strong>Dịch vụ:</strong> <span>{selectedService?.serviceName}</span></div>
+                                    <div><strong>Loại đặt:</strong> <span>{bookingType === 'urgent' ? 'Đặt ngay' : 'Đặt lịch'}</span></div>
+                                    {bookingType === 'scheduled' && (
+                                        <>
+                                            <div><strong>Ngày:</strong> <span>{bookingDate ? new Date(bookingDate).toLocaleDateString('vi-VN') : ''}</span></div>
+                                            <div><strong>Thời gian:</strong> <span>{bookingTime} - {bookingEndTime}</span></div>
+                                        </>
+                                    )}
+                                    <div><strong>Địa chỉ:</strong> <span>{bookingLocation}</span></div>
+                                    <div><strong>Mô tả:</strong> <span>{bookingDescription}</span></div>
+                                    {bookingImages && bookingImages.length > 0 && (
+                                        <div><strong>Hình ảnh:</strong>
+                                            <div className="banner-confirm-images">
+                                                {bookingImages.map((file, index) => (
+                                                    <div key={index} className="banner-confirm-image-item">
+                                                        <img
+                                                            src={URL.createObjectURL(file)}
+                                                            alt={`Hình ảnh ${index + 1}`}
+                                                            className="banner-confirm-image"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        )}
-                    </form>
+
+                            <div className="banner-confirm-note">
+                                <i className="bx bx-info-circle banner-info-icon"></i>
+                                <span>Nhấn "Đặt lịch & chọn kỹ thuật viên" để tạo yêu cầu và chuyển sang bước chọn kỹ thuật viên.</span>
+                            </div>
+                        </div>
+                    )}
                 </Modal.Body>
                 <Modal.Footer className="service-list-modal-footer">
-                    <button
-                        type="button"
-                        onClick={handleCloseBookingModal}
-                        className="service-list-btn-secondary"
-                    >
-                        Hủy
-                    </button>
-                    <button
-                        type="submit"
-                        onClick={handleSubmitBooking}
-                        disabled={submitting}
-                        className="service-list-btn-primary"
-                    >
-                        {submitting ? 'Đang xử lý...' : 'Đặt lịch & chọn kỹ thuật viên'}
-                    </button>
+                    {step === 1 && (
+                        <div className="service-list-modal-footer-actions">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    // Validate sử dụng validateBookingData từ file validation
+                                    const bookingData = {
+                                        service: selectedService,
+                                        description: bookingDescription,
+                                        scheduleDate: bookingDate,
+                                        startTime: bookingTime,
+                                        endTime: bookingEndTime,
+                                        images: bookingImages
+                                    };
+
+                                    const newErrors = validateBookingData(
+                                        bookingData,
+                                        bookingLocation,
+                                        true, // geoJson - tạm thời để true
+                                        bookingType
+                                    );
+
+                                    // Hiển thị tất cả lỗi cùng lúc
+                                    setErrors(newErrors);
+
+                                    // Chỉ chuyển step khi không có lỗi
+                                    if (Object.keys(newErrors).length === 0) {
+                                        setStep(2);
+                                    }
+                                }}
+                                className="service-list-btn-primary"
+                                style={{ marginRight: 10, marginBottom: 10 }}
+                            >
+                                Tiếp tục
+                            </button>
+                        </div>
+                    )}
+
+                    {step === 2 && (
+                        <div style={{marginBottom: 10}} className="service-list-modal-footer-actions">
+                            <button
+                                type="button"
+                                onClick={() => setStep(1)}
+                                className="service-list-btn-secondary"
+                                style={{ marginRight: 10 }}
+                            >
+                                Trở lại
+                            </button>
+                            <button
+                                type="submit"
+                                onClick={handleConfirmBooking}
+                                disabled={submitting}
+                                className="service-list-btn-primary"
+                                style={{ marginRight: 10 }}
+                            >
+                                {submitting ? 'Đang xử lý...' : 'Đặt lịch & chọn kỹ thuật viên'}
+                            </button>
+                        </div>
+                    )}
                 </Modal.Footer>
             </Modal>
 

@@ -36,7 +36,7 @@ function ChooseRole() {
 
                 // 3. Điều hướng ngay sang trang tương ứng
                 if (newRole === 'TECHNICIAN') {
-                    navigate('/technician/complete-profile', { replace: true });
+                    navigate('/choose-account-type', { replace: true });
                 } else {
                     navigate('/', { replace: true });
                 }
@@ -54,6 +54,12 @@ function ChooseRole() {
 
         // Case 2: Người dùng đang hoàn tất đăng ký thường (email/phone)
         dispatch(updateRegistrationData({ role: selectedRole }));
+
+        // Nếu chọn TECHNICIAN, chuyển đến ChooseAccountType trước khi finalize
+        if (selectedRole === 'TECHNICIAN') {
+            navigate('/choose-account-type');
+            return;
+        }
 
         try {
             const result = await dispatch(finalizeRegistrationThunk()).unwrap();
@@ -200,7 +206,7 @@ function ChooseRole() {
                                 >
                                     {loading ? (
                                         <><span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>ĐANG HOÀN TẤT...</>
-                                    ) : 'HOÀN TẤT ĐĂNG KÝ'}
+                                    ) : 'XÁC NHẬN VAI TRÒ'}
                                 </button>
                                     </div>
                                     </div>

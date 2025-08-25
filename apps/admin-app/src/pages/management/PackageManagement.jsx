@@ -197,8 +197,8 @@ const PackageManagement = () => {
               style={{ width: 130 }}
               allowClear
             >
-              <Select.Option value="ACTIVE">Đang hoạt động</Select.Option>
-              <Select.Option value="INACTIVE">Ngừng hoạt động</Select.Option>
+              <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+              <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
             </Select>
           </div>
 
@@ -230,7 +230,7 @@ const PackageManagement = () => {
             {filterStatus && (
               <span className="badge bg-warning-transparent">
                 <i className="ti ti-filter me-1"></i>
-                Trạng thái: {filterStatus === 'ACTIVE' ? 'Đang hoạt động' : 'Ngừng hoạt động'}
+                Trạng thái: {filterStatus === 'ACTIVE' ? 'Hoạt động' : 'Không hoạt động'}
               </span>
             )}
             <button
@@ -294,7 +294,7 @@ const PackageManagement = () => {
                       <td>{pkg.price}</td>
                       <td>
                         <span className={`badge ${pkg.isActive ? "bg-success-transparent" : "bg-danger-transparent"} text-dark`}>
-                          {pkg.isActive ? "ACTIVE" : "INACTIVE"}
+                          {pkg.isActive ? "Hoạt động" : "Không hoạt động"}
                         </span>
                       </td>
                       <td>
@@ -670,7 +670,7 @@ const PackageManagement = () => {
                   <td>{pkg.description}</td>
                   <td>
                     <span className={`badge ${pkg.isActive ? "bg-success" : "bg-danger"}`}>
-                      {pkg.isActive ? "Active" : "Inactive"}
+                      {pkg.isActive ? "Hoạt động" : "Không hoạt động"}
                     </span>
                   </td>
                   <td>
@@ -710,7 +710,7 @@ const PackageManagement = () => {
             <p><strong>Mô tả:</strong> ${selectedPackage.description}</p>
             <p><strong>Trạng thái:</strong>
               <span className={`badge ${selectedPackage.isActive ? "bg-success-transparent" : "bg-danger-transparent"} text-dark`}>
-                {selectedPackage.isActive ? "ACTIVE" : "INACTIVE"}
+                {selectedPackage.isActive ? "Hoạt động" : "Không hoạt động"}
               </span>
             </p>
             <p><strong>Tiện ích:</strong></p>
