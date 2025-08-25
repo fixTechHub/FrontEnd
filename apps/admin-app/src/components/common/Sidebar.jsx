@@ -319,7 +319,7 @@ const Sidebar = () => {
                     className="me-3"
                     style={{ width: "20px", ...activeIcon("/admin/report-management") }}
                   />
-                  <span>Báo cáo đơn</span>
+                  <span>Báo cáo đơn hàng</span>
                 </Link>
               </li>
               <li>

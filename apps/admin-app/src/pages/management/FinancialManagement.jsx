@@ -41,6 +41,7 @@ import {
 // Import APIs để lấy tên thực
 import { userAPI } from '../../features/users/userAPI';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
+import { serviceAPI } from '../../features/service/serviceAPI';
 import { formatCurrency } from '../../utils/formatCurrency';
 import { formatDate } from '../../utils/formatDate';
 
@@ -91,6 +92,7 @@ const FinancialManagement = () => {
   const [technicianNameMap, setTechnicianNameMap] = useState({});
   const [customerNameMap, setCustomerNameMap] = useState({});
   const [userMap, setUserMap] = useState({});
+  const [serviceNameMap, setServiceNameMap] = useState({});
 
   const {
     totalRevenue = 0,
@@ -100,27 +102,26 @@ const FinancialManagement = () => {
     totalWithdrawn = 0
   } = financialSummary || {};
 
-  // Tạo mapping từ technician ID sang tên
+  // Tạo technicianNameMap từ technicianAPI.getAll() giống như userMap
   useEffect(() => {
-    if (techniciansFinancialSummary.length > 0) {
-      const techMap = {};
-      console.log('🔍 Creating technician mapping from technicians:', techniciansFinancialSummary);
-      techniciansFinancialSummary.forEach(tech => {
-        if (tech.technicianId) {
-          // Kiểm tra tất cả các trường có thể chứa tên technician
-          const technicianName = tech.technicianName || 
-                                tech.fullName || 
-                                tech.name ||
-                                tech.technician?.fullName ||
-                                tech.technician?.name ||
-                                'Không có tên';
-          techMap[tech.technicianId] = technicianName;
-          console.log(`🔍 Technician mapping: ${tech.technicianId} -> ${technicianName}`);
-        }
-      });
-      setTechnicianNameMap(techMap);
-    }
-  }, [techniciansFinancialSummary]);
+    const fetchTechnicians = async () => {
+      try {
+        const technicians = await technicianAPI.getAll();
+        const technicianMapData = {};
+        technicians.forEach(t => {
+          if (t.id) {
+            technicianMapData[t.id] = t.fullName || t.name || t.email || `KTV ${t.id}`;
+          }
+        });
+        setTechnicianNameMap(technicianMapData);
+        console.log('✅ TechnicianMap created successfully:', technicianMapData);
+      } catch (error) {
+        console.error('❌ Failed to fetch technicians:', error);
+      }
+    };
+    
+    fetchTechnicians();
+  }, []);
 
   // Tạo userMap từ userAPI.getAll() giống như BookingManagement
   useEffect(() => {
@@ -137,6 +138,23 @@ const FinancialManagement = () => {
     };
     
     fetchUsers();
+  }, []);
+
+  // Tạo serviceNameMap từ serviceAPI.getAll()
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const services = await serviceAPI.getAll();
+        const serviceMapData = {};
+        services.forEach(s => serviceMapData[s.id] = s.serviceName || s.name || s.id);
+        setServiceNameMap(serviceMapData);
+        console.log('✅ ServiceMap created successfully:', serviceMapData);
+      } catch (error) {
+        console.error('❌ Failed to fetch services:', error);
+      }
+    };
+    
+    fetchServices();
   }, []);
 
   // Tạo mapping từ customer ID sang tên (sử dụng userMap)
@@ -168,9 +186,11 @@ const FinancialManagement = () => {
       userMap,
       technicianNameMap,
       customerNameMap,
+      serviceNameMap,
       sampleUser: Object.keys(userMap)[0],
       sampleTechnician: Object.keys(technicianNameMap)[0],
-      sampleCustomer: Object.keys(customerNameMap)[0]
+      sampleCustomer: Object.keys(customerNameMap)[0],
+      sampleService: Object.keys(serviceNameMap)[0]
     });
     
     // Debug chi tiết dữ liệu
@@ -183,7 +203,7 @@ const FinancialManagement = () => {
       console.log('🔍 Sample technician data:', techniciansFinancialSummary[0]);
       console.log('🔍 Available fields in technician:', Object.keys(techniciansFinancialSummary[0]));
     }
-  }, [userMap, technicianNameMap, customerNameMap, bookingsFinancial, techniciansFinancialSummary]);
+  }, [userMap, technicianNameMap, customerNameMap, serviceNameMap, bookingsFinancial, techniciansFinancialSummary]);
 
   // Load financial data on component mount
   useEffect(() => {
@@ -199,9 +219,22 @@ const FinancialManagement = () => {
         message.error('Failed to load financial data');
       }
     };
-
+    
     fetchFinancialData();
   }, [dispatch]);
+
+  // Cleanup filters when component unmounts
+  useEffect(() => {
+    return () => {
+      // Reset filters when leaving the page
+      setSearchText('');
+      setStatusFilter('');
+      setPaymentFilter('');
+      setCurrentPage(1);
+      setSortField('createdAt');
+      setSortOrder('desc');
+    };
+  }, []);
 
   // Load bookings data chỉ khi tab được chọn
   useEffect(() => {
@@ -229,6 +262,39 @@ const FinancialManagement = () => {
         .finally(() => setTechniciansLoading(false));
     }
   }, [activeTab, techniciansFinancialSummary.length, dispatch]);
+
+  // Debug: Log technician mapping creation
+  useEffect(() => {
+    if (bookingsFinancial.length > 0) {
+      console.log('🔍 Bookings data loaded, creating technician mapping...');
+      console.log('🔍 First few bookings:', bookingsFinancial.slice(0, 3));
+      
+      // Tạo mapping trực tiếp để debug
+      const debugTechMap = {};
+      bookingsFinancial.forEach((booking, index) => {
+        if (index < 5) { // Chỉ log 5 booking đầu tiên
+          console.log(`🔍 Booking ${index + 1}:`, {
+            id: booking.id,
+            bookingCode: booking.bookingCode,
+            technicianId: booking.technicianId,
+            technicianName: booking.technicianName,
+            technician: booking.technician,
+            rawTechnicianData: booking
+          });
+        }
+        
+        if (booking.technicianId) {
+          const technicianName = booking.technicianName || 
+                                booking.technician?.fullName || 
+                                booking.technician?.name ||
+                                `Kỹ thuật viên ${booking.technicianId}`;
+          debugTechMap[booking.technicianId] = technicianName;
+        }
+      });
+      
+      console.log('🔍 Debug technician mapping created:', debugTechMap);
+    }
+  }, [bookingsFinancial]);
 
   // Cập nhật export data khi component mount và khi data thay đổi
   useEffect(() => {
@@ -395,11 +461,20 @@ const FinancialManagement = () => {
   const getStatusColor = (status) => {
     switch (status) {
       case 'COMPLETED':
+      case 'DONE':
         return 'green';
       case 'PENDING':
+      case 'Đang chờ':
         return 'orange';
       case 'CANCELLED':
+      case 'Đã hủy':
         return 'red';
+      case 'CONFIRMED':
+      case 'Đã xác nhận':
+        return 'blue';
+      case 'IN_PROGRESS':
+      case 'Đang xử lý':
+        return 'cyan';
       default:
         return 'default';
     }
@@ -408,11 +483,20 @@ const FinancialManagement = () => {
   const getPaymentColor = (paymentStatus) => {
     switch (paymentStatus) {
       case 'PAID':
+      case 'Đã thanh toán':
         return 'green';
       case 'PENDING':
+      case 'Chờ thanh toán':
         return 'orange';
       case 'FAILED':
+      case 'Thanh toán thất bại':
         return 'red';
+      case 'CANCELLED':
+      case 'Đã hủy':
+        return 'red';
+      case 'REFUNDED':
+      case 'Đã hoàn tiền':
+        return 'blue';
       default:
         return 'default';
     }
@@ -421,6 +505,35 @@ const FinancialManagement = () => {
   // Helper function để format status và payment status
   const formatStatus = (status) => {
     return status?.replace(/_/g, ' ') || status;
+  };
+
+  // Hàm để hiển thị status bằng tiếng Việt
+  const getStatusDisplay = (status) => {
+    const statusMapping = {
+      'PENDING': 'Đang chờ',
+      'CONFIRMED': 'Đã xác nhận',
+      'IN_PROGRESS': 'Đang xử lý',
+      'AWAITING_DONE': 'Chờ hoàn thành',
+      'WAITING_CONFIRM': 'Chờ xác nhận',
+      'CONFIRM_ADDITIONAL': 'Xác nhận bổ sung',
+      'DONE': 'Hoàn thành',
+      'CANCELLED': 'Đã hủy',
+      'WAITING_CUSTOMER_CONFIRM_ADDITIONAL': 'Chờ khách xác nhận bổ sung',
+      'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL': 'Chờ thợ xác nhận bổ sung'
+    };
+    return statusMapping[status] || formatStatus(status);
+  };
+
+  // Hàm để hiển thị payment status bằng tiếng Việt
+  const getPaymentStatusDisplay = (paymentStatus) => {
+    const paymentStatusMapping = {
+      'PENDING': 'Chờ thanh toán',
+      'PAID': 'Đã thanh toán',
+      'FAILED': 'Thanh toán thất bại',
+      'CANCELLED': 'Đã hủy',
+      'REFUNDED': 'Đã hoàn tiền'
+    };
+    return paymentStatusMapping[paymentStatus] || paymentStatus;
   };
 
   const handleSortChange = (value) => {
@@ -539,54 +652,44 @@ const FinancialManagement = () => {
     // Set export data for AdminHeader
     if (activeTab === 'bookings') {
       window.currentPageExportData = {
-        data: filteredBookings.map(booking => ({
-          'Booking Code': booking.bookingCode,
-          'Customer Name': booking.customerName,
-          'Technician Name': booking.technicianName,
-          'Service Name': booking.serviceName,
-          'Final Price': formatCurrency(booking.finalPrice),
-          'Holding Amount': formatCurrency(booking.holdingAmount),
-          'Commission Amount': formatCurrency(booking.commissionAmount),
-          'Technician Earning': formatCurrency(booking.technicianEarning),
-          'Status': booking.status,
-          'Payment Status': booking.paymentStatus,
-          'Created Date': formatDate(booking.createdAt)
-        })),
+        data: filteredBookings.map(booking => {
+          return {
+            'Mã đơn hàng': booking.bookingCode,
+            'Giá cuối cùng': formatCurrency(booking.finalPrice),
+            'Số tiền giữ lại': formatCurrency(booking.holdingAmount),
+            'Thu nhập kỹ thuật viên': formatCurrency(booking.technicianEarning),
+            'Trạng thái': getStatusDisplay(booking.status),
+            'Trạng thái thanh toán': getPaymentStatusDisplay(booking.paymentStatus),
+            'Ngày tạo': formatDate(booking.createdAt)
+          };
+        }),
         columns: [
-          { title: 'Booking Code', dataIndex: 'Booking Code' },
-          { title: 'Customer Name', dataIndex: 'Customer Name' },
-          { title: 'Technician Name', dataIndex: 'Technician Name' },
-          { title: 'Service Name', dataIndex: 'Service Name' },
-          { title: 'Final Price', dataIndex: 'Final Price' },
-          { title: 'Holding Amount', dataIndex: 'Holding Amount' },
-          { title: 'Commission Amount', dataIndex: 'Commission Amount' },
-          { title: 'Technician Earning', dataIndex: 'Technician Earning' },
-          { title: 'Status', dataIndex: 'Status' },
-          { title: 'Payment Status', dataIndex: 'Payment Status' },
-          { title: 'Created Date', dataIndex: 'Created Date' }
+          { title: 'Mã đơn hàng', dataIndex: 'Mã đơn hàng' },
+          { title: 'Giá cuối cùng', dataIndex: 'Giá cuối cùng' },
+          { title: 'Số tiền giữ lại', dataIndex: 'Số tiền giữ lại' },
+          { title: 'Thu nhập kỹ thuật viên', dataIndex: 'Thu nhập kỹ thuật viên' },
+          { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+          { title: 'Trạng thái thanh toán', dataIndex: 'Trạng thái thanh toán' },
+          { title: 'Ngày tạo', dataIndex: 'Ngày tạo' }
         ],
         fileName: 'financial_bookings_export',
         sheetName: 'Financial Bookings'
       };
     } else {
       window.currentPageExportData = {
-        data: filteredTechnicians.map(technician => ({
-          'Technician ID': technician.technicianId,
-          'Technician Name': technician.technicianName,
-          'Total Bookings': technician.totalBookings,
-          'Total Earning': formatCurrency(technician.totalEarning),
-          'Commission Paid': formatCurrency(technician.totalCommissionPaid),
-          'Holding Amount': formatCurrency(technician.totalHoldingAmount),
-          'Withdrawn': formatCurrency(technician.totalWithdrawn)
-        })),
+        data: filteredTechnicians.map(technician => {
+          return {
+            'Tổng đơn hàng': technician.totalBookings,
+            'Tổng thu nhập': formatCurrency(technician.totalEarning),
+            'Số tiền giữ lại': formatCurrency(technician.totalHoldingAmount),
+            'Đã rút': formatCurrency(technician.totalWithdrawn)
+          };
+        }),
         columns: [
-          { title: 'Technician ID', dataIndex: 'Technician ID' },
-          { title: 'Technician Name', dataIndex: 'Technician Name' },
-          { title: 'Total Bookings', dataIndex: 'Total Bookings' },
-          { title: 'Total Earning', dataIndex: 'Total Earning' },
-          { title: 'Commission Paid', dataIndex: 'Commission Paid' },
-          { title: 'Holding Amount', dataIndex: 'Holding Amount' },
-          { title: 'Withdrawn', dataIndex: 'Withdrawn' }
+          { title: 'Tổng đơn hàng', dataIndex: 'Tổng đơn hàng' },
+          { title: 'Tổng thu nhập', dataIndex: 'Tổng thu nhập' },
+          { title: 'Số tiền giữ lại', dataIndex: 'Số tiền giữ lại' },
+          { title: 'Đã rút', dataIndex: 'Đã rút' }
         ],
         fileName: 'financial_technicians_export',
         sheetName: 'Financial Technicians'
@@ -600,7 +703,53 @@ const FinancialManagement = () => {
     }
   };
 
+  // Hàm để lấy CSS class cho status badge giống CouponManagement
+  const getStatusBadgeClass = (status) => {
+    switch ((status || '').toUpperCase()) {
+      case 'COMPLETED':
+      case 'DONE':
+        return 'bg-success-transparent';
+      case 'PENDING':
+        return 'bg-warning-transparent';
+      case 'CANCELLED':
+        return 'bg-danger-transparent';
+      case 'CONFIRMED':
+        return 'bg-info-transparent';
+      case 'IN_PROGRESS':
+        return 'bg-primary-transparent';
+      case 'AWAITING_DONE':
+      case 'WAITING_CONFIRM':
+      case 'CONFIRM_ADDITIONAL':
+        return 'bg-secondary-transparent';
+      case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL':
+      case 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL':
+        return 'bg-warning-transparent';
+      default:
+        return 'bg-secondary-transparent';
+    }
+  };
 
+  const getPaymentStatusBadgeClass = (paymentStatus) => {
+    switch ((paymentStatus || '').toUpperCase()) {
+      case 'PAID':
+      case 'Đã thanh toán':
+        return 'bg-success-transparent';
+      case 'PENDING':
+      case 'Chờ thanh toán':
+        return 'bg-warning-transparent';
+      case 'FAILED':
+      case 'Thanh toán thất bại':
+        return 'bg-danger-transparent';
+      case 'CANCELLED':
+      case 'Đã hủy':
+        return 'bg-danger-transparent';
+      case 'REFUNDED':
+      case 'Đã hoàn tiền':
+        return 'bg-info-transparent';
+      default:
+        return 'bg-secondary-transparent';
+    }
+  };
 
   const bookingColumns = [
     {
@@ -616,17 +765,31 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'bookingCode',
       key: 'bookingCode',
-      width: 180,
+      width: 140,
       render: (text) => (
-        <div style={{ maxWidth: 180, fontWeight: 500 }}>
-          {text?.length > 20 ? `${text.substring(0, 20)}...` : text}
+        <div style={{ maxWidth: 140, fontWeight: 500, fontSize: '12px' }}>
+          {text?.length > 15 ? `${text.substring(0, 15)}...` : text}
         </div>
       ),
     },
     {
+      title: 'Kỹ thuật viên',
+      dataIndex: 'technicianId',
+      key: 'technician',
+      width: 150,
+      render: (technicianId, record) => {
+        const technicianName = technicianNameMap[technicianId] || record.technicianName || `KTV ${technicianId}`;
+        return (
+          <div style={{ maxWidth: 150, fontWeight: 500, fontSize: '12px' }}>
+            {technicianName?.length > 20 ? `${technicianName.substring(0, 20)}...` : technicianName}
+          </div>
+        );
+      },
+    },
+    {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByFinalPrice}>
-          Giá trị đơn hàng
+          Giá trị
           {sortField === 'finalPrice' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -636,9 +799,9 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'finalPrice',
       key: 'finalPrice',
-      width: 120,
+      width: 100,
       render: (price) => (
-        <span style={{ fontWeight: 600, color: '#52c41a' }}>
+        <span style={{ fontWeight: 600, color: '#52c41a', fontSize: '12px' }}>
           {formatCurrency(price)}
         </span>
       ),
@@ -646,7 +809,7 @@ const FinancialManagement = () => {
     {
       title: (
         <div style={{ cursor: 'pointer' }} onClick={handleSortByBookingHoldingAmount}>
-          Số tiền giữ lại
+          Giữ lại
           {sortField === 'holdingAmount' && (
             <span style={{ marginLeft: 4 }}>
               {sortOrder === 'asc' ? '▲' : '▼'}
@@ -656,30 +819,10 @@ const FinancialManagement = () => {
       ),
       dataIndex: 'holdingAmount',
       key: 'holdingAmount',
-      width: 120,
+      width: 90,
       render: (amount) => (
-        <span style={{ fontWeight: 600, color: '#faad14' }}>
+        <span style={{ fontWeight: 600, color: '#faad14', fontSize: '12px' }}>
           {formatCurrency(amount)}
-        </span>
-      ),
-    },
-    {
-      title: (
-        <div style={{ cursor: 'pointer' }} onClick={handleSortByTechnicianEarning}>
-          Kỹ thuật viên nhận được
-          {sortField === 'technicianEarning' && (
-            <span style={{ marginLeft: 4 }}>
-              {sortOrder === 'asc' ? '▲' : '▼'}
-            </span>
-          )}
-        </div>
-      ),
-      dataIndex: 'technicianEarning',
-      key: 'technicianEarning',
-      width: 150,
-      render: (earning) => (
-        <span style={{ fontWeight: 600, color: '#722ed1' }}>
-          {formatCurrency(earning)}
         </span>
       ),
     },
@@ -687,20 +830,20 @@ const FinancialManagement = () => {
       title: 'Thanh toán',
       dataIndex: 'paymentStatus',
       key: 'paymentStatus',
-      width: 100,
+      width: 90,
       render: (paymentStatus) => (
-        <Tag color={getPaymentColor(paymentStatus)}>
-          {formatStatus(paymentStatus)?.toUpperCase()}
-        </Tag>
+        <span className={`badge ${getPaymentStatusBadgeClass(paymentStatus)} text-dark`} style={{ fontSize: '11px' }}>
+          {getPaymentStatusDisplay(paymentStatus)}
+        </span>
       ),
     },
     {
       title: 'Hành động',
       key: 'actions',
-      width: 120,
+      width: 100,
       render: (_, record) => (
         <Space>
-          <Button className="management-action-btn" size="middle" onClick={() => handleViewBookingDetails(record)}>
+          <Button className="management-action-btn" size="small" onClick={() => handleViewBookingDetails(record)}>
             <EyeOutlined style={{marginRight: 4}} />Xem chi tiết
           </Button>
         </Space>
@@ -980,34 +1123,34 @@ const FinancialManagement = () => {
                 <>
                   <Select
                     placeholder="Trạng thái"
-                    style={{ width: 130 }}
+                    style={{ width: 250 }}
                     allowClear
                     value={statusFilter || undefined}
                     onChange={(value) => setStatusFilter(value)}
                   >
-                    <Option value="PENDING">PENDING</Option>
-                    <Option value="CONFIRMED">CONFIRMED</Option>
-                    <Option value="IN_PROGRESS">IN PROGRESS</Option>
-                    <Option value="AWAITING_DONE">AWAITING DONE</Option>
-                    <Option value="WAITING_CONFIRM">WAITING CONFIRM</Option>
-                    <Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Option>
-                    <Option value="DONE">DONE</Option>
-                    <Option value="CANCELLED">CANCELLED</Option>
-                    <Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Option>
-                    <Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Option>
+                    <Option value="PENDING">Đang chờ</Option>
+                    <Option value="CONFIRMED">Đã xác nhận</Option>
+                    <Option value="IN_PROGRESS">Đang xử lý</Option>
+                    <Option value="AWAITING_DONE">Chờ hoàn thành</Option>
+                    <Option value="WAITING_CONFIRM">Chờ xác nhận</Option>
+                    <Option value="CONFIRM_ADDITIONAL">Xác nhận bổ sung</Option>
+                    <Option value="DONE">Hoàn thành</Option>
+                    <Option value="CANCELLED">Đã hủy</Option>
+                    <Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">Chờ khách xác nhận bổ sung</Option>
+                    <Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">Chờ thợ xác nhận bổ sung</Option>
                   </Select>
                   <Select
                     placeholder="Thanh toán"
-                    style={{ width: 130 }}
+                    style={{ width: 180 }}
                     allowClear
                     value={paymentFilter || undefined}
                     onChange={(value) => setPaymentFilter(value)}
                   >
-                    <Option value="PENDING">PENDING</Option>
-                    <Option value="PAID">PAID</Option>
-                    <Option value="FAILED">FAILED</Option>
-                    <Option value="CANCELLED">CANCELLED</Option>
-                    <Option value="REFUNDED">REFUNDED</Option>
+                    <Option value="PENDING">Chờ thanh toán</Option>
+                    <Option value="PAID">Đã thanh toán</Option>
+                    <Option value="FAILED">Thanh toán thất bại</Option>
+                    <Option value="CANCELLED">Đã hủy</Option>
+                    <Option value="REFUNDED">Đã hoàn tiền</Option>
                   </Select>
                 </>
               )}
@@ -1046,6 +1189,42 @@ const FinancialManagement = () => {
             </div>
           </div>
 
+          {/* Filter Info */}
+          {(searchText || statusFilter || paymentFilter) && (
+            <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+              <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+              {searchText && (
+                <span className="badge bg-primary-transparent">
+                  <i className="ti ti-search me-1"></i>
+                  Tìm kiếm: "{searchText}"
+                </span>
+              )}
+              {statusFilter && (
+                <span className="badge bg-info-transparent">
+                  <i className="ti ti-filter me-1"></i>
+                  Trạng thái: {getStatusDisplay(statusFilter)}
+                </span>
+              )}
+              {paymentFilter && (
+                <span className="badge bg-warning-transparent">
+                  <i className="ti ti-filter me-1"></i>
+                  Thanh toán: {getPaymentStatusDisplay(paymentFilter)}
+                </span>
+              )}
+              <button 
+                className="btn btn-sm btn-outline-secondary"
+                onClick={() => {
+                  setSearchText('');
+                  setStatusFilter('');
+                  setPaymentFilter('');
+                }}
+              >
+                <i className="ti ti-x me-1"></i>
+                Xóa tất cả
+              </button>
+            </div>
+          )}
+
           {/* Content Tables */}
           {activeTab === 'bookings' && (
             <>
@@ -1064,7 +1243,7 @@ const FinancialManagement = () => {
               <div className="d-flex justify-content-between align-items-center mt-3">
                 <div className="d-flex align-items-center gap-3">
                   <div className="text-muted">
-                    Hiển thị {indexOfFirstBooking + 1}-{Math.min(indexOfLastBooking, sortedBookings.length)} trong tổng số {sortedBookings.length} bookings
+                    Hiển thị {indexOfFirstBooking + 1}-{Math.min(indexOfLastBooking, sortedBookings.length)} trong tổng số {sortedBookings.length} đơn hàng
                   </div>
                 </div>
                 {totalBookingsPages > 1 && (
@@ -1175,10 +1354,7 @@ const FinancialManagement = () => {
               <div className="d-flex justify-content-between align-items-center mt-3">
                 <div className="d-flex align-items-center gap-3">
                   <div className="text-muted">
-                    Hiển thị {indexOfFirstTechnician + 1}-{Math.min(indexOfLastTechnician, sortedTechnicians.length)} trong tổng số {sortedTechnicians.length} technicians
-                  </div>
-                  <div className="text-muted">
-                    Trang {currentPage} / {Math.max(1, totalTechniciansPages)}
+                    Hiển thị {indexOfFirstTechnician + 1}-{Math.min(indexOfLastTechnician, sortedTechnicians.length)} trong tổng số {sortedTechnicians.length} kỹ thuật viên
                   </div>
                 </div>
                 {sortedTechnicians.length > 0 && (
@@ -1307,7 +1483,7 @@ const FinancialManagement = () => {
           >
             <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
               {/* Header */}
-              <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: 24, color: '#fff' }}>
+              <div style={{ background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)', padding: 24, color: '#fff' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết đơn hàng</div>
@@ -1315,9 +1491,9 @@ const FinancialManagement = () => {
                   </div>
                   <div style={{ textAlign: 'right' }}>
                     <span style={{ fontSize: 14, fontWeight: 600 }}>Trạng thái thanh toán: </span>
-                    <Tag color={getPaymentColor(selectedBooking.paymentStatus)} style={{ fontSize: 12, fontWeight: 600 }}>
-                      {selectedBooking.paymentStatus ? selectedBooking.paymentStatus.replace(/_/g, ' ') : ''}
-                    </Tag>
+                    <span className={`badge ${getPaymentStatusBadgeClass(selectedBooking.paymentStatus)} text-dark`} style={{ fontSize: 12, fontWeight: 600 }}>
+                      {getPaymentStatusDisplay(selectedBooking.paymentStatus)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1332,7 +1508,7 @@ const FinancialManagement = () => {
                       <Descriptions size="small" column={1} bordered={false}
                         items={[
                           { key: 'createdAt', label: 'Ngày tạo', children: selectedBooking.createdAt ? new Date(selectedBooking.createdAt).toLocaleDateString('vi-VN') : 'Chưa có' },
-                          { key: 'status', label: 'Trạng thái', children: selectedBooking.status || 'Chưa có' },
+                          { key: 'status', label: 'Trạng thái', children: getStatusDisplay(selectedBooking.status) || 'Chưa có' },
                         ]}
                       />
                     </div>
@@ -1395,7 +1571,7 @@ const FinancialManagement = () => {
           >
             <div style={{ background: '#ffffff', borderRadius: 12, overflow: 'hidden' }}>
               {/* Header */}
-              <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: 24, color: '#fff' }}>
+              <div style={{ background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)', padding: 24, color: '#fff' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 22, fontWeight: 700 }}>Chi tiết tài chính kỹ thuật viên</div>

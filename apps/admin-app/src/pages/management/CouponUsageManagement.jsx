@@ -14,6 +14,42 @@ const CouponUsageManagement = () => {
  const dispatch = useDispatch();
  const { usages = [], loading = false, error = null, filters = {} } = useSelector(state => state.couponUsage) || {};
 
+ // Helper functions for Vietnamese text
+ const getStatusDisplayText = (status) => {
+   if (!status) return 'Chưa có thông tin';
+   
+   switch (status.toUpperCase()) {
+     case 'USED':
+       return 'Đã sử dụng';
+     case 'ACTIVE':
+       return 'Hoạt động';
+     case 'INACTIVE':
+       return 'Không hoạt động';
+     case 'EXPIRED':
+       return 'Hết hạn';
+     case 'CANCELLED':
+       return 'Đã hủy';
+     default:
+       return status;
+   }
+ };
+
+ const getStatusColor = (status) => {
+   switch ((status || '').toUpperCase()) {
+     case 'USED':
+     case 'ACTIVE':
+       return 'green';
+     case 'INACTIVE':
+       return 'default';
+     case 'EXPIRED':
+       return 'orange';
+     case 'CANCELLED':
+       return 'red';
+     default:
+       return 'default';
+   }
+ };
+
 
  const [userMap, setUserMap] = useState({});
  const [couponMap, setCouponMap] = useState({});
@@ -199,21 +235,21 @@ const currentPageData = sortedUsages.slice(indexOfFirst, indexOfLast);
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Mã giảm giá', dataIndex: 'couponCode' },
-    { title: 'Khách hàng', dataIndex: 'userName' },
-    { title: 'Đơn hàng', dataIndex: 'bookingCode' },
-    { title: 'Thời gian sử dụng', dataIndex: 'usedAt' },
-    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+    { title: 'Mã giảm giá', dataIndex: 'Mã giảm giá' },
+    { title: 'Khách hàng', dataIndex: 'Khách hàng' },
+    { title: 'Đơn hàng', dataIndex: 'Đơn hàng' },
+    { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+    { title: 'Thời gian sử dụng', dataIndex: 'Thời gian sử dụng' },
+    { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
   ];
 
   const exportData = sortedUsages.map(usage => ({
-    couponCode: couponMap[usage.couponId] || usage.couponId,
-    userName: userMap[usage.userId] || usage.userId,
-    bookingCode: bookingMap[usage.bookingId] || usage.bookingId,
-    discountApplied: formatCurrency(usage.discountApplied || 0),
-    usedAt: formatDateTime(usage.usedAt),
-    createdAt: formatDateTime(usage.createdAt),
-    updatedAt: formatDateTime(usage.updatedAt),
+    'Mã giảm giá': couponMap[usage.couponId] || usage.couponId,
+    'Khách hàng': userMap[usage.userId] || usage.userId,
+    'Đơn hàng': bookingMap[usage.bookingId] || usage.bookingId,
+    'Trạng thái': getStatusDisplayText('USED'),
+    'Thời gian sử dụng': formatDateTime(usage.usedAt),
+    'Thời gian tạo': formatDateTime(usage.createdAt),
   }));
 
   createExportData(exportData, exportColumns, 'coupon_usages_export', 'Coupon Usages');
@@ -554,7 +590,7 @@ const handleSortByUsedAt = () => {
        >
          <div style={{ background: '#fff', borderRadius: 16 }}>
            <div style={{
-             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+             background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
              padding: '20px 24px',
              color: '#fff'
            }}>
@@ -563,7 +599,7 @@ const handleSortByUsedAt = () => {
                  Chi tiết sử dụng mã giảm giá
                </div>
                <Tag style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: 'none' }}>
-                 USED
+                 {getStatusDisplayText('USED')}
                </Tag>
              </div>
              {selectedUsage.id && (
@@ -591,7 +627,7 @@ const handleSortByUsedAt = () => {
                      </div>
                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                        <span style={{ color: '#8c8c8c' }}>Trạng thái</span>
-                       <span style={{ fontWeight: 600, color: '#52c41a' }}>ACTIVE</span>
+                       <span style={{ fontWeight: 600, color: '#52c41a' }}>{getStatusDisplayText('ACTIVE')}</span>
                      </div>
                    </div>
                  </div>

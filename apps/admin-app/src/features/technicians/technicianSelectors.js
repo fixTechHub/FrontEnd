@@ -76,11 +76,15 @@ export const selectFilteredTechnicians = createSelector(
       );
     }
 
-    // Filter by availability
+    // Filter by availability - so sánh cả string và number
     if (filters.availability) {
-      filteredTechnicians = filteredTechnicians.filter(
-        (technician) => technician.availability === filters.availability
-      );
+      filteredTechnicians = filteredTechnicians.filter((technician) => {
+        const techAvailability = technician.availability;
+        if (filters.availability === '0' && techAvailability !== 0 && techAvailability !== 'ONJOB') return false;
+        if (filters.availability === '1' && techAvailability !== 1 && techAvailability !== 'FREE') return false;
+        if (filters.availability === '2' && techAvailability !== 2 && techAvailability !== 'BUSY') return false;
+        return true;
+      });
     }
 
     return filteredTechnicians;

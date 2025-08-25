@@ -34,6 +34,18 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    const [sortOrder, setSortOrder] = useState('desc');
    const [filterRole, setFilterRole] = useState('');
    const [filterStatus, setFilterStatus] = useState('');
+   
+   // Mapping vai trò từ tiếng Anh sang tiếng Việt
+   const roleNameMapping = {
+       'ADMIN': 'Quản trị viên',
+       'PENDING': 'Đang chờ',
+       'TECHNICIAN': 'Kỹ thuật viên',
+       'CUSTOMER': 'Khách hàng',
+       'admin': 'Quản trị viên',
+       'technician': 'Kỹ thuật viên',
+       'customer': 'Khách hàng',
+       'pending': 'Đang chờ'
+   };
 
 
    const indexOfLastUser = currentPage * usersPerPage;
@@ -79,26 +91,43 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    // Set export data và columns
    useEffect(() => {
      const exportColumns = [
-       { title: 'Họ và tên', dataIndex: 'fullName' },
-       { title: 'Email', dataIndex: 'email' },
-       { title: 'SĐT', dataIndex: 'phone' },
-       { title: 'Vai trò', dataIndex: 'role' },
-       { title: 'Trạng thái', dataIndex: 'status' },
-       { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+       { title: 'Họ và tên', dataIndex: 'Họ và tên' },
+       { title: 'Email', dataIndex: 'Email' },
+       { title: 'SĐT', dataIndex: 'SĐT' },
+       { title: 'Vai trò', dataIndex: 'Vai trò' },
+       { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+       { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
      ];
 
-     const exportData = sortedUsers.map(user => ({
-       fullName: user.fullName,
-       email: user.email,
-       phone: user.phone,
-       role: user.roleName || roleMap[user.role] || user.role || '',
-       status: formatStatus(user.status),
-       createdAt: formatDateTime(user.createdAt),
-       updatedAt: formatDateTime(user.updatedAt),
-     }));
+     // Export toàn bộ dữ liệu đã filter, không chỉ trang hiện tại
+     const exportData = filteredUsers.map(user => {
+       const roleName = roleNameMapping[user.roleName || roleMap[user.role] || user.role] || user.roleName || roleMap[user.role] || user.role || '';
+       const roleKey = user.roleName || roleMap[user.role] || user.role || '';
+       const roleColor = getRoleColor(user.role);
+       
+       return {
+         'Họ và tên': user.fullName,
+         Email: user.email,
+         SĐT: user.phone,
+         'Vai trò': roleName,
+         'Trạng thái': user.status === 'ACTIVE' ? 'Hoạt động' : user.status === 'INACTIVE' ? 'Không hoạt động' : formatStatus(user.status),
+         'Thời gian tạo': formatDateTime(user.createdAt),
+       };
+     });
+     
+     // Thông tin export để user biết đang export gì
+     const exportInfo = {
+       totalRecords: filteredUsers.length,
+       hasFilters: !!(search || filterRole || filterStatus),
+       filters: {
+         search: search || null,
+         role: filterRole ? roles.find(r => r.id === filterRole)?.name : null,
+         status: filterStatus || null
+       }
+     };
 
-     createExportData(exportData, exportColumns, 'users_export', 'Users');
-   }, [sortedUsers, roleMap]);
+     createExportData(exportData, exportColumns, 'users_export', 'Users', exportInfo);
+   }, [filteredUsers, roleMap, search, filterRole, filterStatus, roles]);
 
    const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
 
@@ -156,6 +185,18 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
    useEffect(() => {
        setCurrentPage(1);
    }, [search, filterRole, filterStatus]);
+
+   // Cleanup filters when component unmounts
+   useEffect(() => {
+       return () => {
+           // Reset filters when leaving the page
+           dispatch(setFilters({ search: '', role: '', status: '' }));
+           // Reset local states
+           setFilterRole('');
+           setFilterStatus('');
+           setCurrentPage(1);
+       };
+   }, [dispatch]);
 
 
    const handleEditUser = (user) => {
@@ -302,6 +343,54 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
        }
    };
 
+   const getRoleBadgeClass = (role) => {
+       const roleName = roleMap[role]?.toUpperCase();
+       switch (roleName) {
+           case 'ADMIN':
+               return 'bg-danger-transparent';
+           case 'TECHNICIAN':
+               return 'bg-primary-transparent';
+           case 'CUSTOMER':
+               return 'bg-success-transparent';
+           case 'PENDING':
+               return 'bg-warning-transparent';
+           default:
+               return 'bg-secondary-transparent';
+       }
+   };
+
+   const getRoleColor = (role) => {
+       const roleName = roleMap[role]?.toUpperCase();
+       switch (roleName) {
+           case 'ADMIN':
+               return '#dc3545'; // Đỏ đậm
+           case 'TECHNICIAN':
+               return '#0d6efd'; // Xanh dương đậm
+           case 'CUSTOMER':
+               return '#198754'; // Xanh lá đậm
+           case 'PENDING':
+               return '#ffc107'; // Vàng đậm
+           default:
+               return '#6c757d'; // Xám
+       }
+   };
+
+   const getRoleIconClass = (role) => {
+       const roleName = roleMap[role]?.toUpperCase();
+       switch (roleName) {
+           case 'ADMIN':
+               return 'role-admin';
+           case 'TECHNICIAN':
+               return 'role-technician';
+           case 'CUSTOMER':
+               return 'role-customer';
+           case 'PENDING':
+               return 'role-pending';
+           default:
+               return 'role-default';
+       }
+   };
+
 
    const getStatusIconClass = (status) => {
        switch (status?.toUpperCase()) {
@@ -352,27 +441,42 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                        <Select
                            allowClear
                            placeholder="Vai trò"
-                           style={{ width: 130 }}
+                           style={{ width: 160 }}
                            value={filterRole || undefined}
                            onChange={value => {
                              setFilterRole(value);
                              dispatch(setFilters({ role: value }));
                            }}
-                           options={roles.map(role => ({ value: role.id, label: role.name }))}
+                           options={roles.map(role => ({ 
+                               value: role.id, 
+                               label: (
+                                   <div className="d-flex align-items-center">
+                                       <div className="me-2" style={{ 
+                                           width: '6px', 
+                                           height: '6px', 
+                                           borderRadius: '50%',
+                                           backgroundColor: getRoleColor(role.id)
+                                       }}></div>
+                                       <span style={{ color: getRoleColor(role.id), fontWeight: '500' }}>
+                                           {roleNameMapping[role.name] || role.name}
+                                       </span>
+                                   </div>
+                               )
+                           }))}
                        />
                        {/* Status Filter */}
                        <Select
                            allowClear
                            placeholder="Trạng thái"
-                           style={{ width: 130 }}
+                           style={{ width: 160 }}
                            value={filterStatus || undefined}
                            onChange={value => {
                              setFilterStatus(value);
                              dispatch(setFilters({ status: value }));
                            }}
                            options={[
-                               { value: 'ACTIVE', label: 'ACTIVE' },
-                               { value: 'INACTIVE', label: 'INACTIVE' },
+                               { value: 'ACTIVE', label: 'Hoạt động' },
+                               { value: 'INACTIVE', label: 'Không hoạt động' },
                            ]}
                        />
                    </div>
@@ -387,6 +491,7 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                { value: 'oldest', label: 'Cũ nhất' },
                            ]}
                        />
+
                    </div>
                </div>
 
@@ -403,13 +508,21 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                    {filterRole && (
                      <span className="badge bg-info-transparent">
                        <i className="ti ti-user me-1"></i>
-                       Vai trò: {roles.find(r => r.id === filterRole)?.name || filterRole}
+                       Vai trò: <span className="ms-1" style={{ 
+                           color: getRoleColor(filterRole),
+                           fontSize: '11px',
+                           fontWeight: '600',
+                           textTransform: 'uppercase',
+                           letterSpacing: '0.5px'
+                       }}>
+                           {roleNameMapping[roles.find(r => r.id === filterRole)?.name] || roles.find(r => r.id === filterRole)?.name || filterRole}
+                       </span>
                      </span>
                    )}
                    {filterStatus && (
                      <span className="badge bg-warning-transparent">
                        <i className="ti ti-filter me-1"></i>
-                       Trạng thái: {filterStatus}
+                       Trạng thái: {filterStatus === 'ACTIVE' ? 'Hoạt động' : filterStatus === 'INACTIVE' ? 'Không hoạt động' : filterStatus}
                      </span>
                    )}
                    <button 
@@ -486,10 +599,27 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                            </div>
                                        </td>
                                        <td><p className="text-gray-9">{user.email}</p></td>
-                                       <td><p className="text-gray-9">{roleMap[user.role]}</p></td>
+                                       <td>
+                                           <div className="d-flex align-items-center">
+                                               <div className={`role-icon me-2 ${getRoleIconClass(user.role)}`} style={{ 
+                                                   width: '8px', 
+                                                   height: '8px', 
+                                                   borderRadius: '50%',
+                                                   backgroundColor: getRoleColor(user.role)
+                                               }}></div>
+                                               <span className="fw-semibold" style={{ 
+                                                   color: getRoleColor(user.role),
+                                                   fontSize: '13px',
+                                                   textTransform: 'uppercase',
+                                                   letterSpacing: '0.5px'
+                                               }}>
+                                                   {roleNameMapping[roleMap[user.role]] || roleMap[user.role]}
+                                               </span>
+                                           </div>
+                                       </td>
                                        <td>
                                            <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
-                                               {user.status}
+                                               {user.status === 'ACTIVE' ? 'Hoạt động' : user.status === 'INACTIVE' ? 'Không hoạt động' : user.status}
                                            </span>
                                        </td>
                                        <td>

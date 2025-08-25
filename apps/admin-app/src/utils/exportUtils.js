@@ -1,11 +1,12 @@
 // Utility function để tạo export data cho các trang management
-export const createExportData = (data, columns, fileName, sheetName) => {
+export const createExportData = (data, columns, fileName, sheetName, exportInfo = null) => {
   // Set vào window object để AdminHeader có thể truy cập
   window.currentPageExportData = {
     data: data,
     columns: columns,
     fileName: fileName,
-    sheetName: sheetName
+    sheetName: sheetName,
+    exportInfo: exportInfo
   };
 };
 

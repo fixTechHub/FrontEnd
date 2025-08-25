@@ -194,36 +194,35 @@ const couponsPerPage = 10;
 // Set export data và columns
 useEffect(() => {
   const exportColumns = [
-    { title: 'Mã', dataIndex: 'code' },
-    { title: 'Mô tả', dataIndex: 'description' },
-    { title: 'Loại', dataIndex: 'type' },
-    { title: 'Giá trị', dataIndex: 'value' },
-    { title: 'Giảm tối đa', dataIndex: 'maxDiscount' },
-    { title: 'Giá trị đơn hàng tối thiểu', dataIndex: 'minOrderValue' },
-    { title: 'Số lượng mã giảm giá', dataIndex: 'totalUsageLimit' },
-    { title: 'Số lượng mã đã sử dụng', dataIndex: 'usedCount' },
-    { title: 'Ngày bắt đầu', dataIndex: 'startDate' },
-    { title: 'Ngày kết thúc', dataIndex: 'endDate' },
-    { title: 'Trạng thái', dataIndex: 'status' },
-    { title: 'Loại người dùng', dataIndex: 'audience' },
-    { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+    { title: 'Mã', dataIndex: 'Mã' },
+    { title: 'Mô tả', dataIndex: 'Mô tả' },
+    { title: 'Loại', dataIndex: 'Loại' },
+    { title: 'Giá trị', dataIndex: 'Giá trị' },
+    { title: 'Giảm tối đa', dataIndex: 'Giảm tối đa' },
+    { title: 'Giá trị đơn hàng tối thiểu', dataIndex: 'Giá trị đơn hàng tối thiểu' },
+    { title: 'Số lượng mã giảm giá', dataIndex: 'Số lượng mã giảm giá' },
+    { title: 'Số lượng mã đã sử dụng', dataIndex: 'Số lượng mã đã sử dụng' },
+    { title: 'Ngày bắt đầu', dataIndex: 'Ngày bắt đầu' },
+    { title: 'Ngày kết thúc', dataIndex: 'Ngày kết thúc' },
+    { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+    { title: 'Loại người dùng', dataIndex: 'Loại người dùng' },
+    { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
   ];
 
   const exportData = sortedCoupons.map(coupon => ({
-    code: coupon.code,
-    description: coupon.description,
-    type: coupon.type,
-    value: coupon.type === 'PERCENT' ? `${coupon.value}%` : formatCurrency(coupon.value),
-    maxDiscount: formatCurrency(coupon.maxDiscount),
-    minOrderValue: formatCurrency(coupon.minOrderValue),
-    totalUsageLimit: coupon.totalUsageLimit,
-    usedCount: coupon.usedCount || 0,
-    startDate: formatDateTime(coupon.startDate),
-    endDate: formatDateTime(coupon.endDate),
-    status: coupon.isActive ? 'ACTIVE' : 'INACTIVE',
-    audience: coupon.audience,
-    createdAt: formatDateTime(coupon.createdAt),
-    updatedAt: formatDateTime(coupon.updatedAt),
+    'Mã': coupon.code,
+    'Mô tả': coupon.description,
+    'Loại': coupon.type,
+    'Giá trị': coupon.type === 'PERCENT' ? `${coupon.value}%` : formatCurrency(coupon.value),
+    'Giảm tối đa': formatCurrency(coupon.maxDiscount),
+    'Giá trị đơn hàng tối thiểu': formatCurrency(coupon.minOrderValue),
+    'Số lượng mã giảm giá': coupon.totalUsageLimit,
+    'Số lượng mã đã sử dụng': coupon.usedCount || 0,
+    'Ngày bắt đầu': formatDateTime(coupon.startDate),
+    'Ngày kết thúc': formatDateTime(coupon.endDate),
+    'Trạng thái': coupon.isActive ? 'Hoạt động' : 'Không hoạt động',
+    'Loại người dùng': coupon.audience,
+    'Thời gian tạo': formatDateTime(coupon.createdAt),
   }));
 
   createExportData(exportData, exportColumns, 'coupons_export', 'Coupons');
@@ -691,24 +690,24 @@ const handleConfirmUserSelection = () => {
              </div>
            </div>
            <Select
-             placeholder="Phân loại"
+             placeholder="Loại"
              value={filterType || undefined}
              onChange={value => setFilterType(value)}
-             style={{ width: 130 }}
+             style={{ width: 150 }}
              allowClear
            >
-             <Select.Option value="PERCENT">PERCENT</Select.Option>
-             <Select.Option value="FIXED">FIXED</Select.Option>
+             <Select.Option value="PERCENT">Phần trăm</Select.Option>
+             <Select.Option value="FIXED">Cố định</Select.Option>
            </Select>
            <Select
              placeholder="Trạng thái"
              value={filterStatus || undefined}
              onChange={value => setFilterStatus(value)}
-             style={{ width: 130 }}
+             style={{ width: 150 }}
              allowClear
            >
-             <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-             <Select.Option value="INACTIVE">INACTIVE</Select.Option>
+             <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+             <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
            </Select>
          </div>
          <div className="d-flex align-items-center" style={{ gap: 12 }}>
@@ -738,13 +737,13 @@ const handleConfirmUserSelection = () => {
            {filterType && (
              <span className="badge bg-info-transparent">
                <i className="ti ti-filter me-1"></i>
-               Phân loại: {filterType}
+               Phân loại: {filterType === 'PERCENT' ? 'Phần trăm' : filterType === 'FIXED' ? 'Cố định' : filterType}
              </span>
            )}
            {filterStatus && (
              <span className="badge bg-warning-transparent">
                <i className="ti ti-filter me-1"></i>
-               Trạng thái: {filterStatus}
+               Trạng thái: {filterStatus === 'ACTIVE' ? 'Hoạt động' : filterStatus === 'INACTIVE' ? 'Không hoạt động' : filterStatus}
              </span>
            )}
            <button 
@@ -859,7 +858,7 @@ const handleConfirmUserSelection = () => {
                      <td>{coupon.totalUsageLimit || 0}</td>
                      <td>
                        <span className={`badge ${coupon.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                         {coupon.isActive ? 'ACTIVE' : 'INACTIVE'}
+                         {coupon.isActive ? 'Hoạt động' : 'Không hoạt động'}
                        </span>
                      </td>
                      <td>
@@ -1050,11 +1049,12 @@ const handleConfirmUserSelection = () => {
                  placeholder="Type"
                  name="type"
                  value={formData.type}
-                 onChange={(value) => handleChange({ target: { name: 'type', value } })}
+                 onChange={value => handleChange({ target: { name: 'type', value } })}
                  required
+                 style={{ width: '100%' }}
                >
-                 <Select.Option value="PERCENT">PERCENT</Select.Option>
-                 <Select.Option value="FIXED">FIXED</Select.Option>
+                 <Select.Option value="PERCENT">Phần trăm</Select.Option>
+                 <Select.Option value="FIXED">Cố định</Select.Option>
                </Select>
              </Form.Item>
            </Col>
@@ -1243,12 +1243,12 @@ const handleConfirmUserSelection = () => {
                <Select
                  name="audience"
                  value={formData.audience}
-                 onChange={(value) => handleChange({ target: { name: 'audience', value } })}
+                 onChange={value => handleChange({ target: { name: 'audience', value } })}
+                 style={{ width: '100%' }}
                >
-                 <Select.Option value="ALL">Tất cả người dùng (ALL)</Select.Option>
-                 <Select.Option value="NEW_USER">Chỉ user chưa có booking nào (NEW_USER)</Select.Option>
-                 <Select.Option value="EXISTING_USER">Chỉ user đang hoạt động (EXISTING_USER)</Select.Option>
-                 <Select.Option value="SPECIFIC_USERS">Chỉ user được chọn (SPECIFIC_USERS)</Select.Option>
+                 <Select.Option value="ALL">Tất cả người dùng</Select.Option>
+                 <Select.Option value="NEW_USER">Người dùng mới</Select.Option>
+                 <Select.Option value="SPECIFIC_USERS">Chọn người dùng</Select.Option>
                </Select>
              </Form.Item>
            </Col>
@@ -1258,8 +1258,8 @@ const handleConfirmUserSelection = () => {
                  name="isActive"
                  checked={formData.isActive}
                  onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                 checkedChildren="Active"
-                 unCheckedChildren="Inactive"
+                 checkedChildren="Hoạt động"
+                 unCheckedChildren="Không hoạt động"
                />
              </Form.Item>
            </Col>
@@ -1328,10 +1328,11 @@ const handleConfirmUserSelection = () => {
                <Select
                  name="type"
                  value={formData.type}
-                 onChange={(value) => handleChange({ target: { name: 'type', value } })}
+                 onChange={value => handleChange({ target: { name: 'type', value } })}
+                 style={{ width: '100%' }}
                >
-                 <Select.Option value="PERCENT">PERCENT</Select.Option>
-                 <Select.Option value="FIXED">FIXED</Select.Option>
+                 <Select.Option value="PERCENT">Phần trăm</Select.Option>
+                 <Select.Option value="FIXED">Cố định</Select.Option>
                </Select>
              </Form.Item>
            </Col>
@@ -1520,12 +1521,13 @@ const handleConfirmUserSelection = () => {
                <Select
                  name="audience"
                  value={formData.audience}
-                 onChange={(value) => handleChange({ target: { name: 'audience', value } })}
+                 onChange={value => handleChange({ target: { name: 'audience', value } })}
+                 style={{ width: '100%' }}
                >
-                 <Select.Option value="ALL">Tất cả người dùng (ALL)</Select.Option>
-                 <Select.Option value="NEW_USER">Chỉ user chưa có booking nào (NEW_USER)</Select.Option>
-                 <Select.Option value="EXISTING_USER">Chỉ user đang hoạt động (EXISTING_USER)</Select.Option>
-                 <Select.Option value="SPECIFIC_USERS">Chỉ user được chọn (SPECIFIC_USERS)</Select.Option>
+                 <Select.Option value="ALL">Tất cả người dùng</Select.Option>
+                 <Select.Option value="NEW_USER">Chỉ user chưa có booking nào</Select.Option>
+                 <Select.Option value="EXISTING_USER">Chỉ user đang hoạt động</Select.Option>
+                 <Select.Option value="SPECIFIC_USERS">Chỉ user được chọn</Select.Option>
                </Select>
              </Form.Item>
            </Col>
@@ -1535,8 +1537,8 @@ const handleConfirmUserSelection = () => {
                  name="isActive"
                  checked={formData.isActive}
                  onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                 checkedChildren="Active"
-                 unCheckedChildren="Inactive"
+                 checkedChildren="Hoạt động"
+                 unCheckedChildren="Không hoạt động"
                />
              </Form.Item>
            </Col>
@@ -1918,7 +1920,7 @@ const handleConfirmUserSelection = () => {
                <label style={{ fontWeight: 600, color: '#666' }}>Trạng thái:</label>
                <div style={{ fontSize: 16 }}>
                  <span className={`badge ${selectedCoupon.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                   {selectedCoupon.isActive ? 'ACTIVE' : 'INACTIVE'}
+                   {selectedCoupon.isActive ? 'Hoạt động' : 'Không hoạt động'}
                  </span>
                </div>
              </div>

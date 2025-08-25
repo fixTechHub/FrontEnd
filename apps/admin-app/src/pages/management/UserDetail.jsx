@@ -30,6 +30,114 @@ const formatStatusLabel = (status) => {
   return String(status).replace(/_/g, ' ');
 };
 
+// Mapping vai trò từ tiếng Anh sang tiếng Việt
+const roleNameMapping = {
+  'ADMIN': 'Quản trị viên',
+  'PENDING': 'Đang chờ',
+  'TECHNICIAN': 'Kỹ thuật viên',
+  'CUSTOMER': 'Khách hàng',
+  'admin': 'Quản trị viên',
+  'technician': 'Kỹ thuật viên',
+  'customer': 'Khách hàng',
+  'pending': 'Đang chờ'
+};
+
+// Mapping trạng thái đơn hàng từ tiếng Anh sang tiếng Việt
+const bookingStatusMapping = {
+  'PENDING': 'Đang chờ',
+  'CANCELLED': 'Đã hủy',
+  'WAITING_CONFIRM': 'Chờ xác nhận',
+  'IN_PROGRESS': 'Đang xử lý',
+  'CONFIRMED': 'Đã xác nhận',
+  'DONE': 'Hoàn thành',
+  'AWAITING_CONFIRM': 'Chờ xác nhận',
+  'CONFIRM_ADDITIONAL': 'Xác nhận bổ sung',
+  'WAITING_CUSTOMER_CONFIRM_ADDITIONAL': 'Chờ khách hàng xác nhận bổ sung',
+  'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL': 'Chờ kỹ thuật viên xác nhận bổ sung',
+  'AWAITING_DONE': 'Chờ hoàn thành'
+};
+
+// Function để lấy màu sắc cho trạng thái đơn hàng
+const getBookingStatusColor = (status) => {
+  switch (status) {
+    case 'PENDING':
+    case 'WAITING_CONFIRM':
+    case 'AWAITING_CONFIRM':
+    case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL':
+    case 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL':
+    case 'AWAITING_DONE':
+      return 'orange';
+    case 'IN_PROGRESS':
+      return 'blue';
+    case 'CONFIRMED':
+    case 'CONFIRM_ADDITIONAL':
+      return 'green';
+    case 'DONE':
+      return 'green';
+    case 'CANCELLED':
+      return 'red';
+    default:
+      return 'default';
+  }
+};
+
+// Function để lấy màu sắc cho vai trò
+const getRoleColor = (role) => {
+  const roleName = role?.toUpperCase();
+  switch (roleName) {
+    case 'ADMIN':
+      return '#dc3545'; // Đỏ đậm
+    case 'TECHNICIAN':
+      return '#0d6efd'; // Xanh dương đậm
+    case 'CUSTOMER':
+      return '#198754'; // Xanh lá đậm
+    case 'PENDING':
+      return '#ffc107'; // Vàng đậm
+    default:
+      return '#6c757d'; // Xám
+  }
+};
+
+// Mapping trạng thái user từ tiếng Anh sang tiếng Việt
+const userStatusMapping = {
+  'ACTIVE': 'Hoạt động',
+  'INACTIVE': 'Không hoạt động',
+  'LOCKED': 'Đã khóa',
+  'PENDING': 'Đang chờ'
+};
+
+// Function để lấy màu sắc cho trạng thái user
+const getUserStatusColor = (status) => {
+  switch (status) {
+    case 'ACTIVE':
+      return '#52c41a'; // Xanh lá
+    case 'INACTIVE':
+      return '#6c757d'; // Xám
+    case 'LOCKED':
+      return '#ff4d4f'; // Đỏ
+    case 'PENDING':
+      return '#faad14'; // Vàng
+    default:
+      return '#6c757d'; // Xám mặc định
+  }
+};
+
+// Function để lấy badge class cho trạng thái user (giống UserManagement)
+const getUserStatusBadgeClass = (status) => {
+  switch (status?.toUpperCase()) {
+    case 'ACTIVE':
+      return 'bg-success-transparent';
+    case 'INACTIVE':
+      return 'bg-danger-transparent';
+    case 'LOCKED':
+      return 'bg-danger-transparent';
+    case 'PENDING':
+      return 'bg-warning-transparent';
+    default:
+      return 'bg-secondary-transparent';
+  }
+};
+
 export default function UserDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -110,7 +218,11 @@ export default function UserDetail() {
     () => [
       { title: 'Mã đơn hàng', dataIndex: 'bookingCode', key: 'bookingCode' },
       { title: 'Dịch vụ', dataIndex: 'serviceName', key: 'serviceName', render: (_, r) => serviceMap[r.serviceId] || r.serviceName || r.serviceId },
-      { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => <Tag>{formatStatusLabel(s)}</Tag> },
+      { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => (
+        <Tag color={getBookingStatusColor(s)}>
+          {bookingStatusMapping[s] || s?.replace(/_/g, ' ')}
+        </Tag>
+      ) },
       { title: 'Thời gian tạo đơn hàng', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
     ],
     [serviceMap]
@@ -118,12 +230,16 @@ export default function UserDetail() {
 
   useEffect(() => {
     if (!bookings || bookings.length === 0) return;
-    const exportColumns = bookingColumns.map((c) => ({ title: c.title, dataIndex: c.dataIndex }));
+    const exportColumns = [
+      ...bookingColumns.map((c) => ({ title: c.title, dataIndex: c.dataIndex })),
+      { title: 'Vai trò người dùng', dataIndex: 'userRole' }
+    ];
     const exportData = filteredBookings.map((b) => ({
       bookingCode: b.bookingCode,
       serviceName: serviceMap[b.serviceId] || b.serviceName || b.serviceId,
-      status: formatStatusLabel(b.status),
+      status: bookingStatusMapping[b.status] || b.status?.replace(/_/g, ' '),
       createdAt: formatDateTime(b.createdAt),
+      userRole: roleNameMapping[user?.roleName || user?.role] || user?.roleName || user?.role || '',
     }));
     createExportData(exportData, exportColumns, `user_${id}_bookings`, 'UserBookings');
   }, [filteredBookings, bookingColumns, id, serviceMap]);
@@ -267,9 +383,22 @@ export default function UserDetail() {
                     <Descriptions.Item label="Họ và tên">{user.fullName || ''}</Descriptions.Item>
                     <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
                     <Descriptions.Item label="SĐT">{user.phone || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Vai trò">{user.roleName || user.role || ''}</Descriptions.Item>
+                                            <Descriptions.Item label="Vai trò">
+                          <span style={{ 
+                            color: getRoleColor(user.roleName || user.role),
+                            fontWeight: '600',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}>
+                            {roleNameMapping[user.roleName || user.role] || user.roleName || user.role || ''}
+                          </span>
+                        </Descriptions.Item>
                     <Descriptions.Item label="Mã người dùng">{user.userCode || ''}</Descriptions.Item>
-                    <Descriptions.Item label="Trạng thái">{statusTag(user.status)}</Descriptions.Item>
+                                         <Descriptions.Item label="Trạng thái">
+                       <span className={`badge ${getUserStatusBadgeClass(user.status)} text-dark`}>
+                         {userStatusMapping[user.status] || user.status || 'N/A'}
+                       </span>
+                     </Descriptions.Item>
                     <Descriptions.Item label="Thời gian tạo">{formatDateTime(user.createdAt)}</Descriptions.Item>
                     <Descriptions.Item label="Địa chỉ" span={2}>{formatAddressValue(user.address)}</Descriptions.Item>
                   </Descriptions>
@@ -337,7 +466,7 @@ export default function UserDetail() {
                                 placeholder="Dịch vụ"
                                 value={filterService || undefined}
                                 onChange={(value) => setFilterService(value)}
-                                style={{ width: 150 }}
+                                style={{ width: 250}}
                                 allowClear
                               >
                                 {allServices.map(s => (
@@ -352,21 +481,22 @@ export default function UserDetail() {
                                 placeholder="Trạng thái"
                                 value={filterStatus || undefined}
                                 onChange={(value) => setFilterStatus(value)}
-                                style={{ width: 130 }}
+                                style={{ width: 250 }}
                                 allowClear
-                              >
-                                <Select.Option value="PENDING">PENDING</Select.Option>
-                                <Select.Option value="CANCELLED">CANCELLED</Select.Option>
-                                <Select.Option value="WAITING_CONFIRM">WAITING CONFIRM</Select.Option>
-                                <Select.Option value="IN_PROGRESS">IN PROGRESS</Select.Option>
-                                <Select.Option value="CONFIRMED">CONFIRMED</Select.Option>
-                                <Select.Option value="DONE">DONE</Select.Option>
-                                <Select.Option value="AWAITING_CONFIRM">AWAITING CONFIRM</Select.Option>
-                                <Select.Option value="CONFIRM_ADDITIONAL">CONFIRM ADDITIONAL</Select.Option>
-                                <Select.Option value="WAITING_CUSTOMER_CONFIRM_ADDITIONAL">WAITING CUSTOMER CONFIRM ADDITIONAL</Select.Option>
-                                <Select.Option value="WAITING_TECHNICIAN_CONFIRM_ADDITIONAL">WAITING TECHNICIAN CONFIRM ADDITIONAL</Select.Option>
-                                <Select.Option value="AWAITING_DONE">AWAITING DONE</Select.Option>
-                              </Select>
+                                options={[
+                                  { value: 'PENDING', label: 'Đang chờ' },
+                                  { value: 'CANCELLED', label: 'Đã hủy' },
+                                  { value: 'WAITING_CONFIRM', label: 'Chờ xác nhận' },
+                                  { value: 'IN_PROGRESS', label: 'Đang xử lý' },
+                                  { value: 'CONFIRMED', label: 'Đã xác nhận' },
+                                  { value: 'DONE', label: 'Hoàn thành' },
+                                  { value: 'AWAITING_CONFIRM', label: 'Chờ xác nhận' },
+                                  { value: 'CONFIRM_ADDITIONAL', label: 'Xác nhận bổ sung' },
+                                  { value: 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL', label: 'Chờ khách hàng xác nhận bổ sung' },
+                                  { value: 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL', label: 'Chờ kỹ thuật viên xác nhận bổ sung' },
+                                  { value: 'AWAITING_DONE', label: 'Chờ hoàn thành' }
+                                ]}
+                              />
                             </div>
 
                             
@@ -391,7 +521,7 @@ export default function UserDetail() {
            {filterStatus && (
              <span className="badge bg-warning-transparent">
                <i className="ti ti-filter me-1"></i>
-               Trạng thái: {filterStatus.replace(/_/g, ' ')}
+               Trạng thái: {bookingStatusMapping[filterStatus] || filterStatus.replace(/_/g, ' ')}
              </span>
            )}
            <button 

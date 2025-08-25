@@ -214,26 +214,21 @@ const ServiceManagement = () => {
   // Set export data và columns
   useEffect(() => {
     const exportColumns = [
-      { title: 'Tên dịch vụ', dataIndex: 'serviceName' },
-      { title: 'Danh mục', dataIndex: 'categoryName' },
-      { title: 'Trạn thái', dataIndex: 'status' },
-      { title: 'Mô tả', dataIndex: 'description' },
-      { title: 'Thời gian tạo', dataIndex: 'createdAt' },
+      { title: 'Tên dịch vụ', dataIndex: 'Tên dịch vụ' },
+      { title: 'Danh mục', dataIndex: 'Danh mục' },
+      { title: 'Trạng thái', dataIndex: 'Trạng thái' },
+      { title: 'Mô tả', dataIndex: 'Mô tả' },
+      { title: 'Thời gian tạo', dataIndex: 'Thời gian tạo' },
     ];
 
     const exportData = sortedServices.map(service => {
       const category = categories.find(cat => cat.id === service.categoryId);
       return {
-        serviceName: service.serviceName,
-        categoryName: category?.categoryName || service.categoryId,
-        status: service.isActive ? 'ACTIVE' : 'INACTIVE',
-        description: service.description,
-        fontFamily: service.fontFamily || 'Arial',
-        fontSize: service.fontSize || '14',
-        textAlign: service.textAlign || 'left',
-        embeddingDimensions: service.embedding?.length || 0,
-        createdAt: formatDateTime(service.createdAt),
-        updatedAt: formatDateTime(service.updatedAt),
+        'Tên dịch vụ': service.serviceName,
+        'Danh mục': category?.categoryName || service.categoryId,
+        'Trạng thái': service.isActive ? 'Hoạt động' : 'Không hoạt động',
+        'Mô tả': service.description,
+        'Thời gian tạo': formatDateTime(service.createdAt),
       };
     });
 
@@ -390,7 +385,7 @@ const ServiceManagement = () => {
               placeholder="Danh mục"
               value={filterCategory || undefined}
               onChange={value => setFilterCategory(value)}
-              style={{ width: 150 }}
+              style={{ width: 180 }}
               allowClear
             >
               {categories.map(cat => (
@@ -401,11 +396,11 @@ const ServiceManagement = () => {
               placeholder="Trạng thái"
               value={filterStatus || undefined}
               onChange={value => setFilterStatus(value)}
-              style={{ width: 130 }}
+              style={{ width: 150 }}
               allowClear
             >
-              <Select.Option value="ACTIVE">ACTIVE</Select.Option>
-              <Select.Option value="INACTIVE">INACTIVE</Select.Option>
+              <Select.Option value="ACTIVE">Hoạt động</Select.Option>
+              <Select.Option value="INACTIVE">Không hoạt động</Select.Option>
             </Select>
           </div>
           <div className="d-flex align-items-center">
@@ -441,7 +436,7 @@ const ServiceManagement = () => {
             {filterStatus && (
               <span className="badge bg-warning-transparent">
                 <i className="ti ti-filter me-1"></i>
-                Trạng thái: {filterStatus}
+                Trạng thái: {filterStatus === 'ACTIVE' ? 'Hoạt động' : filterStatus === 'INACTIVE' ? 'Không hoạt động' : filterStatus}
               </span>
             )}
             <button 
@@ -519,7 +514,7 @@ const ServiceManagement = () => {
                         <td>{category ? category.categoryName : '-'}</td>
                         <td>
                           <span className={`badge ${svc.isActive ? 'bg-success-transparent' : 'bg-danger-transparent'} text-dark`}>
-                            {svc.isActive ? 'ACTIVE' : 'INACTIVE'}
+                            {svc.isActive ? 'Hoạt động' : 'Không hoạt động'}
                           </span>
                         </td>
                         <td>
@@ -759,8 +754,8 @@ const ServiceManagement = () => {
                     name="isActive"
                     checked={formData.isActive}
                     onChange={(checked) => handleChange({ target: { name: 'isActive', type: 'checkbox', checked } })}
-                    checkedChildren="Active"
-                    unCheckedChildren="Inactive"
+                    checkedChildren="Hoạt động"
+                    unCheckedChildren="Không hoạt động"
                   />
                   <div style={{
                     fontSize: 12,
@@ -948,7 +943,7 @@ const ServiceManagement = () => {
                   <td>{categories.find(cat => cat.id === svc.categoryId)?.categoryName || '-'}</td>
                   <td>
                     <span className={`badge ${svc.isActive ? 'bg-success' : 'bg-danger'}`}>
-                      {svc.isActive ? 'Active' : 'Inactive'}
+                      {svc.isActive ? 'Hoạt động' : 'Không hoạt động'}
                     </span>
                   </td>
                   <td>
