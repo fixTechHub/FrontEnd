@@ -493,10 +493,10 @@ export default function TechnicianDetail() {
                        }}>
                          <i className="ti ti-wallet" style={{ 
                            fontSize: '20px', 
-                           color: 'white' 
+                           color: 'black' 
                          }} />
                        </div>
-                       <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                       <div style={{ fontSize: '14px', opacity: 0.9, color: 'black' }}>
                          Tổng Thu Nhập
                        </div>
                      </div>
@@ -506,7 +506,8 @@ export default function TechnicianDetail() {
                        fontSize: '28px',
                        fontWeight: '700',
                        marginBottom: '8px',
-                       textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                       textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                       color: 'black'
                      }}>
                        {formatCurrency(financialData.totalEarning || 0)}
                      </div>
@@ -515,7 +516,8 @@ export default function TechnicianDetail() {
                      <div style={{
                        fontSize: '12px',
                        opacity: 0.8,
-                       fontWeight: '500'
+                       fontWeight: '500',
+                       color: 'black'
                      }}>
                        Từ tất cả công việc
                      </div>

@@ -1525,9 +1525,8 @@ const handleConfirmUserSelection = () => {
                  style={{ width: '100%' }}
                >
                  <Select.Option value="ALL">Tất cả người dùng</Select.Option>
-                 <Select.Option value="NEW_USER">Chỉ user chưa có booking nào</Select.Option>
-                 <Select.Option value="EXISTING_USER">Chỉ user đang hoạt động</Select.Option>
-                 <Select.Option value="SPECIFIC_USERS">Chỉ user được chọn</Select.Option>
+                 <Select.Option value="NEW_USER">Người dùng mới</Select.Option>
+                 <Select.Option value="SPECIFIC_USERS">Chọn người dùng</Select.Option>
                </Select>
              </Form.Item>
            </Col>
