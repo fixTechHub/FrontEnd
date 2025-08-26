@@ -22,12 +22,6 @@ const BreadcrumbSection = () => (
 			<div className="row align-items-center text-center">
 				<div className="col-md-12 col-12">
 					<h2 className="breadcrumb-title">Bảng điều khiển</h2>
-					<nav aria-label="breadcrumb" className="page-breadcrumb">
-						<ol className="breadcrumb">
-							<li className="breadcrumb-item"><a href="/">Trang chủ</a></li>
-							<li className="breadcrumb-item active" aria-current="page">Bảng điều khiển</li>
-						</ol>
-					</nav>
 				</div>
 			</div>
 		</div>

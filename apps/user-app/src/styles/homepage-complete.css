@@ -1441,20 +1441,21 @@ h1, h2, h3, h4, h5, h6 {
 /* ========== SERVICES SECTION ========== */
 .nhp-services-section-enhanced {
   padding: 6rem 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 50%, #f1f5f9 100%);
   position: relative;
   overflow: hidden;
 }
 
 .nhp-services-section-enhanced .nhp-section-title-enhanced,
 .nhp-services-section-enhanced .nhp-section-description-enhanced {
-  color: white;
+  color: #2d3748;
 }
 
 .nhp-services-section-enhanced .nhp-section-badge-enhanced {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: linear-gradient(135deg, #fe9307, #ffb347);
+  border: 1px solid rgba(254, 147, 7, 0.3);
   backdrop-filter: blur(20px);
+  color: white;
 }
 
 .nhp-services-floating-bg {
@@ -1472,7 +1473,7 @@ h1, h2, h3, h4, h5, h6 {
   content: '';
   position: absolute;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(254, 147, 7, 0.05);
 }
 
 .nhp-services-floating-bg::before {
@@ -1673,6 +1674,12 @@ h1, h2, h3, h4, h5, h6 {
   transition: all 0.3s ease;
   color: #2d3748;
   position: relative;
+  width: 380px;
+  max-width: 380px;
+  min-height: 280px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .nhp-testi-card-enhanced:hover {
@@ -1732,6 +1739,11 @@ h1, h2, h3, h4, h5, h6 {
   color: #4a5568;
   margin-bottom: 2rem;
   font-style: italic;
+  height: 4.5rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .nhp-testi-footer-enhanced {
@@ -3704,6 +3716,16 @@ a:focus-visible {
   padding-bottom: 3.5rem;
 }
 
+.testi-swiper .swiper-wrapper {
+  align-items: stretch;
+}
+
+.testi-swiper .swiper-slide {
+  height: auto;
+  display: flex;
+  align-items: stretch;
+}
+
 .testi-swiper .swiper-pagination {
   bottom: -28px !important;
 }
@@ -3714,10 +3736,6 @@ a:focus-visible {
   align-items: stretch;
   height: auto;
   transition: transform .4s ease, opacity .4s ease;
-}
-
-.testi-swiper .swiper-slide-active {
-  transform: scale(1.02);
 }
 
 .testi-modern-card {
@@ -3731,17 +3749,9 @@ a:focus-visible {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  width: 340px;
+  width: 380px;
   max-width: 94vw;
-  min-height: 260px;
-}
-
-@media(min-width:768px) {
-  .testi-modern-card { width: 400px; }
-}
-
-@media(min-width:1024px) {
-  .testi-modern-card { width: 460px; }
+  min-height: 280px;
 }
 
 .testi-modern-card:hover {
@@ -3806,6 +3816,11 @@ a:focus-visible {
   line-height: 1.6;
   text-align: center;
   margin-bottom: 1rem;
+  height: 4.5rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .testi-swiper .swiper-pagination-bullet {
@@ -3853,6 +3868,7 @@ a:focus-visible {
   gap: 1.5rem;
   padding: 1rem 0;
   scroll-behavior: smooth;
+  align-items: stretch;
 }
 
 .testi-carousel::-webkit-scrollbar {
@@ -3860,8 +3876,9 @@ a:focus-visible {
 }
 
 .testi-carousel .testimonial-card {
-  flex: 0 0 85%;
-  max-width: 320px;
+  flex: 0 0 380px;
+  width: 380px;
+  max-width: 380px;
   scroll-snap-align: center;
   background: rgba(255,255,255,0.96);
   color: #1f2937;
@@ -3869,21 +3886,16 @@ a:focus-visible {
   border-radius: 1.25rem;
   padding: 2rem 1.5rem;
   box-shadow: 0 6px 24px rgba(0,0,0,.06);
-  transform: scale(.9);
+  transform: scale(1);
   transition: transform .4s cubic-bezier(.4,0,.2,1), box-shadow .4s cubic-bezier(.4,0,.2,1);
   position: relative;
+  min-height: 280px;
 }
 
-@media(min-width:768px) {
-  .testi-carousel .testimonial-card { flex: 0 0 60%; }
-}
 
-@media(min-width:1024px) {
-  .testi-carousel .testimonial-card { flex: 0 0 30%; }
-}
 
 .testi-carousel .testimonial-card:hover {
-  transform: scale(.95);
+  transform: scale(1.02);
   box-shadow: 0 12px 32px rgba(0,0,0,.12);
 }
 
@@ -3927,9 +3939,12 @@ a:focus-visible {
   color: #374151;
   text-align: center;
   line-height: 1.6;
-  max-height: 4.5rem;
+  height: 4.5rem;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 /* ========== TRUST BADGES FIX (CHỨNG NHẬN) ========== */

@@ -510,13 +510,14 @@ function NewHomePage() {
                 window.scrollTo(0, 0);
               }}
               style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                border: "2px solid rgba(255, 255, 255, 0.3)",
+                background: "linear-gradient(135deg, #fe9307, #ffb347)",
+                border: "2px solid rgba(254, 147, 7, 0.3)",
                 color: "white",
                 backdropFilter: "blur(20px)",
                 transition: "all 0.3s ease",
                 display: "inline-block",
-                textDecoration: "none"
+                textDecoration: "none",
+                boxShadow: "0 4px 20px rgba(254, 147, 7, 0.3)"
               }}
             >
               Xem tất cả dịch vụ

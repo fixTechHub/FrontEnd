@@ -180,41 +180,46 @@ function Header() {
                                 </a>
                             </div>
                             <ul className="main-nav">
-                                <li className="has-submenu megamenu">
-                                    <Link to="/">TRANG CHỦ </Link>
-                                </li>
+                                {/* Ẩn navigation cho kỹ thuật viên */}
+                                {user?.role?.name !== 'TECHNICIAN' && (
+                                    <>
+                                        <li className="has-submenu megamenu">
+                                            <Link to="/">TRANG CHỦ </Link>
+                                        </li>
 
-                                {/* <li className="has-submenu">
-                                    <a href="#">DANH MỤC <i className="fas fa-chevron-down"></i></a>
-                                    <ul className="submenu">
-                                        {Array.isArray(categories) && categories.map((category) => (
-                                            <li className="has-submenu"
-                                                key={category._id}>
-                                                <a>{category.categoryName}</a>
+                                        {/* <li className="has-submenu">
+                                            <a href="#">DANH MỤC <i className="fas fa-chevron-down"></i></a>
+                                            <ul className="submenu">
+                                                {Array.isArray(categories) && categories.map((category) => (
+                                                    <li className="has-submenu"
+                                                        key={category._id}>
+                                                        <a>{category.categoryName}</a>
 
-                                                <ul className="submenu">
-                                                    {Array.isArray(services) && services
-                                                        .filter(service => service.categoryId === category._id)
-                                                        .map((service) => (
-                                                            <li key={service._id}><a href="user-dashboard.html">{service.serviceName}</a></li>
-                                                        ))}
-                                                </ul>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </li> */}
+                                                        <ul className="submenu">
+                                                            {Array.isArray(services) && services
+                                                                .filter(service => service.categoryId === category._id)
+                                                                .map((service) => (
+                                                                    <li key={service._id}><a href="user-dashboard.html">{service.serviceName}</a></li>
+                                                                ))}
+                                                        </ul>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </li> */}
 
-                                <li>
-                                    <Link to="/services">DỊCH VỤ</Link>
-                                </li>
+                                        <li>
+                                            <Link to="/services">DỊCH VỤ</Link>
+                                        </li>
 
-                                <li>
-                                    <Link to="/about" onClick={() => window.scrollTo(0, 0)}>VỀ CHÚNG TÔI</Link>
-                                </li>
+                                        <li>
+                                            <Link to="/about" onClick={() => window.scrollTo(0, 0)}>VỀ CHÚNG TÔI</Link>
+                                        </li>
 
-                                <li>
-                                    <Link to="/contact" onClick={() => window.scrollTo(0, 0)}>LIÊN HỆ</Link>
-                                </li>
+                                        <li>
+                                            <Link to="/contact" onClick={() => window.scrollTo(0, 0)}>LIÊN HỆ</Link>
+                                        </li>
+                                    </>
+                                )}
                             </ul>
                         </div>
                         <ul className="nav header-navbar-rht">

@@ -441,6 +441,9 @@ function ProfilePage() {
   const { user, profileLoading } = useSelector((state) => state.auth);
   const authTechnician = useSelector(state=> state.auth.technician);
   const categoriesList = useSelector(state => state.categories.categories);
+  
+  // Get account type for conditional display
+  const accountType = user?.accountType || 'INDIVIDUAL';
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -936,7 +939,7 @@ function ProfilePage() {
       <UserProfile>
         <AvatarWrapper onClick={handleAvatarClick}>
           {avatarPreview || (user?.avatar && !avatarError) ? (
-            <Avatar src={avatarPreview || user?.avatar} alt="Ảnh đại diện" onError={() => setAvatarError(true)} />
+            <Avatar src={avatarPreview || user?.avatar} alt={accountType === 'BUSINESS' ? "Logo doanh nghiệp" : "Ảnh đại diện"} onError={() => setAvatarError(true)} />
           ) : (
             <FaUserCircle size={120} color="#000" />
           )}
@@ -1016,12 +1019,12 @@ function ProfilePage() {
           <ProfileInfoContainer>
             <InfoCard>
               <CardHeader>
-                <i className="bi bi-person-fill"></i>
-                <h6>Thông tin cá nhân</h6>
+                <i className={accountType === 'BUSINESS' ? "bi bi-building-fill" : "bi bi-person-fill"}></i>
+                <h6>{accountType === 'BUSINESS' ? "Thông tin doanh nghiệp" : "Thông tin cá nhân"}</h6>
               </CardHeader>
               <div style={{ padding: '0.5rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <FormControl>
-                  <label htmlFor="fullName">Họ và tên</label>
+                  <label htmlFor="fullName">{accountType === 'BUSINESS' ? "Tên doanh nghiệp" : "Họ và tên"}</label>
                   <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleInputChange} />
                 </FormControl>
               </div>
@@ -1056,19 +1059,19 @@ function ProfilePage() {
         <ProfileInfoContainer>
           <InfoCard>
             <CardHeader>
-              <i className="bi bi-person-fill"></i>
-              <h6>Thông tin cá nhân</h6>
+              <i className={accountType === 'BUSINESS' ? "bi bi-building-fill" : "bi bi-person-fill"}></i>
+              <h6>{accountType === 'BUSINESS' ? "Thông tin doanh nghiệp" : "Thông tin cá nhân"}</h6>
             </CardHeader>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem 0' }}>
               <CardContent>
-                <InfoLabel>Họ và tên:</InfoLabel>
+                <InfoLabel>{accountType === 'BUSINESS' ? "Tên doanh nghiệp:" : "Họ và tên:"}</InfoLabel>
                 <InfoValue>{formData.fullName || "Chưa cập nhật"}</InfoValue>
               </CardContent>
               {user?.role?.name === 'TECHNICIAN' && authTechnician && (
                 <>
                   <CardContent>
-                    <InfoLabel>Số CCCD:</InfoLabel>
-                    <InfoValue>{authTechnician.identification}</InfoValue>
+                    <InfoLabel>{accountType === 'BUSINESS' ? 'Mã số thuế:' : 'Số CCCD:'}</InfoLabel>
+                    <InfoValue>{accountType === 'BUSINESS' ? (authTechnician.taxCode || 'Chưa cập nhật') : (authTechnician.identification || 'Chưa cập nhật')}</InfoValue>
                   </CardContent>
                   <CardContent>
                     <InfoLabel>Kinh nghiệm:</InfoLabel>
@@ -1737,12 +1740,12 @@ function ProfilePage() {
             
             <p><strong>Thông tin sẽ bị xóa:</strong></p>
             <ul>
-              <li>Thông tin cá nhân (họ tên, email, số điện thoại, địa chỉ)</li>
-              <li>Ảnh đại diện</li>
+              <li>{accountType === 'BUSINESS' ? "Thông tin doanh nghiệp (tên doanh nghiệp, email, số điện thoại, địa chỉ)" : "Thông tin cá nhân (họ tên, email, số điện thoại, địa chỉ)"}</li>
+              <li>{accountType === 'BUSINESS' ? "Logo doanh nghiệp" : "Ảnh đại diện"}</li>
               <li>Lịch sử đăng nhập</li>
             </ul>
             
-            <p><strong>Dữ liệu sẽ được giữ lại (ẩn thông tin cá nhân):</strong></p>
+            <p><strong>Dữ liệu sẽ được giữ lại ({accountType === 'BUSINESS' ? "ẩn thông tin doanh nghiệp" : "ẩn thông tin cá nhân"}):</strong></p>
             <ul>
               <li>Lịch sử booking (cho báo cáo)</li>
               <li>Feedback và đánh giá</li>
@@ -1783,7 +1786,7 @@ function ProfilePage() {
     return (
       <ProfilePageContainer>
         <Header />
-        <BreadcrumbBar title="Thông tin cá nhân" />
+        <BreadcrumbBar title={accountType === 'BUSINESS' ? "Thông tin doanh nghiệp" : "Thông tin cá nhân"} />
         <ContentContainer>
           <div className="container">
             <div style={{textAlign: 'center', padding: '3rem 0'}}>
@@ -1800,7 +1803,7 @@ function ProfilePage() {
   return (
     <ProfilePageContainer>
       <Header />
-      <BreadcrumbBar title="Thông tin cá nhân" />
+      <BreadcrumbBar title={accountType === 'BUSINESS' ? "Thông tin doanh nghiệp" : "Thông tin cá nhân"} />
       <ContentContainer>
         <div className="container">
             {/* Banner nhắc xác thực email/phone */}
