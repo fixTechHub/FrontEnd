@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchAllPublicCategories, fetchTopPublicCategories } from './features/categories/categorySlice';
-import { fetchAllPublicServices } from './features/services/serviceSlice';
+import { fetchTopPublicCategories } from './features/categories/categorySlice';
 import { initializeSocket, disconnectSocket } from './services/socket';
 import { checkAuthThunk } from './features/auth/authSlice';
 import { fetchAllRoles } from './features/roles/roleSlice';
@@ -23,8 +22,8 @@ function App() {
 
 
     useEffect(() => {
-        dispatch(fetchAllPublicCategories());
-        dispatch(fetchAllPublicServices());
+        // dispatch(fetchAllPublicCategories());
+        // dispatch(fetchAllPublicServices());
         dispatch(fetchTopBookedServices());
         dispatch(fetchTopPublicCategories());
         dispatch(fetchAllRoles());
