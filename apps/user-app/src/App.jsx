@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchTopPublicCategories } from './features/categories/categorySlice';
+import { fetchAllPublicCategories, fetchTopPublicCategories } from './features/categories/categorySlice';
 import { initializeSocket, disconnectSocket } from './services/socket';
 import { checkAuthThunk } from './features/auth/authSlice';
 import { fetchAllRoles } from './features/roles/roleSlice';
@@ -8,6 +8,7 @@ import { fetchTopBookedServices } from './features/bookings/bookingSlice';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
 import SystemReportButton from './components/common/SystemReportButton';
+import { fetchAllPublicServices } from './features/services/serviceSlice';
 
 function App() {
     const dispatch = useDispatch();
@@ -22,7 +23,7 @@ function App() {
 
 
     useEffect(() => {
-        // dispatch(fetchAllPublicCategories());
+        dispatch(fetchAllPublicCategories());
         dispatch(fetchAllPublicServices());
         dispatch(fetchTopBookedServices());
         dispatch(fetchTopPublicCategories());
