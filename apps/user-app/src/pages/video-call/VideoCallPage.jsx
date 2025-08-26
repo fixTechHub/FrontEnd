@@ -23,6 +23,9 @@ const getIceConfiguration = () => {
 
   const turnServers = [
     {
+      urls: "stun:stun.relay.metered.ca:80",
+    },
+    {
       urls: "turn:global.relay.metered.ca:80",
       username: "8b25f915de9f9386eb3c55db",
       credential: "jRSPzXpVBFHrSQQN",
@@ -48,7 +51,7 @@ const getIceConfiguration = () => {
     ? {
         iceServers: [...baseStunServers, ...turnServers],
         iceCandidatePoolSize: 10,
-        iceTransportPolicy: 'all', // Try P2P (STUN) first, fall back to TURN
+        iceTransportPolicy: 'all',
       }
     : {
         iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
@@ -85,6 +88,7 @@ const VideoCallPage = () => {
   const connectionRef = useRef();
   const hasCalled = useRef(false);
   const hasStopped = useRef(false);
+  const signalSent = useRef(false); // Track if signal has been sent
   const bookingWarrantyId = location.state?.bookingWarrantyId;
 
   const [stream, setStream] = useState(null);
@@ -136,12 +140,12 @@ const VideoCallPage = () => {
         console.log(`Stopping track ${index}: ${track.kind}, active: ${track.readyState === 'live'}`);
         track.stop();
       });
-      if (myVideo.current) {
+      if (myVideo.current && myVideo.current.srcObject) {
         myVideo.current.srcObject = null;
         myVideo.current.load();
         console.log('Cleared myVideo srcObject');
       }
-      if (userVideo.current) {
+      if (userVideo.current && userVideo.current.srcObject) {
         userVideo.current.srcObject = null;
         userVideo.current.load();
         console.log('Cleared userVideo srcObject');
@@ -246,6 +250,7 @@ const VideoCallPage = () => {
           setIsConnecting(false);
           toast.success('Connection established!', { autoClose: 2000 });
         } else if (state === 'failed') {
+          console.log('ICE negotiation failed, checking candidates:', peer._pc.getReceivers().length);
           const timeout = setTimeout(() => {
             if (!callAccepted && !callEnded) {
               setIsConnecting(false);
@@ -257,6 +262,7 @@ const VideoCallPage = () => {
           }, 5000);
           setIceFailureTimeout(timeout);
         } else if (state === 'disconnected') {
+          console.log('ICE disconnected, attempting recovery');
           setIsConnecting(false);
           toast.warn('Disconnected. Attempting to reconnect...');
         } else if (state === 'connecting') {
@@ -403,10 +409,11 @@ const VideoCallPage = () => {
     console.log('Setting up call to user:', id);
     dispatch(setCall({ isReceivingCall: false, from: user._id, name: user.fullName, signal: null }));
     const peer = createPeer(true, stream);
-    peer.on('signal', async (data) => {
-      console.log('Sending call signal to:', id);
-      try {
-        const result = await dispatch(
+    peer.on('signal', (data) => {
+      if (!signalSent.current) {
+        console.log('Sending call signal to:', id);
+        signalSent.current = true;
+        dispatch(
           initiateCall({
             bookingId,
             to: id,
@@ -414,26 +421,30 @@ const VideoCallPage = () => {
             name: user.fullName,
             warrantyId: bookingWarrantyId || null,
           })
-        ).unwrap();
-        socket.emit('callUser', {
-          userToCall: id,
-          signalData: data,
-          from: user._id,
-          name: user.fullName,
-          bookingId: bookingWarrantyId ? null : bookingId,
-          warrantyId: bookingWarrantyId || null,
-        });
-        console.log('Call initiated successfully with sessionId:', result.sessionId);
-      } catch (error) {
-        console.error('Failed to initiate call:', error);
-        toast.error('Failed to initiate call. Please try again.');
-        setIsConnecting(false);
-        socket.emit('callFailed', { message: 'Failed to initiate call.' });
+        )
+          .unwrap()
+          .then((result) => {
+            socket.emit('callUser', {
+              userToCall: id,
+              signalData: data,
+              from: user._id,
+              name: user.fullName,
+              bookingId: bookingWarrantyId ? null : bookingId,
+              warrantyId: bookingWarrantyId || null,
+            });
+            console.log('Call initiated successfully with sessionId:', result.sessionId);
+          })
+          .catch((error) => {
+            console.error('Failed to initiate call:', error);
+            toast.error('Failed to initiate call. Please try again.');
+            setIsConnecting(false);
+            socket.emit('callFailed', { message: 'Failed to initiate call.' });
+          });
       }
     });
     peer.on('stream', (currentStream) => {
       console.log('Received remote stream');
-      if (userVideo.current) {
+      if (userVideo.current && !userVideo.current.srcObject) {
         userVideo.current.srcObject = currentStream;
         userVideo.current.play().catch((error) => console.warn('Remote video autoplay failed:', error));
       }
@@ -449,6 +460,7 @@ const VideoCallPage = () => {
     connectionRef.current = peer;
     return () => {
       socket.off('callAccepted');
+      signalSent.current = false; // Reset for next call
     };
   };
 
@@ -463,21 +475,23 @@ const VideoCallPage = () => {
     dispatch(setCall({ isReceivingCall: false, from: incomingCallData.from, name: incomingCallData.name, signal: incomingCallData.signal }));
     dispatch(setCallAccepted(true));
     const peer = createPeer(false, stream);
-    peer.on('signal', async (data) => {
+    peer.on('signal', (data) => {
       console.log('Sending answer signal to:', incomingCallData.from);
-      try {
-        await dispatch(answerCall({ sessionId: currentSessionId, signal: data, to: incomingCallData.from })).unwrap();
-        console.log('Call answered successfully');
-        setIsConnecting(false);
-      } catch (error) {
-        console.error('Failed to answer call:', error);
-        toast.error('Failed to answer call. Please try again.');
-        setIsConnecting(false);
-      }
+      dispatch(answerCall({ sessionId: currentSessionId, signal: data, to: incomingCallData.from }))
+        .unwrap()
+        .then(() => {
+          console.log('Call answered successfully');
+          setIsConnecting(false);
+        })
+        .catch((error) => {
+          console.error('Failed to answer call:', error);
+          toast.error('Failed to answer call. Please try again.');
+          setIsConnecting(false);
+        });
     });
     peer.on('stream', (currentStream) => {
       console.log('Received remote stream');
-      if (userVideo.current) {
+      if (userVideo.current && !userVideo.current.srcObject) {
         userVideo.current.srcObject = currentStream;
         userVideo.current.play().catch((error) => console.warn('Remote video autoplay failed:', error));
       }
