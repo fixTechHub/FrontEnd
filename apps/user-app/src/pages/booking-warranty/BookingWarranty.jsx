@@ -14,6 +14,7 @@ import { getWarrantyInformationThunk, confirmWarrantyThunk } from "../../feature
 import { onWarrantyUpdated } from "../../services/socket";
 import { Button, Modal } from "react-bootstrap";
 import BookingWarrantySchedule from "./BookingWarrantySchedule";
+import Swal from "sweetalert2";
 
 function BookingWarranty() {
     const styles = {
@@ -148,10 +149,15 @@ function BookingWarranty() {
 
         if (isAuthorized === false) {
             const redirectPath = location.state?.from?.pathname || '/';
-            toast.warn(` ${authError || 'Bạn không có quyền truy cập trang này.'}`, {
-                position: 'top-right',
-                autoClose: 5000,
-            });
+            Swal.fire({
+                icon: 'warning',
+                title: 'Cảnh báo',
+                text: `${authError || 'Bạn không có quyền truy cập trang này.'}`,
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             navigate(redirectPath, { replace: true });
         }
     }, [isAuthorized, isChecking, navigate, authError]);
@@ -183,27 +189,42 @@ function BookingWarranty() {
     const handleConfirm = async (e) => {
         e.preventDefault();
         if (!bookingWarrantyId) {
-            toast.error('Thiếu thông tin booking hoặc kỹ thuật viên!', {
-                position: 'top-right',
-                autoClose: 5000,
-            });
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Thiếu thông tin booking hoặc kỹ thuật viên!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             return;
         }
         try {
             const formData = { status: 'DONE' };
             await dispatch(confirmWarrantyThunk({ bookingWarrantyId, formData })).unwrap();
-            toast.success('Bảo hành đã được đánh dấu là hoàn tất!', {
-                position: 'top-right',
-                autoClose: 5000,
-            });
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: 'Bảo hành đã được đánh dấu là hoàn tất!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             setShowResolveModal(false);
             setSolutionNote('');
             handleWarrantyUpdated();
         } catch (error) {
-            toast.error(`Lỗi khi xác nhận giải quyết bảo hành: ${error || 'Đã xảy ra lỗi'}`, {
-                position: 'top-right',
-                autoClose: 5000,
-            });
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: `Lỗi khi xác nhận giải quyết bảo hành: ${error || 'Đã xảy ra lỗi'}`,
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
         }
 
     };
@@ -211,28 +232,44 @@ function BookingWarranty() {
     const handleResolveWarranty = async (e) => {
         e.preventDefault();
         if (!bookingWarrantyId || !solutionNote.trim()) {
-            toast.error('Vui lòng cung cấp ghi chú giải pháp!', {
-                position: 'top-right',
-                autoClose: 5000,
-            });
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Vui lòng cung cấp ghi chú giải pháp!',
+                timer: 5000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
+            
             return;
         }
 
         try {
             const formData = { status: 'RESOLVED', solutionNote };
             await dispatch(confirmWarrantyThunk({ bookingWarrantyId, formData })).unwrap();
-            toast.success('Bảo hành đã được đánh dấu là hoàn tất!', {
-                position: 'top-right',
-                autoClose: 5000,
-            });
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: 'Bảo hành đã được đánh dấu là hoàn tất!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             setShowResolveModal(false);
             setSolutionNote('');
             handleWarrantyUpdated();
         } catch (error) {
-            toast.error(`Lỗi khi xác nhận giải quyết bảo hành: ${error.message || 'Đã xảy ra lỗi'}`, {
-                position: 'top-right',
-                autoClose: 5000,
-            });
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: `Lỗi khi xác nhận giải quyết bảo hành: ${error.message || 'Đã xảy ra lỗi'}`,
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
         }
     };
 

@@ -11,6 +11,7 @@ import BreadcrumbBar from '../../components/common/BreadcrumbBar';
 import Header from '../../components/common/Header';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
+import Swal from 'sweetalert2';
 
 /* ====== Icons / tiny components ====== */
 const Star = ({ filled }) => (
@@ -191,10 +192,34 @@ const EditFeedbackModal = ({ show, onClose, feedback }) => {
         })
       ).unwrap();
 
-      toast.success('Cập nhật đánh giá thành công');
+      Swal.fire({
+        icon: 'success',
+        title: 'Thành công',
+        text: 'Cập nhật đánh giá thành công',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        position: 'bottom-right',
+        pauseOnHover: true,
+        allowOutsideClick: true,
+        toast: true,
+        
+      });
       onClose();
     } catch (error) {
-      toast.error(error?.message || 'Cập nhật thất bại');
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: error?.message || 'Cập nhật thất bại',
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        position: 'bottom-right',
+        pauseOnHover: true,
+        allowOutsideClick: true,
+        toast: true,
+        
+      });
     }
   };
 

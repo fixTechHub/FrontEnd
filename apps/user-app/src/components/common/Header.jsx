@@ -92,10 +92,6 @@ function Header() {
     const dispatch = useDispatch();
     const navigate = useNavigate();
     const { user } = useSelector((state) => state.auth);
-    const categories = useSelector((state) => state.categories.categories);
-    const services = useSelector((state) => state.services.services);
-    const categoryStatus = useSelector((state) => state.categories.status);
-    const serviceStatus = useSelector((state) => state.services.status);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [avatarError, setAvatarError] = useState(false);
     const menuRef = useRef(null);
@@ -153,14 +149,6 @@ function Header() {
             });
         }
     };
-
-    if (categoryStatus === 'loading' || serviceStatus === 'loading')
-        return (
-            <>
-                <Spinner animation="border" variant="warning" />
-                <h6>Đang tải dữ liệu</h6>
-            </>
-        )
 
     return (
         <>
