@@ -574,30 +574,7 @@ const VideoCallPage = () => {
           )}
         </div>
       </div>
-      {true && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '10px',
-            right: '10px',
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            padding: '10px',
-            borderRadius: '5px',
-            fontSize: '12px',
-            zIndex: 1000,
-          }}
-        >
-          <div>Connection State: {connectionState}</div>
-          <div>Is Connecting: {isConnecting ? 'Yes' : 'No'}</div>
-          <div>Call Accepted: {callAccepted ? 'Yes' : 'No'}</div>
-          <div>Stream: {stream ? 'Available' : 'Not Available'}</div>
-          <div>Stream Stopped: {hasStopped.current ? 'Yes' : 'No'}</div>
-          <div>Is Stream Ready: {isStreamReady ? 'Yes' : 'No'}</div>
-          <div>User: {user ? 'Available' : 'Not Available'}</div>
-          <div>myVideo Paused: {myVideo.current && myVideo.current.paused ? 'Yes' : 'No'}</div>
-        </div>
-      )}
+      
       <div className="custom-controls">
         <button className="custom-btn-hangup" onClick={leaveCall}>
           <MdCallEnd size={24} color="white" />
