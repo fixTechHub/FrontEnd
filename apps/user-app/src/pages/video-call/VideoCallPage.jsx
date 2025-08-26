@@ -22,28 +22,26 @@ const getIceConfiguration = () => {
   ];
 
   const turnServers = [
+    { urls: 'stun:stun.relay.metered.ca:80' }, // STUN for initial connectivity
     {
-      urls: "stun:stun.relay.metered.ca:80",
+      urls: 'turn:global.relay.metered.ca:80',
+      username: '8b25f915de9f9386eb3c55db',
+      credential: 'jRSPzXpVBFHrSQQN',
     },
     {
-      urls: "turn:global.relay.metered.ca:80",
-      username: "8b25f915de9f9386eb3c55db",
-      credential: "jRSPzXpVBFHrSQQN",
+      urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+      username: '8b25f915de9f9386eb3c55db',
+      credential: 'jRSPzXpVBFHrSQQN',
     },
     {
-      urls: "turn:global.relay.metered.ca:80?transport=tcp",
-      username: "8b25f915de9f9386eb3c55db",
-      credential: "jRSPzXpVBFHrSQQN",
+      urls: 'turn:global.relay.metered.ca:443',
+      username: '8b25f915de9f9386eb3c55db',
+      credential: 'jRSPzXpVBFHrSQQN',
     },
     {
-      urls: "turn:global.relay.metered.ca:443",
-      username: "8b25f915de9f9386eb3c55db",
-      credential: "jRSPzXpVBFHrSQQN",
-    },
-    {
-      urls: "turns:global.relay.metered.ca:443?transport=tcp",
-      username: "8b25f915de9f9386eb3c55db",
-      credential: "jRSPzXpVBFHrSQQN",
+      urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+      username: '8b25f915de9f9386eb3c55db',
+      credential: 'jRSPzXpVBFHrSQQN',
     },
   ];
 
@@ -96,12 +94,14 @@ const VideoCallPage = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [iceFailureTimeout, setIceFailureTimeout] = useState(null);
   const [isStreamReady, setIsStreamReady] = useState(false);
+  const [retryCount, setRetryCount] = useState(0); // Add retry counter
 
   const logIceCandidate = (candidate, type) => {
     console.log(`${type} ICE Candidate:`, {
       candidate: candidate.candidate,
       sdpMid: candidate.sdpMid,
       sdpMLineIndex: candidate.sdpMLineIndex,
+      type: candidate.type,
     });
   };
 
@@ -220,6 +220,7 @@ const VideoCallPage = () => {
       console.log('✅ Peer connected successfully');
       setConnectionState('connected');
       setIsConnecting(false);
+      setRetryCount(0); // Reset retry on successful connection
       toast.success('Connected successfully!', { autoClose: 2000 });
     });
 
@@ -244,25 +245,29 @@ const VideoCallPage = () => {
     if (peer._pc) {
       peer._pc.addEventListener('iceconnectionstatechange', () => {
         const state = peer._pc.iceConnectionState;
-        console.log('🧊 ICE connection state:', state);
+        console.log('🧊 ICE connection state:', state, 'Receivers:', peer._pc.getReceivers().length);
         setConnectionState(state);
         if (state === 'connected' || state === 'completed') {
           setIsConnecting(false);
+          setRetryCount(0); // Reset retry on success
           toast.success('Connection established!', { autoClose: 2000 });
         } else if (state === 'failed') {
-          console.log('ICE negotiation failed, checking candidates:', peer._pc.getReceivers().length);
+          console.log('ICE negotiation failed, candidates:', peer._pc.getReceivers().length);
           const timeout = setTimeout(() => {
-            if (!callAccepted && !callEnded) {
+            if (!callAccepted && !callEnded && retryCount < 2) { // Limit to 2 retries
               setIsConnecting(false);
               toast.error('Connection failed. Retrying...');
+              setRetryCount(retryCount + 1);
               if (initiator && stream && !hasCalled.current) {
                 callUser(user._id === booking?.customerId?._id ? booking?.technicianId?.userId?._id : booking?.customerId?._id);
               }
+            } else {
+              toast.error('Max retries reached. Please try again later.');
             }
           }, 5000);
           setIceFailureTimeout(timeout);
         } else if (state === 'disconnected') {
-          console.log('ICE disconnected, attempting recovery');
+          console.log('ICE disconnected, attempting recovery, Receivers:', peer._pc.getReceivers().length);
           setIsConnecting(false);
           toast.warn('Disconnected. Attempting to reconnect...');
         } else if (state === 'connecting') {
@@ -274,6 +279,14 @@ const VideoCallPage = () => {
         if (event.candidate) {
           logIceCandidate(event.candidate, 'Local');
         }
+      });
+
+      peer._pc.addEventListener('icecandidateerror', (event) => {
+        console.error('❌ ICE Candidate Error:', {
+          url: event.url,
+          errorCode: event.errorCode,
+          errorText: event.errorText,
+        });
       });
     }
 
@@ -375,8 +388,9 @@ const VideoCallPage = () => {
       }
       stopStream('component unmount');
       hasCalled.current = false;
+      signalSent.current = false;
     };
-  }, [dispatch, bookingId, navigate, callEnded, iceFailureTimeout]);
+  }, [dispatch, bookingId, navigate, callEnded, iceFailureTimeout, retryCount]); // Add retryCount to dependency array
 
   useEffect(() => {
     if (isStreamReady && user && !hasCalled.current && !call.isReceivingCall && !callAccepted && !location.state?.answerCall) {
@@ -443,8 +457,8 @@ const VideoCallPage = () => {
       }
     });
     peer.on('stream', (currentStream) => {
-      console.log('Received remote stream');
-      if (userVideo.current && !userVideo.current.srcObject) {
+      console.log('Received remote stream, tracks:', currentStream.getTracks().length);
+      if (userVideo.current && !userVideo.current.srcObject && !callEnded) {
         userVideo.current.srcObject = currentStream;
         userVideo.current.play().catch((error) => console.warn('Remote video autoplay failed:', error));
       }
@@ -490,8 +504,8 @@ const VideoCallPage = () => {
         });
     });
     peer.on('stream', (currentStream) => {
-      console.log('Received remote stream');
-      if (userVideo.current && !userVideo.current.srcObject) {
+      console.log('Received remote stream, tracks:', currentStream.getTracks().length);
+      if (userVideo.current && !userVideo.current.srcObject && !callEnded) {
         userVideo.current.srcObject = currentStream;
         userVideo.current.play().catch((error) => console.warn('Remote video autoplay failed:', error));
       }
@@ -615,6 +629,7 @@ const VideoCallPage = () => {
           <div>Is Stream Ready: {isStreamReady ? 'Yes' : 'No'}</div>
           <div>User: {user ? 'Available' : 'Not Available'}</div>
           <div>myVideo Paused: {myVideo.current && myVideo.current.paused ? 'Yes' : 'No'}</div>
+          <div>Retry Count: {retryCount}</div>
         </div>
       )}
       <div className="custom-controls">
