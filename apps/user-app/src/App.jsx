@@ -23,7 +23,7 @@ function App() {
 
     useEffect(() => {
         // dispatch(fetchAllPublicCategories());
-        // dispatch(fetchAllPublicServices());
+        dispatch(fetchAllPublicServices());
         dispatch(fetchTopBookedServices());
         dispatch(fetchTopPublicCategories());
         dispatch(fetchAllRoles());
