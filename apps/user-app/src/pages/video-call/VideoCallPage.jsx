@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -11,24 +10,50 @@ import { MdCallEnd } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import '../../utils/polyfills';
 
-// STUN/TURN Configuration for production
+// Updated STUN/TURN Configuration for better reliability
 const getIceConfiguration = () => {
   const isProduction = window.location.protocol === 'https:';
+  const baseStunServers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    { urls: 'stun:stun3.l.google.com:19302' },
+    { urls: 'stun:stun4.l.google.com:19302' },
+  ];
+
+  const turnServers = [
+    {
+      urls: "turn:global.relay.metered.ca:80",
+      username: "8b25f915de9f9386eb3c55db",
+      credential: "jRSPzXpVBFHrSQQN",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:80?transport=tcp",
+      username: "8b25f915de9f9386eb3c55db",
+      credential: "jRSPzXpVBFHrSQQN",
+    },
+    {
+      urls: "turn:global.relay.metered.ca:443",
+      username: "8b25f915de9f9386eb3c55db",
+      credential: "jRSPzXpVBFHrSQQN",
+    },
+    {
+      urls: "turns:global.relay.metered.ca:443?transport=tcp",
+      username: "8b25f915de9f9386eb3c55db",
+      credential: "jRSPzXpVBFHrSQQN",
+    },
+  ];
+
   return isProduction
     ? {
-        iceServers: [
-          { urls: 'stun:stun.l.google.com:19302' },
-          { urls: 'stun:stun1.l.google.com:19302' },
-          { urls: 'stun:stun2.l.google.com:19302' },
-          { urls: 'stun:stun3.l.google.com:19302' },
-          { urls: 'stun:stun4.l.google.com:19302' },
-          { urls: 'stun:stun.stunprotocol.org:3478' },
-          { urls: 'stun:stun.voiparound.com' },
-          { urls: 'stun:stun.voipbuster.com' },
-        ],
+        iceServers: [...baseStunServers, ...turnServers],
         iceCandidatePoolSize: 10,
+        iceTransportPolicy: 'all', // Try P2P (STUN) first, fall back to TURN
       }
-    : { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    : {
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        iceCandidatePoolSize: 10,
+      };
 };
 
 // Enhanced media constraints
@@ -181,7 +206,7 @@ const VideoCallPage = () => {
     console.log('Creating peer with ICE configuration:', iceConfig);
     const peer = new Peer({
       initiator,
-      trickle: false,
+      trickle: true,
       stream,
       config: iceConfig,
       offerOptions: { offerToReceiveAudio: true, offerToReceiveVideo: true },
@@ -582,11 +607,6 @@ const VideoCallPage = () => {
         <button className="custom-btn-hangup" onClick={leaveCall}>
           <MdCallEnd size={24} color="white" />
         </button>
-        {/* <button 
-        className="custom-btn-camera"
-         onClick={handleStartCamera}>
-          📷
-        </button> */}
       </div>
     </div>
   );
