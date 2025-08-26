@@ -3,14 +3,12 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import authAPI from "../../features/auth/authAPI";
 import { authSuccess } from "../../features/auth/authSlice";
-import { toast } from "react-toastify";
+import Swal from 'sweetalert2'; // Import SweetAlert2
 import { FaEye, FaEyeSlash, FaEnvelope, FaLock } from "react-icons/fa";
 import { validateEmail, validateLoginForm } from "../../utils/validation";
 import "../../styles/auth.css";
-// thêm ở đầu file LogInPage.jsx
 import { postLoginBootstrap } from '../../features/auth/bootstrap';
 import { loginThunk, checkAuthThunk } from '../../features/auth/authSlice';
-
 
 function LogInPage() {
   const [formData, setFormData] = useState({
@@ -22,12 +20,11 @@ function LogInPage() {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingEmail, setIsCheckingEmail] = useState(false);
-  const [emailExists, setEmailExists] = useState(true); // Mặc định true để cho phép login
+  const [emailExists, setEmailExists] = useState(true);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { verificationStatus } = useSelector((state) => state.auth);
 
-  // Clear form when component unmounts
   useEffect(() => {
     return () => {
       setFormData({ email: "", password: "" });
@@ -37,13 +34,12 @@ function LogInPage() {
     };
   }, []);
 
-  // Debounce check email exists
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (formData.email && validateEmail(formData.email)) {
         checkEmailExists(formData.email);
       } else {
-        setEmailExists(true); // Reset về true nếu email không hợp lệ
+        setEmailExists(true);
         setIsCheckingEmail(false);
       }
     }, 500);
@@ -59,14 +55,12 @@ function LogInPage() {
       const response = await authAPI.checkExist(email);
       setEmailExists(response.exists);
 
-      // Nếu email không tồn tại, hiển thị thông báo
       if (!response.exists) {
         setErrors(prev => ({
           ...prev,
           email: 'Email không tồn tại trong hệ thống'
         }));
       } else {
-        // Xóa lỗi email nếu email tồn tại
         setErrors(prev => ({
           ...prev,
           email: ''
@@ -74,7 +68,7 @@ function LogInPage() {
       }
     } catch (error) {
       console.error('Error checking email:', error);
-      setEmailExists(true); // Mặc định cho phép login nếu có lỗi
+      setEmailExists(true);
     } finally {
       setIsCheckingEmail(false);
     }
@@ -87,7 +81,6 @@ function LogInPage() {
       [name]: value,
     }));
 
-    // Clear error for the field being edited
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -107,7 +100,6 @@ function LogInPage() {
   const validateForm = async () => {
     const newErrors = validateLoginForm(formData);
 
-    // Kiểm tra email tồn tại nếu email hợp lệ
     if (!newErrors.email && formData.email && validateEmail(formData.email)) {
       if (!emailExists) {
         newErrors.email = "Email không tồn tại trong hệ thống.";
@@ -150,7 +142,6 @@ function LogInPage() {
     try {
       const result = await authAPI.login(formData);
 
-      // Dispatch authSuccess để cập nhật user vào Redux state
       dispatch(authSuccess({
         user: result.user,
         technician: result.technician,
@@ -161,18 +152,35 @@ function LogInPage() {
         localStorage.setItem("technician", JSON.stringify(result.technician));
       }
 
-      // Hiển thị thông báo thành công
       if (result.wasReactivated) {
-        toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
+        Swal.fire({
+          icon: 'success',
+          title: 'Chào mừng trở lại!',
+          text: 'Tài khoản của bạn đã được kích hoạt lại.',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else if (result.user.role?.name === 'PENDING' || !result.user.role) {
-        toast.info("Vui lòng chọn vai trò để hoàn tất đăng ký.");
+        Swal.fire({
+          icon: 'info',
+          title: 'Thông báo',
+          text: 'Vui lòng chọn vai trò để hoàn tất đăng ký.',
+          timer: 2000,
+          showConfirmButton: false
+        });
       } else {
-        toast.success("Đăng nhập thành công!");
+        Swal.fire({
+          icon: 'success',
+          title: 'Thành công',
+          text: 'Đăng nhập thành công!',
+          timer: 2000,
+          showConfirmButton: false,
+          toast:true,
+          position:'bottom-right'
+        });
       }
 
-      // Điều hướng sau khi đăng nhập Google
       if (result.user.role?.name === "PENDING" || !result.user.role) {
-        // Người dùng mới cần chọn vai trò
         navigate('/choose-role', { replace: true });
       } else if (result.user.role.name === "ADMIN") {
         navigate("/admin/dashboard", { replace: true });
@@ -198,14 +206,19 @@ function LogInPage() {
         scope: "email profile",
         callback: async (response) => {
           if (response.error) {
-            toast.error("Đăng nhập Google bị hủy.");
+            Swal.fire({
+              icon: 'error',
+              title: 'Lỗi',
+              text: 'Đăng nhập Google bị hủy.',
+              timer: 2000,
+              showConfirmButton: false
+            });
             setIsLoading(false);
             return;
           }
           try {
             const result = await authAPI.googleLogin(response.access_token);
 
-            // Dispatch authSuccess để cập nhật user vào Redux state
             dispatch(authSuccess({
               user: result.user,
               technician: result.technician,
@@ -216,18 +229,35 @@ function LogInPage() {
               localStorage.setItem("technician", JSON.stringify(result.technician));
             }
 
-            // Thông báo tuỳ theo trạng thái
             if (result.wasReactivated) {
-              toast.success("Chào mừng trở lại! Tài khoản của bạn đã được kích hoạt lại.");
+              Swal.fire({
+                icon: 'success',
+                title: 'Chào mừng trở lại!',
+                text: 'Tài khoản của bạn đã được kích hoạt lại.',
+                timer: 2000,
+                showConfirmButton: false
+              });
             } else if (result.user.role?.name === 'PENDING' || !result.user.role) {
-              toast.info("Vui lòng chọn vai trò để hoàn tất đăng ký.");
+              Swal.fire({
+                icon: 'info',
+                title: 'Thông báo',
+                text: 'Vui lòng chọn vai trò để hoàn tất đăng ký.',
+                timer: 2000,
+                showConfirmButton: false
+              });
             } else {
-              toast.success("Đăng nhập thành công!");
+              Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: 'Đăng nhập thành công!',
+                timer: 2000,
+                showConfirmButton: false,
+                toast: true,
+                position:'bottom-right'
+              });
             }
 
-            // Điều hướng sau khi đăng nhập Google
             if (result.user.role?.name === "PENDING" || !result.user.role) {
-              // Người dùng mới cần chọn vai trò
               navigate('/choose-role', { replace: true });
             } else if (result.user.role.name === "ADMIN") {
               navigate("/admin/dashboard", { replace: true });
@@ -237,22 +267,39 @@ function LogInPage() {
               navigate("/", { replace: true });
             }
           } catch (error) {
-            toast.error(error.message || "Đăng nhập Google thất bại");
+            Swal.fire({
+              icon: 'error',
+              title: 'Lỗi',
+              text: error.message || 'Đăng nhập Google thất bại',
+              timer: 2000,
+              showConfirmButton: false
+            });
           } finally {
             setIsLoading(false);
           }
         },
         error_callback: () => {
-          toast.error("Đăng nhập Google bị đóng.");
+          Swal.fire({
+            icon: 'error',
+            title: 'Lỗi',
+            text: 'Đăng nhập Google bị đóng.',
+            timer: 2000,
+            showConfirmButton: false
+          });
           setIsLoading(false);
         }
       });
 
       client.requestAccessToken();
     } catch (error) {
-      toast.error("Không thể khởi tạo đăng nhập Google");
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Không thể khởi tạo đăng nhập Google',
+        timer: 2000,
+        showConfirmButton: false
+      });
       console.log("Google login error:", error);
-
       setIsLoading(false);
     }
   };

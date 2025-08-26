@@ -22,6 +22,7 @@ import {
     FaCircle,
     FaInfoCircle
 } from 'react-icons/fa';
+import Swal from "sweetalert2";
 
 function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const dispatch = useDispatch();
@@ -142,10 +143,26 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const handleAcceptWarranty = async () => {
         try {
             await dispatch(acceptWarrantyThunk({ bookingWarrantyId, status: 'CONFIRMED' })).unwrap();
-            toast.success('Chấp nhận yêu cầu bảo hành thành công');
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: 'Chấp nhận yêu cầu bảo hành thành công',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             if (onWarrantyUpdated) onWarrantyUpdated();
         } catch (error) {
-            toast.error(`Lỗi: ${error?.message || error || 'Đã xảy ra lỗi'}`);
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: `Lỗi: ${error?.message || error || 'Đã xảy ra lỗi'}`,
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
         }
     };
 
@@ -156,7 +173,15 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
         }
         try {
             await dispatch(rejectWarrantyThunk({ bookingWarrantyId, formData: { status: 'DENIED', rejectedReason } })).unwrap();
-            toast.success('Từ chối yêu cầu bảo hành thành công');
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: 'Từ chối yêu cầu bảo hành thành công',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             setRejectedReason('');
             setShowRejectModal(false);
             if (onWarrantyUpdated) onWarrantyUpdated();
@@ -168,45 +193,110 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
     const handleProposeSchedule = async (e) => {
         e.preventDefault();
         if (!proposedDate || !proposedTime) {
-            toast.error("Vui lòng chọn cả ngày và giờ đề xuất!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Vui lòng chọn cả ngày và giờ đề xuất!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             return;
         }
         if (!validateDateTime(proposedDate, proposedTime)) {
-            toast.error("Ngày và giờ đề xuất phải từ ngày mai trở đi!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Ngày và giờ đề xuất phải từ ngày mai trở đi!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             return;
         }
         const proposedDateTime = `${proposedDate}T${proposedTime}:00+07:00`;
         try {
             await dispatch(proposeWarrantyScheduleThunk({ bookingWarrantyId, proposedSchedule: proposedDateTime })).unwrap();
-            toast.success("Đề xuất lịch bảo hành thành công!");
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: 'Đề xuất lịch bảo hành thành công!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             setShowProposeModal(false);
             setProposedDate("");
             setProposedTime("");
             if (onWarrantyUpdated) onWarrantyUpdated();
         } catch (error) {
-            toast.error(`Lỗi khi đề xuất lịch: ${error?.message || error || "Đã xảy ra lỗi"}`);
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: `Lỗi khi đề xuất lịch: ${error?.message || error || "Đã xảy ra lỗi"}`,
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
         }
     };
 
     const handleConfirmSchedule = async (e) => {
         e.preventDefault();
         if (!startDate || !startTime || !expectedEndDate || !expectedEndTime) {
-            toast.error("Vui lòng cung cấp đầy đủ ngày và giờ bắt đầu cũng như kết thúc!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Vui lòng cung cấp đầy đủ ngày và giờ bắt đầu cũng như kết thúc!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             return;
         }
         if (!validateDateTime(startDate, startTime)) {
-            toast.error("Thời gian bắt đầu phải từ ngày mai trở đi!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Thời gian bắt đầu phải từ ngày mai trở đi!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             return;
         }
         const startDateTime = new Date(`${startDate}T${startTime}:00+07:00`);
         const endDateTime = new Date(`${expectedEndDate}T${expectedEndTime}:00+07:00`);
         if (endDateTime <= startDateTime) {
-            toast.error("Thời gian kết thúc phải sau thời gian bắt đầu!");
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: 'Thời gian kết thúc phải sau thời gian bắt đầu!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+              });
             return;
         }
         try {
             await dispatch(confirmWarrantyScheduleThunk({ bookingWarrantyId, data: { startTime: startDateTime.toISOString(), expectedEndTime: endDateTime.toISOString() } })).unwrap();
-            toast.success("Xác nhận lịch bảo hành thành công!");
+            Swal.fire({
+                icon: 'success',
+                title: 'Thành công',
+                text: 'Xác nhận lịch bảo hành thành công!',
+                timer: 3000,
+                showConfirmButton: false,
+                position: 'bottom-right',
+                toast: true
+            
+              });
             setShowConfirmModal(false);
             setStartDate("");
             setStartTime("");
@@ -214,7 +304,14 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
             setExpectedEndTime("");
             if (onWarrantyUpdated) onWarrantyUpdated();
         } catch (error) {
-            toast.error(`Lỗi: ${error?.message || error || "Đã xảy ra lỗi"}`);
+            Swal.fire({
+                icon: 'error',
+                title: 'Lỗi',
+                text: `Lỗi: ${error?.message || error || "Đã xảy ra lỗi"}`,
+                timer: 2000,
+                showConfirmButton: false,
+                toast: true
+              });
         }
     };
 
