@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { message, Modal, Button, Select, Descriptions, Spin } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { technicianAPI } from '../../features/technicians/techniciansAPI';
+import { userAPI } from '../../features/users/userAPI';
 import {
   setTechnicians,
   setLoading,
@@ -42,6 +43,7 @@ const TechnicianManagement = () => {
   const [showEditStatusModal, setShowEditStatusModal] = useState(false);
   const [categories, setCategories] = useState([]);
   const [categoryMap, setCategoryMap] = useState({});
+  const [userMap, setUserMap] = useState({});
   const [currentPage, setCurrentPage] = useState(1);
   const techniciansPerPage = 10;
   const [sortField, setSortField] = useState('createdAt');
@@ -181,6 +183,24 @@ const TechnicianManagement = () => {
       dispatch(setLoading(true));
       const data = await technicianAPI.getAll();
       dispatch(setTechnicians(data || []));
+      
+      // Load user data for each technician
+      if (data && data.length > 0) {
+        const userPromises = data
+          .filter(tech => tech.userId)
+          .map(tech => userAPI.getById(tech.userId).catch(() => null));
+        
+        const users = await Promise.all(userPromises);
+        const userMapData = {};
+        
+        data.forEach((tech, index) => {
+          if (tech.userId && users[index]) {
+            userMapData[tech.id] = users[index];
+          }
+        });
+        
+        setUserMap(userMapData);
+      }
     } catch (err) {
       dispatch(setError(err.message || 'Tải các kỹ thuật viên thất bại.'));
       message.error('Tải các kỹ thuật viên thất bại.');
@@ -690,13 +710,19 @@ const TechnicianManagement = () => {
                   <tr key={tech.id}>
                     <td>
                       <div className="d-flex align-items-center">
-                        <p className="avatar me-2 flex-shrink-0">
-                          <img 
-                            src={tech.avatar || tech.userInfo?.avatar || `https://i.pravatar.cc/150?u=${tech.id}`} 
-                            className="rounded-circle" 
-                            alt="" 
-                            style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                          />
+                                                <p className="avatar me-2 flex-shrink-0">
+                          {(tech.avatar || userMap[tech.id]?.avatar) ? (
+                            <img 
+                              src={tech.avatar || userMap[tech.id]?.avatar} 
+                              className="rounded-circle" 
+                              alt="" 
+                              style={{width: 32, height: 32, objectFit: 'cover'}}
+                            />
+                          ) : (
+                            <div className="rounded-circle" style={{width: 32, height: 32, backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#888'}}>
+                                {(tech.fullName || userMap[tech.id]?.fullName || 'U').charAt(0).toUpperCase()}
+                            </div>
+                           )}
                         </p>
                         <h6><p className="fs-14 fw-semibold" style={{maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
                           {tech.fullName && tech.fullName.length > 18 

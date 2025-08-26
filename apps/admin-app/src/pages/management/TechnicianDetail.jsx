@@ -473,7 +473,7 @@ export default function TechnicianDetail() {
 
             <Card title="Thông tin kỹ thuật viên" variant="borderless" style={{ borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 16 }}>
-                <Avatar size={80} src={technician.avatar || user?.avatar || `https://i.pravatar.cc/150?u=${technician.id}`} style={{ flexShrink: 0 }}>
+                <Avatar size={80} src={technician.avatar || user?.avatar} style={{ flexShrink: 0 }}>
                   {(technician.fullName || user?.fullName || 'T').charAt(0).toUpperCase()}
                 </Avatar>
                 <div style={{ flex: 1 }}>

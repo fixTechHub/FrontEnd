@@ -595,7 +595,13 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                        <td>
                                            <div className="d-flex align-items-center">
                                                <p className="avatar me-2 flex-shrink-0">
-                                                   <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} className="rounded-circle" alt="" />
+                                                   {user.avatar ? (
+                                                    <img src={user.avatar} className="rounded-circle" alt="" />
+                                                   ) : (
+                                                    <div className="rounded-circle" style={{width: 32, height: 32, backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#888'}}>
+                                                        {(user.fullName || 'U').charAt(0).toUpperCase()}
+                                                    </div>
+                                                   )}
                                                </p>
                                                <h6><p className="fs-14 fw-semibold">{user.fullName || ""}</p></h6>
                                            </div>
