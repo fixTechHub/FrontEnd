@@ -31,58 +31,52 @@ function TechnicianIncome() {
                 <div className="container">
                     <div className="booking-detail-info">
                         <div className="row">
-                            <div className="col-lg-5">
-                                <BookingDetails bookingId={bookingId} />
-                            </div>
-
-                            <div className="col-lg-7">
-                                <div style={{ display: 'flex', alignItems: 'center' }} className="card your-card">
-                                    {bookingStatus === 'loading' ? (
-                                        <div style={{ textAlign: 'center', width: '100%' }}>
-                                            <Spinner animation="border" variant="primary" />
-                                            <p style={{ marginTop: '1rem' }}>Đang tải thông tin...</p>
+                            <div style={{ display: 'flex', alignItems: 'center' }} className="card your-card">
+                                {bookingStatus === 'loading' ? (
+                                    <div style={{ textAlign: 'center', width: '100%' }}>
+                                        <Spinner animation="border" variant="primary" />
+                                        <p style={{ marginTop: '1rem' }}>Đang tải thông tin...</p>
+                                    </div>
+                                ) : (
+                                    <div style={{ textAlign: 'center', width: '100%' }}>
+                                        <div style={{ fontSize: '4rem', color: '#28a745', marginBottom: '1rem' }}>
+                                            ✓
                                         </div>
-                                    ) : (
-                                        <div style={{ textAlign: 'center', width: '100%' }}>
-                                            <div style={{ fontSize: '4rem', color: '#28a745', marginBottom: '1rem' }}>
-                                                ✓
-                                            </div>
 
-                                            <h4 style={{ marginBottom: '1rem', color: '#28a745' }}>Công việc đã hoàn thành!</h4>
+                                        <h4 style={{ marginBottom: '1rem', color: '#28a745' }}>Công việc đã hoàn thành!</h4>
 
-                                            <p style={{ marginBottom: '1rem' }}>Bạn đã xác nhận hoàn thành công việc cho booking #{bookingId}.</p>
+                                        <p style={{ marginBottom: '1rem' }}>Bạn đã xác nhận hoàn thành công việc cho đơn #{booking?.bookingCode}.</p>
 
-                                            {booking && (
-                                                <>
+                                        {booking && (
+                                            <>
+                                                <p style={{ marginBottom: '1rem' }}>
+                                                    <strong>Dịch vụ:</strong> {booking.serviceId?.serviceName}
+                                                </p>
+                                                <p style={{ marginBottom: '1rem' }}>
+                                                    <strong>Khách hàng:</strong> {booking.customerId?.fullName}
+                                                </p>
+                                                {booking.quote && (
                                                     <p style={{ marginBottom: '1rem' }}>
-                                                        <strong>Dịch vụ:</strong> {booking.serviceId?.serviceName}
+                                                        <strong>Tổng tiền:</strong> {booking.quote.totalAmount?.toLocaleString()} VNĐ
                                                     </p>
-                                                    <p style={{ marginBottom: '1rem' }}>
-                                                        <strong>Khách hàng:</strong> {booking.customerId?.fullName}
-                                                    </p>
-                                                    {booking.quote && (
-                                                        <p style={{ marginBottom: '1rem' }}>
-                                                            <strong>Tổng tiền:</strong> {booking.quote.totalAmount?.toLocaleString()} VNĐ
-                                                        </p>
-                                                    )}
-                                                </>
-                                            )}
+                                                )}
+                                            </>
+                                        )}
 
-                                            <p style={{ marginBottom: '1rem' }}>Hệ thống sẽ tự động xử lý thanh toán và cập nhật trạng thái booking.</p>
+                                        <p style={{ marginBottom: '1rem' }}>Hệ thống sẽ tự động xử lý thanh toán và cập nhật trạng thái đơn hàng.</p>
 
-                                            <p style={{ marginBottom: '2rem' }}>Cảm ơn bạn đã cung cấp dịch vụ chất lượng!</p>
+                                        <p style={{ marginBottom: '2rem' }}>Cảm ơn bạn đã cung cấp dịch vụ chất lượng!</p>
 
-                                            <div className="mt-30 mb-20">
-                                                <button
-                                                    onClick={() => navigate('/')}
-                                                    className="btn btn-primary"
-                                                >
-                                                    Đi đến trang chủ
-                                                </button>
-                                            </div>
+                                        <div className="mt-30 mb-20">
+                                            <button
+                                                onClick={() => navigate('/')}
+                                                className="btn btn-primary"
+                                            >
+                                                Đi đến trang chủ
+                                            </button>
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

@@ -1062,18 +1062,18 @@ const AdminDashboard = () => {
                                background: index === 0 ? '#fff' : '#e9ecef',
                                fontWeight: 'bold',
                                fontSize: '1.2rem',
-                               color: index === 0 ? '#667eea' : '#666'
+                               color: index === 0 ? '#ffc107' : '#666'            //===============================================
                              }}>
                           {index + 1}
                       </div>
                         <div>
-                          <div className={`fw-bold ${index === 0 ? 'text-white' : ''}`}>
+                          <div className={`fw-bold ${index === 0 ? 'text-black' : ''}`}>
                             {booking.user?.fullName || 'Unknown User'}
                     </div>
-                          <div className={`small ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
+                          <div className={`small ${index === 0 ? 'text-black-50' : 'text-muted'}`}>
                             {booking.service?.serviceName || 'Unknown Service'}
                       </div>
-                          <div className={`small ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
+                          <div className={`small ${index === 0 ? 'text-black-50' : 'text-muted'}`}>
                             {booking.schedule?.startTime ? new Date(booking.schedule.startTime).toLocaleDateString() : 'No date'}
                     </div>
                       </div>
@@ -1090,7 +1090,7 @@ const AdminDashboard = () => {
                         >
                           {booking.status?.replace(/_/g, ' ') || 'Unknown'}
                         </Tag>
-                        <div className={`small mt-1 ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
+                        <div className={`small mt-1 ${index === 0 ? 'text-black-50' : 'text-muted'}`}>
                           {booking.bookingCode || booking.id}
                   </div>
                 </div>
@@ -1177,10 +1177,10 @@ const AdminDashboard = () => {
                         {index + 1}
                   </div>
                       <div className="flex-grow-1">
-                        <div className={`fw-bold ${index === 0 ? 'text-white' : ''}`}>
+                        <div className={`fw-bold ${index === 0 ? 'text-black' : ''}`}>
                           {tech.user?.fullName || 'Unknown Technician'}
                 </div>
-                        <div className={`small ${index === 0 ? 'text-white-50' : 'text-muted'}`}>
+                        <div className={`small ${index === 0 ? 'text-black-50' : 'text-muted'}`}>
                           Số công việc đã thực hiện: {tech.jobCompleted || 0}
                       </div>
                     </div>
@@ -1190,7 +1190,7 @@ const AdminDashboard = () => {
                             color: index === 0 ? '#fff' : '#ffc107', 
                             marginRight: '4px'
                           }} />
-                          <span className={`fw-bold ${index === 0 ? 'text-white' : ''}`}>
+                          <span className={`fw-bold ${index === 0 ? 'text-black' : ''}`}>
                             {tech.ratingAverage?.toFixed(1) || '0.0'}
                           </span>
                       </div>

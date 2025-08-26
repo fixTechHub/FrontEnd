@@ -869,7 +869,7 @@ const ReportManagement = () => {
                 </div>
                 {selectedReport.id && (
                           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ fontFamily: 'monospace', fontSize: 15 }}>ID: {selectedReport.id}</span>
+                            <span style={{ fontFamily: 'monospace', fontSize: 15, color: 'black' }}>ID: {selectedReport.id}</span>
                           </div>
                         )}
               </div>
@@ -1083,7 +1083,7 @@ const ReportManagement = () => {
                </div>
                {selectedUser && (
                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                   <span style={{ fontFamily: 'monospace', fontSize: 15 }}>ID: {selectedUser}</span>
+                   <span style={{ fontFamily: 'monospace', fontSize: 15, color: 'black' }}>ID: {selectedUser}</span>
                  </div>
                )}
              </div>

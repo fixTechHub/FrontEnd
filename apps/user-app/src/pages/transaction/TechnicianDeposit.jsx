@@ -81,15 +81,12 @@ const TechnicianDeposit = () => {
   const pkg = sub?.package || null;
 
   // local UI state
-  const [amount, setAmount] = useState('');
-  const [amountError, setAmountError] = useState(null);
-
+  const [payAmount, setPayAmount] = useState(technician?.debBalance ? technician.debBalance.toString() : '');
+  const [payAmountError, setPayAmountError] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawAmountError, setWithdrawAmountError] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('BANK');
-
   const [months, setMonths] = useState(1);
-
   const [page, setPage] = useState(0);
   const limit = 5;
 
@@ -97,17 +94,18 @@ const TechnicianDeposit = () => {
   useEffect(() => {
     if (technicianId) {
       dispatch(fetchTechnicianDepositLogs({ limit, skip: page * limit }));
-      // nếu thunk cần object thì đổi thành: dispatch(fetchCurrentSubscription({ technicianId }))
       dispatch(fetchCurrentSubscription(technicianId));
     }
-  }, [dispatch, page, technicianId]);
+    // Update payAmount when technician.debBalance changes
+    setPayAmount(technician?.debBalance ? formatThousands(technician.debBalance.toString()) : '');
+  }, [dispatch, page, technicianId, technician?.debBalance]);
 
   // handlers
   const handleDepositSubmit = async (e) => {
     e.preventDefault();
-    const parsed = parseFloat(amount);
-    if (isNaN(parsed) || parsed <= 0) {
-      setAmountError('Hãy nhập số tiền hợp lệ');
+    const parsed = parseFloat(payAmount.replace(/[^\d]/g, ''));
+    if (isNaN(parsed) || parsed < 300000) {
+      setPayAmountError('Số tiền phải lớn hơn hoặc bằng 300,000 VND');
       return;
     }
 
@@ -115,7 +113,7 @@ const TechnicianDeposit = () => {
       const depositURL = await dispatch(depositBalance(parsed)).unwrap();
       if (depositURL) {
         toast.success('Đang chuyển hướng đến cổng thanh toán...');
-        const modalElement = document.getElementById('deposit_modal');
+        const modalElement = document.getElementById('new_deposit_modal');
         const modal = window.bootstrap.Modal.getInstance(modalElement);
         if (modal) modal.hide();
         window.location.href = depositURL;
@@ -194,10 +192,8 @@ const TechnicianDeposit = () => {
 
   const handleRequestWithdrawSubmit = async (e) => {
     e.preventDefault();
-
-    // Tẩy mọi ký tự không phải số: chấm, phẩy, khoảng trắng…
     const raw = String(withdrawAmount || '');
-    const amountNumber = Number(raw.replace(/[^\d]/g, ''));   // "1.234.567" -> 1234567
+    const amountNumber = Number(raw.replace(/[^\d]/g, ''));
     const bal = Number(technician?.balance || 0);
 
     if (!amountNumber || amountNumber <= 0) {
@@ -214,36 +210,25 @@ const TechnicianDeposit = () => {
       await dispatch(
         withdrawBalance({
           technicianId,
-          amount: amountNumber,      // 👈 dùng số sạch
+          amount: amountNumber,
           paymentMethod,
         })
       ).unwrap();
 
       toast.success('Yêu cầu rút tiền đã được gửi đến admin');
-
-      // Đóng modal an toàn
       const el = document.getElementById('withdraw_modal');
       if (el) {
         const instance = window.bootstrap?.Modal.getInstance(el) || new window.bootstrap.Modal(el);
         instance.hide();
       }
 
-      // Reset form
       setWithdrawAmount('');
       setPaymentMethod('BANK');
-
-      // Refresh logs (nếu page là 1-based thì dùng (page-1)*limit)
       dispatch(fetchTechnicianDepositLogs({ limit, skip: page * limit }));
     } catch (err) {
       console.error('Withdraw request error:', err);
       toast.error(err?.message || 'Có lỗi xảy ra khi gửi yêu cầu rút tiền.');
     }
-  };
-
-
-  const handleAmountChange = (e) => {
-    setAmount(e.target.value);
-    setAmountError(null);
   };
 
   const handleWithdrawAmountChange = (e) => {
@@ -267,18 +252,18 @@ const TechnicianDeposit = () => {
 
   const translateStatus = (status) => {
     switch (status) {
-      case "PENDING":
-        return "Đang chờ";
-      case "APPROVED":
-        return "Đã duyệt";
-      case "REJECTED":
-        return "Bị từ chối";
-      case "COMPLETED":
-        return "Hoàn thành";
-      case "CANCELLED":
-        return "Đã hủy";
+      case 'PENDING':
+        return 'Đang chờ';
+      case 'APPROVED':
+        return 'Đã duyệt';
+      case 'REJECTED':
+        return 'Bị từ chối';
+      case 'COMPLETED':
+        return 'Hoàn thành';
+      case 'CANCELLED':
+        return 'Đã hủy';
       default:
-        return status; // fallback giữ nguyên
+        return status;
     }
   };
 
@@ -293,11 +278,11 @@ const TechnicianDeposit = () => {
     modal.show();
   };
 
-  // --- helpers ---
-  const digitsOnly = (s) => (s || '').replace(/[^\d]/g, ''); // bỏ mọi thứ không phải số
-  const formatVND = (n) => Number(n).toLocaleString('vi-VN'); // 1.234.567
+  const digitsOnly = (s) => (s || '').replace(/[^\d]/g, '');
+  const formatVND = (n) => Number(n).toLocaleString('vi-VN');
+  const formatThousands = (v) =>
+    String(v).replace(/[^\d]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
-  // --- onChange: format khi gõ ---
   const onFormattedAmountChange = (e) => {
     const bal = Number(technician?.balance || 0);
     const rawDigits = digitsOnly(e.target.value);
@@ -310,25 +295,11 @@ const TechnicianDeposit = () => {
 
     let num = parseInt(rawDigits, 10);
     if (Number.isNaN(num)) num = 0;
-
-    // Giới hạn tối đa theo số dư
     if (bal > 0 && num > bal) num = bal;
 
-    setWithdrawAmount(formatVND(num));   // 👉 lưu dạng "1.234.567"
+    setWithdrawAmount(formatVND(num));
     setWithdrawAmountError(null);
   };
-
-  // format "1.234.567"
-  const formatThousands = (v) =>
-    String(v).replace(/[^\d]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-  const onDepositAmountChange = (e) => {
-    const formatted = formatThousands(e.target.value);
-    setAmount(formatted);              // dùng state amount của deposit
-    if (amountError) setAmountError(null);
-  };
-
-
 
   return (
     <div className="main-wrapper">
@@ -383,12 +354,6 @@ const TechnicianDeposit = () => {
                       <span>Thu nhập</span>
                     </Link>
                   </li>
-                  {/* <li>
-                    <Link to={`/profile`}>
-                      <img src="/img/icons/settings-icon.svg" alt="Icon" />
-                      <span>Cài đặt</span>
-                    </Link>
-                  </li> */}
                 </ul>
               </div>
             </div>
@@ -449,22 +414,20 @@ const TechnicianDeposit = () => {
                         Rút
                       </button>
                     </div>
-                    <div className="wallet-btn">
-                      <Button
-                        className="btn"
-                        onClick={handleDepositSubmit}
-                        disabled={transactionLoading || technician?.debBalance <= 0}
-                      >
-                        {transactionLoading ? 'Đang xử lý...' : 'Thanh toán nợ'}
-                      </Button>
-                    </div>
+                
+                      <div className="wallet-btn">
+                        <Button
+                          className="btn"
+                          data-bs-toggle="modal"
+                          data-bs-target="#new_deposit_modal"
+                          disabled={technician?.debBalance <= 0}
+                        >
+                          {transactionLoading ? 'Đang xử lý...' : 'Thanh toán nợ'}
+                        </Button>
+                      </div>
+                    
                   </div>
-                  {transactionError && (
-                    <small className="text-danger mt-2 d-block">{transactionError}</small>
-                  )}
-                  {successMessage && (
-                    <small className="text-success mt-2 d-block">{successMessage}</small>
-                  )}
+                
                 </div>
               </div>
             </div>
@@ -484,8 +447,6 @@ const TechnicianDeposit = () => {
                     <h5 className="text-primary fw-bold">
                       {pkg?.name || 'Chưa đăng ký gói'}
                     </h5>
-
-                    {/* Chỉ hiện khi chưa có gói */}
                     {!(pkg && (pkg._id || pkg.id || pkg.name)) && (
                       <p className="mb-1 text-primary">
                         Bạn chưa có gói nào. Hãy bấm “Chọn gói” để đăng ký.
@@ -620,82 +581,119 @@ const TechnicianDeposit = () => {
                 </div>
               </div>
 
-              {/* Deposit Modal */}
-              <div className="modal new-modal fade" id="deposit_modal" data-bs-keyboard="false" data-bs-backdrop="static">
-                <div className="modal-dialog modal-dialog-centered modal-md">
-                  <div className="modal-content">
+              {/* New Deposit Modal */}
+              <div
+                className="modal fade new-modal"
+                id="new_deposit_modal"
+                data-bs-backdrop="static"
+                data-bs-keyboard="false"
+                aria-hidden="true"
+                aria-labelledby="depositModalLabel"
+              >
+                <div className="modal-dialog modal-dialog-centered">
+                  <div className="modal-content shadow-lg">
                     <div className="modal-header">
-                      <h4 className="modal-title">Khoản Giao Dịch</h4>
+                      <h5 className="modal-title" id="depositModalLabel">Thanh Toán Nợ</h5>
                       <button
                         type="button"
-                        className="close-btn"
+                        className="btn-close"
                         data-bs-dismiss="modal"
+                        aria-label="Close"
                         onClick={() => {
-                          setAmount('');
-                          setAmountError(null);
+                          setPayAmountError(null);
                           dispatch(clearTransactionState());
                         }}
-                      >
-                        <span>×</span>
-                      </button>
+                      />
                     </div>
                     <div className="modal-body">
-                      <form onSubmit={handleDepositSubmit}>
-                        <div className="row">
-                          <div className="col-md-12">
-                            <div className="modal-form-group">
-                              <label className="form-label">
-                                Số tiền <span className="text-danger">*</span>
-                              </label>
-                              <div className="input-group">
-                                <input
-                                  type="text"
-                                  inputMode="numeric"        // gợi ý bàn phím số trên mobile
-                                  pattern="\d*"              // chấp nhận chỉ số (cho trình duyệt hỗ trợ)
-                                  className={`form-control ${withdrawAmountError || transactionError ? 'is-invalid' : ''}`}
-                                  placeholder="Nhập số tiền muốn rút"
-                                  value={withdrawAmount}
-                                  onChange={onFormattedAmountChange}
-                                  autoComplete="off"
-                                />
-                                <span className="input-group-text">VND</span>
-                                {(withdrawAmountError || transactionError) && (
-                                  <div className="invalid-feedback">
-                                    {withdrawAmountError || transactionError}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="form-text">
-                                Tối đa: {(technician?.balance || 0).toLocaleString('vi-VN')} VND
-                              </div>
-                              {successMessage && <div className="form-text text-success">{successMessage}</div>}
-                            </div>
-                          </div>
+                      <div className="mb-3">
+                        <div className="balance-box d-flex justify-content-between align-items-center">
+                          <span>Số tiền nợ</span>
+                          <strong>{(technician?.debBalance || 0).toLocaleString('vi-VN')} VND</strong>
                         </div>
-                        <div className="modal-btn modal-btn-sm">
+                      </div>
+                      <form onSubmit={handleDepositSubmit}>
+                        <div className="mb-3">
+                          <label className="form-label">
+                            Số tiền trả <span className="text-danger">*</span>
+                          </label>
+                          <div className="input-group">
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              pattern="\d*"
+                              className={`form-control ${payAmountError || transactionError ? 'is-invalid' : ''}`}
+                              value={payAmount}
+                              readOnly
+                            />
+                            <span className="input-group-text">VND</span>
+                            {(payAmountError || transactionError) && (
+                              <div className="invalid-feedback">
+                                {payAmountError || transactionError}
+                              </div>
+                            )}
+                          </div>
+                          {successMessage && <div className="form-text text-success">{successMessage}</div>}
+                        </div>
+                        <div className="modal-footer">
                           <button
                             type="button"
-                            className="btn btn-secondary"
+                            className="btn btn-outline-secondary"
                             data-bs-dismiss="modal"
                             onClick={() => {
-                              setAmount('');
-                              setAmountError(null);
+                              setPayAmountError(null);
                               dispatch(clearTransactionState());
                             }}
                           >
                             Thoát
                           </button>
-                          <button type="submit" className="btn btn-primary" disabled={transactionLoading}>
-                            {transactionLoading ? 'Xử lý...' : 'Nạp'}
+                          <button
+                            type="submit"
+                            className="btn btn-primary"
+                            disabled={transactionLoading}
+                          >
+                            {transactionLoading ? 'Đang xử lý...' : 'Xác nhận thanh toán'}
                           </button>
                         </div>
                       </form>
                     </div>
                   </div>
                 </div>
+                <style>{`
+                  .new-modal .modal-dialog {
+                    max-width: 640px !important;
+                    margin: 1.75rem auto;
+                  }
+                  .new-modal .modal-content {
+                    border-radius: 14px;
+                  }
+                  .new-modal .modal-header {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid #eef2f7;
+                  }
+                  .new-modal .modal-body {
+                    padding: 16px;
+                  }
+                  .new-modal .modal-footer {
+                    padding: 12px 16px;
+                    border-top: 1px solid #eef2f7;
+                  }
+                  .new-modal .balance-box {
+                    background: #f8fafc;
+                    border: 1px solid #eef2f7;
+                    border-radius: 10px;
+                    padding: 10px 12px;
+                    font-weight: 600;
+                  }
+                  @media (max-width: 576px) {
+                    .new-modal .modal-dialog {
+                      margin: 0 12px;
+                    }
+                  }
+                `}</style>
               </div>
 
-              {/* Withdraw Modal (đã sửa) */}
+              {/* Withdraw Modal */}
               <div
                 className="modal fade new-modal"
                 id="withdraw_modal"
@@ -710,7 +708,7 @@ const TechnicianDeposit = () => {
                       <h5 className="modal-title" id="withdrawModalLabel">Yêu Cầu Rút Tiền</h5>
                       <button
                         type="button"
-                        className="btn-close"                // ✅ dùng nút chuẩn của Bootstrap
+                        className="btn-close"
                         data-bs-dismiss="modal"
                         aria-label="Close"
                         onClick={() => {
@@ -721,18 +719,14 @@ const TechnicianDeposit = () => {
                         }}
                       />
                     </div>
-
                     <div className="modal-body">
-                      {/* Số dư khả dụng */}
                       <div className="mb-3">
                         <div className="balance-box d-flex justify-content-between align-items-center">
                           <span>Số dư khả dụng</span>
                           <strong>{(technician?.balance || 0).toLocaleString('vi-VN')} VND</strong>
                         </div>
                       </div>
-
                       <form onSubmit={handleRequestWithdrawSubmit}>
-                        {/* Số tiền */}
                         <div className="mb-3">
                           <label className="form-label">
                             Số tiền <span className="text-danger">*</span>
@@ -741,24 +735,25 @@ const TechnicianDeposit = () => {
                             <input
                               type="text"
                               inputMode="numeric"
-                              pattern="\d*"
-                              className={`form-control ${amountError || transactionError ? 'is-invalid' : ''}`}
-                              placeholder="Nhập số tiền muốn nạp"
-                              value={amount}                          // ✅ dùng amount, KHÔNG dùng withdrawAmount
-                              onChange={onDepositAmountChange}        // ✅ handler format dấu chấm
+                              // pattern="\d*"
+                              className={`form-control ${withdrawAmountError || transactionError ? 'is-invalid' : ''}`}
+                              placeholder="Nhập số tiền muốn rút"
+                              value={withdrawAmount}
+                              onChange={onFormattedAmountChange}
                               autoComplete="off"
                             />
                             <span className="input-group-text">VND</span>
-                            {(amountError || transactionError) && (
+                            {(withdrawAmountError || transactionError) && (
                               <div className="invalid-feedback">
-                                {amountError || transactionError}
+                                {withdrawAmountError || transactionError}
                               </div>
                             )}
                           </div>
+                          <div className="form-text">
+                            Tối đa: {(technician?.balance || 0).toLocaleString('vi-VN')} VND
+                          </div>
                           {successMessage && <div className="form-text text-success">{successMessage}</div>}
                         </div>
-
-                        {/* Phương thức */}
                         <div className="mb-3">
                           <label className="form-label">
                             Phương thức thanh toán <span className="text-danger">*</span>
@@ -771,8 +766,6 @@ const TechnicianDeposit = () => {
                             <option value="BANK">Chuyển khoản ngân hàng</option>
                           </select>
                         </div>
-
-                        {/* Footer nút */}
                         <div className="modal-footer">
                           <button
                             type="button"
@@ -795,38 +788,39 @@ const TechnicianDeposit = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* CSS chỉ áp cho modal này */}
                 <style>{`
-    .new-modal .modal-dialog{
-      max-width: 640px !important;      /* ✅ không quá rộng */
-      margin: 1.75rem auto;
-    }
-    .new-modal .modal-content{
-      border-radius: 14px;               /* bo góc nhẹ */
-    }
-    .new-modal .modal-header{
-      padding: 12px 16px;
-      border-bottom: 1px solid #eef2f7;
-    }
-    .new-modal .modal-body{ padding: 16px; }
-    .new-modal .modal-footer{
-      padding: 12px 16px;
-      border-top: 1px solid #eef2f7;
-    }
-    .new-modal .balance-box{
-      background:#f8fafc;
-      border:1px solid #eef2f7;
-      border-radius:10px;
-      padding:10px 12px;
-      font-weight:600;
-    }
-    @media (max-width: 576px){
-      .new-modal .modal-dialog{ margin: 0 12px; }
-    }
-  `}</style>
+                  .new-modal .modal-dialog {
+                    max-width: 640px !important;
+                    margin: 1.75rem auto;
+                  }
+                  .new-modal .modal-content {
+                    border-radius: 14px;
+                  }
+                  .new-modal .modal-header {
+                    padding: 12px 16px;
+                    border-bottom: 1px solid #eef2f7;
+                  }
+                  .new-modal .modal-body {
+                    padding: 16px;
+                  }
+                  .new-modal .modal-footer {
+                    padding: 12px 16px;
+                    border-top: 1px solid #eef2f7;
+                  }
+                  .new-modal .balance-box {
+                    background: #f8fafc;
+                    border: 1px solid #eef2f7;
+                    border-radius: 10px;
+                    padding: 10px 12px;
+                    font-weight: 600;
+                  }
+                  @media (max-width: 576px) {
+                    .new-modal .modal-dialog {
+                      margin: 0 12px;
+                    }
+                  }
+                `}</style>
               </div>
-
 
               {/* View Deposit Modals */}
               {Array.isArray(logs) &&
@@ -970,40 +964,72 @@ const TechnicianDeposit = () => {
                   </div>
                 </div>
               </div>
-              {/* end modals */}
             </div>
           </div>
         </div>
       </div>
 
-      {/* CSS thuần, KHÔNG để JS trong này */}
       <style>{`
-        .modal-backdrop.show{ background: rgba(15,23,42,.55); backdrop-filter: blur(2px); }
-        .upgrade-modal{ border:1px solid #e6eaf2; border-radius:16px; overflow:hidden; box-shadow:0 30px 80px rgba(2,6,23,.25); }
-        .upgrade-modal__head{ background:linear-gradient(180deg,#fff,#f9fbff); border-bottom:1px solid #edf0f6; }
-        .upgrade-modal__head .modal-title{ font-weight:800; letter-spacing:.2px; color:#0f172a; }
-        .upgrade-close{ filter:grayscale(100%); opacity:.7; }
-        .upgrade-close:hover{ opacity:1; }
-        .upgrade-modal__body{ background:#fff; }
-
-        .package-card:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(2,6,23,.12); border-color:#dbe4ff; }
-        .package-card{ min-width:220px; max-width:250px; display:flex; flex-direction:column; }
-        .package-card .card-body{ display:flex; flex-direction:column; justify-content:space-between; }
-        .package-card button{ width:100px; }
-
-        .package-ribbon{ position:absolute; top:10px; right:-12px; background:#111827; color:#fff; font-weight:800; font-size:12px; padding:6px 10px; border-radius:999px; box-shadow:0 6px 16px rgba(0,0,0,.15); }
-        .package-card.is-popular{ border-color:#111827; }
-
-        .price-tag{ display:inline-flex; align-items:baseline; gap:6px; background:#f4f7ff; border:1px solid #e3e9ff; padding:8px 12px; border-radius:12px; }
-        .price{ font-size:20px; font-weight:900; color:#111827; }
-        .per{ color:#64748b; font-weight:700; }
-
-        .btn-upgrade{ --btn-bg:#111827; --btn-bg-hover:#0b1220; --btn-border:#111827; background:var(--btn-bg); color:#fff; border:1px solid var(--btn-border); border-radius:12px; padding:10px 14px; font-weight:800; }
-        .btn-upgrade:hover{ background:var(--btn-bg-hover); color:#fff; }
-
-        @media (max-width:576px){
-          .package-ribbon{ right:10px; }
-          .price{ font-size:18px; }
+        .modal-backdrop.show {
+          background: rgba(15,23,42,.55);
+          backdrop-filter: blur(2px);
+        }
+        .package-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 14px 30px rgba(2,6,23,.12);
+          border-color: #dbe4ff;
+        }
+        .package-card {
+          min-width: 220px;
+          max-width: 250px;
+          display: flex;
+          flex-direction: column;
+        }
+        .package-card .card-body {
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+        }
+        .package-card button {
+          width: 100px;
+        }
+        .price-tag {
+          display: inline-flex;
+          align-items: baseline;
+          gap: 6px;
+          background: #f4f7ff;
+          border: 1px solid #e3e9ff;
+          padding: 8px 12px;
+          border-radius: 12px;
+        }
+        .price {
+          font-size: 20px;
+          font-weight: 900;
+          color: #111827;
+        }
+        .per {
+          color: #64748b;
+          font-weight: 700;
+        }
+        .btn-upgrade {
+          --btn-bg: #111827;
+          --btn-bg-hover: #0b1220;
+          --btn-border: #111827;
+          background: var(--btn-bg);
+          color: #fff;
+          border: 1px solid var(--btn-border);
+          border-radius: 12px;
+          padding: 10px 14px;
+          font-weight: 800;
+        }
+        .btn-upgrade:hover {
+          background: var(--btn-bg-hover);
+          color: #fff;
+        }
+        @media (max-width: 576px) {
+          .price {
+            font-size: 18px;
+          }
         }
       `}</style>
     </div>

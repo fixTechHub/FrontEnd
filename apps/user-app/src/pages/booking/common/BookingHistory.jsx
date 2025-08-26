@@ -6,7 +6,7 @@ import { fetchUserBookingHistory, cancelBooking } from '../../../features/bookin
 import { requestWarrantyThunk, resetWarrantyState } from '../../../features/booking-warranty/warrantySlice';
 import { formatBookingDate, formatDateOnly, formatTimeOnly } from '../../../utils/formatDate';
 import { toast } from 'react-toastify';
-import ImageUploader from './ImageUploader';
+// import ImageUploader from './ImageUploader';
 import { 
   FaFileAlt, FaUser, FaClock, FaCalendar, FaTag, FaBan, FaMapMarkerAlt, 
   FaDollarSign, FaUserCheck, FaHourglassHalf, FaSpinner 
@@ -32,6 +32,7 @@ import {
   RiToolsFill as Tools
 } from 'react-icons/ri';
 import { formatCurrency } from '../../../utils/formatDuration';
+import Swal from 'sweetalert2';
 
 const statusConfig = {
   PENDING: {
@@ -101,6 +102,121 @@ const statusConfig = {
     icon: Success
   }
 };
+const MAX_FILES = 5;
+
+function ImageUploader({ onFilesSelect }) {
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [previewUrls, setPreviewUrls] = useState([]);
+
+    const handleFileChange = (event) => {
+        const newFiles = Array.from(event.target.files);
+
+        const remainingSlots = MAX_FILES - selectedFiles.length;
+        if (newFiles.length > remainingSlots) {
+            alert(`Bạn chỉ có thể tải lên thêm ${remainingSlots} ảnh. Giới hạn tối đa là ${MAX_FILES} ảnh.`);
+        }
+
+        const filesToProcess = newFiles.slice(0, remainingSlots);
+
+        const validFiles = filesToProcess.filter(file => {
+            const isTypeValid = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
+
+            if (!isTypeValid) {
+                alert(`Định dạng file ${file.name} không được hỗ trợ. Vui lòng chỉ sử dụng ảnh JPEG, JPG, hoặc PNG.`);
+            }
+            return isTypeValid;
+        });
+
+        const updatedFiles = [...selectedFiles, ...validFiles];
+        setSelectedFiles(updatedFiles);
+        onFilesSelect(updatedFiles);
+    };
+
+    useEffect(() => {
+        const newPreviewUrls = selectedFiles.map(file => URL.createObjectURL(file));
+        setPreviewUrls(newPreviewUrls);
+        return () => {
+            newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+        };
+    }, [selectedFiles]);
+
+    const handleRemoveImage = (indexToRemove) => {
+        URL.revokeObjectURL(previewUrls[indexToRemove]);
+        const updatedFiles = selectedFiles.filter((_, index) => index !== indexToRemove);
+        setSelectedFiles(updatedFiles);
+        onFilesSelect(updatedFiles);
+    };
+
+    return (
+        <div className="input-block date-widget">
+            <label className="form-label" style={{ fontSize: 16 }}>
+                Tải lên hình ảnh (bắt buộc) 
+            </label>
+            {/* ({selectedFiles.length}/{MAX_FILES}) */}
+
+            {selectedFiles.length < MAX_FILES && (
+                <label className="upload-div" htmlFor="file-input-component" style={{ cursor: 'pointer' }}>
+                    <input
+                        id="file-input-component"
+                        type="file"
+                        accept=".jpeg,.jpg,.png"
+                        multiple
+                        onChange={handleFileChange}
+                    // style={{ display: 'none' }}
+                    />
+                    <div className="upload-photo-drag">
+                        <span>
+                            <i className="fa fa-upload me-2"></i> Tải ảnh lên
+                        </span>
+                        <h6>hoặc Kéo thả để tải ảnh</h6>
+                    </div>
+                </label>
+            )}
+
+            {/* {previewUrls.length > 0 && (
+                <div className="upload-preview mt-3">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                        {previewUrls.map((url, index) => (
+                            <div key={url} style={{ position: 'relative' }}>
+                                <img
+                                    src={url}
+                                    alt={`Preview ${index}`}
+                                    style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveImage(index)}
+                                    style={{
+                                        position: 'absolute', top: '-5px', right: '-5px', background: 'red',
+                                        color: 'white', border: 'none', borderRadius: '50%',
+                                        width: '20px', height: '20px', lineHeight: '18px',
+                                        textAlign: 'center', cursor: 'pointer', padding: 0,
+                                        fontSize: '14px', fontWeight: 'bold'
+                                    }}
+                                >
+                                    &times;
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )} */}
+
+            {/* <div className="upload-list mt-2">
+                <ul style={{ fontSize: 11 }}>
+                    Để đảm bảo ảnh của bạn được tải lên thành công, vui lòng lưu ý các điểm sau:
+                    <li style={{ fontSize: 11, marginLeft: 15, marginTop: 5 }}>
+                        Kích thước tối đa: Mỗi ảnh không quá 8 MB.
+                    </li>
+                    <li style={{ fontSize: 11, marginLeft: 15, marginTop: 5 }}>
+                        Định dạng hỗ trợ: Vui lòng sử dụng các định dạng ảnh JPEG, JPG hoặc PNG.
+                    </li>
+                </ul>
+            </div> */}
+        </div>
+    );
+}
+
 
 const BookingHistory = () => {
   const dispatch = useDispatch();
@@ -167,23 +283,54 @@ const BookingHistory = () => {
   const handleCancelBooking = async (e) => {
     e.preventDefault();
     if (!cancelReason.trim()) {
-      toast.error('Vui lòng nhập lý do hủy');
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Vui lòng nhập lý do hủy',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'bottom-right',
+        toast: true
+      });
       return;
     }
     try {
       await dispatch(cancelBooking({ bookingId: selectedBookingId, reason: cancelReason })).unwrap();
-      toast.success('Hủy đặt chỗ thành công');
+      Swal.fire({
+        icon: 'success',
+        title: 'Thành công',
+        text: 'Hủy đặt chỗ thành công',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'bottom-right',
+        toast: true
+      });
       setCancelReason('');
       setShowCancelModal(false);
       setSelectedBookingId(null);
     } catch (error) {
-      toast.error(`Lỗi: ${error}`);
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: `${error}`,
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'bottom-right'
+      });
     }
   };
 
   const handleWarrantyModalOpen = (bookingId) => {
     if (!bookingId) {
-      toast.error('Booking ID is required');
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Booking ID is required',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'bottom-right',
+        toast: true
+      });
       return;
     }
     setSelectedWarrantyBookingId(bookingId);
@@ -211,7 +358,15 @@ const BookingHistory = () => {
   const handleWarrantySubmit = async (e) => {
     e.preventDefault();
     if (!selectedWarrantyBookingId) {
-      toast.error('Booking ID is required');
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: 'Booking ID is required',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'bottom-right',
+        toast: true
+      });
       return;
     }
     try {
@@ -223,12 +378,29 @@ const BookingHistory = () => {
       }
       const warranty = await dispatch(requestWarrantyThunk(formData)).unwrap();
 
-      toast.success('Yêu cầu bảo hành thành công, Vui lòng đợi trong vòng 24h để thợ phản hồi');
+      Swal.fire({
+        icon: 'success',
+        title: 'Thành công',
+        text: 'Yêu cầu bảo hành thành công, Vui lòng đợi trong vòng 24h để thợ phản hồi',
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'bottom-right',
+        toast: true
+      });
       handleWarrantyModalClose();
       navigate(`/warranty?bookingWarrantyId=${warranty._id}`)
     } catch (err) {
       const errorMessage = err?.error || 'Đã xảy ra lỗi khi yêu cầu bảo hành';
-      toast.error(errorMessage);
+      Swal.fire({
+        icon: 'error',
+        title: 'Lỗi',
+        text: errorMessage,
+        timer: 3000,
+        showConfirmButton: false,
+        position: 'bottom-right',
+        toast: true,
+        
+      });
     }
   };
 
