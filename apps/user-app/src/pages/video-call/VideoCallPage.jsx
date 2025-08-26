@@ -10,7 +10,7 @@ import { MdCallEnd } from 'react-icons/md';
 import { toast } from 'react-toastify';
 import '../../utils/polyfills';
 
-// Updated STUN/TURN Configuration for better reliability
+// Updated STUN/TURN Configuration with fallback
 const getIceConfiguration = () => {
   const isProduction = window.location.protocol === 'https:';
   const baseStunServers = [
@@ -19,10 +19,11 @@ const getIceConfiguration = () => {
     { urls: 'stun:stun2.l.google.com:19302' },
     { urls: 'stun:stun3.l.google.com:19302' },
     { urls: 'stun:stun4.l.google.com:19302' },
+    { urls: 'stun:stun.nextcloud.com:3478' }, // Fallback STUN server
   ];
 
   const turnServers = [
-    { urls: 'stun:stun.relay.metered.ca:80' }, // STUN for initial connectivity
+    { urls: 'stun:stun.relay.metered.ca:80' },
     {
       urls: 'turn:global.relay.metered.ca:80',
       username: '8b25f915de9f9386eb3c55db',
@@ -52,7 +53,7 @@ const getIceConfiguration = () => {
         iceTransportPolicy: 'all',
       }
     : {
-        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun.nextcloud.com:3478' }],
         iceCandidatePoolSize: 10,
       };
 };
@@ -86,7 +87,7 @@ const VideoCallPage = () => {
   const connectionRef = useRef();
   const hasCalled = useRef(false);
   const hasStopped = useRef(false);
-  const signalSent = useRef(false); // Track if signal has been sent
+  const signalSent = useRef(false);
   const bookingWarrantyId = location.state?.bookingWarrantyId;
 
   const [stream, setStream] = useState(null);
@@ -94,7 +95,7 @@ const VideoCallPage = () => {
   const [isConnecting, setIsConnecting] = useState(false);
   const [iceFailureTimeout, setIceFailureTimeout] = useState(null);
   const [isStreamReady, setIsStreamReady] = useState(false);
-  const [retryCount, setRetryCount] = useState(0); // Add retry counter
+  const [retryCount, setRetryCount] = useState(0);
 
   const logIceCandidate = (candidate, type) => {
     console.log(`${type} ICE Candidate:`, {
@@ -143,16 +144,13 @@ const VideoCallPage = () => {
       if (myVideo.current && myVideo.current.srcObject) {
         myVideo.current.srcObject = null;
         myVideo.current.load();
-        console.log('Cleared myVideo srcObject');
       }
       if (userVideo.current && userVideo.current.srcObject) {
         userVideo.current.srcObject = null;
         userVideo.current.load();
-        console.log('Cleared userVideo srcObject');
       }
       setStream(null);
       setIsStreamReady(false);
-      console.log(`Stream stopped for user: ${user._id} (Reason: ${reason})`);
     }
   };
 
@@ -169,18 +167,14 @@ const VideoCallPage = () => {
       const constraints = getMediaConstraints();
       const currentStream = await navigator.mediaDevices.getUserMedia(constraints);
       const videoTracks = currentStream.getVideoTracks();
-      console.log(`Stream initialized with ${videoTracks.length} video tracks`);
-      if (videoTracks.length === 0) {
-        throw new Error('No video track available');
-      }
+      if (videoTracks.length === 0) throw new Error('No video track available');
       setStream(currentStream);
       setIsStreamReady(true);
-      console.log('Stream initialized successfully');
       hasStopped.current = false;
     } catch (error) {
       console.error(`Error accessing media devices, attempt ${attempt + 1}:`, error);
       if (error.name === 'NotAllowedError') {
-        toast.error('Camera/microphone access denied. Please allow permissions in browser settings.');
+        toast.error('Camera/microphone access denied. Please allow permissions.');
       } else if (error.name === 'NotFoundError') {
         toast.error('No camera/microphone found. Please connect a device.');
       } else if (error.name === 'NotReadableError') {
@@ -188,9 +182,7 @@ const VideoCallPage = () => {
       } else {
         toast.error('Failed to access camera/microphone. Check device or permissions.');
       }
-      if (attempt < maxRetries - 1) {
-        setTimeout(() => initializeStream(attempt + 1), 1000);
-      }
+      if (attempt < maxRetries - 1) setTimeout(() => initializeStream(attempt + 1), 1000);
     }
   };
 
@@ -200,7 +192,7 @@ const VideoCallPage = () => {
       myVideo.current.srcObject = stream;
       myVideo.current.play().catch((error) => {
         console.warn('Local video autoplay failed:', error);
-        toast.warn('Local video failed to play. Please click "Start Camera" to enable it.');
+        toast.warn('Local video failed to play. Click "Start Camera" to enable.');
       });
     }
   }, [stream, myVideo, hasStopped]);
@@ -220,7 +212,7 @@ const VideoCallPage = () => {
       console.log('✅ Peer connected successfully');
       setConnectionState('connected');
       setIsConnecting(false);
-      setRetryCount(0); // Reset retry on successful connection
+      setRetryCount(0);
       toast.success('Connected successfully!', { autoClose: 2000 });
     });
 
@@ -228,18 +220,14 @@ const VideoCallPage = () => {
       console.log('🔌 Peer connection closed');
       setConnectionState('closed');
       setIsConnecting(false);
-      if (callEnded) {
-        stopStream('peer closed');
-      }
+      if (callEnded) stopStream('peer closed');
     });
 
     peer.on('error', (err) => {
       console.error('❌ Peer error:', err);
       setConnectionState('failed');
       setIsConnecting(false);
-      if (callEnded) {
-        stopStream('peer error');
-      }
+      if (callEnded) stopStream('peer error');
     });
 
     if (peer._pc) {
@@ -249,12 +237,12 @@ const VideoCallPage = () => {
         setConnectionState(state);
         if (state === 'connected' || state === 'completed') {
           setIsConnecting(false);
-          setRetryCount(0); // Reset retry on success
+          setRetryCount(0);
           toast.success('Connection established!', { autoClose: 2000 });
         } else if (state === 'failed') {
           console.log('ICE negotiation failed, candidates:', peer._pc.getReceivers().length);
           const timeout = setTimeout(() => {
-            if (!callAccepted && !callEnded && retryCount < 2) { // Limit to 2 retries
+            if (!callAccepted && !callEnded && retryCount < 2) {
               setIsConnecting(false);
               toast.error('Connection failed. Retrying...');
               setRetryCount(retryCount + 1);
@@ -276,21 +264,26 @@ const VideoCallPage = () => {
       });
 
       peer._pc.addEventListener('icecandidate', (event) => {
-        if (event.candidate) {
-          logIceCandidate(event.candidate, 'Local');
-        }
+        if (event.candidate) logIceCandidate(event.candidate, 'Local');
       });
 
       peer._pc.addEventListener('icecandidateerror', (event) => {
         console.error('❌ ICE Candidate Error:', {
           url: event.url,
-          errorCode: event.errorCode,
+          errorCode: errorCodes[event.errorCode] || event.errorCode,
           errorText: event.errorText,
         });
       });
     }
 
     return peer;
+  };
+
+  // Map ICE error codes to readable messages
+  const errorCodes = {
+    701: 'STUN binding request timed out.',
+    403: 'Forbidden (invalid credentials or access).',
+    701: 'Network unreachable.',
   };
 
   useEffect(() => {
@@ -310,10 +303,9 @@ const VideoCallPage = () => {
         hasCalled.current = true;
         dispatch(setCurrentSessionId(data.sessionId));
         dispatch(setCall({ ...data, isReceivingCall: true }));
-        console.log('Incoming call from:', data.from, 'with sessionId:', data.sessionId);
         answerIncomingCall(data);
       } else if (!isStreamReady) {
-        console.warn('Stream not ready for incoming call, reinitializing...');
+        console.warn('Stream not ready, reinitializing...');
         initializeStream();
       }
     };
@@ -361,14 +353,13 @@ const VideoCallPage = () => {
       socket.off('callDeclined', handleCallDeclined);
       if (iceFailureTimeout) clearTimeout(iceFailureTimeout);
       if (callAccepted && !callEnded && connectionRef.current) {
-        console.log('Call active during cleanup - ending call');
         connectionRef.current.destroy();
         connectionRef.current = null;
-        stopStream('navigation away from call');
+        stopStream('navigation away');
         const otherUserId = call.from || (booking && (user._id === booking.customerId._id ? booking.technicianId.userId._id : booking.customerId._id));
         if (socket && currentSessionId && otherUserId) {
           dispatch(endCall({ sessionId: currentSessionId, to: otherUserId }))
-            .then(() => console.log('Call ended successfully via API'))
+            .then(() => console.log('Call ended via API'))
             .catch((error) => {
               console.error('Failed to end call via API:', error);
               socket.emit('endCall', { to: otherUserId, sessionId: currentSessionId, from: user._id });
@@ -376,7 +367,6 @@ const VideoCallPage = () => {
           dispatch(setCallEnded(true));
         }
       } else if (call.isReceivingCall && !callAccepted) {
-        console.log('Declining incoming call due to navigation');
         const otherUserId = call.from;
         if (socket && otherUserId && currentSessionId) {
           dispatch(declineCall({ sessionId: currentSessionId, to: otherUserId }))
@@ -390,7 +380,7 @@ const VideoCallPage = () => {
       hasCalled.current = false;
       signalSent.current = false;
     };
-  }, [dispatch, bookingId, navigate, callEnded, iceFailureTimeout, retryCount]); // Add retryCount to dependency array
+  }, [dispatch, bookingId, navigate, callEnded, iceFailureTimeout, retryCount]);
 
   useEffect(() => {
     if (isStreamReady && user && !hasCalled.current && !call.isReceivingCall && !callAccepted && !location.state?.answerCall) {
@@ -416,8 +406,8 @@ const VideoCallPage = () => {
   const callUser = (id) => {
     const socket = getSocket();
     if (!socket || !stream) {
-      console.log('Cannot call user, stream or socket unavailable');
-      toast.error('Cannot initiate call. Please refresh and try again.');
+      console.log('Cannot call, stream or socket unavailable');
+      toast.error('Cannot initiate call. Please refresh.');
       return;
     }
     console.log('Setting up call to user:', id);
@@ -446,11 +436,11 @@ const VideoCallPage = () => {
               bookingId: bookingWarrantyId ? null : bookingId,
               warrantyId: bookingWarrantyId || null,
             });
-            console.log('Call initiated successfully with sessionId:', result.sessionId);
+            console.log('Call initiated with sessionId:', result.sessionId);
           })
           .catch((error) => {
             console.error('Failed to initiate call:', error);
-            toast.error('Failed to initiate call. Please try again.');
+            toast.error('Failed to initiate call. Try again.');
             setIsConnecting(false);
             socket.emit('callFailed', { message: 'Failed to initiate call.' });
           });
@@ -472,17 +462,14 @@ const VideoCallPage = () => {
       peer.signal(signal);
     });
     connectionRef.current = peer;
-    return () => {
-      socket.off('callAccepted');
-      signalSent.current = false; // Reset for next call
-    };
+    return () => socket.off('callAccepted');
   };
 
   const answerIncomingCall = (incomingCallData) => {
     const socket = getSocket();
     if (!socket || !stream) {
-      console.log('Cannot answer call, stream or socket unavailable');
-      toast.error('Cannot answer call. Please refresh and try again.');
+      console.log('Cannot answer, stream or socket unavailable');
+      toast.error('Cannot answer call. Please refresh.');
       return;
     }
     console.log('Answering call from:', incomingCallData.from);
@@ -499,7 +486,7 @@ const VideoCallPage = () => {
         })
         .catch((error) => {
           console.error('Failed to answer call:', error);
-          toast.error('Failed to answer call. Please try again.');
+          toast.error('Failed to answer call. Try again.');
           setIsConnecting(false);
         });
     });
@@ -517,14 +504,13 @@ const VideoCallPage = () => {
   const leaveCall = async () => {
     const socket = getSocket();
     if (!socket) return;
-    console.log('Leaving call, notifying other user:', call.from);
+    console.log('Leaving call, notifying:', call.from);
     dispatch(setCallEnded(true));
     const otherUserId = call.from || (booking && (user._id === booking.customerId._id ? booking.technicianId.userId._id : booking.customerId._id));
     if (otherUserId && currentSessionId) {
       try {
         await dispatch(endCall({ sessionId: currentSessionId, to: otherUserId })).unwrap();
         socket.emit('callEnded', { to: otherUserId, sessionId: currentSessionId });
-        console.log('Call ended successfully');
       } catch (error) {
         console.error('Failed to end call:', error);
         socket.emit('endCall', { to: otherUserId, sessionId: currentSessionId });
@@ -541,16 +527,12 @@ const VideoCallPage = () => {
   };
 
   useEffect(() => {
-    const handlePopState = (event) => {
-      if (callAccepted && !callEnded) {
-        leaveCall();
-      }
+    const handlePopState = () => {
+      if (callAccepted && !callEnded) leaveCall();
     };
     window.addEventListener('popstate', handlePopState);
     return () => {
-      if (callAccepted && !callEnded) {
-        leaveCall();
-      }
+      if (callAccepted && !callEnded) leaveCall();
       window.removeEventListener('popstate', handlePopState);
     };
   }, [callAccepted, callEnded]);
@@ -572,15 +554,23 @@ const VideoCallPage = () => {
   };
 
   const handleStartCamera = () => {
-    if (myVideo.current && stream && !myVideo.current.paused) {
-      console.log('Camera already playing');
-      return;
-    }
+    if (myVideo.current && stream && !myVideo.current.paused) return;
     if (myVideo.current && stream) {
       myVideo.current.play().catch((error) => {
         console.error('Manual play failed:', error);
-        toast.error('Failed to start camera. Check permissions or browser settings.');
+        toast.error('Failed to start camera. Check permissions.');
       });
+    }
+  };
+
+  const handleRetryConnection = () => {
+    if (!callAccepted && !callEnded && retryCount < 2) {
+      setIsConnecting(true);
+      setRetryCount(retryCount + 1);
+      const otherUserId = user._id === booking?.customerId?._id ? booking?.technicianId?.userId?._id : booking?.customerId?._id;
+      if (otherUserId) callUser(otherUserId);
+    } else {
+      toast.error('Max retries reached or call active. Please try again later.');
     }
   };
 
@@ -595,6 +585,11 @@ const VideoCallPage = () => {
             <div className={`custom-waiting-message ${getConnectionStatusClass()}`}>
               {getConnectionStatusText()}
               {isConnecting && <div className="loading-spinner"></div>}
+              {(connectionState === 'failed' || connectionState === 'disconnected') && retryCount < 2 && (
+                <button onClick={handleRetryConnection} className="custom-retry-btn">
+                  Thử lại
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -607,7 +602,7 @@ const VideoCallPage = () => {
           )}
         </div>
       </div>
-      {process.env.NODE_ENV === 'development' && (
+      {true && (
         <div
           style={{
             position: 'fixed',

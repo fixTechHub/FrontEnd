@@ -6,7 +6,7 @@ if (typeof process === 'undefined') {
   window.process = {
     env: {},
     nextTick: queueMicrotask,
-    version: 'v22.0.0', // Match backend Node.js version
+    version: 'v22.0.0',
     versions: { node: '22.0.0' },
     platform: 'browser',
     browser: true,
@@ -53,7 +53,6 @@ if (typeof Buffer === 'undefined') {
       result._isBuffer = true;
       return result;
     },
-    // v22 compatibility: additional methods
     byteLength: (string, encoding) => new TextEncoder().encode(string).length,
     compare: (buf1, buf2) => {
       const u1 = new Uint8Array(buf1);
@@ -146,9 +145,11 @@ if (typeof window.stream === 'undefined') {
           ended: false,
           length: 0,
           buffer: [],
+          reading: false,
         };
         this._read = options?.read || (() => {});
         this._destroyed = false;
+        this._events = {};
       }
 
       push(chunk) {
@@ -161,9 +162,30 @@ if (typeof window.stream === 'undefined') {
         if (chunk) {
           this._readableState.buffer.push(chunk);
           this._readableState.length += chunk.length || 1;
-          this.emit('readable');
+          if (!this._readableState.reading) this.emitReadable();
         }
         return true;
+      }
+
+      read(size) {
+        if (this._destroyed || this._readableState.ended) return null;
+        this._readableState.reading = true;
+        if (size === 0) return Buffer.alloc(0);
+        if (!size) size = this._readableState.length;
+        if (size > this._readableState.length) size = this._readableState.length;
+        const chunk = this._readableState.buffer.shift();
+        if (chunk) {
+          this._readableState.length -= chunk.length || 1;
+          this.emitReadable();
+        }
+        this._readableState.reading = false;
+        return chunk || null;
+      }
+
+      emitReadable() {
+        if (this._readableState.length > 0 && this._events['readable']) {
+          this.emit('readable');
+        }
       }
 
       destroy(err) {
@@ -182,21 +204,7 @@ if (typeof window.stream === 'undefined') {
         return dest;
       }
 
-      read(size) {
-        if (this._destroyed || this._readableState.ended) return null;
-        if (size === 0) return Buffer.alloc(0);
-        if (!size) size = this._readableState.length;
-        if (size > this._readableState.length) size = this._readableState.length;
-        const chunk = this._readableState.buffer.shift();
-        if (chunk) {
-          this._readableState.length -= chunk.length || 1;
-          this.emit('readable');
-        }
-        return chunk || null;
-      }
-
       on(event, listener) {
-        if (!this._events) this._events = {};
         if (!this._events[event]) this._events[event] = [];
         this._events[event].push(listener);
         if (event === 'readable' && this._readableState.length > 0) listener();
@@ -204,7 +212,7 @@ if (typeof window.stream === 'undefined') {
       }
 
       emit(event, ...args) {
-        const listeners = this._events?.[event];
+        const listeners = this._events[event];
         if (listeners) {
           const listenersArray = [...listeners];
           for (const listener of listenersArray) {
