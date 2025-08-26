@@ -46,7 +46,7 @@ const getIceConfiguration = () => {
             credential: 'jRSPzXpVBFHrSQQN',
           },
         ],
-        iceCandidatePoolSize: 10,
+        iceCandidatePoolSize: 13,
       }
     : { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 };

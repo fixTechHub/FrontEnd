@@ -60,7 +60,7 @@ if (typeof Buffer === 'undefined') {
 class MinimalEventEmitter {
   constructor() {
     this._events = {};
-    this._maxListeners = 10;
+    this._maxListeners = 13;
   }
   
   on(event, listener) {
