@@ -380,7 +380,6 @@ export default function UserDetail() {
                     </div>
                   </div>
                   <Descriptions column={2} bordered>
-                    <Descriptions.Item label="Họ và tên">{user.fullName || ''}</Descriptions.Item>
                     <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
                     <Descriptions.Item label="SĐT">{user.phone || ''}</Descriptions.Item>
                                             <Descriptions.Item label="Vai trò">

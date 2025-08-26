@@ -603,7 +603,11 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                                     </div>
                                                    )}
                                                </p>
-                                               <h6><p className="fs-14 fw-semibold">{user.fullName || ""}</p></h6>
+                                               <h6><p className="fs-14 fw-semibold" style={{maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                                                    {user.fullName && user.fullName.length > 18 
+                                                        ? `${user.fullName.substring(0, 18)}...` 
+                                                        : (user.fullName || "")}
+                                                </p></h6>
                                            </div>
                                        </td>
                                        <td><p className="text-gray-9">{user.email}</p></td>

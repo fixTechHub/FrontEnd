@@ -353,7 +353,7 @@ const Sidebar = () => {
                       ...activeIcon("/admin/technician-subscription-analytics"),
                     }}
                   />
-                  <span>Doanh thu</span>
+                  <span>Tài chính</span>
                 </Link>
               </li>
             </ul>
@@ -551,7 +551,7 @@ const Sidebar = () => {
                     className="me-3"
                     style={{ width: "20px", ...activeIcon("/admin/withdraw") }}
                   />
-                  <span>Tài chính</span>
+                  <span>Rút tiền</span>
                 </Link>
               </li>
             </ul>

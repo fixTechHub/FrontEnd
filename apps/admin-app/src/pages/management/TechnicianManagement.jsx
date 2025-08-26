@@ -710,13 +710,12 @@ const TechnicianManagement = () => {
                   <tr key={tech.id}>
                     <td>
                       <div className="d-flex align-items-center">
-                                                <p className="avatar me-2 flex-shrink-0">
+                        <p className="avatar me-2 flex-shrink-0">
                           {(tech.avatar || userMap[tech.id]?.avatar) ? (
                             <img 
                               src={tech.avatar || userMap[tech.id]?.avatar} 
                               className="rounded-circle" 
                               alt="" 
-                              style={{width: 32, height: 32, objectFit: 'cover'}}
                             />
                           ) : (
                             <div className="rounded-circle" style={{width: 32, height: 32, backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#888'}}>
