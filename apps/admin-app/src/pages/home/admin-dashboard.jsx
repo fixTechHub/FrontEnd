@@ -180,7 +180,7 @@ const AdminDashboard = () => {
         displayColors: true,
         callbacks: {
           label: function(context) {
-            return `${context.dataset.label}: ${context.parsed.y.toLocaleString()} VNĐ`;
+            return `${context.dataset.label}: ${context.parsed.y.toLocaleString('en-US')} VND`;
           }
         }
       }
@@ -220,7 +220,7 @@ const AdminDashboard = () => {
           color: '#6B7280',
           padding: 8,
           callback: function(value) {
-            return value >= 1000 ? (value/1000).toFixed(1) + 'k' : value;
+            return value >= 1000 ? (value/1000).toFixed(1) + 'K' : value.toLocaleString('en-US');
           }
         },
         border: {
@@ -601,6 +601,29 @@ const AdminDashboard = () => {
     }
   };
 
+  // Get status in Vietnamese
+  const getStatusVietnamese = (status) => {
+    switch (status?.toUpperCase()) {
+      case 'COMPLETED':
+      case 'DONE':
+        return 'Hoàn thành';
+      case 'PENDING':
+        return 'Chờ xử lý';
+      case 'WAITING':
+        return 'Đang chờ';
+      case 'CANCELLED':
+        return 'Đã hủy';
+      case 'REJECTED':
+        return 'Từ chối';
+      case 'IN_PROGRESS':
+        return 'Đang thực hiện';
+      case 'ACTIVE':
+        return 'Đang hoạt động';
+      default:
+        return status?.replace(/_/g, ' ') || 'Chưa xác định';
+    }
+  };
+
   // Get status icon
   const getStatusIcon = (status) => {
     switch (status?.toUpperCase()) {
@@ -618,6 +641,26 @@ const AdminDashboard = () => {
         return <ArrowUpOutlined />;
       default:
         return <ClockCircleOutlined />;
+    }
+  };
+
+  // Get payment status in Vietnamese
+  const getPaymentStatusVietnamese = (paymentStatus) => {
+    switch (paymentStatus?.toUpperCase()) {
+      case 'PENDING':
+        return 'Chờ thanh toán';
+      case 'PAID':
+        return 'Đã thanh toán';
+      case 'FAILED':
+        return 'Thanh toán thất bại';
+      case 'REFUNDED':
+        return 'Đã hoàn tiền';
+      case 'CANCELLED':
+        return 'Đã hủy';
+      case 'PROCESSING':
+        return 'Đang xử lý';
+      default:
+        return paymentStatus || 'Chưa xác định';
     }
   };
 
@@ -664,11 +707,11 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Tổng đơn hàng của tháng</div>
-                  <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
+                  <div className="text-black-50  mb-1">Tổng đơn hàng của tháng</div>
+                  <div className="text-black fw-bold" style={{fontSize: '1.5rem'}}>
                     {totalBookings.toLocaleString()}
                 </div>
-                  <div className="text-white-50 small mb-2">
+                  <div className="text-black-50 small mb-2">
                     {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
                   <div className="d-flex align-items-center mt-2">
@@ -713,11 +756,11 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Tổng doanh thu của tháng</div>
-                  <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
-                    {currentRevenue.toLocaleString()} VND
+                  <div className="text-black-50 mb-1">Tổng doanh thu của tháng</div>
+                  <div className="text-black fw-bold" style={{fontSize: '1.5rem'}}>
+                    {currentRevenue.toLocaleString('en-US')} VND
                 </div>
-                  <div className="text-white-50 small mb-2" >
+                  <div className="text-black-50 small mb-2" >
                     {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
                   <div className="d-flex align-items-center mt-2">
@@ -762,11 +805,11 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Kỹ thuật viên đăng ký tháng</div>
-                  <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
+                  <div className="text-black-50 mb-1">KTV đăng ký tháng</div>
+                  <div className="text-black fw-bold" style={{fontSize: '1.5rem'}}>
                     {totalTechnicians.toLocaleString()}
                 </div>
-                  <div className="text-white-50 small mb-2">
+                  <div className="text-black-50 small mb-2">
                     {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                 </div>
                   <div className="d-flex align-items-center mt-2">
@@ -811,15 +854,15 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-white-50 small mb-1">Tổng số lượng người dùng</div>
-                  <div className="text-white fw-bold" style={{fontSize: '1.5rem'}}>
+                  <div className="text-black-50 mb-1">Tổng số lượng người dùng</div>
+                  <div className="text-black fw-bold" style={{fontSize: '1.5rem'}}>
                     {dashboardStats.totalUsers.toLocaleString()}
                   </div>
-                  <div className="text-white-50 small mb-2">
+                  <div className="text-black-50 small mb-2">
                     {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </div>
                   <div className="d-flex align-items-center mt-2">
-                    <span className="small text-white-50">
+                    <span className="small text-black-50">
                       {dashboardStats.pendingBookings} đơn hàng chờ xác nhận
                     </span>
                   </div>
@@ -913,7 +956,7 @@ const AdminDashboard = () => {
             <Card 
               title={
                 <div className="d-flex align-items-center justify-content-between">
-                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Thống kê số liệu hiện tại</span>
+                  <span className="fw-bold" style={{color: '#1F2937', fontSize: '1.1rem'}}>Tình trạng hiện tại</span>
                 </div>
               }
               style={{
@@ -974,7 +1017,7 @@ const AdminDashboard = () => {
                   height: '70px'
                 }}>
                   <div>
-                    <div className="small" style={{color: '#d97706', fontWeight: '600', fontSize: '12px'}}>Điểm đánh giá trung bình của kỹ thuật viên</div>
+                    <div className="small" style={{color: '#d97706', fontWeight: '600', fontSize: '12px'}}>Điểm đánh giá trung bình của KTV</div>
                     <div className="fw-bold" style={{fontSize: '1.3rem', color: '#d97706'}}>{dashboardStats.averageRating.toFixed(1)}</div>
                   </div>
                   <StarOutlined style={{fontSize: '1.6rem', color: '#f59e0b'}} />
@@ -1067,8 +1110,10 @@ const AdminDashboard = () => {
                           {index + 1}
                       </div>
                         <div>
-                          <div className={`fw-bold ${index === 0 ? 'text-black' : ''}`}>
-                            {booking.user?.fullName || 'Unknown User'}
+                          <div className={`fw-bold ${index === 0 ? 'text-black' : ''}`} style={{maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                            {booking.user?.fullName && booking.user.fullName.length > 18 
+                              ? `${booking.user.fullName.substring(0, 18)}...` 
+                              : (booking.user?.fullName || 'Unknown User')}
                     </div>
                           <div className={`small ${index === 0 ? 'text-black-50' : 'text-muted'}`}>
                             {booking.service?.serviceName || 'Unknown Service'}
@@ -1083,12 +1128,12 @@ const AdminDashboard = () => {
                           color={getStatusColor(booking.status)} 
                           icon={getStatusIcon(booking.status)}
                           style={{
-                            background: index === 0 ? 'rgba(255,255,255,0.2)' : undefined,
-                            border: index === 0 ? '1px solid rgba(255,255,255,0.3)' : undefined,
-                            color: index === 0 ? '#fff' : undefined
+                            background: index === 0 && booking.status !== 'DONE' && booking.status !== 'COMPLETED' ? 'rgba(255,255,255,0.2)' : undefined,
+                            border: index === 0 && booking.status !== 'DONE' && booking.status !== 'COMPLETED' ? '1px solid rgba(255,255,255,0.3)' : undefined,
+                            color: index === 0 && booking.status !== 'DONE' && booking.status !== 'COMPLETED' ? '#fff' : undefined
                           }}
                         >
-                          {booking.status?.replace(/_/g, ' ') || 'Unknown'}
+                          {getStatusVietnamese(booking.status)}
                         </Tag>
                         <div className={`small mt-1 ${index === 0 ? 'text-black-50' : 'text-muted'}`}>
                           {booking.bookingCode || booking.id}
@@ -1177,8 +1222,10 @@ const AdminDashboard = () => {
                         {index + 1}
                   </div>
                       <div className="flex-grow-1">
-                        <div className={`fw-bold ${index === 0 ? 'text-black' : ''}`}>
-                          {tech.user?.fullName || 'Unknown Technician'}
+                        <div className={`fw-bold ${index === 0 ? 'text-black' : ''}`} style={{maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                          {tech.user?.fullName && tech.user.fullName.length > 15 
+                            ? `${tech.user.fullName.substring(0, 15)}...` 
+                            : (tech.user?.fullName || 'Unknown Technician')}
                 </div>
                         <div className={`small ${index === 0 ? 'text-black-50' : 'text-muted'}`}>
                           Số công việc đã thực hiện: {tech.jobCompleted || 0}
@@ -1227,7 +1274,7 @@ const AdminDashboard = () => {
                       </div>
                   <div style={{textAlign: 'right'}}>
                     <Tag color={getStatusColor(selectedBooking.status)} style={{fontSize: 12, fontWeight: 600}}>
-                      {selectedBooking.status?.replace(/_/g, ' ') || 'Unknown'}
+                      {getStatusVietnamese(selectedBooking.status)}
                     </Tag>
                   </div>
                 </div>
@@ -1264,7 +1311,10 @@ const AdminDashboard = () => {
                       <Descriptions size="small" column={1} bordered={false}
                         items={[
                           { key: 'customer', label: 'Khách hàng', children: selectedBooking.user?.fullName || '' },
-                          { key: 'technician', label: 'Kỹ thuật viên', children: (selectedBooking.technicianId && technicianMap[selectedBooking.technicianId]) || '' },
+                          { key: 'technician', label: 'Kỹ thuật viên', children: (() => {
+                            const techName = (selectedBooking.technicianId && technicianMap[selectedBooking.technicianId]) || '';
+                            return techName.length > 20 ? `${techName.substring(0, 20)}...` : techName;
+                          })() },
                         ]}
                       />
               </div>
@@ -1279,7 +1329,7 @@ const AdminDashboard = () => {
                     <Col span={6}>
                       <div style={{ textAlign: 'center', background: '#e6f7ff', padding: 12, borderRadius: 8 }}>
                         <div style={{ fontSize: 11, color: '#666', marginBottom: 4 }}>Trạng thái thanh toán</div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{selectedBooking.paymentStatus || ''}</div>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#1890ff' }}>{getPaymentStatusVietnamese(selectedBooking.paymentStatus)}</div>
             </div>
                     </Col>
                     <Col span={6}>
@@ -1314,7 +1364,7 @@ const AdminDashboard = () => {
                 {/* Images */}
                 {selectedBooking.images && selectedBooking.images.length > 0 && (
                   <div style={{background: '#fafafa', padding: 16, borderRadius: 8}}>
-                    <div style={{fontWeight: 600, marginBottom: 8}}>Images</div>
+                    <div style={{fontWeight: 600, marginBottom: 8}}>Hình ảnh liên quan</div>
                     <Image.PreviewGroup>
                       <Row gutter={[8,8]}>
                         {selectedBooking.images.map((img, i) => (

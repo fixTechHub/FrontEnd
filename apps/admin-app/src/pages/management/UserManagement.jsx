@@ -338,6 +338,8 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                return 'bg-success-transparent';
            case 'INACTIVE':
                return 'bg-danger-transparent';
+           case 'PENDING':
+               return 'bg-warning-transparent';
            default:
                return 'bg-secondary-transparent';
        }
@@ -619,7 +621,10 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                        </td>
                                        <td>
                                            <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
-                                               {user.status === 'ACTIVE' ? 'Hoạt động' : user.status === 'INACTIVE' ? 'Không hoạt động' : user.status}
+                                               {user.status === 'ACTIVE' ? 'Hoạt động' : 
+                                                user.status === 'INACTIVE' ? 'Không hoạt động' : 
+                                                user.status === 'PENDING' ? 'Đang chờ' : 
+                                                user.status}
                                            </span>
                                        </td>
                                        <td>

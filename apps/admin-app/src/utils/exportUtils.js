@@ -24,11 +24,12 @@ export const formatDateTime = (date) => {
 
 // Helper function để format currency
 export const formatCurrency = (amount) => {
-  if (!amount) return '0';
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
+  if (!amount) return '0 VND';
+  const formatted = new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
   }).format(amount);
+  return `${formatted} VND`;
 };
 
 // Helper function để format status

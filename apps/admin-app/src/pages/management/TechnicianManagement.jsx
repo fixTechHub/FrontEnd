@@ -698,7 +698,11 @@ const TechnicianManagement = () => {
                             style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                           />
                         </p>
-                        <h6><p className="fs-14 fw-semibold">{tech.fullName || ""}</p></h6>
+                        <h6><p className="fs-14 fw-semibold" style={{maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                          {tech.fullName && tech.fullName.length > 18 
+                            ? `${tech.fullName.substring(0, 18)}...` 
+                            : (tech.fullName || "")}
+                        </p></h6>
                       </div>
                     </td>
                     <td>{tech.email}</td>
@@ -783,26 +787,6 @@ const TechnicianManagement = () => {
                         <Button className="management-action-btn" size="middle" onClick={() => handleOpenDetail(tech)}>
                           <EyeOutlined style={{ marginRight: 4 }} />Xem chi tiết
                         </Button>
-                        {tech.status === "PENDING" ? (
-                          <>
-                            <button
-                              className="btn btn-sm btn-success"
-                              onClick={() => handleUpdateStatusWithAction('APPROVED', tech)}
-                              disabled={loading}
-                            >
-                              <i className="ti ti-check me-1"></i>
-                              Đồng ý
-                            </button>
-                            <button
-                              className="btn btn-sm btn-danger"
-                              onClick={() => handleOpenEditStatus(tech)}
-                              disabled={loading}
-                            >
-                              <i className="ti ti-x me-1"></i>
-                              Từ chối
-                            </button>
-                          </>
-                        ) : null}
                       </div>
                     </td>
                   </tr>
@@ -952,7 +936,9 @@ const TechnicianManagement = () => {
           <hr></hr>
           <div style={{ marginBottom: '20px' }}>
             <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px' }}>
-              Họ và tên: {selectedTechnician.fullName || ''}
+              Họ và tên: {selectedTechnician.fullName && selectedTechnician.fullName.length > 25 
+                ? `${selectedTechnician.fullName.substring(0, 25)}...` 
+                : (selectedTechnician.fullName || '')}
             </div>
             <div style={{ fontSize: '14px', color: '#666' }}>
               Tình trạng hiện tại: {getTechnicianStatus(selectedTechnician.status)}

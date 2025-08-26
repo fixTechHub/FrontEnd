@@ -1636,7 +1636,7 @@ const handleConfirmUserSelection = () => {
                  </td>
                  <td>
                    <span style={{ fontWeight: 600, color: '#1a1a1a' }}>
-                     {coupon.type === 'PERCENT' ? `${coupon.value}%` : `${coupon.value.toLocaleString('vi-VN')}₫`}
+                     {coupon.type === 'PERCENT' ? `${coupon.value}%` : `${coupon.value.toLocaleString('en-US')} VND`}
                    </span>
                  </td>
                  <td>
