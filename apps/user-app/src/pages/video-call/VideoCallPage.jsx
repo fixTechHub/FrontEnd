@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
@@ -25,8 +24,29 @@ const getIceConfiguration = () => {
           { urls: 'stun:stun.stunprotocol.org:3478' },
           { urls: 'stun:stun.voiparound.com' },
           { urls: 'stun:stun.voipbuster.com' },
+          { urls: 'stun:stun.relay.metered.ca:80' },
+          {
+            urls: 'turn:global.relay.metered.ca:80',
+            username: '8b25f915de9f9386eb3c55db',
+            credential: 'jRSPzXpVBFHrSQQN',
+          },
+          {
+            urls: 'turn:global.relay.metered.ca:80?transport=tcp',
+            username: '8b25f915de9f9386eb3c55db',
+            credential: 'jRSPzXpVBFHrSQQN',
+          },
+          {
+            urls: 'turn:global.relay.metered.ca:443',
+            username: '8b25f915de9f9386eb3c55db',
+            credential: 'jRSPzXpVBFHrSQQN',
+          },
+          {
+            urls: 'turns:global.relay.metered.ca:443?transport=tcp',
+            username: '8b25f915de9f9386eb3c55db',
+            credential: 'jRSPzXpVBFHrSQQN',
+          },
         ],
-        iceCandidatePoolSize: 10,
+        iceCandidatePoolSize: 13,
       }
     : { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 };
@@ -554,30 +574,7 @@ const VideoCallPage = () => {
           )}
         </div>
       </div>
-      {process.env.NODE_ENV === 'development' && (
-        <div
-          style={{
-            position: 'fixed',
-            top: '10px',
-            right: '10px',
-            background: 'rgba(0,0,0,0.7)',
-            color: 'white',
-            padding: '10px',
-            borderRadius: '5px',
-            fontSize: '12px',
-            zIndex: 1000,
-          }}
-        >
-          <div>Connection State: {connectionState}</div>
-          <div>Is Connecting: {isConnecting ? 'Yes' : 'No'}</div>
-          <div>Call Accepted: {callAccepted ? 'Yes' : 'No'}</div>
-          <div>Stream: {stream ? 'Available' : 'Not Available'}</div>
-          <div>Stream Stopped: {hasStopped.current ? 'Yes' : 'No'}</div>
-          <div>Is Stream Ready: {isStreamReady ? 'Yes' : 'No'}</div>
-          <div>User: {user ? 'Available' : 'Not Available'}</div>
-          <div>myVideo Paused: {myVideo.current && myVideo.current.paused ? 'Yes' : 'No'}</div>
-        </div>
-      )}
+      
       <div className="custom-controls">
         <button className="custom-btn-hangup" onClick={leaveCall}>
           <MdCallEnd size={24} color="white" />
