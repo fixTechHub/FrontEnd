@@ -756,7 +756,7 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-black-50 mb-1">Tổng doanh thu của tháng</div>
+                  <div className="text-black-50 mb-1">Doanh thu gói của tháng</div>
                   <div className="text-black fw-bold" style={{fontSize: '1.5rem'}}>
                     {currentRevenue.toLocaleString('en-US')} VND
                 </div>
