@@ -28,6 +28,21 @@ const statusTag = (status) => {
   return <Tag color={colorMap[status] || 'default'}>{mappedStatus}</Tag>;
 };
 
+const getStatusBadgeClass = (status) => {
+  switch (status?.toUpperCase()) {
+    case 'APPROVED':
+      return 'bg-success-transparent';
+    case 'REJECTED':
+      return 'bg-danger-transparent';
+    case 'PENDING':
+      return 'bg-warning-transparent';
+    case 'INACTIVE':
+      return 'bg-secondary-transparent';
+    default:
+      return 'bg-secondary-transparent';
+  }
+};
+
 // Mapping availability từ tiếng Anh sang tiếng Việt
 const availabilityMapping = {
   1: 'Đang Rảnh',
@@ -168,17 +183,7 @@ const getTechnicianStatusColor = (status) => {
   }
 };
 
-// Function để lấy CSS class cho status badge giống TechnicianManagement.jsx
-const getStatusBadgeClass = (status) => {
-  switch ((status || '').toUpperCase()) {
-    case 'APPROVED':
-      return 'bg-success-transparent';
-    case 'REJECTED':
-      return 'bg-danger-transparent';
-    default:
-      return 'bg-secondary-transparent';
-  }
-};
+
 
 export default function TechnicianDetail() {
   const { id } = useParams();
@@ -203,6 +208,8 @@ export default function TechnicianDetail() {
   const { reportCount, loading: reportLoading, error: reportError } = useSelector((state) => state.reports);
   const [notificationContent, setNotificationContent] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
   useEffect(() => {
     const load = async () => {
       try {
@@ -297,7 +304,56 @@ export default function TechnicianDetail() {
       console.log(error);
       message.error('Gửi cảnh cáo thất bại!');
     }
-  }
+  };
+
+  const handleApproveTechnician = async () => {
+    try {
+      setLoading(true);
+      await technicianAPI.updateStatus(technician.id, 'APPROVED');
+      message.success('Duyệt kỹ thuật viên thành công!');
+      // Reload data
+      const updatedTechnician = await technicianAPI.getById(technician.id);
+      setTechnician(updatedTechnician);
+    } catch (error) {
+      console.error('Error approving technician:', error);
+      message.error('Duyệt kỹ thuật viên thất bại!');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenRejectModal = () => {
+    setShowRejectModal(true);
+    setRejectReason('');
+  };
+
+  const handleCloseRejectModal = () => {
+    setShowRejectModal(false);
+    setRejectReason('');
+  };
+
+  const handleRejectTechnician = async () => {
+    if (!rejectReason.trim()) {
+      message.error('Vui lòng nhập lý do từ chối!');
+      return;
+    }
+    
+    try {
+      setLoading(true);
+      await technicianAPI.updateStatus(technician.id, 'REJECTED', rejectReason);
+      message.success('Từ chối kỹ thuật viên thành công!');
+      setShowRejectModal(false);
+      setRejectReason('');
+      // Reload data
+      const updatedTechnician = await technicianAPI.getById(technician.id);
+      setTechnician(updatedTechnician);
+    } catch (error) {
+      console.error('Error rejecting technician:', error);
+      message.error('Từ chối kỹ thuật viên thất bại!');
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   // Logic filter cho bookings
@@ -417,15 +473,35 @@ export default function TechnicianDetail() {
 
             <Card title="Thông tin kỹ thuật viên" variant="borderless" style={{ borderRadius: 12 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 16 }}>
-                <Avatar size={80} src={technician.avatar || user?.avatar || `https://i.pravatar.cc/150?u=${technician.id}`} style={{ flexShrink: 0 }}>
+                <Avatar size={80} src={technician.avatar || user?.avatar} style={{ flexShrink: 0 }}>
                   {(technician.fullName || user?.fullName || 'T').charAt(0).toUpperCase()}
                 </Avatar>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontSize: 20, fontWeight: 600 }}>{technician.fullName || user?.fullName || ''}</div>
                   <div style={{ color: '#888', marginTop: 4 }}>ID: {technician.id}</div>
                   <br></br>
-                  <div>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
+                    {technician.status === "PENDING" && (
+                      <>
+                        <Button 
+                          type="primary" 
+                          style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+                          onClick={() => handleApproveTechnician()}
+                        >
+                          <i className="ti ti-check me-1"></i>
+                          Đồng ý
+                        </Button>
+                        <Button 
+                          type="primary" 
+                          danger
+                          onClick={() => handleOpenRejectModal()}
+                        >
+                          <i className="ti ti-x me-1"></i>
+                          Từ chối
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -1185,6 +1261,45 @@ export default function TechnicianDetail() {
           onChange={(e) => setNotificationContent(e.target.value)}
           placeholder="Nhập nội dung cảnh cáo"
         />
+      </Modal>
+
+      {/* Reject Modal */}
+      <Modal
+        title="Từ chối đăng ký kỹ thuật viên"
+        open={showRejectModal}
+        onCancel={handleCloseRejectModal}
+        footer={[
+          <Button key="cancel" onClick={handleCloseRejectModal}>
+            Hủy
+          </Button>,
+          <Button key="submit" type="primary" danger onClick={handleRejectTechnician} loading={loading}>
+            Xác nhận từ chối
+          </Button>,
+        ]}
+      >
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px' }}>
+            Họ và tên: {technician?.fullName && technician.fullName.length > 25 
+              ? `${technician.fullName.substring(0, 25)}...` 
+              : (technician?.fullName || '')}
+          </div>
+          <div style={{ fontSize: '14px', color: '#666' }}>
+            Tình trạng hiện tại: {technician?.status === 'PENDING' ? 'Đang chờ' : technician?.status}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 500, marginBottom: '8px', color: '#d32f2f' }}>
+            Lý do từ chối <span style={{ color: 'red' }}>*</span>
+          </div>
+          <TextArea
+            rows={4}
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="Nhập lý do từ chối đăng ký kỹ thuật viên..."
+            style={{ resize: 'none' }}
+          />
+        </div>
       </Modal>
     </div>
   );
