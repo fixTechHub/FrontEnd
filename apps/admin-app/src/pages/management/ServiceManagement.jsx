@@ -492,7 +492,7 @@ const ServiceManagement = () => {
                     <td colSpan={5} className="text-center text-muted py-4">
                       <div>
                         <i className="ti ti-tools" style={{ fontSize: '48px', color: '#ccc', marginBottom: '16px' }}></i>
-                        <p className="mb-0">Không có dịch vụ nào</p>
+                        <p className="mb-0">Đang tải...</p>
                       </div>
                     </td>
                   </tr>

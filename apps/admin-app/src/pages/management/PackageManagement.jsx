@@ -291,7 +291,7 @@ const PackageManagement = () => {
                   currentPackages.map((pkg) => (
                     <tr key={pkg._id || pkg.id}>
                       <td>{pkg.name}</td>
-                      <td>{pkg.price}</td>
+                      <td>{pkg.price ? pkg.price.toLocaleString('en-US') + ' VND' : '—'}</td>
                       <td>
                         <span className={`badge ${pkg.isActive ? "bg-success-transparent" : "bg-danger-transparent"} text-dark`}>
                           {pkg.isActive ? "Hoạt động" : "Không hoạt động"}
@@ -666,7 +666,7 @@ const PackageManagement = () => {
               {deletedPackages.map((pkg) => (
                 <tr key={pkg._id || pkg.id}>
                   <td>{pkg.name}</td>
-                  <td>{pkg.price}</td>
+                  <td>{pkg.price ? pkg.price.toLocaleString('en-US') + ' VND' : '—'}</td>
                   <td>{pkg.description}</td>
                   <td>
                     <span className={`badge ${pkg.isActive ? "bg-success" : "bg-danger"}`}>
@@ -706,7 +706,7 @@ const PackageManagement = () => {
         {selectedPackage && (
           <div>
             <p><strong>Tên gói:</strong> {selectedPackage.name}</p>
-            <p><strong>Giá:</strong> ${selectedPackage.price}</p>
+            <p><strong>Giá:</strong> {selectedPackage.price ? selectedPackage.price.toLocaleString('en-US') + ' VND' : '—'}</p>
             <p><strong>Mô tả:</strong> ${selectedPackage.description}</p>
             <p><strong>Trạng thái:</strong>
               <span className={`badge ${selectedPackage.isActive ? "bg-success-transparent" : "bg-danger-transparent"} text-dark`}>

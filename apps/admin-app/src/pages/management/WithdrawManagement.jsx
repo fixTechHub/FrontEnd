@@ -225,7 +225,7 @@ export default function WithdrawAdmin() {
                             {record?.technician?.user?.email || ""}
                           </div>
                         </td>
-                        <td>{record.amount != null ? record.amount.toLocaleString("vi-VN") + " ₫" : "—"}</td>
+                        <td>{record.amount != null ? record.amount.toLocaleString("en-US") + " VND" : "—"}</td>
                         <td>{record.createdAt ? dayjs(record.createdAt).format("DD/MM/YYYY HH:mm") : "—"}</td>
                         <td>
                           <span
@@ -268,7 +268,7 @@ export default function WithdrawAdmin() {
                         </td>
                         <td>
                           {record.balanceAfter != null
-                            ? record.balanceAfter.toLocaleString("vi-VN") + " ₫"
+                            ? record.balanceAfter.toLocaleString("en-US") + " VND"
                             : "—"}
                         </td>
                         <td>

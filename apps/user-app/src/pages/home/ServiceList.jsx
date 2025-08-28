@@ -5,6 +5,8 @@ import { Spinner, Button, Modal } from "react-bootstrap";
 import BreadcrumbBar from "../../components/common/BreadcrumbBar";
 import Header from "../../components/common/Header";
 import { createNewBooking } from '../../features/bookings/bookingSlice';
+import { fetchAllPublicCategories } from '../../features/categories/categorySlice';
+import { fetchAllPublicServices } from '../../features/services/serviceSlice';
 import ImageUploader from '../booking/common/ImageUploader';
 import { validateBookingData } from '../../validations/bookingValidation';
 import Footer from "../../components/common/Footer";
@@ -108,6 +110,12 @@ function ServiceList() {
     useEffect(() => {
         setCurrentPage(1);
     }, [selectedCategories, searchTerm]);
+
+    // Fetch categories and services when component mounts
+    useEffect(() => {
+        dispatch(fetchAllPublicCategories());
+        dispatch(fetchAllPublicServices());
+    }, [dispatch]);
 
     // Xử lý mở modal booking
     const handleOpenBookingModal = (service, type) => {

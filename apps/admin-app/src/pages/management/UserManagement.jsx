@@ -338,6 +338,8 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                return 'bg-success-transparent';
            case 'INACTIVE':
                return 'bg-danger-transparent';
+           case 'PENDING':
+               return 'bg-warning-transparent';
            default:
                return 'bg-secondary-transparent';
        }
@@ -593,9 +595,19 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                        <td>
                                            <div className="d-flex align-items-center">
                                                <p className="avatar me-2 flex-shrink-0">
-                                                   <img src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`} className="rounded-circle" alt="" />
+                                                   {user.avatar ? (
+                                                    <img src={user.avatar} className="rounded-circle" alt="" />
+                                                   ) : (
+                                                    <div className="rounded-circle" style={{width: 32, height: 32, backgroundColor: '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, color: '#888'}}>
+                                                        {(user.fullName || 'U').charAt(0).toUpperCase()}
+                                                    </div>
+                                                   )}
                                                </p>
-                                               <h6><p className="fs-14 fw-semibold">{user.fullName || ""}</p></h6>
+                                               <h6><p className="fs-14 fw-semibold" style={{maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'}}>
+                                                    {user.fullName && user.fullName.length > 18 
+                                                        ? `${user.fullName.substring(0, 18)}...` 
+                                                        : (user.fullName || "")}
+                                                </p></h6>
                                            </div>
                                        </td>
                                        <td><p className="text-gray-9">{user.email}</p></td>
@@ -619,7 +631,10 @@ import { createExportData, formatDateTime, formatStatus } from '../../utils/expo
                                        </td>
                                        <td>
                                            <span className={`badge ${getStatusBadgeClass(user.status)} text-dark`}>
-                                               {user.status === 'ACTIVE' ? 'Hoạt động' : user.status === 'INACTIVE' ? 'Không hoạt động' : user.status}
+                                               {user.status === 'ACTIVE' ? 'Hoạt động' : 
+                                                user.status === 'INACTIVE' ? 'Không hoạt động' : 
+                                                user.status === 'PENDING' ? 'Đang chờ' : 
+                                                user.status}
                                            </span>
                                        </td>
                                        <td>
