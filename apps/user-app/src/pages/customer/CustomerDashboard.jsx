@@ -32,13 +32,81 @@ const BreadcrumbSection = () => (
 const DashboardMenu = ({ activeTab, onSelect }) => (
 	<div className="dashboard-section">
 		<style jsx>{`
-			.dashboard-menu ul::-webkit-scrollbar { display: none; }
+			.dashboard-menu {
+				overflow-x: auto !important;
+				overflow-y: hidden !important;
+				-webkit-overflow-scrolling: touch;
+				scrollbar-width: none;
+				-ms-overflow-style: none;
+			}
+			
+			.dashboard-menu ul {
+				display: flex !important;
+				flex-wrap: nowrap !important;
+				min-width: max-content !important;
+				margin: 0 !important;
+				padding: 0 1rem !important;
+				gap: 0.5rem !important;
+			}
+			
+			.dashboard-menu ul::-webkit-scrollbar { 
+				display: none !important; 
+			}
+			
+			.dashboard-menu li {
+				flex-shrink: 0 !important;
+				min-width: 130px !important;
+			}
+			
+			.dashboard-menu li a {
+				display: block !important;
+				padding: 22px 16px !important;
+				width: 130px !important;
+				text-align: center !important;
+				white-space: nowrap !important;
+				border-radius: 8px !important;
+				transition: all 0.2s ease !important;
+			}
+			
+			@media (max-width: 768px) {
+				.dashboard-menu ul {
+					padding: 0 1rem !important;
+					gap: 0.25rem !important;
+				}
+				.dashboard-menu li {
+					min-width: 110px !important;
+				}
+				.dashboard-menu li a {
+					padding: 16px 12px !important;
+					width: 110px !important;
+					font-size: 0.85rem !important;
+				}
+				.dashboard-menu li a img {
+					width: 20px !important;
+					height: 20px !important;
+				}
+			}
+			
+			@media (max-width: 480px) {
+				.dashboard-menu li {
+					min-width: 100px !important;
+				}
+				.dashboard-menu li a {
+					width: 100px !important;
+					padding: 14px 8px !important;
+					font-size: 0.8rem !important;
+				}
+				.dashboard-menu li a span {
+					white-space: normal !important;
+					line-height: 1.2 !important;
+				}
+			}
 		`}</style>
 		<div className="container">
 			<div className="row">
 				<div className="col-lg-12">
 					<div className="dashboard-menu">
-						<ul className="d-flex justify-content-center flex-nowrap gap-2" style={{overflowX:'auto', scrollbarWidth:'none', msOverflowStyle:'none'}}>
+						<ul>
 							{[
 								{ icon: "dashboard", text: "Bảng điều khiển", section: 'DASHBOARD' },
 								{ icon: "booking", text: "Đặt lịch của tôi", section: 'BOOKINGS' },
@@ -174,7 +242,7 @@ const bookingStatusUIMap = {
 const LastBookingsCard = ({ bookings, onViewAll }) => {
     const data = bookings && bookings.length ? bookings : [];
     return (
-        <div className="col-lg-8 d-flex">
+        <div className="col-lg-8 col-12 d-flex">
             <div className="card user-card flex-fill">
                 <div className="card-header">
                     <div className="row align-items-center">
@@ -192,8 +260,26 @@ const LastBookingsCard = ({ bookings, onViewAll }) => {
                     {data.length === 0 ? (
                         <div className="p-4 text-center text-secondary">Chưa có đơn đặt lịch nào</div>
                     ) : (
-                    <div className="table-responsive dashboard-table dashboard-table-info" style={{ overflowX: 'hidden' }}>
-                        <table className="table w-100" style={{ minWidth: '750px' }}>
+                    <div className="table-responsive dashboard-table dashboard-table-info" style={{ overflowX: 'auto' }}>
+                        <table className="table w-100" style={{ minWidth: '600px' }}>
+                            <style>{`
+                                @media (max-width: 768px) {
+                                    .dashboard-table .table {
+                                        min-width: 500px !important;
+                                        font-size: 0.85rem;
+                                    }
+                                    .table-avatar .avatar {
+                                        width: 40px !important;
+                                        height: 40px !important;
+                                    }
+                                    .table-head-name a {
+                                        font-size: 0.9rem !important;
+                                    }
+                                    .table-head-name p {
+                                        font-size: 0.75rem !important;
+                                    }
+                                }
+                            `}</style>
                             <colgroup>
                                 <col style={{ width: 220 }} />
                                 <col style={{ width: 150 }} />
@@ -388,7 +474,7 @@ const CouponsCard = ({ coupons }) => {
     };
 
     return (
-        <div className="col-lg-4 d-flex">
+        <div className="col-lg-4 col-12 d-flex">
             <div className="card user-card flex-fill d-flex flex-column">
                 <div className="card-header">
                     <h5 className="mb-0">Mã giảm giá hiện có</h5>
@@ -516,6 +602,36 @@ const FavoriteTechniciansSection = ({ favorites, loading, onRemove }) => (
 				grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 				gap: 1.5rem;
 				margin-top: 2rem;
+			}
+			
+			@media (max-width: 768px) {
+				.favorites-grid {
+					grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)) !important;
+					gap: 1rem !important;
+				}
+				.favorites-list-modern {
+					padding: 1.5rem 0 !important;
+				}
+				.favorites-title {
+					font-size: 2rem !important;
+				}
+				.favorites-subtitle {
+					font-size: 1rem !important;
+				}
+			}
+			
+			@media (max-width: 480px) {
+				.favorites-grid {
+					grid-template-columns: 1fr !important;
+					gap: 1rem !important;
+				}
+				.favorite-card {
+					padding: 1.5rem !important;
+				}
+				.favorite-avatar {
+					width: 80px !important;
+					height: 80px !important;
+				}
 			}
 			
 			.favorite-card {
@@ -784,6 +900,22 @@ function CustomerDashboard() {
 			<DashboardMenu activeTab={activeTab} onSelect={setActiveTab} />
 
 			<div className="content dashboard-content">
+				<style>{`
+					@media (max-width: 768px) {
+						.dashboard-content {
+							padding: 1rem 0 !important;
+						}
+						.dashboard-content .container-xl {
+							padding: 0 1rem !important;
+						}
+						.widget-box {
+							margin-bottom: 1rem !important;
+						}
+						.card-header h5 {
+							font-size: 1.1rem !important;
+						}
+					}
+				`}</style>
 				<div className="container-xl">
 				
 

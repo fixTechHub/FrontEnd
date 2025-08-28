@@ -362,6 +362,11 @@ const WarrantyList=()=>{
           justify-content: center;
         }
         
+        /* Hide mobile elements on desktop */
+        .mobile-status {
+          display: none;
+        }
+        
         .action-btn {
           display: flex;
           align-items: center;
@@ -454,37 +459,229 @@ const WarrantyList=()=>{
           to { transform: rotate(360deg); }
         }
         
+        /* Desktop: Đảm bảo desktop layout không thay đổi */
+        @media (min-width: 769px) {
+          .mobile-status {
+            display: none !important;
+          }
+        }
+        
+        /* iPhone 12/13 và thiết bị mobile trung bình (361px - 390px) */
+        @media (min-width: 361px) and (max-width: 390px) {
+          .warranty-booking-section {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 0.35rem !important;
+            flex-wrap: nowrap !important;
+          }
+          
+          .warranty-booking {
+            max-width: 55% !important;
+            font-size: 0.75rem !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          
+          .mobile-status {
+            display: flex !important;
+            font-size: 0.5rem !important;
+            padding: 0.35rem 0.55rem !important;
+            max-width: 40% !important;
+          }
+          
+          .desktop-status {
+            display: none !important;
+          }
+        }
+
+        /* iPhone 14 Pro Max và các thiết bị mobile lớn (391px - 768px) */
+        @media (min-width: 391px) and (max-width: 768px) {
+          .warranty-booking-section {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 0.4rem !important;
+            flex-wrap: nowrap !important;
+          }
+          
+          .warranty-booking {
+            max-width: 52% !important;
+            font-size: 0.8rem !important;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          
+          .mobile-status {
+            display: flex !important;
+            font-size: 0.55rem !important;
+            padding: 0.4rem 0.6rem !important;
+            max-width: 42% !important;
+          }
+          
+          .desktop-status {
+            display: none !important;
+          }
+        }
+
         @media (max-width: 768px) {
           .warranty-title { font-size: 2rem; }
           .filters-grid { grid-template-columns: 1fr; }
-          .filter-actions { flex-direction: column; }
+          
+          /* Transform to beautiful card layout on mobile */
+          .warranty-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            background: none;
+            border: none;
+            box-shadow: none;
+          }
           
           .warranty-list-header {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-            text-align: center;
+            display: none; /* Hide table header on mobile */
           }
           
           .warranty-item {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            text-align: left;
+            display: block; /* Reset grid to block */
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 107, 107, 0.1);
+            transition: all 0.4s ease;
+            position: relative;
+            padding: 0;
           }
           
           .warranty-item:hover {
-            transform: none;
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            background: white;
           }
           
+          .warranty-item::before {
+            height: 5px;
+            width: 100%;
+            top: 0;
+            left: 0;
+            bottom: auto;
+          }
+          
+          /* Card Header */
+          .warranty-code-section {
+            padding: 1.5rem 1.5rem 0.75rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid rgba(255, 107, 107, 0.08);
+          }
+          
+          .warranty-code {
+            font-size: 1.25rem;
+            font-weight: 900;
+            margin-bottom: 0.75rem;
+            color: #1f2937;
+          }
+          
+          /* Booking section with mobile status */
+          .warranty-booking-section {
+            padding: 1rem 1.5rem;
+            background: white;
+            margin: 0;
+          }
+          
+          .warranty-booking {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+          }
+          
+          /* Default: Hide mobile status, show only on specific breakpoints */
+          .mobile-status {
+            display: none;
+          }
+          
+          /* Date section */
+          .warranty-date-section {
+            padding: 1rem 1.5rem 0;
+            background: white;
+            border-top: 1px solid rgba(255, 107, 107, 0.08);
+          }
+          
+          .warranty-date {
+            margin-bottom: 0.25rem;
+          }
+          
+          /* Hide desktop status on mobile */
+          .desktop-status {
+            display: none;
+          }
+          
+          /* Actions */
           .warranty-actions {
-            justify-content: stretch;
+            padding: 1rem 1.5rem 1.5rem;
+            background: white;
+            justify-content: center;
           }
           
           .action-btn {
             width: 100%;
             justify-content: center;
+            padding: 1rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 14px;
+            transition: all 0.3s ease;
+          }
+          
+          .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
           }
         }
         
+        /* Small mobile adjustments - chỉ áp dụng cho màn hình rất nhỏ */
+        @media (max-width: 360px) {
+          .warranty-booking-section {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.5rem !important;
+          }
+          
+          .warranty-booking {
+            max-width: 100% !important;
+            margin-bottom: 0.5rem;
+          }
+          
+          .mobile-status {
+            font-size: 0.6rem !important;
+            padding: 0.4rem 0.8rem !important;
+            margin-top: 0.25rem;
+            max-width: 100% !important;
+          }
+          
+          .warranty-code-section {
+            padding: 1.25rem 1.25rem 0.75rem;
+          }
+          
+          .warranty-booking-section {
+            padding: 1rem 1.25rem;
+          }
+          
+          .warranty-date-section {
+            padding: 1rem 1.25rem 0;
+          }
+          
+          .warranty-actions {
+            padding: 1rem 1.25rem 1.25rem;
+          }
+        }
+
         @media (max-width: 1024px) {
           .warranty-list-header {
             grid-template-columns: 2fr 2fr 1fr;
@@ -631,6 +828,17 @@ const WarrantyList=()=>{
                         <div className="warranty-booking">
                           {warranty.bookingId?.bookingCode || 'N/A'}
                         </div>
+                        {/* Mobile status - only shows on mobile */}
+                        <div 
+                          className="warranty-status mobile-status"
+                          style={{
+                            backgroundColor: config.bgColor,
+                            color: config.color
+                          }}
+                        >
+                          <StatusIcon size={14} />
+                          {config.label}
+                        </div>
                       </div>
                       
                       <div className="warranty-date-section">
@@ -644,8 +852,9 @@ const WarrantyList=()=>{
                         </div>
                       </div>
                       
+                      {/* Desktop status - only shows on desktop */}
                       <div 
-                        className="warranty-status"
+                        className="warranty-status desktop-status"
                         style={{
                           backgroundColor: config.bgColor,
                           color: config.color

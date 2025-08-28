@@ -26,12 +26,29 @@ function AboutPage() {
       <Header />
       
       {/* Hero Section */}
-      <section style={{ 
+      <section className="about-hero" style={{ 
         background: "linear-gradient(135deg, #fe9307 0%, #ff6b6b 100%)",
         padding: "8rem 0 6rem",
         color: "white",
         textAlign: "center"
       }}>
+        <style>{`
+          @media (max-width: 768px) {
+            .about-hero {
+              padding: 4rem 0 3rem !important;
+            }
+            .about-hero h1 {
+              font-size: 2.5rem !important;
+            }
+            .about-hero p {
+              font-size: 1rem !important;
+            }
+            .about-stats {
+              flex-direction: column !important;
+              gap: 2rem !important;
+            }
+          }
+        `}</style>
         <div className="nhp-container">
           <div style={{ maxWidth: "800px", margin: "0 auto" }}>
             <div style={{ 
@@ -67,7 +84,7 @@ function AboutPage() {
               thiết bị gia dụng có kinh nghiệm và uy tín tại TP. Đà Nẵng.
             </p>
             
-            <div style={{ 
+            <div className="about-stats" style={{ 
               display: "flex", 
               justifyContent: "center", 
               gap: "3rem",
@@ -93,13 +110,24 @@ function AboutPage() {
       {/* Mission & Vision */}
       <section style={{ padding: "6rem 0" }}>
         <div className="nhp-container">
-          <div style={{ 
+          <div className="about-mission-grid" style={{ 
             display: "grid", 
             gridTemplateColumns: "1fr 1fr", 
             gap: "4rem",
             alignItems: "center"
           }}>
-            <div>
+            <style>{`
+              @media (max-width: 768px) {
+                .about-mission-grid {
+                  grid-template-columns: 1fr !important;
+                  gap: 2rem !important;
+                }
+                .about-section h2 {
+                  font-size: 2rem !important;
+                }
+              }
+            `}</style>
+            <div className="about-section">
               <div style={{ 
                 display: "flex", 
                 alignItems: "center", 
@@ -301,6 +329,19 @@ function AboutPage() {
           }}
           className="journey-grid"
           >
+            <style>{`
+              @media (max-width: 768px) {
+                .journey-grid {
+                  grid-template-columns: 1fr !important;
+                  gap: 1.5rem !important;
+                }
+              }
+              @media (min-width: 769px) and (max-width: 1024px) {
+                .journey-grid {
+                  grid-template-columns: repeat(2, 1fr) !important;
+                }
+              }
+            `}</style>
             {[
               {
                 year: "Giai đoạn 1",

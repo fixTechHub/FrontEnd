@@ -1197,12 +1197,87 @@ h1, h2, h3, h4, h5, h6 {
     grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
   }
+  
+  .stats-section {
+    padding: 2rem 0;
+  }
+  
+  .trust-badges-enhanced {
+    gap: 1rem;
+  }
+  
+  .trust-badge-enhanced {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .stats-section {
+    padding: 1.5rem 0;
+  }
+  
+  .trust-badges-enhanced {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  
+  .trust-badge-enhanced {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .nhp-stats-grid-enhanced {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  
+  .stat-card-enhanced {
+    padding: 1.2rem 1rem;
+  }
+  
+  .stat-number {
+    font-size: 1.8rem;
+  }
+  
+  .stat-label {
+    font-size: 0.8rem;
+  }
 }
 
 @media (max-width: 640px) {
   .nhp-stats-grid-enhanced {
     grid-template-columns: 1fr;
     gap: 1rem;
+  }
+  
+  .stat-card-enhanced {
+    padding: 1.5rem 1rem;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-section {
+    padding: 1rem 0;
+  }
+  
+  .trust-badge-enhanced {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+  }
+  
+  .stat-card-enhanced {
+    padding: 1.2rem 0.8rem;
+  }
+  
+  .stat-number {
+    font-size: 1.6rem;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
   }
 }
 
@@ -2427,24 +2502,54 @@ html {
 }
 
 /* ========== RESPONSIVE DESIGN ========== */
-@media (max-width: 968px) {
-  .hero-banner-enhanced {
-    min-height: auto;
-    padding: 2rem 0;
-  }
-  
-  .hero-content-wrapper {
+@media (max-width: 1024px) {
+  .nhp-hero-content-wrapper {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 3rem;
     text-align: center;
   }
   
-  .nhp-hero-search-section {
-    margin-top: 1rem;
+  .nhp-hero-left {
+    order: 1;
+  }
+  
+  .nhp-hero-right-enhanced {
+    order: 2;
+    display: none;
   }
   
   .nhp-title-single-line {
-    font-size: 2.5rem;
+    font-size: 2.8rem;
+  }
+  
+  .nhp-hero-features {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nhp-hero-banner-enhanced {
+    padding: 2rem 0;
+  }
+  
+  .nhp-hero-content-wrapper {
+    gap: 2rem;
+  }
+  
+  .nhp-title-single-line {
+    font-size: 2.2rem;
+    line-height: 1.1;
+  }
+  
+  .nhp-title-fire {
+    font-size: 28px;
+    margin-left: 0.5rem;
+  }
+  
+  .nhp-hero-subtitle-enhanced {
+    font-size: 1.1rem;
+    line-height: 1.5;
   }
   
   .nhp-hero-features {
@@ -2452,18 +2557,46 @@ html {
     gap: 1rem;
   }
   
+  .nhp-feature-item {
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+  
+  .nhp-feature-icon {
+    width: 32px;
+    height: 32px;
+  }
+  
   .nhp-hero-cta-enhanced {
     flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .nhp-btn-primary-enhanced,
+  .nhp-btn-secondary-enhanced {
+    padding: 0.875rem 1.5rem;
+    font-size: 0.95rem;
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .nhp-hero-trust-indicators {
+    flex-direction: column;
+    gap: 0.5rem;
     align-items: center;
   }
   
+  .nhp-trust-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
+  }
+  
   .nhp-image-wrapper-enhanced {
-    height: 400px;
+    display: none;
   }
   
   .nhp-hero-image-container {
-    width: 300px;
-    height: 350px;
+    display: none;
   }
   
   .nhp-float-element {
@@ -2471,33 +2604,105 @@ html {
   }
   
   .nhp-rating-card-simple {
-    position: relative;
-    bottom: auto;
-    right: auto;
-    margin-top: 2rem;
-    width: 100%;
-    max-width: 260px;
-    align-self: center;
-    transform: none;
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .nhp-hero-banner-enhanced {
+    padding: 1.5rem 0;
   }
   
-  .nhp-rating-card-simple:hover {
-    transform: translateY(-3px);
+  .nhp-hero-content-wrapper {
+    gap: 1.5rem;
+  }
+  
+  .nhp-hero-badge-enhanced {
+    font-size: 0.75rem;
+    padding: 0.6rem 1.2rem;
+    gap: 0.5rem;
+  }
+  
+  .nhp-title-single-line {
+    font-size: 1.8rem;
+    line-height: 1.1;
+  }
+  
+  .nhp-title-fire {
+    font-size: 22px;
+    margin-left: 0.3rem;
+  }
+  
+  .nhp-hero-subtitle-enhanced {
+    font-size: 1rem;
+    line-height: 1.4;
+  }
+  
+  .nhp-hero-features {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+  
+  .nhp-feature-item {
+    padding: 0.6rem 0.8rem;
+    font-size: 0.8rem;
+  }
+  
+  .nhp-feature-icon {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .nhp-btn-primary-enhanced,
+  .nhp-btn-secondary-enhanced {
+    padding: 0.8rem 1.2rem;
+    font-size: 0.9rem;
+  }
+  
+  .nhp-image-wrapper-enhanced {
+    display: none;
+  }
+  
+  .nhp-hero-image-container {
+    display: none;
+  }
+  
+  .nhp-rating-card-simple {
+    display: none;
+  }
+  
+  .nhp-rating-header {
+    padding: 0.6rem 0.8rem;
+  }
+  
+  .nhp-rating-badge-simple {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .nhp-score-big {
+    font-size: 1.6rem;
   }
 }
 
 @media (max-width: 768px) {
-  .search-container-enhanced {
+  .nhp-search-container-enhanced {
     max-width: 95%;
     margin: 2rem auto 1rem auto;
   }
 
-  .search-main-title {
+  .nhp-search-main-title {
     font-size: 2rem;
+    line-height: 1.1;
   }
 
-  .search-subtitle {
+  .nhp-search-subtitle {
     font-size: 1rem;
+  }
+
+  .nhp-search-badge {
+    font-size: 0.8rem;
+    padding: 0.4rem 1.2rem;
   }
 
   .nhp-search-input-enhanced {
@@ -2529,6 +2734,11 @@ html {
   .nhp-btn-search-enhanced {
     padding: 0.75rem 1rem;
     border-radius: 12px;
+    font-size: 0.9rem;
+  }
+
+  .nhp-popular-searches-enhanced {
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
   }
 
   .nhp-popular-tags {
@@ -2537,16 +2747,22 @@ html {
 
   .nhp-popular-tag-enhanced {
     padding: 0.5rem 0.75rem;
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
   }
 
   .nhp-search-trust-indicators {
-    gap: 1rem;
+    gap: 0.75rem;
     padding: 1rem;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .nhp-trust-item {
-    font-size: 0.8125rem;
+    font-size: 0.8rem;
+    flex: 1;
+    min-width: 80px;
+    padding: 0.5rem 0.25rem;
   }
 
   .nhp-section-title-enhanced {
@@ -2599,12 +2815,24 @@ html {
 }
 
 @media (max-width: 480px) {
-  .search-container-enhanced {
+  .nhp-search-container-enhanced {
     max-width: 95%;
+    padding: 0 1rem;
   }
   
-  .search-main-title {
+  .nhp-search-main-title {
     font-size: 1.75rem;
+    line-height: 1.1;
+  }
+  
+  .nhp-search-subtitle {
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .nhp-search-badge {
+    font-size: 0.7rem;
+    padding: 0.3rem 1rem;
   }
 
   .nhp-search-input-enhanced {
@@ -2612,19 +2840,63 @@ html {
     align-items: stretch;
     gap: 1rem;
     padding: 1rem;
+    min-height: 65px;
   }
 
   .nhp-search-icon-enhanced {
     align-self: center;
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+  }
+
+  .nhp-search-field-enhanced {
+    font-size: 0.9rem;
+    text-align: center;
+    margin-top: 0.5rem;
   }
 
   .nhp-search-actions-enhanced {
     justify-content: center;
+    width: 100%;
+    margin-top: 1rem;
   }
 
   .nhp-btn-search-enhanced {
-    padding: 0.75rem 2rem;
-    min-width: 140px;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    width: 100%;
+    border-radius: 10px;
+  }
+
+  .nhp-popular-searches-enhanced {
+    padding: 1rem 1rem 1.5rem 1rem;
+  }
+
+  .nhp-popular-tags {
+    justify-content: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+  }
+
+  .nhp-popular-tag-enhanced {
+    padding: 0.4rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  .nhp-search-trust-indicators {
+    gap: 0.5rem;
+    padding: 0.75rem;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .nhp-trust-item {
+    font-size: 0.7rem;
+    flex: 1;
+    min-width: 70px;
+    padding: 0.4rem 0.2rem;
   }
 
   .nhp-search-text-enhanced {
@@ -3159,6 +3431,70 @@ a:focus-visible {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
   margin-top: 3rem;
+}
+
+/* Services Section Responsive */
+@media (max-width: 1024px) {
+  .nhp-services-section-enhanced {
+    padding: 4rem 0;
+  }
+  
+  .nhp-services-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nhp-services-section-enhanced {
+    padding: 3rem 0;
+  }
+  
+  .nhp-services-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+  
+  .nhp-service-card-enhanced {
+    padding: 2rem 1.5rem;
+  }
+  
+  .nhp-service-title {
+    font-size: 1.2rem;
+  }
+  
+  .nhp-service-description {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nhp-services-section-enhanced {
+    padding: 2rem 0;
+  }
+  
+  .nhp-services-grid {
+    margin-top: 1.5rem;
+  }
+  
+  .nhp-service-card-enhanced {
+    padding: 1.5rem 1rem;
+  }
+  
+  .nhp-service-icon {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .nhp-service-title {
+    font-size: 1.1rem;
+  }
+  
+  .nhp-service-description {
+    font-size: 0.85rem;
+  }
 }
 
 .nhp-btn-orange {
@@ -3726,6 +4062,92 @@ a:focus-visible {
   align-items: stretch;
 }
 
+/* Testimonials Section Responsive */
+@media (max-width: 1024px) {
+  .nhp-testimonials-section-enhanced {
+    padding: 4rem 0;
+  }
+  
+  .nhp-testi-card-enhanced {
+    width: 350px;
+    max-width: 350px;
+    margin: 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nhp-testimonials-section-enhanced {
+    padding: 3rem 0;
+  }
+  
+  .nhp-testi-card-enhanced {
+    width: 320px;
+    max-width: 320px;
+    min-height: 260px;
+    margin: 0.5rem;
+    padding: 1.2rem;
+  }
+  
+  .nhp-testi-content-enhanced {
+    font-size: 0.9rem;
+    height: 4rem;
+  }
+  
+  .nhp-testi-name {
+    font-size: 0.9rem;
+  }
+  
+  .nhp-service-badge-enhanced,
+  .nhp-price-badge-enhanced {
+    font-size: 0.7rem;
+    padding: 0.3rem 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nhp-testimonials-section-enhanced {
+    padding: 2rem 0;
+  }
+  
+  .nhp-testi-card-enhanced {
+    width: 280px;
+    max-width: 280px;
+    min-height: 240px;
+    margin: 0.25rem;
+    padding: 1rem;
+  }
+  
+  .nhp-testi-content-enhanced {
+    font-size: 0.85rem;
+    height: 3.5rem;
+    line-height: 1.4;
+  }
+  
+  .nhp-testi-name {
+    font-size: 0.85rem;
+  }
+  
+  .nhp-testi-avatar-enhanced,
+  .nhp-testi-avatar-placeholder {
+    width: 40px !important;
+    height: 40px !important;
+  }
+  
+  .nhp-service-badge-enhanced,
+  .nhp-price-badge-enhanced {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .nhp-verified-badge-inline {
+    font-size: 0.6rem;
+  }
+  
+  .nhp-testi-rating-text {
+    font-size: 0.7rem;
+  }
+}
+
 .testi-swiper .swiper-pagination {
   bottom: -28px !important;
 }
@@ -4123,14 +4545,50 @@ a:focus-visible {
 }
 
 /* ========== RESPONSIVE FAQ STYLES ========== */
+@media (max-width: 1024px) {
+  .nhp-faq-section-enhanced {
+    padding: 4rem 0;
+  }
+}
+
 @media (max-width: 768px) {
+  .nhp-faq-section-enhanced {
+    padding: 3rem 0;
+  }
+  
   .nhp-faq-question-enhanced {
     padding: 1rem 1.5rem;
     font-size: 1rem;
   }
-  
+
   .nhp-faq-answer-enhanced {
     padding: 0 1.5rem 1rem 1.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .nhp-faq-container {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .nhp-faq-section-enhanced {
+    padding: 2rem 0;
+  }
+  
+  .nhp-faq-question-enhanced {
+    padding: 0.875rem 1.2rem;
+    font-size: 0.95rem;
+  }
+
+  .nhp-faq-answer-enhanced {
+    padding: 0 1.2rem 0.875rem 1.2rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  
+  .nhp-faq-container {
+    gap: 0.5rem;
   }
 }
 
@@ -4712,8 +5170,112 @@ a:focus-visible {
     padding: 1rem 1.5rem;
     font-size: 1rem;
   }
-  
+
   .nhp-faq-answer-enhanced {
     padding: 0 1.5rem 1rem 1.5rem;
+  }
+}
+
+/* ========== GENERAL RESPONSIVE IMPROVEMENTS ========== */
+@media (max-width: 1200px) {
+  .nhp-container,
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .nhp-container,
+  .container {
+    padding: 0 1rem;
+  }
+  
+  .nhp-section-title-enhanced {
+    font-size: 2.2rem;
+    line-height: 1.1;
+  }
+  
+  .nhp-section-description-enhanced {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  
+  .nhp-section-badge-enhanced {
+    font-size: 0.8rem;
+    padding: 0.4rem 1.2rem;
+  }
+  
+  /* Process steps responsive */
+  .nhp-process-steps {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  .nhp-step-connector {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .nhp-container,
+  .container {
+    padding: 0 0.75rem;
+  }
+  
+  .nhp-section-title-enhanced {
+    font-size: 1.8rem;
+    line-height: 1.1;
+  }
+  
+  .nhp-section-description-enhanced {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  
+  .nhp-section-badge-enhanced {
+    font-size: 0.7rem;
+    padding: 0.3rem 1rem;
+  }
+  
+  /* Floating particles - hide on small mobile */
+  .nhp-floating-particles,
+  .nhp-bg-elements {
+    display: none;
+  }
+}
+
+/* ========== AI CHATBOX RESPONSIVE ========== */
+.nhp-ai-chatbox-container {
+  position: fixed;
+  bottom: 3rem;
+  right: 3.5rem;
+  z-index: 1000;
+}
+
+@media (max-width: 768px) {
+  .nhp-ai-chatbox-container {
+    bottom: 16px;  /* Ngang hàng với nút report */
+    right: 16px;
+    scale: 1;      /* Không scale xuống nữa */
+    z-index: 10001; /* Đè lên header */
+  }
+  
+  /* Đảm bảo report button cũng đè lên header */
+  .report-btn-floating {
+    z-index: 10001 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .nhp-ai-chatbox-container {
+    bottom: 12px;  /* Ngang hàng với nút report */
+    right: 12px;
+    scale: 0.95;   /* Chỉ scale xuống một chút */
+    z-index: 10001; /* Đè lên header */
+  }
+  
+  /* Đảm bảo report button cũng đè lên header */
+  .report-btn-floating {
+    z-index: 10001 !important;
   }
 }

@@ -718,7 +718,7 @@ function NewHomePage() {
       {/* Premium Floating Chat Button */}
       {isAuthenticated && user.role.name === 'CUSTOMER' && <>
 
-        <div style={{ position: "fixed", bottom: "3rem", right: "3.5rem", zIndex: 1000 }}>
+        <div className="nhp-ai-chatbox-container">
           <AIChatbox size={24} />
         </div>
       </>}

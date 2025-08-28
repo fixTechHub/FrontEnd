@@ -50,6 +50,10 @@ const ProfilePageContainer = styled.div`
 
 const ContentContainer = styled.div`
   padding: 3rem 0;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 0;
+  }
 `;
 
 const SettingsWrapper = styled.div`
@@ -58,6 +62,12 @@ const SettingsWrapper = styled.div`
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
   display: flex;
   border: 1px solid ${BORDER_COLOR};
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+  }
 `;
 
 const SettingsSidebar = styled.div`
@@ -66,11 +76,23 @@ const SettingsSidebar = styled.div`
   padding: 1.5rem;
   background-color: #fff;
   border-radius: 0.5rem 0 0 0.5rem;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid ${BORDER_COLOR};
+    padding: 1rem;
+    border-radius: 0.375rem 0.375rem 0 0;
+  }
 `;
 
 const UserProfile = styled.div`
   text-align: center;
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const AvatarWrapper = styled.div`
@@ -79,6 +101,12 @@ const AvatarWrapper = styled.div`
   height: 120px;
   margin: 0 auto 1rem;
   cursor: pointer;
+  
+  @media (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 0.75rem;
+  }
 `;
 
 const Avatar = styled.img`
@@ -157,6 +185,10 @@ const NavLink = styled.a`
 const SettingsContent = styled.div`
   flex: 1;
   padding: 2.5rem;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+  }
 `;
 
 const Section = styled.div`
@@ -194,6 +226,11 @@ const InfoCard = styled.div`
   border-radius: 0.5rem;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+    border-radius: 0.375rem;
+  }
 `;
 
 const CardHeader = styled.div`
@@ -220,12 +257,23 @@ const CardContent = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
 `;
 
 const InfoLabel = styled.span`
   font-weight: 500;
   color: ${MUTED_TEXT_COLOR};
   min-width: 120px;
+  
+  @media (max-width: 480px) {
+    min-width: auto;
+    font-size: 0.9rem;
+  }
 `;
 
 const InfoValue = styled.span`
@@ -233,6 +281,11 @@ const InfoValue = styled.span`
   font-weight: 500;
   flex: 1;
   text-align: right;
+  
+  @media (max-width: 480px) {
+    text-align: left;
+    font-size: 0.95rem;
+  }
 `;
 
 const FormControl = styled.div`
@@ -271,6 +324,11 @@ const ButtonGroup = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
 `;
 
 const Button = styled.button`
