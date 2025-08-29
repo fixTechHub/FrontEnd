@@ -50,6 +50,10 @@ const ProfilePageContainer = styled.div`
 
 const ContentContainer = styled.div`
   padding: 3rem 0;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 0;
+  }
 `;
 
 const SettingsWrapper = styled.div`
@@ -58,6 +62,12 @@ const SettingsWrapper = styled.div`
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
   display: flex;
   border: 1px solid ${BORDER_COLOR};
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.05);
+  }
 `;
 
 const SettingsSidebar = styled.div`
@@ -66,11 +76,23 @@ const SettingsSidebar = styled.div`
   padding: 1.5rem;
   background-color: #fff;
   border-radius: 0.5rem 0 0 0.5rem;
+  
+  @media (max-width: 768px) {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid ${BORDER_COLOR};
+    padding: 1rem;
+    border-radius: 0.375rem 0.375rem 0 0;
+  }
 `;
 
 const UserProfile = styled.div`
   text-align: center;
   margin-bottom: 2rem;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 1.5rem;
+  }
 `;
 
 const AvatarWrapper = styled.div`
@@ -79,6 +101,12 @@ const AvatarWrapper = styled.div`
   height: 120px;
   margin: 0 auto 1rem;
   cursor: pointer;
+  
+  @media (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 0.75rem;
+  }
 `;
 
 const Avatar = styled.img`
@@ -157,6 +185,10 @@ const NavLink = styled.a`
 const SettingsContent = styled.div`
   flex: 1;
   padding: 2.5rem;
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+  }
 `;
 
 const Section = styled.div`
@@ -194,6 +226,11 @@ const InfoCard = styled.div`
   border-radius: 0.5rem;
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  
+  @media (max-width: 768px) {
+    padding: 1rem;
+    border-radius: 0.375rem;
+  }
 `;
 
 const CardHeader = styled.div`
@@ -220,12 +257,23 @@ const CardContent = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
 `;
 
 const InfoLabel = styled.span`
   font-weight: 500;
   color: ${MUTED_TEXT_COLOR};
   min-width: 120px;
+  
+  @media (max-width: 480px) {
+    min-width: auto;
+    font-size: 0.9rem;
+  }
 `;
 
 const InfoValue = styled.span`
@@ -233,6 +281,11 @@ const InfoValue = styled.span`
   font-weight: 500;
   flex: 1;
   text-align: right;
+  
+  @media (max-width: 480px) {
+    text-align: left;
+    font-size: 0.95rem;
+  }
 `;
 
 const FormControl = styled.div`
@@ -271,6 +324,11 @@ const ButtonGroup = styled.div`
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  
+  @media (max-width: 480px) {
+    flex-direction: column-reverse;
+    gap: 0.5rem;
+  }
 `;
 
 const Button = styled.button`
@@ -441,6 +499,9 @@ function ProfilePage() {
   const { user, profileLoading } = useSelector((state) => state.auth);
   const authTechnician = useSelector(state=> state.auth.technician);
   const categoriesList = useSelector(state => state.categories.categories);
+  
+  // Get account type for conditional display
+  const accountType = user?.accountType || 'INDIVIDUAL';
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -936,7 +997,7 @@ function ProfilePage() {
       <UserProfile>
         <AvatarWrapper onClick={handleAvatarClick}>
           {avatarPreview || (user?.avatar && !avatarError) ? (
-            <Avatar src={avatarPreview || user?.avatar} alt="Ảnh đại diện" onError={() => setAvatarError(true)} />
+            <Avatar src={avatarPreview || user?.avatar} alt={accountType === 'BUSINESS' ? "Logo doanh nghiệp" : "Ảnh đại diện"} onError={() => setAvatarError(true)} />
           ) : (
             <FaUserCircle size={120} color="#000" />
           )}
@@ -1016,12 +1077,12 @@ function ProfilePage() {
           <ProfileInfoContainer>
             <InfoCard>
               <CardHeader>
-                <i className="bi bi-person-fill"></i>
-                <h6>Thông tin cá nhân</h6>
+                <i className={accountType === 'BUSINESS' ? "bi bi-building-fill" : "bi bi-person-fill"}></i>
+                <h6>{accountType === 'BUSINESS' ? "Thông tin doanh nghiệp" : "Thông tin cá nhân"}</h6>
               </CardHeader>
               <div style={{ padding: '0.5rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 <FormControl>
-                  <label htmlFor="fullName">Họ và tên</label>
+                  <label htmlFor="fullName">{accountType === 'BUSINESS' ? "Tên doanh nghiệp" : "Họ và tên"}</label>
                   <input type="text" id="fullName" name="fullName" value={formData.fullName} onChange={handleInputChange} />
                 </FormControl>
               </div>
@@ -1056,19 +1117,19 @@ function ProfilePage() {
         <ProfileInfoContainer>
           <InfoCard>
             <CardHeader>
-              <i className="bi bi-person-fill"></i>
-              <h6>Thông tin cá nhân</h6>
+              <i className={accountType === 'BUSINESS' ? "bi bi-building-fill" : "bi bi-person-fill"}></i>
+              <h6>{accountType === 'BUSINESS' ? "Thông tin doanh nghiệp" : "Thông tin cá nhân"}</h6>
             </CardHeader>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem 0' }}>
               <CardContent>
-                <InfoLabel>Họ và tên:</InfoLabel>
+                <InfoLabel>{accountType === 'BUSINESS' ? "Tên doanh nghiệp:" : "Họ và tên:"}</InfoLabel>
                 <InfoValue>{formData.fullName || "Chưa cập nhật"}</InfoValue>
               </CardContent>
               {user?.role?.name === 'TECHNICIAN' && authTechnician && (
                 <>
                   <CardContent>
-                    <InfoLabel>Số CCCD:</InfoLabel>
-                    <InfoValue>{authTechnician.identification}</InfoValue>
+                    <InfoLabel>{accountType === 'BUSINESS' ? 'Mã số thuế:' : 'Số CCCD:'}</InfoLabel>
+                    <InfoValue>{accountType === 'BUSINESS' ? (authTechnician.taxCode || 'Chưa cập nhật') : (authTechnician.identification || 'Chưa cập nhật')}</InfoValue>
                   </CardContent>
                   <CardContent>
                     <InfoLabel>Kinh nghiệm:</InfoLabel>
@@ -1737,12 +1798,12 @@ function ProfilePage() {
             
             <p><strong>Thông tin sẽ bị xóa:</strong></p>
             <ul>
-              <li>Thông tin cá nhân (họ tên, email, số điện thoại, địa chỉ)</li>
-              <li>Ảnh đại diện</li>
+              <li>{accountType === 'BUSINESS' ? "Thông tin doanh nghiệp (tên doanh nghiệp, email, số điện thoại, địa chỉ)" : "Thông tin cá nhân (họ tên, email, số điện thoại, địa chỉ)"}</li>
+              <li>{accountType === 'BUSINESS' ? "Logo doanh nghiệp" : "Ảnh đại diện"}</li>
               <li>Lịch sử đăng nhập</li>
             </ul>
             
-            <p><strong>Dữ liệu sẽ được giữ lại (ẩn thông tin cá nhân):</strong></p>
+            <p><strong>Dữ liệu sẽ được giữ lại ({accountType === 'BUSINESS' ? "ẩn thông tin doanh nghiệp" : "ẩn thông tin cá nhân"}):</strong></p>
             <ul>
               <li>Lịch sử booking (cho báo cáo)</li>
               <li>Feedback và đánh giá</li>
@@ -1783,7 +1844,7 @@ function ProfilePage() {
     return (
       <ProfilePageContainer>
         <Header />
-        <BreadcrumbBar title="Thông tin cá nhân" />
+        <BreadcrumbBar title={accountType === 'BUSINESS' ? "Thông tin doanh nghiệp" : "Thông tin cá nhân"} />
         <ContentContainer>
           <div className="container">
             <div style={{textAlign: 'center', padding: '3rem 0'}}>
@@ -1800,7 +1861,7 @@ function ProfilePage() {
   return (
     <ProfilePageContainer>
       <Header />
-      <BreadcrumbBar title="Thông tin cá nhân" />
+      <BreadcrumbBar title={accountType === 'BUSINESS' ? "Thông tin doanh nghiệp" : "Thông tin cá nhân"} />
       <ContentContainer>
         <div className="container">
             {/* Banner nhắc xác thực email/phone */}

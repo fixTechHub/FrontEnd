@@ -778,13 +778,13 @@ const FinancialManagement = () => {
       key: 'technician',
       width: 150,
       render: (technicianId, record) => {
-        const technicianName = technicianNameMap[technicianId] || record.technicianName || `KTV ${technicianId}`;
+        const technicianName = technicianNameMap[technicianId] || (record.technicianName && record.technicianName !== 'Unknown' ? record.technicianName : 'Chưa có');
         return (
           <div style={{ maxWidth: 150, fontWeight: 500, fontSize: '12px' }}>
             {technicianName?.length > 20 ? `${technicianName.substring(0, 20)}...` : technicianName}
           </div>
         );
-      },
+      }, 
     },
     {
       title: (

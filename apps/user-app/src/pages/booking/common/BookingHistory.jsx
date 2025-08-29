@@ -619,6 +619,20 @@ const BookingHistory = () => {
           gap: 0.25rem;
         }
         
+        /* Desktop: Đảm bảo service section hiển thị dạng cột và ẩn mobile status */
+        @media (min-width: 769px) {
+          .booking-service-section {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.25rem !important;
+            align-items: flex-start !important;
+          }
+          
+          .mobile-status {
+            display: none !important;
+          }
+        }
+        
         .booking-service {
           font-size: 0.8rem;
           color: white;
@@ -676,6 +690,15 @@ const BookingHistory = () => {
           gap: 0.375rem;
           flex-wrap: wrap;
         }
+        
+        /* Hide mobile elements on desktop */
+        .mobile-metadata-grid,
+        .mobile-technician-card,
+        .mobile-status {
+          display: none;
+        }
+        
+
         
         .action-btn {
           display: flex;
@@ -780,36 +803,6 @@ const BookingHistory = () => {
           to { transform: rotate(360deg); }
         }
         
-        @media (max-width: 768px) {
-          .booking-title { font-size: 2rem; }
-          .filters-grid { grid-template-columns: 1fr; }
-          
-          .booking-list-header {
-            grid-template-columns: 1fr;
-            gap: 0.5rem;
-            text-align: center;
-          }
-          
-          .booking-item {
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            text-align: left;
-          }
-          
-          .booking-item:hover {
-            transform: none;
-          }
-          
-          .booking-actions {
-            justify-content: stretch;
-          }
-          
-          .action-btn {
-            width: 100%;
-            justify-content: center;
-          }
-        }
-        
         @media (max-width: 1024px) {
           .booking-list-header {
             grid-template-columns: 2fr 2fr 1fr;
@@ -826,6 +819,393 @@ const BookingHistory = () => {
             margin-top: 0.5rem;
             padding-top: 0.5rem;
             border-top: 1px solid rgba(255, 107, 107, 0.1);
+          }
+        }
+        
+        /* iPhone 12/13 và thiết bị mobile trung bình (361px - 390px) */
+        @media (min-width: 361px) and (max-width: 390px) {
+          .booking-service-section {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 0.35rem !important;
+            flex-wrap: nowrap !important;
+          }
+          
+          .booking-service {
+            max-width: 55% !important;
+            font-size: 0.75rem !important;
+            padding: 0.35rem 0.65rem !important;
+          }
+          
+          .mobile-status {
+            display: flex !important;
+            font-size: 0.5rem !important;
+            padding: 0.35rem 0.55rem !important;
+            max-width: 40% !important;
+          }
+          
+          .desktop-status {
+            display: none !important;
+          }
+        }
+
+        /* iPhone 14 Pro Max và các thiết bị mobile lớn (391px - 768px) */
+        @media (min-width: 391px) and (max-width: 768px) {
+          .booking-service-section {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 0.4rem !important;
+            flex-wrap: nowrap !important;
+          }
+          
+          .booking-service {
+            max-width: 52% !important;
+            font-size: 0.8rem !important;
+            padding: 0.4rem 0.7rem !important;
+          }
+          
+          .mobile-status {
+            display: flex !important;
+            font-size: 0.55rem !important;
+            padding: 0.4rem 0.6rem !important;
+            max-width: 42% !important;
+          }
+          
+          .desktop-status {
+            display: none !important;
+          }
+        }
+
+        /* ENHANCED MOBILE CARD LAYOUT */
+        @media (max-width: 768px) {
+          .booking-title { font-size: 2rem; }
+          .filters-grid { grid-template-columns: 1fr; }
+          
+          /* Transform to beautiful card layout on mobile */
+          .booking-list {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            background: none;
+            border: none;
+            box-shadow: none;
+          }
+          
+          .booking-list-header {
+            display: none; /* Hide table header on mobile */
+          }
+          
+          .booking-item {
+            display: block; /* Reset grid to block */
+            background: white;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+            border: 1px solid rgba(255, 107, 107, 0.1);
+            transition: all 0.4s ease;
+            position: relative;
+            padding: 0;
+          }
+          
+          .booking-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+            background: white;
+          }
+          
+          .booking-item::before {
+            height: 5px;
+            width: 100%;
+            top: 0;
+            left: 0;
+            bottom: auto;
+          }
+          
+          /* Card Header */
+          .booking-code-section {
+            padding: 1.5rem 1.5rem 0.75rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid rgba(255, 107, 107, 0.08);
+            position: relative;
+          }
+          
+          .booking-code {
+            font-size: 1.25rem;
+            font-weight: 900;
+            margin-bottom: 0.75rem;
+            color: #1f2937;
+          }
+          
+          .booking-service-section {
+            margin-top: 0.75rem;
+          }
+          
+          .booking-service {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.25);
+            max-width: 100%;
+          }
+          
+          /* Default: Hide mobile status, show later with specific breakpoint */
+          .mobile-status {
+            display: none;
+          }
+          
+          /* Hide desktop status on mobile */
+          .desktop-status {
+            display: none;
+          }
+          
+          /* Enhanced Technician Section */
+          .booking-technician-section {
+            padding: 1.5rem;
+            border: none;
+            margin: 0;
+            background: white;
+          }
+          
+          .booking-technician {
+            display: none; /* Hide on mobile, use mobile-technician-card instead */
+          }
+          
+          /* Mobile Technician Card */
+          .mobile-technician-card {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+          }
+          
+          .mobile-technician-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+          }
+          
+          .technician-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            overflow: hidden;
+            background: linear-gradient(135deg, #ff6b6b, #ffa500);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 900;
+            font-size: 1.2rem;
+            box-shadow: 0 3px 10px rgba(255, 107, 107, 0.25);
+            flex-shrink: 0;
+            position: relative;
+          }
+          
+          .technician-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+          
+          .technician-avatar span {
+            color: white;
+            font-weight: 900;
+            font-size: 1.5rem;
+          }
+          
+          .technician-info {
+            flex: 1;
+            min-width: 0;
+          }
+          
+          .technician-name {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.125rem;
+            line-height: 1.3;
+          }
+          
+          .technician-role {
+            font-size: 0.75rem;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+          }
+          
+          /* Compact mobile metadata grid */
+          .mobile-metadata-grid {
+            display: block;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 107, 107, 0.08);
+          }
+          
+          .metadata-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.75rem;
+          }
+          
+          .metadata-row:last-child {
+            margin-bottom: 0;
+          }
+          
+          .metadata-compact {
+            flex: 1;
+            padding: 0.5rem 0.75rem;
+            background: white;
+            border-radius: 10px;
+            margin: 0 0.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+          }
+          
+          .meta-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: block;
+            margin-bottom: 0.25rem;
+          }
+          
+          .meta-value {
+            font-size: 0.85rem;
+            color: #1f2937;
+            font-weight: 700;
+            line-height: 1.2;
+            display: block;
+          }
+          
+          .meta-value.urgent {
+            color: #dc2626;
+            font-weight: 800;
+          }
+          
+          .meta-value.normal {
+            color: #059669;
+          }
+          
+          .booking-actions {
+            padding: 0 1.5rem 1.5rem;
+            background: white;
+            flex-direction: column;
+            gap: 0.75rem;
+          }
+          
+
+          
+          .action-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 1rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 14px;
+            transition: all 0.3s ease;
+          }
+          
+          .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 107, 107, 0.3);
+          }
+        }
+        
+        /* Small mobile adjustments - chỉ áp dụng cho màn hình rất nhỏ */
+        @media (max-width: 360px) {
+          .booking-service-section {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 0.5rem !important;
+          }
+          
+          .booking-service {
+            flex: none;
+            max-width: 100% !important;
+            margin-bottom: 0.25rem;
+          }
+          
+          .mobile-status {
+            font-size: 0.6rem !important;
+            padding: 0.4rem 0.8rem !important;
+            letter-spacing: 0.3px !important;
+            margin-top: 0.25rem;
+          }
+        }
+          
+          .mobile-metadata-grid {
+            padding: 0.75rem;
+            margin-top: 0.75rem;
+          }
+          
+          .metadata-row {
+            flex-direction: column;
+            margin-bottom: 0.5rem;
+          }
+          
+          .metadata-compact {
+            margin: 0.25rem 0;
+            padding: 0.375rem 0.5rem;
+          }
+          
+          .meta-label {
+            font-size: 0.65rem;
+            margin-bottom: 0.125rem;
+          }
+          
+          .meta-value {
+            font-size: 0.8rem;
+          }
+          
+          .mobile-technician-card {
+            padding: 0.875rem;
+            gap: 0.875rem;
+            margin-bottom: 0.75rem;
+          }
+          
+          .technician-avatar {
+            width: 42px;
+            height: 42px;
+            font-size: 1.1rem;
+          }
+          
+          .technician-name {
+            font-size: 0.9rem;
+          }
+          
+          .technician-role {
+            font-size: 0.7rem;
+          }
+          
+          .booking-item {
+            border-radius: 18px;
+          }
+          
+          .booking-code-section {
+            padding: 1.25rem 1.25rem 0.75rem;
+          }
+          
+          .booking-technician-section {
+            padding: 1.25rem;
+          }
+          
+          .booking-actions {
+            padding: 0 1.25rem 1.25rem;
           }
         }
       `}</style>
@@ -953,6 +1333,17 @@ const BookingHistory = () => {
                         <div className="booking-service">
                           {booking.serviceId?.serviceName || 'N/A'}
                         </div>
+                        {/* Mobile status - only shows on mobile */}
+                        <div 
+                          className="booking-status mobile-status"
+                          style={{
+                            backgroundColor: config.bgColor,
+                            color: config.color
+                          }}
+                        >
+                          <StatusIcon size={14} />
+                          {config.label}
+                        </div>
                       </div>
                       
                       <div className="booking-technician-section">
@@ -961,10 +1352,80 @@ const BookingHistory = () => {
                             ? booking.technicianId?.userId?.fullName || 'Chưa phân công'
                             : booking.customerId?.fullName || 'N/A'}
                         </div>
+                        
+                        {/* Mobile Technician Card */}
+                        <div className="mobile-technician-card">
+                          <div className="technician-avatar">
+                            {isCustomer && booking.technicianId?.userId?.avatar ? (
+                              <img 
+                                src={booking.technicianId.userId.avatar} 
+                                alt="Technician Avatar"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.parentNode.innerHTML = booking.technicianId?.userId?.fullName?.charAt(0) || '?';
+                                }}
+                              />
+                            ) : !isCustomer && booking.customerId?.avatar ? (
+                              <img 
+                                src={booking.customerId.avatar} 
+                                alt="Customer Avatar"
+                                onError={(e) => {
+                                  e.target.style.display = 'none';
+                                  e.target.parentNode.innerHTML = booking.customerId?.fullName?.charAt(0) || '?';
+                                }}
+                              />
+                            ) : (
+                              <span>
+                                {isCustomer 
+                                  ? booking.technicianId?.userId?.fullName?.charAt(0) || '?'
+                                  : booking.customerId?.fullName?.charAt(0) || '?'
+                                }
+                              </span>
+                            )}
+                          </div>
+                          <div className="technician-info">
+                            <div className="technician-name">
+                              {isCustomer
+                                ? booking.technicianId?.userId?.fullName || 'Chưa phân công'
+                                : booking.customerId?.fullName || 'N/A'}
+                            </div>
+                            <div className="technician-role">
+                              {isCustomer ? 'Kỹ thuật viên' : 'Khách hàng'}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Mobile Metadata Grid - Compact */}
+                        <div className="mobile-metadata-grid">
+                          <div className="metadata-row">
+                            <div className="metadata-compact">
+                              <span className="meta-label">Ngày tạo:</span>
+                              <span className="meta-value">{formatDateOnly(booking.createdAt)}</span>
+                            </div>
+                            <div className="metadata-compact">
+                              <span className="meta-label">Giá:</span>
+                              <span className="meta-value">{formatCurrency(booking.finalPrice) || 'Chờ báo giá'}</span>
+                            </div>
+                          </div>
+                          
+                          <div className="metadata-row">
+                            <div className="metadata-compact">
+                              <span className="meta-label">Địa điểm:</span>
+                              <span className="meta-value">{booking.location?.address || 'Chưa có'}</span>
+                            </div>
+                            <div className="metadata-compact">
+                              <span className="meta-label">Ưu tiên:</span>
+                              <span className={`meta-value ${booking.isUrgent ? 'urgent' : 'normal'}`}>
+                                {booking.isUrgent ? 'Khẩn cấp' : 'Bình thường'}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                       
+                      {/* Desktop status - only shows on desktop */}
                       <div 
-                        className="booking-status"
+                        className="booking-status desktop-status"
                         style={{
                           backgroundColor: config.bgColor,
                           color: config.color

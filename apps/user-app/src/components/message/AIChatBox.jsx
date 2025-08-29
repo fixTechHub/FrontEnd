@@ -286,7 +286,7 @@ const AIChatbox = () => {
 
       {/* Enhanced Chatbox */}
       <div
-        className={`chatbox-container bg-white rounded-4 shadow-lg d-flex flex-column position-absolute bottom-100 end-0 overflow-hidden ${
+        className={`chatbox-container bg-white rounded-4 shadow-lg position-absolute bottom-100 end-0 overflow-hidden ${
           isOpen ? 'chatbox-open' : 'd-none'
         }`}
         style={{ width: '420px', maxHeight: '65vh' }}

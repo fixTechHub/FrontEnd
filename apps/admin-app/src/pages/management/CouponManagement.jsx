@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, DatePicker, InputNumber, Table, Space } from 'antd';
+import { message, Modal, Button, Spin, Select, Row, Col, Form, Input, Switch, DatePicker, InputNumber, Table, Space, Dropdown, Menu } from 'antd';
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
@@ -81,9 +81,10 @@ const [userFilterCriteria, setUserFilterCriteria] = useState({
 });
 const [filteredUsers, setFilteredUsers] = useState([]);
 const [loadingFilteredUsers, setLoadingFilteredUsers] = useState(false);
-const [selectedFilteredUserIds, setSelectedFilteredUserIds] = useState([]);
+ const [selectedFilteredUserIds, setSelectedFilteredUserIds] = useState([]);
+ const [selectAllSelected, setSelectAllSelected] = useState(false);
  
-const [validationErrors, setValidationErrors] = useState({});
+ const [validationErrors, setValidationErrors] = useState({});
 const [activeKey, setActiveKey] = useState('active');
 
 
@@ -412,18 +413,11 @@ const handleImageUpload = () => {
 
  // Sửa lại handleUserSearch: chỉ filter trên allUsers
  const handleUserSearch = (searchText) => {
-  if (!searchText) {
-    setFilteredUsers(allUsers);
-    return;
-  }
-  setFilteredUsers(
-    allUsers.filter(
-      u =>
-        (u.fullName && u.fullName.toLowerCase().includes(searchText.toLowerCase())) ||
-        (u.email && u.email.toLowerCase().includes(searchText.toLowerCase()))
-    )
-  );
-};
+   setSearchText(searchText);
+   
+   // Gọi API filter với criteria hiện tại, sau đó áp dụng search
+   handleApplyUserFilter(userFilterCriteria);
+ };
 useEffect(() => {
   if (showUserFilterModal && allUsers.length === 0) {
     setLoadingUsers(true);
@@ -448,6 +442,7 @@ useEffect(() => {
     setFilteredUsers([]);
     // Đặt selectedFilteredUserIds = formData.userIds để giữ trạng thái đã chọn
     setSelectedFilteredUserIds(formData.userIds || []);
+    setSelectAllSelected(false);
     const defaultCriteria = {
         isNewUser: null,
         isIntermissionUser: null,
@@ -457,6 +452,37 @@ useEffect(() => {
     setUserFilterCriteria(defaultCriteria);
     handleApplyUserFilter(defaultCriteria);
 };
+
+// Hàm xử lý select all
+const handleSelectAll = () => {
+  if (selectAllSelected) {
+    // Nếu đang select all thì unselect all
+    setSelectedFilteredUserIds([]);
+    setSelectAllSelected(false);
+  } else {
+    // Nếu chưa select all thì select all
+    const allIds = filteredUsers.map(user => user.id);
+    setSelectedFilteredUserIds(allIds);
+    setSelectAllSelected(true);
+  }
+};
+
+// Hàm xử lý invert selection
+const handleInvertSelection = () => {
+  const currentSelected = new Set(selectedFilteredUserIds);
+  const allIds = filteredUsers.map(user => user.id);
+  
+  const newSelected = allIds.filter(id => !currentSelected.has(id));
+  setSelectedFilteredUserIds(newSelected);
+  setSelectAllSelected(newSelected.length === allIds.length);
+};
+
+// Cập nhật selectAllSelected khi selectedFilteredUserIds thay đổi
+useEffect(() => {
+  if (filteredUsers.length > 0) {
+    setSelectAllSelected(selectedFilteredUserIds.length === filteredUsers.length);
+  }
+}, [selectedFilteredUserIds, filteredUsers]);
 
 const handleUserFilterChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -504,7 +530,18 @@ const handleApplyUserFilter = async (criteria = userFilterCriteria) => {
         //     });
         // }
 
-        setFilteredUsers(result);
+                 // Áp dụng search filter trên kết quả API
+         let finalResult = result;
+         if (searchText) {
+             const searchLower = searchText.toLowerCase();
+             finalResult = result.filter(
+                 u =>
+                     (u.fullName && u.fullName.toLowerCase().includes(searchLower)) ||
+                     (u.email && u.email.toLowerCase().includes(searchLower))
+             );
+         }
+         
+         setFilteredUsers(finalResult);
     } catch (error) {
         message.error("Lỗi khi lọc người dùng!");
     } finally {
@@ -1267,27 +1304,27 @@ const handleConfirmUserSelection = () => {
 
          {formData.audience === 'SPECIFIC_USERS' && (
             <Form.Item label={<span>Chọn người dùng <Button icon={<FilterOutlined />} size="small" style={{ marginLeft: 8 }} onClick={handleOpenUserFilterModal}>Lọc người dùng</Button></span>} required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
-                <Select
+                {/* <Select
                     mode="multiple"
-                    placeholder="Tìm kiếm người dùng"
+                    placeholder="Chọn người dùng"
                     value={formData.userIds}
                     onChange={handleUserSelect}
-                    onSearch={handleUserSearch}
                     loading={loadingUsers}
-                    filterOption={false}
-                    showSearch
                     style={{ width: '100%' }}
-                    maxTagCount={2}
-                    maxTagPlaceholder={omittedValues => `${omittedValues.length + 2} users selected`}
+                    maxTagCount={0}
+                    showSearch={false}
+                    allowClear
                 >
                     {users.map(user => (
                         <Select.Option key={user.id} value={user.id}>
                             {user.fullName} ({user.email})
                         </Select.Option>
                     ))}
-                </Select>
+                </Select> */}
+                <div style={{ marginLeft: 10, color: 'green', fontSize: 13 }}>Đã chọn: {formData.userIds?.length || 0} người dùng</div>
             </Form.Item>
          )}
+         
 
          <div className="d-flex justify-content-end">
            <Button onClick={() => setShowAddModal(false)} style={{ marginRight: 8 }}>
@@ -1545,25 +1582,24 @@ const handleConfirmUserSelection = () => {
 
          {formData.audience === 'SPECIFIC_USERS' && (
             <Form.Item label={<span>Chọn người dùng <Button icon={<FilterOutlined />} size="small" style={{ marginLeft: 8 }} onClick={handleOpenUserFilterModal}>Lọc người dùng</Button></span>} required validateStatus={validationErrors.UserIds ? 'error' : ''} help={validationErrors.UserIds ? validationErrors.UserIds.join(', ') : ''}>
-                <Select
+                {/* <Select
                     mode="multiple"
-                    placeholder="Tìm kiếm người dùng"
+                    placeholder="Chọn người dùng"
                     value={formData.userIds}
                     onChange={handleUserSelect}
-                    onSearch={handleUserSearch}
                     loading={loadingUsers}
-                    filterOption={false}
-                    showSearch
                     style={{ width: '100%' }}
-                    maxTagCount={2}
-                    maxTagPlaceholder={omittedValues => `${omittedValues.length + 2} users selected`}
+                    maxTagCount={0}
+                    showSearch={false}
+                    allowClear
                 >
                     {users.map(user => (
                         <Select.Option key={user.id} value={user.id}>
                             {user.fullName} ({user.email})
                         </Select.Option>
                     ))}
-                </Select>
+                </Select> */}
+                <div style={{ marginLeft: 10, color: 'green', fontSize: 13 }}>Đã chọn: {formData.userIds?.length || 0} người dùng</div>
             </Form.Item>
          )}
 
@@ -1636,7 +1672,7 @@ const handleConfirmUserSelection = () => {
                  </td>
                  <td>
                    <span style={{ fontWeight: 600, color: '#1a1a1a' }}>
-                     {coupon.type === 'PERCENT' ? `${coupon.value}%` : `${coupon.value.toLocaleString('vi-VN')}₫`}
+                     {coupon.type === 'PERCENT' ? `${coupon.value}%` : `${coupon.value.toLocaleString('en-US')} VND`}
                    </span>
                  </td>
                  <td>
@@ -1658,9 +1694,10 @@ const handleConfirmUserSelection = () => {
      <Modal
     open={showUserFilterModal}
     onCancel={() => setShowUserFilterModal(false)}
-    title="Lọc người dùng"
-    width={900}
+    width={1200}
     zIndex={2000}
+    centered
+    styles={{ body: { background: '#ffffff', paddingTop: 12 } }}
     footer={[
         <Button key="back" onClick={() => setShowUserFilterModal(false)}>
             Hủy
@@ -1670,7 +1707,7 @@ const handleConfirmUserSelection = () => {
         </Button>,
     ]}
 >
-    <div style={{ marginBottom: 16 }}>
+    <div style={{ marginBottom: 16, background: '#f8fafc', border: '1px solid rgba(0,0,0,0.06)', borderRadius: 12, padding: 12 }}>
         <Row gutter={16} align="middle" className="filter-row">
             <Col span={6}>
                 <div className="filter-item">
@@ -1683,25 +1720,7 @@ const handleConfirmUserSelection = () => {
                     />
                 </div>
             </Col>
-            <Col span={6}>
-                <div className="switch-label-group">
-                    <label>Người dùng mới</label>
-                    <Switch
-                        checked={userFilterCriteria.isNewUser}
-                        onChange={checked => handleUserFilterChange({ target: { name: 'isNewUser', type: 'checkbox', checked } })}
-                    />
-                </div>
-            </Col>
-            <Col span={6}>
-                <div className="switch-label-group">
-                    <label>Người dùng cũ</label>
-                    <Switch
-                        checked={userFilterCriteria.isIntermissionUser}
-                        onChange={checked => handleUserFilterChange({ target: { name: 'isIntermissionUser', type: 'checkbox', checked } })}
-                    />
-                </div>
-            </Col>
-            <Col span={6}>
+            {/* <Col span={6}>
                 <div className="switch-label-group">
                     <label>Xếp hạng</label>
                     <Select
@@ -1717,9 +1736,7 @@ const handleConfirmUserSelection = () => {
                         <Select.Option value="VIP">VIP</Select.Option>
                     </Select>
                 </div>
-            </Col>
-        </Row>
-        <Row gutter={16} style={{ marginTop: 12 }}>
+            </Col> */}
             <Col span={6}>
                 <label style={{ fontWeight: 500 }}>Giá trị đơn hàng tối thiểu</label>
                 <InputNumber
@@ -1727,63 +1744,12 @@ const handleConfirmUserSelection = () => {
                     style={{ width: '100%' }}
                     value={userFilterCriteria.minTotalBookingValue}
                     onChange={value => handleUserFilterChange({ target: { name: 'minTotalBookingValue', value } })}
+                    formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                    parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
                 />
             </Col>
             <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Giá trị đơn hàng tối đa</label>
-                <InputNumber
-                    placeholder="Nhập giá trị tối đa"
-                    style={{ width: '100%' }}
-                    value={userFilterCriteria.maxTotalBookingValue}
-                    onChange={value => handleUserFilterChange({ target: { name: 'maxTotalBookingValue', value } })}
-                />
-            </Col>
-            {/* <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Booking Time From</label>
-                <TimePicker
-                    style={{ width: '100%' }}
-                    value={
-                        userFilterCriteria.bookingTimeFrom
-                            ? dayjs.tz(userFilterCriteria.bookingTimeFrom, 'HH:mm:ss', 'Asia/Ho_Chi_Minh')
-                            : null
-                    }
-                    onChange={time =>
-                        handleUserFilterChange({
-                            target: {
-                                name: 'bookingTimeFrom',
-                                value: time ? time.tz('Asia/Ho_Chi_Minh').format('HH:mm:ss') : null
-                            }
-                        })
-                    }
-                    format="HH:mm:ss"
-                    placeholder="Chọn giờ bắt đầu"
-                    allowClear
-                />
-            </Col>
-            <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Booking Time To</label>
-                <TimePicker
-                    style={{ width: '100%' }}
-                    value={
-                        userFilterCriteria.bookingTimeTo
-                            ? dayjs.tz(userFilterCriteria.bookingTimeTo, 'HH:mm:ss', 'Asia/Ho_Chi_Minh')
-                            : null
-                    }
-                    onChange={time =>
-                        handleUserFilterChange({
-                            target: {
-                                name: 'bookingTimeTo',
-                                value: time ? time.tz('Asia/Ho_Chi_Minh').format('HH:mm:ss') : null
-                            }
-                        })
-                    }
-                    format="HH:mm:ss"
-                    placeholder="Chọn giờ kết thúc"
-                    allowClear
-                />
-            </Col> */}
-            <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Số đơn tối thiểu (tháng)</label>
+                <label style={{ fontWeight: 500 }}>Số đơn tối thiểu/tháng</label>
                 <InputNumber
                     placeholder="Nhập số đơn tối thiểu"
                     style={{ width: '100%' }}
@@ -1791,34 +1757,121 @@ const handleConfirmUserSelection = () => {
                     onChange={value => handleUserFilterChange({ target: { name: 'minBookingCountInMonth', value } })}
                 />
             </Col>
-            <Col span={6}>
-                <label style={{ fontWeight: 500 }}>Số đơn tối đa (tháng)</label>
-                <InputNumber
-                    placeholder="Nhập số đơn tối đa"
-                    style={{ width: '100%' }}
-                    value={userFilterCriteria.maxBookingCountInMonth}
-                    onChange={value => handleUserFilterChange({ target: { name: 'maxBookingCountInMonth', value } })}
-                />
-            </Col>
         </Row>
     </div>
+         {(userFilterCriteria.rank || userFilterCriteria.minTotalBookingValue != null || userFilterCriteria.minBookingCountInMonth != null || searchText) && (
+       <div className="d-flex align-items-center gap-3 mb-2 p-2 bg-light rounded" style={{ marginTop: 8 }}>
+         <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+         {searchText && (
+           <span className="badge bg-primary-transparent">
+             <i className="ti ti-search me-1"></i>
+             Tìm kiếm: "{searchText}"
+           </span>
+         )}
+         {userFilterCriteria.rank && (
+           <span className="badge bg-success-transparent">
+             <i className="ti ti-filter me-1"></i>
+             Hạng: {userFilterCriteria.rank}
+           </span>
+         )}
+         {userFilterCriteria.minTotalBookingValue != null && (
+           <span className="badge bg-info-transparent">
+             <i className="ti ti-filter me-1"></i>
+             Giá trị tối thiểu: {userFilterCriteria.minTotalBookingValue.toLocaleString('en-US')} VND
+           </span>
+         )}
+         {userFilterCriteria.minBookingCountInMonth != null && (
+           <span className="badge bg-warning-transparent">
+             <i className="ti ti-filter me-1"></i>
+             Đơn tối thiểu/tháng: {userFilterCriteria.minBookingCountInMonth}
+           </span>
+         )}
+         <button 
+           className="btn btn-sm btn-outline-secondary"
+           onClick={() => { 
+             const defaults = { isNewUser: null, isIntermissionUser: null, minTotalBookingValue: null, maxTotalBookingValue: null, bookingTimeFrom: null, bookingTimeTo: null, minBookingCountInMonth: null, maxBookingCountInMonth: null, rank: null }; 
+             setUserFilterCriteria(defaults); 
+             setSearchText('');
+             setFilteredUsers(allUsers);
+           }}
+         >
+           <i className="ti ti-x me-1"></i>
+           Xóa tất cả
+         </button>
+       </div>
+     )}
+    <div style={{ position: 'relative' }}>
+    {loadingFilteredUsers && (
+        <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1 }}>
+            <div className="spinner-border text-primary" role="status">
+                <span className="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    )}
     <Table
         rowKey="id"
         columns={[
             { title: 'Họ và tên', dataIndex: 'fullName' },
+            { title: 'Mã người dùng', dataIndex: 'userCode' },
+            { title: 'SĐT', dataIndex: 'phone' },
             { title: 'Email', dataIndex: 'email' },
+            
         ]}
         dataSource={filteredUsers}
         rowSelection={{
             selectedRowKeys: selectedFilteredUserIds,
             onChange: setSelectedFilteredUserIds,
-            selections: [Table.SELECTION_ALL, Table.SELECTION_INVERT],
+            columnTitle: (
+                <Dropdown
+                    overlay={
+                        <Menu>
+                            <Menu.Item key="select-all" onClick={handleSelectAll}>
+                                {selectAllSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                            </Menu.Item>
+                            <Menu.Item key="invert" onClick={handleInvertSelection}>
+                                Đảo ngược lựa chọn
+                            </Menu.Item>
+                        </Menu>
+                    }
+                    trigger={['click']}
+                >
+                    <div style={{ 
+                        display: 'flex', 
+                        cursor: 'pointer',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        backgroundColor: '#f0f0f0',
+                        border: '1px solid #d9d9d9',                        
+                        whiteSpace: 'nowrap',
+                        overflow: 'visible'
+                    }}>
+                        <span style={{ fontSize: '11px' }}>▼</span>
+                    </div>
+                </Dropdown>
+            ),
+            selections: [
+                {
+                    key: 'select-all',
+                    text: selectAllSelected ? 'Bỏ chọn tất cả' : 'Chọn tất cả',
+                    onSelect: handleSelectAll,
+                },
+                {
+                    key: 'invert',
+                    text: 'Đảo ngược lựa chọn',
+                    onSelect: handleInvertSelection,
+                },
+            ],
         }}
-        pagination={{ pageSize: 8 }}
-        size="middle"
+        pagination={{ pageSize: 8, showSizeChanger: false }}
+        size="small"
+        bordered
+        scroll={{ y: 360 }}
     />
-    <div style={{ marginTop: 8 }}>
-        <b>Đã chọn:</b> {selectedFilteredUserIds.length} người dùng
+    </div>
+    <div style={{ marginTop: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ background: '#eef2ff', color: 'green', padding: '4px 10px', borderRadius: 999, fontWeight: 600 }}>
+            Đã chọn: {selectedFilteredUserIds.length} người dùng
+        </div>
     </div>
 </Modal>
 

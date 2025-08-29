@@ -344,7 +344,7 @@ export default function UserDetail() {
                   <div style={{display:'flex', alignItems:'center', gap:24, marginBottom:16}}>
                     <Avatar
                       size={80}
-                      src={user.avatar || `https://i.pravatar.cc/150?u=${user.id}`}
+                      src={user.avatar}
                       style={{flexShrink:0}}
                     >
                       {(user.fullName || 'U').charAt(0).toUpperCase()}
@@ -380,7 +380,6 @@ export default function UserDetail() {
                     </div>
                   </div>
                   <Descriptions column={2} bordered>
-                    <Descriptions.Item label="Họ và tên">{user.fullName || ''}</Descriptions.Item>
                     <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
                     <Descriptions.Item label="SĐT">{user.phone || ''}</Descriptions.Item>
                                             <Descriptions.Item label="Vai trò">

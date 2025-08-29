@@ -261,7 +261,7 @@ const Sidebar = () => {
             className="text-uppercase text-muted px-4 pt-3 pb-2 mt-2"
             style={{ fontSize: "12px", letterSpacing: "1px" }}
           >
-            <span>Người dùng</span>
+            <span>Tài khoản</span>
           </li>
           <li>
             <ul className="list-unstyled m-0 p-0">
@@ -277,7 +277,7 @@ const Sidebar = () => {
                     className="me-3"
                     style={{ width: "20px", ...activeIcon("/admin/user-management") }}
                   />
-                  <span>Khách hàng</span>
+                  <span>Người dùng</span>
                 </Link>
               </li>
               <li>
@@ -353,7 +353,7 @@ const Sidebar = () => {
                       ...activeIcon("/admin/technician-subscription-analytics"),
                     }}
                   />
-                  <span>Doanh thu</span>
+                  <span>Tài chính</span>
                 </Link>
               </li>
             </ul>
@@ -364,7 +364,7 @@ const Sidebar = () => {
             className="text-uppercase text-muted px-4 pt-3 pb-2 mt-2"
             style={{ fontSize: "12px", letterSpacing: "1px" }}
           >
-            <span>Quản lí</span>
+            <span>Quản lí thành phần</span>
           </li>
           <li>
             <ul className="list-unstyled m-0 p-0">
@@ -551,7 +551,7 @@ const Sidebar = () => {
                     className="me-3"
                     style={{ width: "20px", ...activeIcon("/admin/withdraw") }}
                   />
-                  <span>Tài chính</span>
+                  <span>Rút tiền</span>
                 </Link>
               </li>
             </ul>

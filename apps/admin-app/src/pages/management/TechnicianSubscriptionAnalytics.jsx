@@ -50,7 +50,8 @@ import {
   RocketOutlined,
   CloseCircleOutlined,
   StopOutlined,
-  ExclamationCircleOutlined
+  ExclamationCircleOutlined,
+
 } from '@ant-design/icons';
 import {
  Chart as ChartJS,
@@ -66,6 +67,7 @@ import {
   Filler
 } from 'chart.js';
 import { fetchAllSubscriptions, fetchSubscriptionStats, fetchSubscriptionAnalytics } from '../../features/technicianSubscription/technicianSubscriptionSlice';
+
 import { formatCurrency } from '../../utils/formatCurrency';
 import '../../styles/analytics.css';
 
@@ -100,6 +102,10 @@ const TechnicianSubscriptionAnalytics = () => {
   const [refreshInterval, setRefreshInterval] = useState(30);
   const [dateRange, setDateRange] = useState(null);
   const [viewMode, setViewMode] = useState('overview'); // overview, detailed, comparison
+  
+
+
+
 
   // Calculate comprehensive stats
   const analyticsData = useMemo(() => {
@@ -112,7 +118,7 @@ const TechnicianSubscriptionAnalytics = () => {
         totalRevenue: analytics.totalRevenue || 0,
         pendingSubscriptions: analytics.pendingSubscriptions || 0,
         cancelledSubscriptions: analytics.cancelledSubscriptions || 0,
-        revenueGrowth: analytics.revenueGrowth || 0,
+        revenueGrowth: analytics.revenueGrowth || 0, // Lấy từ Backend
         conversionRate: analytics.conversionRate || 0,
         avgRevenuePerSub: analytics.avgRevenuePerSubscription || 0,
         churnRate: analytics.churnRate || 0,
@@ -120,7 +126,8 @@ const TechnicianSubscriptionAnalytics = () => {
         
         // Tỷ lệ rời bỏ chi tiết
         customerCancellationRate: analytics.customerCancellationRate || 0,
-        totalChurnRate: analytics.totalChurnRate || 0,
+        totalChurnRate: analytics.totalChurnRate || (analytics.cancelledSubscriptions && analytics.totalSubscriptions ? 
+          (analytics.cancelledSubscriptions / analytics.totalSubscriptions * 100) : 0),
         expiredChurnRate: analytics.expiredChurnRate || 0,
         suspendedChurnRate: analytics.suspendedChurnRate || 0
       };
@@ -330,7 +337,7 @@ scales: {
     },
        ticks: {
       callback: function(value) {
-        return value; // Chỉ hiển thị số, không thêm đơn vị 'đ'
+        return value.toLocaleString('en-US'); // Format với dấu phẩy
       }
     }
   }
@@ -557,7 +564,7 @@ scales: {
                     {analyticsData.revenueGrowth >= 0 ? '+' : ''}{analyticsData.revenueGrowth}%
                   </Tag>
                   <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    so với tháng trước
+                    so với cùng kì năm ngoái
                   </Text>
                 </div>
               </Card>
@@ -578,7 +585,7 @@ scales: {
                 />
                 <div style={{ marginTop: '8px' }}>
                   <Tag color="green" style={{ color: 'black' }}>
-                    {analyticsData.avgRevenuePerSub.toFixed(0)} VND
+                    {analyticsData.avgRevenuePerSub.toLocaleString('en-US')} VND
                   </Tag>
                   <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
                     trung bình/gói
@@ -961,7 +968,7 @@ scales: {
                                 </div>
                                 <Statistic
                                   title="Doanh thu"
-                                  value={itemRevenue}
+                                  value={itemRevenue.toLocaleString('en-US') + ' VND'}
                                   precision={0}
                                   valueStyle={{ fontSize: '18px', color: itemColor }}
                                 />
@@ -1150,7 +1157,7 @@ scales: {
                               <RiseOutlined />
                             </div>
                             <Statistic
-                              title="Tăng trưởng doanh thu"
+                              title="Doanh thu so với cùng kì năm ngoái"
                               value={analyticsData.revenueGrowth}
                               precision={1}
                               valueStyle={{ color: analyticsData.revenueGrowth >= 0 ? '#52c41a' : '#f5222d' }}
@@ -1178,7 +1185,7 @@ scales: {
                               <DollarOutlined />
                   </div>
                             <Statistic
-                              title="Doanh thu trung bình"
+                              title="Doanh thu trung bình/gói"
                               value={analyticsData.avgRevenuePerSub}
                               precision={0}
                               valueStyle={{ color: '#faad14' }}

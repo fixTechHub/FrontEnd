@@ -57,6 +57,9 @@ const CompleteProfile = () => {
     const { user, registrationData } = useSelector((state) => state.auth);
     const { loading } = useSelector((state) => state.technician);
     
+    // Enhanced submit state for better UX
+    const [submitState, setSubmitState] = useState('idle'); // 'idle', 'submitting', 'success', 'done'
+    
     // Get account type from user or registrationData
     const accountType = user?.accountType || registrationData?.accountType || 'INDIVIDUAL';
     const categories = useSelector((state) => state.categories.categories);
@@ -83,9 +86,12 @@ const CompleteProfile = () => {
     const [serviceDetails, setServiceDetails] = useState({});
     const [fieldErrors, setFieldErrors] = useState({});
     const [inspectionFee, setInspectionFee] = useState('');
-    const [focusedPriceFields, setFocusedPriceFields] = useState(new Set());
+    // focusedPriceFields removed - no longer needed with real-time formatting
     const [frontImage, setFrontImage] = useState(null);
     const [backImage, setBackImage] = useState(null);
+    
+    // Avatar/Profile image state
+    const [avatarImage, setAvatarImage] = useState(null);
     
     // Business account states
     const [businessLicenseImage, setBusinessLicenseImage] = useState(null);
@@ -98,6 +104,7 @@ const CompleteProfile = () => {
     // Personal info states
     const [identification, setIdentification] = useState('');
     const [experienceYears, setExperienceYears] = useState('');
+    const [businessDisplayName, setBusinessDisplayName] = useState(''); // For business account
     const [currentStep, setCurrentStep] = useState(1); // Track current step
     const [cccdErrors, setCccdErrors] = useState('');
     const [cccdOcrError, setCccdOcrError] = useState('');
@@ -111,7 +118,8 @@ const CompleteProfile = () => {
         accountNumber: false,
         accountHolder: false,
         address: false,
-        experienceYears: false
+        experienceYears: false,
+        businessName: false
     });
 
     // Address & suggestion states
@@ -135,12 +143,13 @@ const CompleteProfile = () => {
     // Different validation based on account type
     const isIndividualStep1Valid = accountType === 'INDIVIDUAL' &&
         identification.length > 0 && !cccdErrors && !cccdOcrError && 
-        Number(experienceYears) > 0 && frontImage && backImage && 
+        Number(experienceYears) > 0 && frontImage && backImage && avatarImage &&
         addressInput.trim().length >= 3 && hasValidCoordinates;
         
     const isBusinessStep1Valid = accountType === 'BUSINESS' &&
         taxCode.length > 0 && !taxCodeErrors && 
-        Number(experienceYears) > 0 && businessLicenseImage && 
+        businessDisplayName.trim().length > 0 &&
+        Number(experienceYears) > 0 && businessLicenseImage && avatarImage &&
         addressInput.trim().length >= 3 && hasValidCoordinates;
         
     const isStep1Valid = isIndividualStep1Valid || isBusinessStep1Valid;
@@ -347,6 +356,11 @@ const CompleteProfile = () => {
         setBusinessLicenseImage(file);
     };
 
+    // Handle avatar image selection
+    const handleAvatarSelect = (file) => {
+        setAvatarImage(file);
+    };
+
     // Handle file selection for front image (with OCR reset)
     const handleFrontImageSelect = (file) => {
         
@@ -444,10 +458,11 @@ const CompleteProfile = () => {
         });
     };
 
-    // Helper function to format number with dots
+    // Enhanced number formatting with real-time support
     const formatNumberWithDots = (value) => {
-        if (!value) return '';
+        if (!value && value !== 0) return '';
         const number = value.toString().replace(/[^\d]/g, '');
+        if (!number) return '';
         return number.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
 
@@ -455,6 +470,21 @@ const CompleteProfile = () => {
     const parseFormattedNumber = (value) => {
         if (!value) return 0;
         return parseInt(value.toString().replace(/\./g, ''), 10) || 0;
+    };
+
+    // Real-time number input handler with formatting
+    const handleFormattedNumberInput = (value, setValue, maxLength = 10) => {
+        // Remove all non-digits
+        const cleanValue = value.replace(/[^\d]/g, '');
+        
+        // Apply max length limit
+        const limitedValue = cleanValue.slice(0, maxLength);
+        
+        // Format with dots and update state
+        const formattedValue = formatNumberWithDots(limitedValue);
+        setValue(formattedValue);
+        
+        return limitedValue; // Return raw number for validation
     };
 
     // Helper function to extract only numbers (handles Vietnamese keyboard)
@@ -466,23 +496,26 @@ const CompleteProfile = () => {
         return numbers;
     };
 
-    // Simple price input - no real-time formatting to avoid conflicts
+    // Enhanced price input with real-time formatting
     const handlePriceInput = (serviceId, event) => {
-        const rawValue = event.target.value;
+        const inputValue = event.target.value;
         
-        // Chỉ giữ lại số, loại bỏ mọi ký tự khác
-        const cleanValue = rawValue.replace(/[^\d]/g, '');
+        // Remove all non-digits
+        const cleanValue = inputValue.replace(/[^\d]/g, '');
         
-        // Giới hạn độ dài tối đa (10 số = 9,999,999,999)
-        const maxLength = 10;
-        const limitedValue = cleanValue.slice(0, maxLength);
+        // Apply max length limit (10 digits)
+        const limitedValue = cleanValue.slice(0, 10);
         
-        // Update state với raw value
+        // Format with dots for display
+        const formattedValue = formatNumberWithDots(limitedValue);
+        
+        // Update state with both raw and formatted values
         setServiceDetails(prev => ({
             ...prev,
             [serviceId]: {
                 ...prev[serviceId],
-                price: limitedValue
+                price: limitedValue, // Raw value for calculations
+                displayPrice: formattedValue // Formatted value for display
             }
         }));
         
@@ -499,28 +532,15 @@ const CompleteProfile = () => {
         });
     };
 
-    // Handle focus - show raw value for editing
-    const handlePriceFocus = (serviceId) => {
-        setFocusedPriceFields(prev => new Set([...prev, serviceId]));
-    };
+    // Note: handlePriceFocus and handlePriceBlur removed as formatting is now real-time
 
-    // Handle blur - can format if needed
-    const handlePriceBlur = (serviceId) => {
-        setFocusedPriceFields(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(serviceId);
-            return newSet;
-        });
-    };
-
-    // Get display value based on focus state
+    // Get display value - always formatted now for real-time experience
     const getPriceDisplayValue = (serviceId) => {
-        const rawValue = serviceDetails[serviceId]?.price || '';
-        const isFocused = focusedPriceFields.has(serviceId);
+        const serviceData = serviceDetails[serviceId];
+        if (!serviceData) return '';
         
-        // Khi focus: hiển thị raw (80000)
-        // Khi blur: hiển thị formatted (80.000) 
-        return isFocused ? rawValue : formatNumberWithDots(rawValue);
+        // Use displayPrice if available (formatted), otherwise format the raw price
+        return serviceData.displayPrice || formatNumberWithDots(serviceData.price || '');
     };
 
     const handleServiceDetailChange = (serviceId, field, value) => {
@@ -571,20 +591,28 @@ const CompleteProfile = () => {
             toast.error('Vui lòng nhập giá > 0 và bảo hành ≥ 0 cho tất cả dịch vụ');
             return;
         }
+
         // validate address
         if (!addressInput || addressInput.trim().length < 3) {
-            toast.error('Vui lòng nhập địa chỉ làm việc');
+            setSubmitState('idle'); // Reset submit state on error
+            toast.error(accountType === 'BUSINESS' ? 'Vui lòng nhập địa chỉ văn phòng' : 'Vui lòng nhập địa chỉ làm việc');
             return;
         }
+
         if (!hasValidCoordinates) {
+            setSubmitState('idle'); // Reset submit state on error
             toast.error('Vui lòng chọn địa chỉ từ gợi ý để xác định tọa độ');
             return;
         }
 
+        // Set submitting state to prevent multiple clicks (after all validations pass)
+        setSubmitState('submitting');
+
         // Additional safety check for coordinates
         const coords = formData.currentLocation?.coordinates;
         if (!coords || coords[0] === 0 || coords[1] === 0) {
-            toast.error('Địa chỉ chưa được xác định tọa độ. Vui lòng chọn lại từ gợi ý địa chỉ.');
+            setSubmitState('idle'); // Reset submit state on error
+            toast.error(`${accountType === 'BUSINESS' ? 'Địa chỉ văn phòng' : 'Địa chỉ làm việc'} chưa được xác định tọa độ. Vui lòng chọn lại từ gợi ý.`);
             return;
         }
         // Removed inspection fee validation
@@ -601,6 +629,18 @@ const CompleteProfile = () => {
             formDataAll.append('currentLocation', JSON.stringify(formData.currentLocation));
             // Append address string for User model
             formDataAll.append('address', addressInput);
+            
+            // Append updated fullName for business accounts
+            if (accountType === 'BUSINESS' && businessDisplayName.trim()) {
+                formDataAll.append('fullName', businessDisplayName.trim());
+            }
+            
+            // Append avatar image
+            if (avatarImage) {
+                formDataAll.append('avatar', avatarImage);
+            } else {
+                console.warn('⚠️ Missing avatar image');
+            }
             // Removed inspectionFee
 
             // Append account type specific data
@@ -657,6 +697,8 @@ const CompleteProfile = () => {
             const result = await dispatch(completeTechnicianProfileThunk(formDataAll));
             
             if (completeTechnicianProfileThunk.fulfilled.match(result)) {
+                // Show success state
+                setSubmitState('success');
                 toast.success('Hồ sơ đã được hoàn thành thành công!');
                 
                 // Enhanced refresh strategy with multiple retries
@@ -670,14 +712,22 @@ const CompleteProfile = () => {
                     setTimeout(async () => {
                         await dispatch(checkAuthThunk());
                         
-                        // Navigate home after all auth refreshes
+                        // Show done state before navigation
+                        setSubmitState('done');
+                        
+                        // Wait a bit more to show "done" state
+                        setTimeout(() => {
                         navigate('/', { replace: true });
+                        }, 1500);
                     }, 1500);
                 }, 2000);
             } else {
                 throw new Error(result.payload?.message || result.payload || 'Có lỗi xảy ra');
             }
         } catch (error) {
+            // Reset submit state on error
+            setSubmitState('idle');
+            
             // Show more specific error messages
             let errorMessage = 'Có lỗi xảy ra khi hoàn thành hồ sơ';
             
@@ -980,6 +1030,47 @@ const CompleteProfile = () => {
                                                         </p>
                                                     </div>
 
+                                                    {/* Avatar Upload */}
+                                                    <div className="mb-5">
+                                                        <h6 className="fw-semibold mb-3">
+                                                            {accountType === 'BUSINESS' ? 'Logo doanh nghiệp' : 'Ảnh đại diện cá nhân'}
+                                                            <span className="text-danger ms-1">*</span>
+                                                        </h6>
+                                                        <div className="alert alert-info mb-3">
+                                                            <i className="bi bi-info-circle me-2"></i>
+                                                            <strong>Yêu cầu quan trọng:</strong>
+                                                            <ul className="mb-0 mt-2">
+                                                                {accountType === 'BUSINESS' ? (
+                                                                    <li>Upload logo chính thức của doanh nghiệp</li>
+                                                                ) : (
+                                                                    <>
+                                                                        <li>Ảnh chân dung rõ mặt, giống với ảnh trong CCCD</li>
+                                                                        <li>Chụp từ phần ngực trở lên</li>
+                                                                        <li>Ánh sáng đầy đủ, không bị mờ hoặc tối</li>
+                                                                    </>
+                                                                )}
+                                                                <li className="text-warning mt-1">
+                                                                    <strong>Lưu ý:</strong> Nếu upload không đúng yêu cầu, tài khoản có thể không được duyệt và bạn sẽ phải chịu trách nhiệm về việc này.
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+                                                        <div className="col-md-6">
+                                                            <ImageDropZone
+                                                                key={`avatar-${avatarImage ? avatarImage.name + avatarImage.size : 'empty'}`}
+                                                                label={accountType === 'BUSINESS' ? 'Logo doanh nghiệp' : 'Ảnh đại diện cá nhân'}
+                                                                currentFile={avatarImage}
+                                                                onFileSelect={handleAvatarSelect}
+                                                                onRemove={() => {
+                                                                    setAvatarImage(null);
+                                                                    toast.info(`🗑️ Đã gỡ ${accountType === 'BUSINESS' ? 'logo doanh nghiệp' : 'ảnh đại diện'}.`);
+                                                                }}
+                                                                accept="image/*"
+                                                                maxSize={10 * 1024 * 1024} // 10MB
+                                                                showSelectButton={false}
+                                                            />
+                                                        </div>
+                                                    </div>
+
                                                     {/* Document Upload */}
                                                     <div className="mb-5">
                                                         <h6 className="fw-semibold mb-3">
@@ -1151,7 +1242,9 @@ const CompleteProfile = () => {
                                                                 </ul>
                                                             )}
                                                             {fieldTouched.address && (!addressInput || !hasValidCoordinates) && (
-                                                                <div className="invalid-feedback d-block">Vui lòng nhập địa chỉ</div>
+                                                                <div className="invalid-feedback d-block">
+                                                                    Vui lòng nhập {accountType === 'BUSINESS' ? 'địa chỉ văn phòng' : 'địa chỉ làm việc'}
+                                                                </div>
                                                             )}
                                                             {fieldTouched.address && addressInput && hasValidCoordinates && (
                                                                 <div className="valid-feedback d-block">
@@ -1227,6 +1320,42 @@ const CompleteProfile = () => {
                                                                         </ul>
                                                                     </div>
                                                                 </div>
+                                                            </div>
+                                                        )}
+                                        </div>
+                                    )}
+
+                                    {/* Business Account - Business Name */}
+                                    {accountType === 'BUSINESS' && (
+                                        <div className="col-md-6">
+                                            <label className="form-label fw-medium">
+                                                Tên doanh nghiệp
+                                                <span className="text-danger ms-1">*</span>
+                                            </label>
+                                            <div className="input-group input-group-modern">
+                                                <span className="input-group-text">
+                                                    <i className="bi bi-building"></i>
+                                                </span>
+                                                <input
+                                                    type="text"
+                                                    className={`form-control ${
+                                                        businessDisplayName.trim().length > 0 
+                                                            ? 'is-valid' 
+                                                            : fieldTouched.businessName ? 'is-invalid' : ''
+                                                    }`}
+                                                    placeholder="Nhập tên doanh nghiệp"
+                                                    value={businessDisplayName}
+                                                    onChange={(e) => setBusinessDisplayName(e.target.value)}
+                                                    onBlur={() => setFieldTouched(prev => ({ ...prev, businessName: true }))}
+                                                />
+                                            </div>
+                                            {fieldTouched.businessName && businessDisplayName.trim().length === 0 && (
+                                                <div className="invalid-feedback d-block">Tên doanh nghiệp là bắt buộc</div>
+                                            )}
+                                            {businessDisplayName.trim().length > 0 && (
+                                                <div className="valid-feedback d-block">
+                                                    <i className="bi bi-check-circle me-1"></i>
+                                                    Tên doanh nghiệp đã nhập
                                                             </div>
                                                         )}
                                         </div>
@@ -1502,8 +1631,6 @@ const CompleteProfile = () => {
                                                                                             placeholder="Nhập giá dịch vụ"
                                                                                             value={getPriceDisplayValue(serviceId)}
                                                                                             onChange={e => handlePriceInput(serviceId, e)}
-                                                                                            onFocus={() => handlePriceFocus(serviceId)}
-                                                                                            onBlur={() => handlePriceBlur(serviceId)}
                                                                                             inputMode="numeric"
                                                                                         />
                                                                                         <span className="input-group-text">VNĐ</span>
@@ -1674,19 +1801,29 @@ const CompleteProfile = () => {
                                                             <div className="input-group input-group-modern">
                                                                 <input
                                                                     type="number"
-                                                                    className={`form-control ${(inspectionFee === '' || inspectionFee <= 0) ? 'is-invalid' : 'is-valid'}`}
+                                                                    className={`form-control ${(inspectionFee === '' || parseFormattedNumber(inspectionFee) <= 0) ? 'is-invalid' : 'is-valid'}`}
                                                                     placeholder="Nhập phí kiểm tra"
-                                                                    value={inspectionFee || ''}
-                                                                    onChange={e => setInspectionFee(e.target.value === '' ? '' : Number(e.target.value))}
+                                                                    value={typeof inspectionFee === 'string' ? inspectionFee : formatNumberWithDots(inspectionFee || '')}
+                                                                    onChange={e => {
+                                                                        const inputValue = e.target.value;
+                                                                        if (inputValue === '') {
+                                                                            setInspectionFee('');
+                                                                        } else {
+                                                                            const cleanValue = inputValue.replace(/[^\d]/g, '');
+                                                                            const limitedValue = cleanValue.slice(0, 10);
+                                                                            const formattedValue = formatNumberWithDots(limitedValue);
+                                                                            setInspectionFee(formattedValue);
+                                                                        }
+                                                                    }}
                                                                     min="0"
                                                                 />
                                                                 <span className="input-group-text">VNĐ</span>
                                                             </div>
                                                             <div className="form-text">
-                                                                {inspectionFee > 0 ? (
+                                                                {parseFormattedNumber(inspectionFee) > 0 ? (
                                                                     <span className="text-success">
                                                                         <i className="bi bi-check-circle me-1"></i>
-                                                                        Phí kiểm tra: {inspectionFee.toLocaleString('vi-VN')} VNĐ
+                                                                        Phí kiểm tra: {typeof inspectionFee === 'string' ? inspectionFee : inspectionFee.toLocaleString('vi-VN')} VNĐ
                                                                     </span>
                                                                 ) : (
                                                                     "Phí kiểm tra ban đầu trước khi báo giá chi tiết"
@@ -1736,6 +1873,11 @@ const CompleteProfile = () => {
                                                                         </h6>
                                                                     </div>
                                                                     <div className="small">
+                                                                        {accountType === 'BUSINESS' && (
+                                                                            <div className="mb-2">
+                                                                                <strong>Tên doanh nghiệp:</strong> {businessDisplayName || 'Chưa nhập'}
+                                                                            </div>
+                                                                        )}
                                                                         <div className="mb-2">
                                                                             <strong>
                                                                                 {accountType === 'BUSINESS' ? 'Mã số thuế doanh nghiệp:' : 'CCCD:'}
@@ -1747,6 +1889,15 @@ const CompleteProfile = () => {
                                                                         </div>
                                                                         <div className="mb-2">
                                                                             <strong>Kinh nghiệm làm việc:</strong> {experienceYears || 0} năm
+                                                                        </div>
+                                                                        <div className="mb-2">
+                                                                            <strong>{accountType === 'BUSINESS' ? 'Địa chỉ văn phòng:' : 'Địa chỉ làm việc:'}</strong> {addressInput || 'Chưa nhập'}
+                                                                        </div>
+                                                                        <div>
+                                                                            <strong>
+                                                                                {accountType === 'BUSINESS' ? 'Logo doanh nghiệp:' : 'Ảnh đại diện:'}
+                                                                            </strong>{' '}
+                                                                            {avatarImage ? '✅ Đã upload' : '❌ Chưa upload'}
                                                                         </div>
                                                                         <div>
                                                                             <strong>
@@ -1836,8 +1987,8 @@ const CompleteProfile = () => {
                                                                     </div>
                                                                     <div className="small">
                                                                         <div className="mb-2">
-                                                                            <strong>Phí kiểm tra:</strong> {inspectionFee && Number(inspectionFee) > 0 
-                                                                                ? Number(inspectionFee).toLocaleString('vi-VN') + ' VNĐ' 
+                                                                            <strong>Phí kiểm tra:</strong> {inspectionFee && parseFormattedNumber(inspectionFee) > 0 
+                                                                                ? (typeof inspectionFee === 'string' ? inspectionFee : inspectionFee.toLocaleString('vi-VN')) + ' VNĐ' 
                                                                                 : 'Chưa nhập'
                                                                             }
                                                                         </div>
@@ -1978,12 +2129,22 @@ const CompleteProfile = () => {
                                                                 transition: 'all 0.3s ease'
                                                             }}
                                         onClick={handleSubmit}
-                                                            disabled={loading || !isAllStepsValid}
+                                                            disabled={loading || !isAllStepsValid || submitState !== 'idle'}
                                     >
-                                        {loading ? (
+                                        {loading || submitState === 'submitting' ? (
                                                                 <>
                                                                     <span className="spinner-border spinner-border-sm me-2" role="status" />
                                                                     Đang xử lý...
+                                                                </>
+                                                            ) : submitState === 'success' ? (
+                                                                <>
+                                                                    <span className="spinner-border spinner-border-sm me-2" role="status" />
+                                                                    Đang hoàn tất...
+                                                                </>
+                                                            ) : submitState === 'done' ? (
+                                                                <>
+                                                                    <i className="bi bi-check-circle-fill me-2 text-white"></i>
+                                                                    Hoàn thành!
                                                                 </>
                                                             ) : (
                                                                 <>
