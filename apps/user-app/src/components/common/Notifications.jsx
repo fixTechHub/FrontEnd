@@ -80,6 +80,18 @@ const styles = {
     borderRadius: '14px',
     top: '-10px',
     right: '-10px',
+  },
+  dropdownMenu: {
+    position: 'absolute',
+    top: '100%',
+    right: '0',
+    width: '350px',
+    maxWidth: 'calc(100vw - 20px)',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)',
+    border: 'none',
+    borderRadius: '12px',
+    overflow: 'hidden',
+    zIndex: 1050,
   }
 };
 const Notifications = ({ userId }) => {
@@ -91,7 +103,7 @@ const Notifications = ({ userId }) => {
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      const dropdown = event.target.closest('.mobile-notification-native');
+      const dropdown = event.target.closest('.noti-wrapper');
       if (!dropdown && isOpen) {
         setIsOpen(false);
       }
@@ -122,7 +134,8 @@ const Notifications = ({ userId }) => {
     };
   }, [dispatch, userId]);
 
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = (notification, e) => {
+    e.stopPropagation();
     if (notification.url) {
       if (!notification.isRead) {
         dispatch(markNotificationAsReadThunk(notification._id));
@@ -132,14 +145,16 @@ const Notifications = ({ userId }) => {
         : `/${notification.url}`;
       try {
         navigate(targetUrl);
-        setIsOpen(false);
+        setIsOpen(false); // Chỉ đóng khi navigate
       } catch (error) {
         console.error('Navigation error:', error);
       }
     }
   };
 
-  const handleMarkNotificationRead = (notificationId) => {
+  const handleMarkNotificationRead = (notificationId, e) => {
+    e.stopPropagation();
+    e.preventDefault();
     dispatch(markNotificationAsReadThunk(notificationId));
   };
 
@@ -174,8 +189,11 @@ const Notifications = ({ userId }) => {
       <a
         href="#"
         className="dropdown-toggle nav-link"
-        onClick={() => setIsOpen(!isOpen)}
-      // data-bs-toggle="dropdown"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setIsOpen(!isOpen);
+        }}
       >
         <span style={styles.bellIcon}>
           <img src="/img/icons/bell-icon.svg" alt="Bell" />
@@ -186,15 +204,39 @@ const Notifications = ({ userId }) => {
       </a>
 
       {isOpen && (
-        <div className="dropdown-menu notifications show">
-          <div className="topnav-dropdown-header">
-            <span className="notification-title">Thông Báo</span>
+        <div 
+          className="dropdown-menu notifications show"
+          onClick={(e) => e.stopPropagation()}
+          style={styles.dropdownMenu}
+        >
+          <div className="topnav-dropdown-header" style={{ 
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '15px 20px',
+            borderBottom: '1px solid #e9ecef',
+            fontSize: '16px',
+            fontWeight: '600'
+          }}>
+            <span className="notification-title" style={{ 
+              color: '#333',
+              fontSize: '16px',
+              fontWeight: '600',
+              margin: 0
+            }}>Thông Báo</span>
             <a
               href="#"
               className="clear-noti"
               onClick={(e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 handleClearAll();
+              }}
+              style={{
+                color: '#007bff',
+                fontSize: '14px',
+                textDecoration: 'none',
+                fontWeight: '500'
               }}
             >
               Xóa tất cả
@@ -227,23 +269,43 @@ const Notifications = ({ userId }) => {
                       style={{
                         ...styles.notificationMessage,
                         ...(notification.isRead ? {} : styles.unreadNotification),
-                        ...(notification.url ? styles.clickableNotification : {})
+                        ...(notification.url ? styles.clickableNotification : {}),
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal'
                       }}
-                      onClick={() => handleNotificationClick(notification)}
+                      onClick={(e) => handleNotificationClick(notification, e)}
                     >
                       <div className="media d-flex justify-content-between align-items-start">
                         <div className="d-flex flex-grow-1">
                          
-                          <div className="media-body">
-                            <p className="noti-details">
+                          <div className="media-body" style={{ minWidth: 0, flex: 1 }}>
+                            <p className="noti-details" style={{ 
+                              margin: '0 0 8px 0',
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'normal',
+                              lineHeight: '1.4'
+                            }}>
                               {notification.title}
                             </p>
-                            <p className="noti-details">
-                              <span style={{ fontSize: 13 }} className="noti-title">
+                            <p className="noti-details" style={{
+                              margin: '0 0 8px 0',
+                              wordWrap: 'break-word',
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'normal'
+                            }}>
+                              <span style={{ 
+                                fontSize: 13,
+                                wordWrap: 'break-word',
+                                overflowWrap: 'break-word',
+                                whiteSpace: 'normal',
+                                display: 'block'
+                              }} className="noti-title">
                                 {notification.content}
                               </span>
                             </p>
-                            <p className="noti-time">
+                            <p className="noti-time" style={{ margin: '0' }}>
                               <span className="notification-time">
                                 {getTimeAgo(notification.createdAt)}
                               </span>
@@ -253,12 +315,14 @@ const Notifications = ({ userId }) => {
                         {!notification.isRead && (
                           <button
                             className="btn btn-sm btn-light mark-as-read"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              e.preventDefault();
-                              handleMarkNotificationRead(notification._id);
+                            onClick={(e) => handleMarkNotificationRead(notification._id, e)}
+                            style={{
+                              ...styles.markAsReadBtn,
+                              flexShrink: 0,
+                              minWidth: '32px',
+                              height: '32px',
+                              padding: '4px'
                             }}
-                            style={styles.markAsReadBtn}
                           >
                             <i className='bx bx-check-double'></i>
                           </button>
