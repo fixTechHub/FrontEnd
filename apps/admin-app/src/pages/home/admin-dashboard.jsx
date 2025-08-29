@@ -586,15 +586,22 @@ const AdminDashboard = () => {
     switch (status?.toUpperCase()) {
       case 'COMPLETED':
       case 'DONE':
+      case 'AWAITING_DONE':
         return 'success';
       case 'PENDING':
       case 'WAITING':
+      case 'WAITING_CONFIRM':
+      case 'AWAITING_CONFIRM':
+      case 'CONFIRM_ADDITIONAL':
+      case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL':
+      case 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL':
         return 'warning';
       case 'CANCELLED':
       case 'REJECTED':
         return 'error';
       case 'IN_PROGRESS':
       case 'ACTIVE':
+      case 'CONFIRMED':
         return 'processing';
       default:
         return 'default';
@@ -611,6 +618,14 @@ const AdminDashboard = () => {
         return 'Chờ xử lý';
       case 'WAITING':
         return 'Đang chờ';
+      case 'WAITING_CONFIRM':
+        return 'Chờ xác nhận';
+      case 'AWAITING_CONFIRM':
+        return 'Đang chờ xác nhận';
+      case 'AWAITING_DONE':
+        return 'Chờ xác nhận hoàn tất';
+      case 'CONFIRM_ADDITIONAL':
+        return 'Xác nhận chi phí phát sinh';
       case 'CANCELLED':
         return 'Đã hủy';
       case 'REJECTED':
@@ -619,6 +634,12 @@ const AdminDashboard = () => {
         return 'Đang thực hiện';
       case 'ACTIVE':
         return 'Đang hoạt động';
+      case 'CONFIRMED':
+        return 'Đã xác nhận';
+      case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL':
+        return 'Chờ KH xác nhận chi phí phát sinh';
+      case 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL':
+        return 'Chờ KTV xác nhận chi phí phát sinh';
       default:
         return status?.replace(/_/g, ' ') || 'Chưa xác định';
     }
@@ -632,12 +653,19 @@ const AdminDashboard = () => {
         return <CheckCircleOutlined />;
       case 'PENDING':
       case 'WAITING':
+      case 'WAITING_CONFIRM':
+      case 'AWAITING_CONFIRM':
+      case 'AWAITING_DONE':
+      case 'CONFIRM_ADDITIONAL':
+      case 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL':
+      case 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL':
         return <ClockCircleOutlined />;
       case 'CANCELLED':
       case 'REJECTED':
         return <ExclamationCircleOutlined />;
       case 'IN_PROGRESS':
       case 'ACTIVE':
+      case 'CONFIRMED':
         return <ArrowUpOutlined />;
       default:
         return <ClockCircleOutlined />;
@@ -756,7 +784,7 @@ const AdminDashboard = () => {
             >
               <div className="d-flex align-items-center justify-content-between">
                 <div>
-                  <div className="text-black-50 mb-1">Tổng doanh thu của tháng</div>
+                  <div className="text-black-50 mb-1">Doanh thu gói của tháng</div>
                   <div className="text-black fw-bold" style={{fontSize: '1.5rem'}}>
                     {currentRevenue.toLocaleString('en-US')} VND
                 </div>

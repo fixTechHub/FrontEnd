@@ -1185,7 +1185,7 @@ scales: {
                               <DollarOutlined />
                   </div>
                             <Statistic
-                              title="Doanh thu trung bình"
+                              title="Doanh thu trung bình/gói"
                               value={analyticsData.avgRevenuePerSub}
                               precision={0}
                               valueStyle={{ color: '#faad14' }}
