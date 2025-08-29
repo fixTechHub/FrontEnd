@@ -1050,24 +1050,70 @@ function Header() {
                                 }
 
                                 /* Fix Mobile Dropdown Overflow */
-                                .mobile-notification-native .dropdown-menu {
+                                .noti-wrapper .dropdown-menu.notifications {
                                     position: absolute !important;
                                     top: 45px !important;
                                     right: 0 !important;
                                     left: auto !important;
-                                    width: 280px !important;
-                                    max-width: calc(100vw - 30px) !important;
-                                    max-height: 300px !important;
+                                    width: 350px !important;
+                                    max-width: calc(100vw - 20px) !important;
+                                    max-height: 400px !important;
                                     overflow-y: auto !important;
                                     transform: translateX(0) !important;
                                     margin: 0 !important;
+                                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+                                    border: none !important;
+                                    border-radius: 12px !important;
+                                }
+                                
+                                /* Mobile specific adjustments */
+                                @media (max-width: 768px) {
+                                    .noti-wrapper .dropdown-menu.notifications {
+                                        right: -10px !important;
+                                        width: 320px !important;
+                                        max-width: calc(100vw - 30px) !important;
+                                    }
+                                    
+                                    .noti-wrapper .noti-content {
+                                        width: 100% !important;
+                                        max-height: 350px !important;
+                                    }
+                                    
+                                    .noti-wrapper .notification-message {
+                                        padding: 12px 15px !important;
+                                        word-wrap: break-word !important;
+                                        overflow-wrap: break-word !important;
+                                    }
+                                    
+                                    .noti-wrapper .noti-details {
+                                        white-space: normal !important;
+                                        word-wrap: break-word !important;
+                                        overflow-wrap: break-word !important;
+                                        line-height: 1.4 !important;
+                                    }
+                                    
+                                    .noti-wrapper .noti-title {
+                                        white-space: normal !important;
+                                        word-wrap: break-word !important;
+                                        overflow-wrap: break-word !important;
+                                        display: block !important;
+                                    }
                                 }
 
                                 /* Ensure dropdown fits on small screens */
+                                @media (max-width: 480px) {
+                                    .noti-wrapper .dropdown-menu.notifications {
+                                        right: -15px !important;
+                                        width: 280px !important;
+                                        max-width: calc(100vw - 40px) !important;
+                                    }
+                                }
+                                
                                 @media (max-width: 320px) {
-                                    .mobile-notification-native .dropdown-menu {
+                                    .noti-wrapper .dropdown-menu.notifications {
                                         width: 250px !important;
-                                        right: -5px !important;
+                                        right: -20px !important;
+                                        max-width: calc(100vw - 50px) !important;
                                     }
                                 }
 

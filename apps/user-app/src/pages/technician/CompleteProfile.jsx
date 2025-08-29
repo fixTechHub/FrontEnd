@@ -773,10 +773,404 @@ const CompleteProfile = () => {
                         display: none;
                     }
                     .wizard-card {
-                        margin: 1rem 0.5rem;
+                        margin: 0.5rem;
+                        border-radius: 16px;
+                        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
                     }
                     .wizard-container {
-                        padding: 1rem 0;
+                        padding: 0.5rem 0;
+                        min-height: 100vh;
+                    }
+                    
+                    /* Mobile Navigation Progress Bar */
+                    .mobile-progress-nav {
+                        display: block !important;
+                        background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(10px);
+                        padding: 1rem;
+                        border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+                        margin-bottom: 1rem;
+                    }
+                    
+                    .mobile-progress-steps {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 1rem;
+                    }
+                    
+                    .mobile-step {
+                        flex: 1;
+                        height: 4px;
+                        background: #e5e7eb;
+                        margin: 0 2px;
+                        border-radius: 2px;
+                        position: relative;
+                        transition: all 0.3s ease;
+                    }
+                    
+                    .mobile-step.active {
+                        background: linear-gradient(90deg, #667eea, #764ba2);
+                    }
+                    
+                    .mobile-step.completed {
+                        background: #10b981;
+                    }
+                    
+                    .mobile-step-info {
+                        text-align: center;
+                        margin-top: 0.5rem;
+                    }
+                    
+                    .mobile-step-title {
+                        font-size: 0.9rem;
+                        font-weight: 600;
+                        color: #1f2937;
+                        margin-bottom: 0.25rem;
+                    }
+                    
+                    .mobile-step-subtitle {
+                        font-size: 0.75rem;
+                        color: #6b7280;
+                    }
+                    
+                    /* Form optimizations */
+                    .wizard-card .p-4 {
+                        padding: 1.5rem !important;
+                    }
+                    
+                    .mb-5 {
+                        margin-bottom: 2rem !important;
+                    }
+                    
+                    .mb-4 {
+                        margin-bottom: 1.5rem !important;
+                    }
+                    
+                    /* Image upload mobile optimization */
+                    .col-md-6 {
+                        margin-bottom: 1rem;
+                    }
+                    
+                    /* Input groups mobile */
+                    .input-group-modern .form-control {
+                        padding: 14px 16px;
+                        font-size: 16px; /* Prevents zoom on iOS */
+                        border-radius: 12px 0 0 12px;
+                        min-width: 0;
+                        flex: 1;
+                    }
+                    
+                    /* Form control mobile optimization */
+                    .form-control {
+                        padding: 14px 16px;
+                        font-size: 16px; /* Prevents zoom on iOS */
+                        border-radius: 12px;
+                        min-width: 0;
+                    }
+                    
+                    /* Placeholder mobile styling */
+                    .form-control::placeholder {
+                        font-size: 14px;
+                        color: #9ca3af;
+                    }
+                    
+                    /* Account holder input specific */
+                    input[placeholder*="chủ tài khoản"]::placeholder {
+                        font-size: 13px !important;
+                        color: #6b7280;
+                    }
+                    
+                    /* Labels mobile styling */
+                    .form-label {
+                        font-size: 15px;
+                        font-weight: 600;
+                        color: #374151;
+                        margin-bottom: 8px;
+                        display: block;
+                        line-height: 1.2;
+                    }
+                    
+                    /* Small helper text mobile */
+                    small.text-muted {
+                        font-size: 12px;
+                        line-height: 1.3;
+                        color: #6b7280 !important;
+                        margin-top: 4px;
+                        display: block;
+                    }
+                    
+                    small.text-muted i {
+                        opacity: 0.7;
+                        font-size: 11px;
+                    }
+                    
+                    .input-group-modern .input-group-text {
+                        padding: 14px 12px;
+                        font-size: 14px;
+                        font-weight: 600;
+                        background: #667eea;
+                        color: white;
+                        border: 2px solid #667eea;
+                        border-radius: 0 12px 12px 0;
+                        min-width: 60px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                    }
+                    
+                    .input-group-modern {
+                        display: flex;
+                        width: 100%;
+                        max-width: 100%;
+                    }
+                    
+                    /* Price input specific styles */
+                    .price-input {
+                        text-align: right;
+                        padding-right: 12px !important;
+                    }
+                    
+                    /* Alert mobile */
+                    .alert {
+                        padding: 1rem;
+                        font-size: 0.9rem;
+                        border-radius: 12px;
+                    }
+                    
+                    /* Headings mobile */
+                    h4 {
+                        font-size: 1.5rem !important;
+                    }
+                    
+                    h6 {
+                        font-size: 1rem !important;
+                    }
+                    
+                    /* Button optimizations */
+                    .btn {
+                        padding: 12px 24px;
+                        font-size: 16px;
+                        font-weight: 600;
+                        border-radius: 12px;
+                        min-height: 48px;
+                        transition: all 0.3s ease;
+                        border: 2px solid transparent;
+                    }
+                    
+                    .btn-lg {
+                        padding: 14px 28px;
+                        font-size: 17px;
+                        min-height: 52px;
+                        font-weight: 700;
+                        border-radius: 16px;
+                    }
+                    
+                    /* Navigation buttons specific styling */
+                    .btn-primary {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        border: 2px solid transparent;
+                        color: white;
+                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                    }
+                    
+                    .btn-primary:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+                        background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+                    }
+                    
+                    .btn-outline-secondary {
+                        background: rgba(255, 255, 255, 0.9);
+                        border: 2px solid #e5e7eb;
+                        color: #6b7280;
+                        backdrop-filter: blur(10px);
+                    }
+                    
+                    .btn-outline-secondary:hover {
+                        background: rgba(102, 126, 234, 0.1);
+                        border-color: #667eea;
+                        color: #667eea;
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.15);
+                    }
+                    
+                    .btn-secondary {
+                        background: #f1f5f9;
+                        border: 2px solid #e2e8f0;
+                        color: #64748b;
+                    }
+                    
+                    .btn-secondary:hover {
+                        background: #e2e8f0;
+                        border-color: #cbd5e1;
+                        transform: translateY(-1px);
+                    }
+                    
+                    /* Button groups mobile */
+                    .d-flex.justify-content-between {
+                        gap: 1rem;
+                    }
+                    
+                    .d-flex.justify-content-end {
+                        margin-top: 2rem;
+                    }
+                    
+                    .d-flex.justify-content-between .btn,
+                    .d-flex.justify-content-end .btn {
+                        flex: 1;
+                        max-width: 200px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 0.5rem;
+                    }
+                }
+                
+                /* Extra small mobile devices */
+                @media (max-width: 480px) {
+                    .wizard-card {
+                        margin: 0.25rem;
+                        border-radius: 12px;
+                    }
+                    
+                    .wizard-card .p-4 {
+                        padding: 1rem !important;
+                    }
+                    
+                    .mobile-progress-nav {
+                        padding: 0.75rem;
+                    }
+                    
+                    .mobile-step-title {
+                        font-size: 0.85rem;
+                    }
+                    
+                    .mobile-step-subtitle {
+                        font-size: 0.7rem;
+                    }
+                    
+                    .alert {
+                        padding: 0.75rem;
+                        font-size: 0.85rem;
+                    }
+                    
+                    h4 {
+                        font-size: 1.25rem !important;
+                    }
+                    
+                    .btn {
+                        padding: 10px 20px;
+                        font-size: 15px;
+                        min-height: 44px;
+                        border-radius: 10px;
+                    }
+                    
+                    .btn-lg {
+                        padding: 12px 24px;
+                        font-size: 16px;
+                        min-height: 48px;
+                        border-radius: 14px;
+                    }
+                    
+                    /* Button groups extra small mobile */
+                    .d-flex.justify-content-between .btn,
+                    .d-flex.justify-content-end .btn {
+                        flex: 1;
+                        max-width: none;
+                        min-width: 120px;
+                    }
+                    
+                    .d-flex.justify-content-between {
+                        gap: 0.75rem;
+                    }
+                    
+                    /* Chips mobile responsive */
+                    .chip, .service-chip {
+                        margin: 2px;
+                        padding: 6px 12px;
+                        font-size: 13px;
+                        border-radius: 16px;
+                    }
+                    
+                    /* Cards mobile responsive */
+                    .card {
+                        border-radius: 12px !important;
+                    }
+                    
+                    .card-body {
+                        padding: 1rem !important;
+                    }
+                    
+                    /* Row gaps mobile */
+                    .row.g-4 {
+                        --bs-gutter-x: 1rem;
+                        --bs-gutter-y: 1rem;
+                    }
+                    
+                    .row.g-3 {
+                        --bs-gutter-x: 0.75rem;
+                        --bs-gutter-y: 0.75rem;
+                    }
+                }
+                
+                /* Large mobile and tablet */
+                @media (min-width: 768px) and (max-width: 991px) {
+                    .mobile-progress-nav {
+                        display: none !important;
+                    }
+                    
+                    .wizard-card .p-4 {
+                        padding: 2rem !important;
+                    }
+                }
+                
+                /* Hide mobile nav on desktop */
+                .mobile-progress-nav {
+                    display: none;
+                }
+                
+                /* Mobile Navigation Buttons */
+                @media (max-width: 767px) {
+                    .navigation-buttons {
+                        position: sticky;
+                        bottom: 0;
+                        left: 0;
+                        right: 0;
+                        background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(10px);
+                        padding: 1rem;
+                        border-top: 1px solid rgba(0, 0, 0, 0.1);
+                        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+                        z-index: 100;
+                    }
+                    
+                    .navigation-buttons .btn {
+                        flex: 1;
+                        max-width: none;
+                    }
+                    
+                    .navigation-buttons .d-flex {
+                        gap: 1rem;
+                    }
+                    
+                    /* Add bottom padding to content to account for sticky buttons */
+                    .wizard-card .p-4 {
+                        padding-bottom: 6rem !important;
+                    }
+                }
+                
+                /* Smooth scroll behavior */
+                html {
+                    scroll-behavior: smooth;
+                }
+                
+                /* Focus styles for better accessibility */
+                @media (max-width: 767px) {
+                    .form-control:focus,
+                    .btn:focus {
+                        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25) !important;
+                        outline: none;
                     }
                 }
                 .step-item {
@@ -855,6 +1249,9 @@ const CompleteProfile = () => {
                     padding: 12px 16px;
                     font-weight: 500;
                     transition: all 0.3s ease;
+                    border-radius: 12px 0 0 12px;
+                    min-width: 0;
+                    flex: 1;
                 }
                 .input-group-modern .form-control:focus {
                     border-color: #667eea;
@@ -862,32 +1259,47 @@ const CompleteProfile = () => {
                     z-index: 3;
                 }
                 .input-group-modern .input-group-text {
-                    border: 2px solid #e5e7eb;
-                    background: #f8f9fa;
-                    color: #6c757d;
-                    font-weight: 500;
-                    border-radius: 12px;
+                    border: 2px solid #667eea;
+                    background: #667eea;
+                    color: white;
+                    font-weight: 600;
+                    border-radius: 0 12px 12px 0;
                     transition: all 0.3s ease;
+                    min-width: 60px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 12px;
                 }
                 .input-group-modern .input-group-text:first-child {
                     border-radius: 12px 0 0 12px;
                     border-right: none;
-                }
-                .input-group-modern .input-group-text:last-child {
-                    border-radius: 0 12px 12px 0;
-                    border-left: none;
-                    background: #667eea;
-                    color: white;
-                    font-weight: 600;
+                    background: #f8f9fa;
+                    color: #6c757d;
+                    font-weight: 500;
+                    border: 2px solid #e5e7eb;
                 }
                 .input-group-modern .form-control:focus + .input-group-text:last-child,
                 .input-group-modern:focus-within .input-group-text:last-child {
                     border-color: #667eea;
+                    background: #5a6fd8;
                 }
                 .input-group-modern:focus-within .input-group-text:first-child {
                     border-color: #667eea;
                     background: rgba(102, 126, 234, 0.1);
                     color: #667eea;
+                }
+                
+                /* Desktop price input styling */
+                .price-input {
+                    text-align: right;
+                    padding-right: 12px !important;
+                }
+                
+                .input-group-modern {
+                    display: flex;
+                    width: 100%;
+                    max-width: 100%;
                 }
             `}</style>
             <div className="wizard-container">
@@ -1012,6 +1424,34 @@ const CompleteProfile = () => {
                                         </div>
                         </div>
                                     
+                                    {/* Mobile Navigation Progress Bar */}
+                                    <div className="d-block d-md-none mobile-progress-nav">
+                                        <div className="mobile-progress-steps">
+                                            <div className={`mobile-step ${currentStep >= 1 ? 'completed' : ''} ${currentStep === 1 ? 'active' : ''}`}></div>
+                                            <div className={`mobile-step ${currentStep >= 2 ? 'completed' : ''} ${currentStep === 2 ? 'active' : ''}`}></div>
+                                            <div className={`mobile-step ${currentStep >= 3 ? 'completed' : ''} ${currentStep === 3 ? 'active' : ''}`}></div>
+                                            <div className={`mobile-step ${currentStep >= 4 ? 'completed' : ''} ${currentStep === 4 ? 'active' : ''}`}></div>
+                                        </div>
+                                        <div className="mobile-step-info">
+                                            <div className="mobile-step-title">
+                                                Bước {currentStep}/4: {
+                                                    currentStep === 1 ? (accountType === 'BUSINESS' ? 'Thông tin doanh nghiệp' : 'Thông tin cá nhân') :
+                                                    currentStep === 2 ? 'Dịch vụ & Khu vực' :
+                                                    currentStep === 3 ? 'Chứng chỉ' :
+                                                    'Xem lại & Hoàn tất'
+                                                }
+                                            </div>
+                                            <div className="mobile-step-subtitle">
+                                                {
+                                                    currentStep === 1 ? (accountType === 'BUSINESS' ? 'Mã số thuế & Kinh nghiệm' : 'CCCD & Kinh nghiệm') :
+                                                    currentStep === 2 ? 'Chọn dịch vụ & khu vực hoạt động' :
+                                                    currentStep === 3 ? 'Upload chứng chỉ nghề nghiệp' :
+                                                    'Chứng chỉ & Xác nhận'
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
                                     {/* Main Content */}
                                     <div className="col-md-8 col-lg-9">
                                         <div className="p-4">
@@ -1054,7 +1494,7 @@ const CompleteProfile = () => {
                                                                 </li>
                                                             </ul>
                                                         </div>
-                                                        <div className="col-md-6">
+                                                        <div className="col-12 col-sm-8 col-md-6">
                                                             <ImageDropZone
                                                                 key={`avatar-${avatarImage ? avatarImage.name + avatarImage.size : 'empty'}`}
                                                                 label={accountType === 'BUSINESS' ? 'Logo doanh nghiệp' : 'Ảnh đại diện cá nhân'}
@@ -1096,7 +1536,7 @@ const CompleteProfile = () => {
                                                     {/* Individual Account - CCCD Images */}
                                                     {accountType === 'INDIVIDUAL' && (
                                                         <>
-                                                            <div className="col-md-6">
+                                                            <div className="col-12 col-sm-6">
                                                                 <div className="position-relative">
                                                                     <ImageDropZone
                                                                         key={`front-${uploadCounter}-${frontImage ? frontImage.name + frontImage.size : 'empty'}`}
@@ -1136,7 +1576,7 @@ const CompleteProfile = () => {
                                                                     )}
                                                                 </div>
                                                             </div>
-                                                            <div className="col-md-6">
+                                                            <div className="col-12 col-sm-6">
                                                                 <ImageDropZone
                                                                     key={`back-${uploadCounter}-${backImage ? backImage.name + backImage.size : 'empty'}`}
                                                                     label="Mặt sau CCCD"
@@ -1256,7 +1696,7 @@ const CompleteProfile = () => {
                                                     </div>
                                                     {/* Individual Account - CCCD */}
                                                     {accountType === 'INDIVIDUAL' && (
-                                                    <div className="col-md-6">
+                                                    <div className="col-12 col-sm-6">
                                                                 <label className="form-label fw-medium">
                                                                     Số CCCD
                                                                     <span className="text-danger ms-1">*</span>
@@ -1327,7 +1767,7 @@ const CompleteProfile = () => {
 
                                     {/* Business Account - Business Name */}
                                     {accountType === 'BUSINESS' && (
-                                        <div className="col-md-6">
+                                        <div className="col-12 col-sm-6">
                                             <label className="form-label fw-medium">
                                                 Tên doanh nghiệp
                                                 <span className="text-danger ms-1">*</span>
@@ -1363,7 +1803,7 @@ const CompleteProfile = () => {
 
                                     {/* Business Account - Tax Code */}
                                     {accountType === 'BUSINESS' && (
-                                        <div className="col-md-6">
+                                        <div className="col-12 col-sm-6">
                                                                 <label className="form-label fw-medium">
                                                 Mã số thuế doanh nghiệp
                                                 <span className="text-danger ms-1">*</span>
@@ -1398,7 +1838,7 @@ const CompleteProfile = () => {
                                         </div>
                                     )}
 
-                                    <div className="col-md-6">
+                                    <div className="col-12 col-sm-6">
                                                                 <label className="form-label fw-medium">
                                                                     Kinh nghiệm làm việc
                                                                     <span className="text-danger ms-1">*</span>
@@ -1620,7 +2060,7 @@ const CompleteProfile = () => {
                                 </div>
 
                                                                             <div className="row g-2">
-                                                                                <div className="col-6">
+                                                                                <div className="col-12 col-sm-6">
                                                                                     <label className="form-label small fw-medium">Giá dịch vụ</label>
                                                                                     <div className="input-group input-group-modern">
                                                                                         <input
@@ -1639,7 +2079,7 @@ const CompleteProfile = () => {
                                                                                         <small className="text-danger">{fieldErrors[`${serviceId}-price`]}</small>
                                                                                     )}
                                                                                 </div>
-                                                                                <div className="col-6">
+                                                                                <div className="col-12 col-sm-6">
                                                                                     <label className="form-label small fw-medium">Bảo hành</label>
                                                                                     <div className="input-group input-group-modern">
                                         <input
@@ -1699,7 +2139,7 @@ const CompleteProfile = () => {
                                                     <div className="mb-5">
                                                         <h6 className="fw-semibold mb-3">Thông tin ngân hàng</h6>
                                                         <div className="row g-3">
-                                        <div className="col-md-6">
+                                        <div className="col-12 col-sm-6">
                                                 <label className="form-label">Tên ngân hàng</label>
                                                 <input
                                                     type="text"
@@ -1722,7 +2162,7 @@ const CompleteProfile = () => {
                                                     <div className="invalid-feedback">Vui lòng nhập tên ngân hàng</div>
                                                 )}
                                         </div>
-                                        <div className="col-md-6">
+                                        <div className="col-12 col-sm-6">
                                                 <label className="form-label">Số tài khoản</label>
                                                 <input
                                                     type="text"
@@ -1745,8 +2185,11 @@ const CompleteProfile = () => {
                                                     <div className="invalid-feedback">Vui lòng nhập số tài khoản</div>
                                                 )}
                                         </div>
-                                        <div className="col-md-6">
-                                                <label className="form-label">Chủ tài khoản</label>
+                                        <div className="col-12 col-sm-6">
+                                                <label className="form-label">
+                                                    Chủ tài khoản
+                                                    <span className="text-danger ms-1">*</span>
+                                                </label>
                                                 <input
                                                     type="text"
                                                     className={`form-control ${
@@ -1754,7 +2197,7 @@ const CompleteProfile = () => {
                                                             ? (formData.bankAccount.accountHolder ? 'is-valid' : 'is-invalid')
                                                             : ''
                                                     }`}
-                                                    placeholder="Họ và tên chủ tài khoản viết không dấu"
+                                                    placeholder="VD: NGUYEN VAN A"
                                                     style={{ textTransform: 'uppercase' }}
                                                     value={formData.bankAccount.accountHolder}
                                                     onChange={(e) => {
@@ -1765,11 +2208,15 @@ const CompleteProfile = () => {
                                                         setFieldTouched(prev => ({ ...prev, accountHolder: true }));
                                                     }}
                                                 />
+                                                <small className="text-muted mt-1 d-block">
+                                                    <i className="bi bi-info-circle me-1"></i>
+                                                    Họ và tên chủ tài khoản viết không dấu
+                                                </small>
                                                 {fieldTouched.accountHolder && !formData.bankAccount.accountHolder && (
                                                     <div className="invalid-feedback">Vui lòng nhập tên chủ tài khoản</div>
                                                 )}
                                         </div>
-                                        <div className="col-md-6">
+                                        <div className="col-12 col-sm-6">
                                                 <label className="form-label">Chi nhánh</label>
                                                 <input
                                                     type="text"
@@ -1797,7 +2244,7 @@ const CompleteProfile = () => {
                                                                 </small>
                                                             )}
                                                         </div>
-                                                        <div className="col-md-6">
+                                                        <div className="col-12 col-sm-6">
                                                             <div className="input-group input-group-modern">
                                                                 <input
                                                                     type="number"
@@ -1863,7 +2310,7 @@ const CompleteProfile = () => {
                                                     {/* Summary Cards */}
                                                     <div className="row g-4 mb-5">
                                                         {/* Personal Info Summary */}
-                                                        <div className="col-md-6">
+                                                        <div className="col-12 col-lg-6">
                                                             <div className="card border-0 bg-light h-100">
                                                                 <div className="card-body">
                                                                     <div className="d-flex align-items-center mb-3">
@@ -1914,7 +2361,7 @@ const CompleteProfile = () => {
                                                         </div>
                                                         
                                                         {/* Services Summary */}
-                                                        <div className="col-md-6">
+                                                        <div className="col-12 col-lg-6">
                                                             <div className="card border-0 bg-light h-100">
                                                                 <div className="card-body">
                                                                     <div className="d-flex align-items-center mb-3">
