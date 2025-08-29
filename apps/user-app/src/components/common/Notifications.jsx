@@ -88,6 +88,21 @@ const Notifications = ({ userId }) => {
   const { notifications, status } = useSelector((state) => state.notifications);
   const [isOpen, setIsOpen] = useState(false);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const dropdown = event.target.closest('.mobile-notification-native');
+      if (!dropdown && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (userId) {
       dispatch(fetchNotificationsThunk());

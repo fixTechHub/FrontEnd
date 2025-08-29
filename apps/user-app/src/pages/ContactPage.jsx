@@ -54,12 +54,25 @@ function ContactPage() {
       <Header />
       
       {/* Hero Section */}
-      <section style={{ 
+      <section className="contact-hero" style={{ 
         background: "linear-gradient(135deg, #fe9307 0%, #ff6b6b 100%)",
         padding: "8rem 0 6rem",
         color: "white",
         textAlign: "center"
       }}>
+        <style>{`
+          @media (max-width: 768px) {
+            .contact-hero {
+              padding: 4rem 0 3rem !important;
+            }
+            .contact-hero h1 {
+              font-size: 2.5rem !important;
+            }
+            .contact-hero p {
+              font-size: 1rem !important;
+            }
+          }
+        `}</style>
         <div className="nhp-container">
           <div style={{ maxWidth: "600px", margin: "0 auto" }}>
             <div style={{ 
@@ -99,14 +112,28 @@ function ContactPage() {
       {/* Contact Information & Form */}
       <section style={{ padding: "6rem 0" }}>
         <div className="nhp-container">
-          <div style={{ 
+          <div className="contact-main-grid" style={{ 
             display: "grid", 
             gridTemplateColumns: "1fr 1fr", 
             gap: "4rem",
             alignItems: "start"
           }}>
+            <style>{`
+              @media (max-width: 768px) {
+                .contact-main-grid {
+                  grid-template-columns: 1fr !important;
+                  gap: 2rem !important;
+                }
+                .contact-form-container {
+                  padding: 1.5rem !important;
+                }
+                .contact-info-section h2 {
+                  font-size: 2rem !important;
+                }
+              }
+            `}</style>
             {/* Contact Info */}
-            <div>
+            <div className="contact-info-section">
               <h2 style={{ 
                 fontSize: "2.5rem", 
                 fontWeight: "bold", 
@@ -249,7 +276,7 @@ function ContactPage() {
 
             {/* Contact Form */}
             <div>
-              <div style={{
+              <div className="contact-form-container" style={{
                 background: "white",
                 borderRadius: "20px",
                 padding: "2.5rem",
@@ -296,7 +323,15 @@ function ContactPage() {
                     />
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+                  <div className="contact-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+                    <style>{`
+                      @media (max-width: 480px) {
+                        .contact-form-row {
+                          grid-template-columns: 1fr !important;
+                          gap: 1.5rem !important;
+                        }
+                      }
+                    `}</style>
                     <div>
                       <label style={{ 
                         display: "block", 

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { fetchTopPublicCategories } from './features/categories/categorySlice';
 import { initializeSocket, disconnectSocket } from './services/socket';
 import { checkAuthThunk } from './features/auth/authSlice';
-import { fetchAllRoles } from './features/roles/roleSlice';
+
 import { fetchTopBookedServices } from './features/bookings/bookingSlice';
 import AppRoutes from './routes'
 import AppProvider from './app/AppProvider';
@@ -24,7 +24,7 @@ function App() {
     useEffect(() => {
         dispatch(fetchTopBookedServices());
         dispatch(fetchTopPublicCategories());
-        dispatch(fetchAllRoles());
+
         // Logic checkAuth đã được chuyển sang main.jsx
     }, [dispatch]);
 

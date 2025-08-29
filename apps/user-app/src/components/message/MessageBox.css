@@ -356,6 +356,20 @@
   background: white;
 }
 
+/* Flex layout chỉ khi chatbox mở */
+.chatbox-container.chatbox-open {
+  height: 65vh !important;
+  max-height: 65vh !important;
+  min-height: 400px !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Đảm bảo khi đóng chatbox thì display: none */
+.chatbox-container.d-none {
+  display: none !important;
+}
+
 @keyframes chatboxSlideIn {
   from {
     opacity: 0;
@@ -372,6 +386,11 @@
   background: transparent;
   position: relative;
   border-radius: 1rem 1rem 0 0;
+}
+
+/* Header flex khi chatbox mở */
+.chatbox-container.chatbox-open .ai-chatbox-header {
+  flex-shrink: 0 !important;
 }
 
 .chatbox-header-bg {
@@ -547,6 +566,13 @@
   background: #fafafa;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 166, 51, 0.3) transparent;
+  overflow-y: auto !important;
+}
+
+/* Messages area flex khi chatbox mở */
+.chatbox-container.chatbox-open .chatbox-messages {
+  flex: 1 !important;
+  min-height: 0 !important;
 }
 
 .chatbox-messages::-webkit-scrollbar {
@@ -902,6 +928,13 @@
   border-radius: 0 0 1rem 1rem;
 }
 
+/* Input area flex khi chatbox mở */
+.chatbox-container.chatbox-open .chatbox-input-area {
+  flex-shrink: 0 !important;
+  min-height: 85px !important; /* Tăng để fit font size lớn hơn */
+  max-height: 170px !important;
+}
+
 .input-wrapper {
   background: #ffffff;
   border: 2px solid #e5e7eb;
@@ -931,6 +964,18 @@
   overflow: hidden;
   min-height: 42px;
   max-height: 120px;
+}
+
+/* Font size tăng cho mobile */
+@media (max-width: 768px) {
+  .chat-input {
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+  }
+  
+  .chat-input::placeholder {
+    font-size: 15px !important;
+  }
 }
 
 .chat-input::placeholder {
@@ -1014,6 +1059,74 @@
     right: 50% !important;
     transform: translateX(50%);
     margin-right: 0 !important;
+    height: 70vh !important;
+    max-height: 70vh !important;
+  }
+  
+  /* Chỉ apply flex khi chatbox đang mở */
+  .chatbox-container.chatbox-open {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Fix header không bị ép khi input mở rộng */
+  .chatbox-container.chatbox-open .ai-chatbox-header {
+    height: auto !important;
+    min-height: 60px !important;
+  }
+  
+  /* Messages area co giãn theo không gian */
+  .chatbox-container.chatbox-open .chatbox-messages {
+    max-height: none !important;
+  }
+  
+  /* Input area không ép header */
+  .chatbox-container.chatbox-open .chatbox-input-area {
+    min-height: 80px !important; /* Tăng để fit font lớn hơn */
+    max-height: 160px !important;
+    overflow: visible !important;
+  }
+  
+  /* Textarea trong input */
+  .chatbox-container.chatbox-open .chat-input {
+    max-height: 100px !important;
+    overflow-y: auto !important;
+    font-size: 16px !important; /* Tăng font cho dễ đọc */
+  }
+  
+  /* Tăng font size cho mobile để dễ đọc */
+  .chat-message .message-bubble {
+    font-size: 15px !important; /* Tăng từ 13px */
+    line-height: 1.6 !important;
+  }
+  
+  .chat-input::placeholder {
+    font-size: 15px !important; /* Placeholder dễ đọc */
+  }
+  
+  .greeting-text {
+    font-size: 16px !important; /* Tăng từ 14px */
+  }
+  
+  .greeting-subtext {
+    font-size: 14px !important; /* Tăng từ 12px */
+  }
+  
+  .quick-btn {
+    font-size: 13px !important; /* Tăng từ 11px */
+    padding: 12px 10px !important;
+  }
+  
+  .ai-title {
+    font-size: 18px !important; /* Tăng từ 16px */
+  }
+  
+  .bubble-subtitle {
+    font-size: 12px !important; /* Tăng từ 10px */
+  }
+  
+  .typing-text {
+    font-size: 14px !important; /* Tăng từ 12px */
   }
   
   .modern-ai-btn {
@@ -1055,11 +1168,6 @@
     animation: bubbleFadeIn 0.6s ease-out forwards;
     animation-delay: 1.2s;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  }
-  
-  .chatbox-messages {
-    min-height: 200px !important;
-    max-height: 350px !important;
   }
   
   .ai-greeting-bubble {
@@ -1119,21 +1227,97 @@
   .chatbox-container {
     width: 100vw !important;
     height: 100vh !important;
-    max-height: none !important;
+    max-height: 100vh !important;
     border-radius: 0 !important;
     bottom: 0 !important;
     right: 0 !important;
     transform: none !important;
+    min-height: 100vh !important;
   }
   
-  .ai-chatbox-header {
+  /* Chỉ apply flex khi chatbox đang mở - Mobile */
+  .chatbox-container.chatbox-open {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Fix header không bị ép khi input mở rộng - Mobile */
+  .chatbox-container.chatbox-open .ai-chatbox-header {
     border-radius: 0 !important;
     padding: 1rem !important;
+    height: auto !important;
+    min-height: 70px !important;
   }
   
-  .chatbox-messages {
-    min-height: calc(100vh - 180px) !important;
-    max-height: calc(100vh - 180px) !important;
+  /* Messages area co giãn theo không gian - Mobile */
+  .chatbox-container.chatbox-open .chatbox-messages {
+    max-height: none !important;
+  }
+  
+  /* Input area không ép header - Mobile */
+  .chatbox-container.chatbox-open .chatbox-input-area {
+    min-height: 75px !important; /* Tăng để fit font lớn hơn */
+    max-height: 150px !important;
+    overflow: visible !important;
+  }
+  
+  /* Textarea trong input - Mobile */
+  .chatbox-container.chatbox-open .chat-input {
+    max-height: 90px !important;
+    overflow-y: auto !important;
+    font-size: 16px !important; /* Dễ đọc trên mobile nhỏ */
+  }
+  
+  /* Tăng font size cho mobile nhỏ để dễ đọc */
+  .chat-message .message-bubble {
+    font-size: 15px !important;
+    line-height: 1.6 !important;
+    padding: 0.75rem 1rem !important;
+  }
+  
+  .chat-input::placeholder {
+    font-size: 15px !important; /* Placeholder dễ đọc */
+  }
+  
+  .greeting-text {
+    font-size: 16px !important;
+    font-weight: 700 !important;
+  }
+  
+  .greeting-subtext {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+  
+  .quick-btn {
+    font-size: 13px !important;
+    padding: 12px 10px !important;
+    line-height: 1.4 !important;
+  }
+  
+  .ai-title {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+  }
+  
+  .ai-status {
+    font-size: 13px !important; /* Tăng từ 11px */
+  }
+  
+  .bubble-title {
+    font-size: 14px !important; /* Tăng từ 12px */
+  }
+  
+  .bubble-subtitle {
+    font-size: 13px !important; /* Tăng từ 10px */
+  }
+  
+  .typing-text {
+    font-size: 14px !important;
+  }
+  
+  .message-time {
+    font-size: 12px !important; /* Tăng từ 11px */
   }
   
   .modern-ai-btn {
