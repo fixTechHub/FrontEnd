@@ -378,8 +378,13 @@ const TechnicianDeposit = () => {
                         <h6>Số dư khả dụng</h6>
                         <h4>{(technician?.balance || 0).toLocaleString('vi-VN')} VND</h4>
                       </div>
+                      
+                      <div className="balance-content">
+                        <h6>Số ghi nợ</h6>
+                        <h4>{(technician?.debBalance || 0).toLocaleString('vi-VN')} VND</h4>
+                      </div>
                     </div>
-
+                  
                     <div className="balance-list">
                       <div className="row">
                         <div className="col-lg-4 col-md-6 d-flex">
@@ -410,24 +415,25 @@ const TechnicianDeposit = () => {
                         className="btn"
                         data-bs-toggle="modal"
                         data-bs-target="#withdraw_modal"
+                        onClick={handleDepositSubmit}
                       >
                         Rút
                       </button>
                     </div>
-                
-                      <div className="wallet-btn">
-                        <Button
-                          className="btn"
-                          data-bs-toggle="modal"
-                          data-bs-target="#new_deposit_modal"
-                          disabled={technician?.debBalance <= 0}
-                        >
-                          {transactionLoading ? 'Đang xử lý...' : 'Thanh toán nợ'}
-                        </Button>
-                      </div>
-                    
+
+                    <div className="wallet-btn">
+                      <Button
+                        className="btn"
+                        data-bs-toggle="modal"
+                        data-bs-target="#new_deposit_modal"
+                        disabled={technician?.debBalance <= 0}
+                      >
+                        {transactionLoading ? 'Đang xử lý...' : 'Thanh toán nợ'}
+                      </Button>
+                    </div>
+
                   </div>
-                
+
                 </div>
               </div>
             </div>
@@ -953,6 +959,7 @@ const TechnicianDeposit = () => {
                         <option value={12}>1 năm (12 tháng)</option>
                       </select>
                     </div>
+
                     <div className="modal-footer">
                       <button className="btn btn-secondary" data-bs-dismiss="modal">
                         Hủy

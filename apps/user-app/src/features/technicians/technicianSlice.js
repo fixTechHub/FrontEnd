@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, current } from '@reduxjs/toolkit';
 import {
   getTechnicianProfile,
   getEarningAndCommission,
@@ -6,12 +6,12 @@ import {
   updateTechnicianAvailability,
   getTechnicianJob,
   getJobDetails,
-  getTechnicians, 
-  completeTechnicianProfile, 
-  fetchCertificatesByTechnicianId, 
-  sendQuotationAPI, 
-  getTechnicianDepositLogs, 
-  getListFeedback, 
+  getTechnicians,
+  completeTechnicianProfile,
+  fetchCertificatesByTechnicianId,
+  sendQuotationAPI,
+  getTechnicianDepositLogs,
+  getListFeedback,
   uploadCertificateAPI,
   getScheduleByTechnicianId,
   deleteCertificateAPI
@@ -37,7 +37,7 @@ export const fetchEarningAndCommission = createAsyncThunk(
     try {
       const data = await getEarningAndCommission(technicianId);
       console.log(data);
-      
+
       return data
     } catch (error) {
       return thunkAPI.rejectWithValue(
@@ -264,11 +264,11 @@ const technicianSlice = createSlice({
       fileUrl: '',
       loading: false,
       error: null,
-     
+
     },
   },
   reducers: {
-  
+
   },
   extraReducers: (builder) => {
     builder
@@ -288,15 +288,17 @@ const technicianSlice = createSlice({
 
       //earning
       .addCase(fetchEarningAndCommission.pending, (state) => {
+        console.log('[earning] pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(fetchEarningAndCommission.fulfilled, (state, action) => {
+        console.log('[earning] fulfilled payload:', action.payload);
         state.loading = false;
-        state.earnings = action.payload.data;
-        console.log('earning: ' + state.earnings)
+        state.earnings = action.payload?.data;
       })
       .addCase(fetchEarningAndCommission.rejected, (state, action) => {
+        console.log('[earning] rejected:', action.error, action.payload);
         state.loading = false;
         state.error = action.payload;
       })
@@ -450,20 +452,20 @@ const technicianSlice = createSlice({
         state.status = 'failed';
         state.error = action.error.message;
       })
-      
+
       .addCase(deleteCertificate.pending, (state, action) => {
-      state.certificateDeletingId = action.meta.arg; // id đang xóa
-    })
-    .addCase(deleteCertificate.fulfilled, (state, action) => {
-      state.certificateDeletingId = null;
-      state.certificates = state.certificates.filter(
-        (c) => c._id !== action.payload.certificateId
-      );
-    })
-    .addCase(deleteCertificate.rejected, (state, action) => {
-      state.certificateDeletingId = null;
-      state.error = action.payload;
-    });
+        state.certificateDeletingId = action.meta.arg; // id đang xóa
+      })
+      .addCase(deleteCertificate.fulfilled, (state, action) => {
+        state.certificateDeletingId = null;
+        state.certificates = state.certificates.filter(
+          (c) => c._id !== action.payload.certificateId
+        );
+      })
+      .addCase(deleteCertificate.rejected, (state, action) => {
+        state.certificateDeletingId = null;
+        state.error = action.payload;
+      });
 
 
   }
