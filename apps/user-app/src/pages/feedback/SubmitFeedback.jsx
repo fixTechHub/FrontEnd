@@ -19,6 +19,9 @@ const SubmitFeedback = () => {
   const { loading } = useSelector((state) => state.feedback);
   const { booking } = useSelector((state) => state.booking);
 
+  const errors = {}; 
+  const [bookingImages, setBookingImages] = useState([]);
+
   useEffect(() => {
     if (bookingId) {
       dispatch(fetchBookingById(bookingId));
@@ -29,17 +32,27 @@ const SubmitFeedback = () => {
   const [content, setContent] = useState('');
   const [files, setFiles] = useState([]);
 
+  const handleBookingImages = (filesArray) => setBookingImages(filesArray);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  useEffect(() => {
+    const urls = bookingImages.map(f => URL.createObjectURL(f));
+    setPreviewUrls(urls);
+    return () => urls.forEach(u => URL.revokeObjectURL(u));
+  }, [bookingImages]);
+
   const handleFilesSelect = (selectedFiles) => setFiles(selectedFiles);
 
   // ✅ Chỉ toast khi BE trả thành công thật sự
   const handleSubmit = async (e) => {
     e.preventDefault();
     dispatch(clearMessages());
+    console.log('[FE] bookingImages:', bookingImages);
 
     const formData = new FormData();
     formData.append('rating', String(rating)); // ép chuỗi cho chắc
     formData.append('content', content);
-    files.forEach((file) => formData.append('files', file)); // key 'files' trùng multer.array('files')
+    bookingImages.forEach((file) => formData.append('files', file)); // key 'files' trùng multer.array('files')
+    console.log('[FE] FormData files:', formData.getAll('files'));
 
     try {
       const res = await dispatch(submitFeedbackThunk({ bookingId, formData })).unwrap();
@@ -147,7 +160,7 @@ const SubmitFeedback = () => {
                                     <textarea
                                       rows="4"
                                       className="form-control"
-                                      placeholder="Comments"
+                                      placeholder="Hãy viết đánh giá của bạn"
                                       value={content}
                                       onChange={(e) => setContent(e.target.value)}
                                       required
@@ -156,14 +169,43 @@ const SubmitFeedback = () => {
                                 </div>
                               </div>
 
-                              <div className="col-lg-6">
-                                <div className="input-block">
-                                  <ImageUploader onFilesSelect={handleFilesSelect} />
-                                  <div style={{ marginTop: '10px' }}>
-                                    {files.length > 0 && files.map((file, i) => <p key={i}>{file.name}</p>)}
+                              <div className="mb-3">
+                                <ImageUploader onFilesSelect={handleBookingImages} />
+                                {errors.images && <div className="banner-form-error">{errors.images}</div>}
+
+                                {bookingImages && bookingImages.length > 0 && (
+                                  <div className="banner-uploaded-images">
+                                    <div className="banner-uploaded-images-title">
+                                      <i className="bx bx-image" style={{ fontSize: 16, marginRight: 8 }}></i>
+                                      Hình ảnh đã chọn ({bookingImages.length})
+                                    </div>
+
+                                    <div className="banner-uploaded-images-grid">
+                                      {bookingImages.map((file, index) => (
+                                        <div key={`${file.name}-${index}`} className="banner-uploaded-image-item">
+                                          <img
+                                            src={previewUrls[index]}              // 👈 dùng URL đã tạo sẵn
+                                            alt={`Hình ảnh ${index + 1}`}
+                                            className="banner-uploaded-image"
+                                          />
+                                          <button
+                                            type="button"
+                                            className="banner-remove-image-btn"
+                                            onClick={() => {
+                                              const next = bookingImages.filter((_, i) => i !== index);
+                                              setBookingImages(next);
+                                            }}
+                                            title="Xóa hình ảnh"
+                                          >
+                                            <i className="bx bx-x"></i>
+                                          </button>
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
-                                </div>
+                                )}
                               </div>
+
 
                               <div className="submit-btn text-end">
                                 <button className="btn btn-primary submit-review" type="submit" disabled={loading}>
@@ -224,7 +266,7 @@ const SubmitFeedback = () => {
                     </li>
                     <li>
                       <span>Kinh nghiệm</span>
-                      <span>{booking.technicianId?.experienceYears || 0} years</span>
+                      <span>{booking.technicianId?.experienceYears || 0} năm</span>
                     </li>
                     <li>
                       <span>Chuyên môn</span>

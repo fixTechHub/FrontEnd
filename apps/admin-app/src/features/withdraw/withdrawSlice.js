@@ -84,6 +84,7 @@ const adminWithdrawSlice = createSlice({
                 // Nếu muốn ưu tiên nullish trước rồi fallback:
                 state.totalPages = (data.totalPages ?? Math.ceil(state.total / state.limit)) || 0;
 
+
             })
             .addCase(fetchWithdrawLogsThunk.rejected, (state, action) => {
                 state.loading = false;
