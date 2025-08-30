@@ -443,7 +443,17 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                             <div
                                                 className="booking-details-card-value description-text clickable"
                                             >
-                                                {warranty?.reportedIssue}
+                                                {isExpanded || !warranty?.reportedIssue || warranty.reportedIssue.length <= maxLength
+                                                    ? warranty?.reportedIssue
+                                                    : truncateText(warranty?.reportedIssue, maxLength)}
+                                                {warranty?.reportedIssue && warranty.reportedIssue.length > maxLength && (
+                                                    <button
+                                                        className="view-more-button clickable"
+                                                        onClick={handleToggle}
+                                                    >
+                                                        {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

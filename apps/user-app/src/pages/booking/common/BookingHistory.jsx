@@ -1664,7 +1664,8 @@ const BookingHistory = () => {
               <Modal.Header
                 closeButton
                 style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+
                   border: 'none',
                   padding: '25px 30px',
                   position: 'relative',
@@ -1740,7 +1741,8 @@ const BookingHistory = () => {
                     {/* Service Card */}
                     <div
                       style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+
                         border: 'none',
                         borderRadius: '15px',
                         padding: '25px',
@@ -1833,7 +1835,8 @@ const BookingHistory = () => {
                                 borderRadius: '12px',
                                 overflow: 'hidden',
                                 marginRight: '15px',
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -1860,7 +1863,7 @@ const BookingHistory = () => {
                                 {booking.customerId?.fullName || 'N/A'}
                               </h6>
                               <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
-                                {booking.customerId?.phoneNumber || 'N/A'}
+                                {/* {booking.customerId?.phone || 'N/A'} */}
                               </p>
                             </div>
                           </div>
@@ -1895,7 +1898,8 @@ const BookingHistory = () => {
                                 borderRadius: '12px',
                                 overflow: 'hidden',
                                 marginRight: '15px',
-                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -1922,7 +1926,7 @@ const BookingHistory = () => {
                                 {booking.technicianId?.userId?.fullName || 'Chưa phân công'}
                               </h6>
                               <p style={{ margin: 0, color: '#64748b', fontSize: '0.9rem' }}>
-                                {booking.technicianId?.userId?.phoneNumber || 'N/A'}
+                                {/* {booking.technicianId?.userId?.phone || 'N/A'} */}
                               </p>
                             </div>
                           </div>
@@ -2033,7 +2037,8 @@ const BookingHistory = () => {
                     {/* Service Card - History Tab */}
                     <div
                       style={{
-                        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                        background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+
                         border: 'none',
                         borderRadius: '15px',
                         padding: '25px',
@@ -2121,7 +2126,8 @@ const BookingHistory = () => {
                       >
                         <div
                           style={{
-                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+
                             color: 'white',
                             borderRadius: '12px',
                             padding: '15px',
@@ -2159,7 +2165,7 @@ const BookingHistory = () => {
                         >
                           <div
                             style={{
-                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
                               color: 'white',
                               borderRadius: '12px',
                               padding: '15px',
@@ -2215,7 +2221,8 @@ const BookingHistory = () => {
                         >
                           <div
                             style={{
-                              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                              background: 'linear-gradient(135deg, #ff6b6b, #ffa500)',
+
                               color: 'white',
                               borderRadius: '12px',
                               padding: '15px',
