@@ -7,9 +7,9 @@ import { requestWarrantyThunk, resetWarrantyState } from '../../../features/book
 import { formatBookingDate, formatDateOnly, formatTimeOnly } from '../../../utils/formatDate';
 import { toast } from 'react-toastify';
 // import ImageUploader from './ImageUploader';
-import { 
-  FaFileAlt, FaUser, FaClock, FaCalendar, FaTag, FaBan, FaMapMarkerAlt, 
-  FaDollarSign, FaUserCheck, FaHourglassHalf, FaSpinner 
+import {
+  FaFileAlt, FaUser, FaClock, FaCalendar, FaTag, FaBan, FaMapMarkerAlt,
+  FaDollarSign, FaUserCheck, FaHourglassHalf, FaSpinner
 } from 'react-icons/fa';
 import {
   RiServiceFill as Service,
@@ -104,117 +104,145 @@ const statusConfig = {
 };
 const MAX_FILES = 5;
 
-function ImageUploader({ onFilesSelect }) {
-    const [selectedFiles, setSelectedFiles] = useState([]);
-    const [previewUrls, setPreviewUrls] = useState([]);
 
-    const handleFileChange = (event) => {
-        const newFiles = Array.from(event.target.files);
+function ImageUploader({ onFilesSelect}) {
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [previewUrls, setPreviewUrls] = useState([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
-        const remainingSlots = MAX_FILES - selectedFiles.length;
-        if (newFiles.length > remainingSlots) {
-            alert(`Bạn chỉ có thể tải lên thêm ${remainingSlots} ảnh. Giới hạn tối đa là ${MAX_FILES} ảnh.`);
-        }
+  const handleFileChange = (event) => {
+    const newFiles = Array.from(event.target.files);
 
-        const filesToProcess = newFiles.slice(0, remainingSlots);
+    const remainingSlots = MAX_FILES - selectedFiles.length;
+    if (newFiles.length > remainingSlots) {
+      alert(`Bạn chỉ có thể tải lên thêm ${remainingSlots} ảnh. Giới hạn tối đa là ${MAX_FILES} ảnh.`);
+    }
 
-        const validFiles = filesToProcess.filter(file => {
-            const isTypeValid = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
+    const filesToProcess = newFiles.slice(0, remainingSlots);
 
-            if (!isTypeValid) {
-                alert(`Định dạng file ${file.name} không được hỗ trợ. Vui lòng chỉ sử dụng ảnh JPEG, JPG, hoặc PNG.`);
-            }
-            return isTypeValid;
-        });
+    const validFiles = filesToProcess.filter(file => {
+      const isTypeValid = ['image/jpeg', 'image/jpg', 'image/png'].includes(file.type);
+      if (!isTypeValid) {
+        alert(`Định dạng file ${file.name} không được hỗ trợ. Vui lòng chỉ sử dụng ảnh JPEG, JPG, hoặc PNG.`);
+      }
+      return isTypeValid;
+    });
 
-        const updatedFiles = [...selectedFiles, ...validFiles];
-        setSelectedFiles(updatedFiles);
-        onFilesSelect(updatedFiles);
+    const updatedFiles = [...selectedFiles, ...validFiles];
+    setSelectedFiles(updatedFiles);
+    onFilesSelect(updatedFiles);
+  };
+
+  useEffect(() => {
+    const newPreviewUrls = selectedFiles.map(file => URL.createObjectURL(file));
+    setPreviewUrls(newPreviewUrls);
+    return () => {
+      newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
     };
+  }, [selectedFiles]);
 
-    useEffect(() => {
-        const newPreviewUrls = selectedFiles.map(file => URL.createObjectURL(file));
-        setPreviewUrls(newPreviewUrls);
-        return () => {
-            newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
-        };
-    }, [selectedFiles]);
+  const handleRemoveImage = (indexToRemove) => {
+    URL.revokeObjectURL(previewUrls[indexToRemove]);
+    const updatedFiles = selectedFiles.filter((_, index) => index !== indexToRemove);
+    setSelectedFiles(updatedFiles);
+    onFilesSelect(updatedFiles);
+  };
 
-    const handleRemoveImage = (indexToRemove) => {
-        URL.revokeObjectURL(previewUrls[indexToRemove]);
-        const updatedFiles = selectedFiles.filter((_, index) => index !== indexToRemove);
-        setSelectedFiles(updatedFiles);
-        onFilesSelect(updatedFiles);
-    };
+  const handleImageClick = (url) => {
+    setSelectedImage(url);
+    setIsModalOpen(true);
+  };
 
-    return (
-        <div className="input-block date-widget">
-            <label className="form-label" style={{ fontSize: 16 }}>
-                Tải lên hình ảnh (bắt buộc) 
-            </label>
-            {/* ({selectedFiles.length}/{MAX_FILES}) */}
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedImage(null);
+  };
 
-            {selectedFiles.length < MAX_FILES && (
-                <label className="upload-div" htmlFor="file-input-component" style={{ cursor: 'pointer' }}>
-                    <input
-                        id="file-input-component"
-                        type="file"
-                        accept=".jpeg,.jpg,.png"
-                        multiple
-                        onChange={handleFileChange}
-                    // style={{ display: 'none' }}
-                    />
-                    <div className="upload-photo-drag">
-                        <span>
-                            <i className="fa fa-upload me-2"></i> Tải ảnh lên
-                        </span>
-                        <h6>hoặc Kéo thả để tải ảnh</h6>
-                    </div>
-                </label>
-            )}
+  return (
+    <div className="input-block date-widget p-4 bg-white rounded-lg shadow-md">
+      <label className="form-label text-gray-700 font-semibold" style={{ fontSize: 16 }}>
+        Tải lên hình ảnh (bắt buộc)
+      </label>
 
-            {/* {previewUrls.length > 0 && (
-                <div className="upload-preview mt-3">
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                        {previewUrls.map((url, index) => (
-                            <div key={url} style={{ position: 'relative' }}>
-                                <img
-                                    src={url}
-                                    alt={`Preview ${index}`}
-                                    style={{ width: '80px', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveImage(index)}
-                                    style={{
-                                        position: 'absolute', top: '-5px', right: '-5px', background: 'red',
-                                        color: 'white', border: 'none', borderRadius: '50%',
-                                        width: '20px', height: '20px', lineHeight: '18px',
-                                        textAlign: 'center', cursor: 'pointer', padding: 0,
-                                        fontSize: '14px', fontWeight: 'bold'
-                                    }}
-                                >
-                                    &times;
-                                </button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )} */}
+      {selectedFiles.length < MAX_FILES && (
+        <label
+          className="upload-div border-2 border-dashed border-gray-300 p-6 rounded-lg text-center cursor-pointer hover:bg-gray-50"
+          htmlFor="file-input-component"
+        >
+          <input
+            id="file-input-component"
+            type="file"
+            accept=".jpeg,.jpg,.png"
+            multiple
+            onChange={handleFileChange}
+            className="hidden"
+          />
+          <div className="upload-photo-drag">
+            <span className="text-blue-500 font-medium">
+              <i className="fa fa-upload mr-2"></i> Tải ảnh lên
+            </span>
+            <h6 className="text-gray-500 mt-2">hoặc Kéo thả để tải ảnh</h6>
+          </div>
+        </label>
+      )}
 
-            {/* <div className="upload-list mt-2">
-                <ul style={{ fontSize: 11 }}>
-                    Để đảm bảo ảnh của bạn được tải lên thành công, vui lòng lưu ý các điểm sau:
-                    <li style={{ fontSize: 11, marginLeft: 15, marginTop: 5 }}>
-                        Kích thước tối đa: Mỗi ảnh không quá 8 MB.
-                    </li>
-                    <li style={{ fontSize: 11, marginLeft: 15, marginTop: 5 }}>
-                        Định dạng hỗ trợ: Vui lòng sử dụng các định dạng ảnh JPEG, JPG hoặc PNG.
-                    </li>
-                </ul>
-            </div> */}
+      {selectedFiles.length > 0 && (
+        <div className="banner-uploaded-images mt-4">
+          <div className="banner-uploaded-images-title flex items-center text-gray-700 font-semibold">
+            <i className="bx bx-image text-lg mr-2"></i>
+            Hình ảnh đã chọn ({selectedFiles.length})
+          </div>
+          <div className="banner-uploaded-images-grid grid grid-cols-3 gap-4 mt-2">
+            {selectedFiles.map((file, index) => (
+              <div key={index} className="banner-uploaded-image-item relative">
+                <img
+                  src={previewUrls[index]}
+                  alt={`Hình ảnh ${index + 1}`}
+                  className="banner-uploaded-image w-full h-24 object-cover rounded-lg cursor-pointer hover:opacity-80"
+                  onClick={() => handleImageClick(previewUrls[index])}
+                />
+                <button
+                  type="button"
+                  className="banner-remove-image-btn absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                  onClick={() => handleRemoveImage(index)}
+                  title="Xóa hình ảnh"
+                >
+                  <i className="bx bx-x"></i>
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
-    );
+      )}
+
+      <Modal
+        show={isModalOpen}
+        onHide={handleCloseModal}
+        centered
+        size="lg"
+        className="custom-modal"
+      >
+        <Modal.Header closeButton className="border-0">
+          <Modal.Title>Xem hình ảnh</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="flex justify-center items-center overflow-auto max-h-[80vh]">
+          {selectedImage && (
+            <img
+              src={selectedImage}
+              alt="Full-size preview"
+              className="max-w-full max-h-full object-contain"
+            />
+          )}
+        </Modal.Body>
+        <Modal.Footer className="border-0">
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Đóng
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
+  );
 }
 
 
