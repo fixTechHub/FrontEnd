@@ -40,6 +40,7 @@ import ReceiptPage from "../pages/receipt/ReceiptPage";
 import TechnicianDeposit from "../pages/transaction/TechnicianDeposit";
 import BookingWarranty from "../pages/booking-warranty/BookingWarranty";
 import BookingHistory from "../pages/booking/common/BookingHistory";
+// import WarrantyList from "../pages/technician/TechnicianWarranry";
 // import { checkAuthThunk } from '../features/auth/authSlice';
 
 // import TechnicianDashboard from "../pages/technician/TechnicianDashboard";
@@ -131,6 +132,7 @@ export default function AppRoutes() {
       <Route path="/technician" element={<TechnicianDashboard />} />
       <Route path="/technician/earning" element={<ViewEarningAndCommission />} />
       <Route path="/technician/booking" element={< TechnicianJobList/>} />
+      {/* <Route path="/technician/warranty" element={< WarrantyList/>} /> */}
       <Route path="/technician/booking/:bookingId" element={< TechnicianJob/>} />
       <Route path="/technician/:technicianId/certificate" element={< CertificateList/>} />
       <Route path="/technician/feedback" element={< ListFeedback/>} />

@@ -326,19 +326,13 @@ function ServiceList() {
                                                 </div>
 
                                                 <div className="service-list-card-content">
-                                                    <h3 className="service-list-card-title">
+                                                    <h3 className="service-list-card-title service-title" title={service?.serviceName}>
                                                         {service.serviceName}
                                                     </h3>
 
                                                     <p className="service-list-card-description">
                                                         {service.description}
                                                     </p>
-
-                                                    {service.price && (
-                                                        <div className="service-list-card-price">
-                                                            {service.price.toLocaleString()} VNĐ
-                                                        </div>
-                                                    )}
 
                                                     <div className="service-list-card-buttons">
                                                         <button

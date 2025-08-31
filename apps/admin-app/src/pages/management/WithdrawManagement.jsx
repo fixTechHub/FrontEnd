@@ -23,26 +23,54 @@ export default function WithdrawAdmin() {
   } = useSelector((s) => s.adminWithdraw);
 
   // ----- Local UI state (đồng bộ với Certificate/Package) -----
-  const [searchText, setSearchText] = useState(lastQuery?.search || "");
-  const [filterStatus, setFilterStatus] = useState(lastQuery?.status || "PENDING");
+  const [searchText, setSearchText] = useState("");
+  const [filterStatus, setFilterStatus] = useState(null);
 
   // kiểm soát “Xem/Ẩn” theo từng dòng
   const [revealMap, setRevealMap] = useState({}); // { [logId]: boolean }
 
   useEffect(() => {
-    dispatch(fetchWithdrawLogsThunk({ page: 1, limit: 10, status: "PENDING" }));
+    const q = { page: 1, limit: 10 };
+    dispatch(setWithdrawQuery(q));
+    dispatch(fetchWithdrawLogsThunk(q));
+    // dispatch(setWithdrawQuery({ page: 1, limit: 10 }));
+    // dispatch(fetchWithdrawLogsThunk({ page: 1, limit: 10}));
   }, [dispatch]);
 
+  // const refetch = (patch = {}) => {
+  //   const q = { ...(lastQuery || {}), ...patch };
+  //   if (!q.search?.trim()) delete q.search;
+  //   if (q.status == null || q.status === "") delete q.status;
+  //   if (!q.limit) q.limit = limit;
+  //   dispatch(setWithdrawQuery(q));
+  //   dispatch(fetchWithdrawLogsThunk(q));
+  // };
+
+  const buildQuery = (patch = {}) => {
+    const q = {
+      page,
+      limit,              // limit hiện tại từ store
+      status: filterStatus || null,
+      search: (searchText || '').trim(),
+      ...patch,           // cho phép override (vd: page:1)
+    };
+    if (!q.search) delete q.search;
+    if (!q.status) delete q.status;
+    if (!q.limit) q.limit = 10;
+    console.log('[WithdrawAdmin] buildQuery ->', q)
+    return q;
+  };
   const refetch = (patch = {}) => {
-    const q = { ...(lastQuery || {}), ...patch };
-    if (!q.search?.trim()) delete q.search;
-    if (q.status == null || q.status === "") delete q.status;
-    if (!q.limit) q.limit = limit;
+    const q = buildQuery(patch);
+    // Debug xem đúng payload chưa:
+    // console.log('[WithdrawAdmin] payload:', q);
+    console.log('[WithdrawAdmin] refetch -> payload gửi thunk:', q);
     dispatch(setWithdrawQuery(q));
     dispatch(fetchWithdrawLogsThunk(q));
   };
 
-  const handleSearch = () => refetch({ search: searchText, page: 1, status: filterStatus || null });
+  // const handleSearch = () => refetch({ search: searchText, page: 1, status: filterStatus || null });
+  const handleSearch = () => refetch({ page: 1 });
 
   const approve = async (logId) => {
     try {
@@ -74,7 +102,7 @@ export default function WithdrawAdmin() {
   const startIndex = useMemo(() => (page - 1) * (limit || 10), [page, limit]);
 
   return (
-    <div className="modern-page-wrapper">
+    <div className="modern-page- wrapper">
       <div className="modern-content-card">
         {/* ------ Header & Breadcrumb ------ */}
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-3">
@@ -150,8 +178,8 @@ export default function WithdrawAdmin() {
                 {filterStatus === "APPROVED"
                   ? "Đã duyệt"
                   : filterStatus === "REJECTED"
-                  ? "Từ chối"
-                  : "Chờ duyệt"}
+                    ? "Từ chối"
+                    : "Chờ duyệt"}
               </span>
             )}
             <button
@@ -229,20 +257,19 @@ export default function WithdrawAdmin() {
                         <td>{record.createdAt ? dayjs(record.createdAt).format("DD/MM/YYYY HH:mm") : "—"}</td>
                         <td>
                           <span
-                            className={`badge text-dark ${
-                              record.status === "APPROVED"
-                                ? "bg-success-transparent"
-                                : record.status === "REJECTED"
+                            className={`badge text-dark ${record.status === "APPROVED"
+                              ? "bg-success-transparent"
+                              : record.status === "REJECTED"
                                 ? "bg-danger-transparent"
                                 : "bg-warning-transparent"
-                            }`}
+                              }`}
                             style={{ padding: "6px 10px" }}
                           >
                             {record.status === "APPROVED"
                               ? "ĐÃ DUYỆT"
                               : record.status === "REJECTED"
-                              ? "TỪ CHỐI"
-                              : "CHỜ DUYỆT"}
+                                ? "TỪ CHỐI"
+                                : "CHỜ DUYỆT"}
                           </span>
                         </td>
                         <td>
