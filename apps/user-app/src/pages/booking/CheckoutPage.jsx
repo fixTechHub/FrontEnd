@@ -277,9 +277,20 @@ const CheckoutPage = () => {
     const { user } = useSelector((state) => state.auth);
     const [isChecking, setIsChecking] = useState(true);
     let discount = 0;
-    
-   
-    
+
+    const [isExpanded, setIsExpanded] = useState(false);
+    const maxLength = 100; // Maximum characters before truncation
+
+    const truncateText = (text, max) => {
+        if (!text || text.length <= max) return text;
+        return text.slice(0, max) + '...';
+    };
+
+    const handleToggle = () => {
+        setIsExpanded(!isExpanded);
+    };
+
+
     useEffect(() => {
         const verifyAccess = async () => {
             if (!bookingId || !user?._id) {
@@ -322,11 +333,11 @@ const CheckoutPage = () => {
         }
     }, [dispatch, bookingId]);
 
-    
 
-  
 
-    const itemsTotal = acceptedBooking?.quote?.items?.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) || 0;
+
+
+    const itemsTotal = acceptedBooking?.quote?.items?.filter(item => item.status === 'ACCEPTED').reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) || 0;
     const laborPrice = acceptedBooking?.quote?.laborPrice || 0;
     const subTotal = acceptedBooking?.quote?.totalAmount || (laborPrice + itemsTotal);
 
@@ -387,10 +398,10 @@ const CheckoutPage = () => {
                 discount1 = appliedCoupon.value;
             }
         }
-        const VAT = subTotal*0.08
+        const VAT = subTotal * 0.08
         const newFinalPrice = subTotal + VAT - discount1;
         console.log(newFinalPrice);
-        
+
         try {
             const resultAction = await dispatch(finalizeBookingThunk({
                 bookingId: bookingId,
@@ -445,9 +456,9 @@ const CheckoutPage = () => {
         return null;
     };
 
-    const estimatedTotal = subTotal + subTotal*0.08 - discount;
+    const estimatedTotal = subTotal + subTotal * 0.08 - discount;
 
-    if (bookingLoading ||  isAuthorize === false) {
+    if (bookingLoading || isAuthorize === false) {
         return null;
     }
 
@@ -515,145 +526,147 @@ const CheckoutPage = () => {
                                         <div className="booking-info-body" style={{ padding: '25px' }}>
                                             <ul className="adons-lists" style={{ listStyle: 'none', padding: '0', margin: '0' }}>
 
-                                                {acceptedBooking?.quote?.items?.length > 0 ? (
-                                                    acceptedBooking?.quote?.items?.map((item, index) => (
-                                                        <li
-                                                            key={item.name}
-                                                            style={{
-                                                                marginBottom: '20px',
-                                                                padding: '20px',
-                                                                backgroundColor: index % 2 === 0 ? '#fafafa' : '#ffffff',
-                                                                borderRadius: '12px',
-                                                                border: '1px solid #e9ecef',
-                                                                transition: 'all 0.3s ease'
-                                                            }}
-                                                            onMouseEnter={(e) => {
-                                                                e.currentTarget.style.backgroundColor = '#f0f8ff';
-                                                                e.currentTarget.style.borderColor = '#ff6200';
-                                                            }}
-                                                            onMouseLeave={(e) => {
-                                                                e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#fafafa' : '#ffffff';
-                                                                e.currentTarget.style.borderColor = '#e9ecef';
-                                                            }}
-                                                        >
-                                                            <div className="adons-types">
-                                                                <div className="d-flex align-items-center adon-name-info justify-content-between">
-                                                                    <div className="adon-name" style={{ flex: 1 }}>
-                                                                        <h6 style={{
-                                                                            margin: '0 0 8px 0',
-                                                                            color: '#2c3e50',
-                                                                            fontSize: '16px',
-                                                                            fontWeight: '600',
-                                                                            display: 'flex',
-                                                                            alignItems: 'center',
-                                                                            gap: '10px'
-                                                                        }}>
-                                                                            <i className="bx bx-wrench" style={{ color: '#ff6200', fontSize: '18px' }}></i>
-                                                                            {item?.name}
-                                                                            {item?.quantity > 1 && (
-                                                                                <span style={{
-                                                                                    backgroundColor: '#ff6200',
-                                                                                    color: 'white',
-                                                                                    padding: '2px 8px',
-                                                                                    borderRadius: '12px',
-                                                                                    fontSize: '12px',
-                                                                                    fontWeight: '600'
-                                                                                }}>
-                                                                                    x{item.quantity}
+                                                {acceptedBooking?.quote?.items?.filter(item => item.status === 'ACCEPTED').length > 0 ? (
+                                                    acceptedBooking?.quote?.items
+                                                        ?.filter(item => item.status === 'ACCEPTED')
+                                                        ?.map((item, index) => (
+                                                            <li
+                                                                key={item.name}
+                                                                style={{
+                                                                    marginBottom: '20px',
+                                                                    padding: '20px',
+                                                                    backgroundColor: index % 2 === 0 ? '#fafafa' : '#ffffff',
+                                                                    borderRadius: '12px',
+                                                                    border: '1px solid #e9ecef',
+                                                                    transition: 'all 0.3s ease'
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = '#f0f8ff';
+                                                                    e.currentTarget.style.borderColor = '#ff6200';
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#fafafa' : '#ffffff';
+                                                                    e.currentTarget.style.borderColor = '#e9ecef';
+                                                                }}
+                                                            >
+                                                                <div className="adons-types">
+                                                                    <div className="d-flex align-items-center adon-name-info justify-content-between">
+                                                                        <div className="adon-name" style={{ flex: 1 }}>
+                                                                            <h6 style={{
+                                                                                margin: '0 0 8px 0',
+                                                                                color: '#2c3e50',
+                                                                                fontSize: '16px',
+                                                                                fontWeight: '600',
+                                                                                display: 'flex',
+                                                                                alignItems: 'center',
+                                                                                gap: '10px'
+                                                                            }}>
+                                                                                <i className="bx bx-wrench" style={{ color: '#ff6200', fontSize: '18px' }}></i>
+                                                                                {item?.name}
+                                                                                {item?.quantity > 1 && (
+                                                                                    <span style={{
+                                                                                        backgroundColor: '#ff6200',
+                                                                                        color: 'white',
+                                                                                        padding: '2px 8px',
+                                                                                        borderRadius: '12px',
+                                                                                        fontSize: '12px',
+                                                                                        fontWeight: '600'
+                                                                                    }}>
+                                                                                        x{item.quantity}
+                                                                                    </span>
+                                                                                )}
+                                                                                {item?.note && (
+                                                                                    <i
+                                                                                        className="bx bx-info-circle"
+                                                                                        style={{
+                                                                                            color: '#17a2b8',
+                                                                                            cursor: 'pointer',
+                                                                                            fontSize: '18px',
+                                                                                            transition: 'color 0.3s ease'
+                                                                                        }}
+                                                                                        onClick={() => {
+                                                                                            setExpandedNotes(prev => ({
+                                                                                                ...prev,
+                                                                                                [item.name]: !prev[item.name]
+                                                                                            }));
+                                                                                        }}
+                                                                                        onMouseEnter={(e) => e.target.style.color = '#ff6200'}
+                                                                                        onMouseLeave={(e) => e.target.style.color = '#17a2b8'}
+                                                                                    />
+                                                                                )}
+                                                                            </h6>
+                                                                            {item?.status && (
+                                                                                <span
+                                                                                    className="badge"
+                                                                                    style={{
+                                                                                        backgroundColor: getStatusColor(item.status),
+                                                                                        color: 'white',
+                                                                                        fontSize: '11px',
+                                                                                        padding: '4px 8px',
+                                                                                        borderRadius: '12px',
+                                                                                        fontWeight: '600',
+                                                                                        marginLeft: '8px',
+                                                                                        textTransform: 'uppercase',
+                                                                                        letterSpacing: '0.5px'
+                                                                                    }}
+                                                                                >
+                                                                                    {{
+                                                                                        PENDING: 'Đang chờ',
+                                                                                        CONFIRMED: 'Xác nhận',
+                                                                                        IN_PROGRESS: 'Đang thực hiện',
+                                                                                        COMPLETED: 'Hoàn thành',
+                                                                                        CANCELLED: 'Hủy',
+                                                                                        ACCEPTED: 'Đồng ý',
+                                                                                        REJECTED: 'Từ chối',
+                                                                                        QUOTE_PROVIDED: 'Đã báo giá',
+                                                                                        AWAITING_PAYMENT: 'Chờ thanh toán',
+                                                                                        PAID: 'Đã thanh toán'
+                                                                                    }[item.status] || item.status}
                                                                                 </span>
                                                                             )}
-                                                                            {item?.note && (
-                                                                                <i
-                                                                                    className="bx bx-info-circle"
-                                                                                    style={{
-                                                                                        color: '#17a2b8',
-                                                                                        cursor: 'pointer',
-                                                                                        fontSize: '18px',
-                                                                                        transition: 'color 0.3s ease'
-                                                                                    }}
-                                                                                    onClick={() => {
-                                                                                        setExpandedNotes(prev => ({
-                                                                                            ...prev,
-                                                                                            [item.name]: !prev[item.name]
-                                                                                        }));
-                                                                                    }}
-                                                                                    onMouseEnter={(e) => e.target.style.color = '#ff6200'}
-                                                                                    onMouseLeave={(e) => e.target.style.color = '#17a2b8'}
-                                                                                />
-                                                                            )}
-                                                                        </h6>
-                                                                        {item?.status && (
-                                                                            <span
-                                                                                className="badge"
-                                                                                style={{
-                                                                                    backgroundColor: getStatusColor(item.status),
-                                                                                    color: 'white',
-                                                                                    fontSize: '11px',
-                                                                                    padding: '4px 8px',
-                                                                                    borderRadius: '12px',
-                                                                                    fontWeight: '600',
-                                                                                    marginLeft: '8px',
-                                                                                    textTransform: 'uppercase',
-                                                                                    letterSpacing: '0.5px'
-                                                                                }}
-                                                                            >
-                                                                                {{
-                                                                                    PENDING: 'Đang chờ',
-                                                                                    CONFIRMED: 'Xác nhận',
-                                                                                    IN_PROGRESS: 'Đang thực hiện',
-                                                                                    COMPLETED: 'Hoàn thành',
-                                                                                    CANCELLED: 'Hủy',
-                                                                                    ACCEPTED: 'Đồng ý',
-                                                                                    REJECTED: 'Từ chối',
-                                                                                    QUOTE_PROVIDED: 'Đã báo giá',
-                                                                                    AWAITING_PAYMENT: 'Chờ thanh toán',
-                                                                                    PAID: 'Đã thanh toán'
-                                                                                }[item.status] || item.status}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                    <span
-                                                                        className="adon-price"
-                                                                        style={{
-                                                                            fontSize: '18px',
-                                                                            fontWeight: '700',
-                                                                            color: item.status === 'REJECTED' ? '#dc3545' : '#28a745',
-                                                                            backgroundColor: item.status === 'REJECTED' ? '#f8d7da' : '#e8f5e8',
-                                                                            padding: '8px 15px',
-                                                                            borderRadius: '25px',
-                                                                            textDecoration: item.status === 'REJECTED' ? 'line-through' : 'none'
-                                                                        }}
-                                                                    >
-                                                                        {formatCurrency(item.price * (item.quantity || 1))} VND
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-
-                                                            {item.note && expandedNotes[item.name] && (
-                                                                <div
-                                                                    className="more-adon-info mt-3"
-                                                                    style={{
-                                                                        padding: '15px',
-                                                                        backgroundColor: '#e3f2fd',
-                                                                        borderRadius: '8px',
-                                                                        borderLeft: '4px solid #2196f3',
-                                                                        animation: 'fadeIn 0.3s ease'
-                                                                    }}
-                                                                >
-                                                                    <div className='d-flex align-items-center'>
-                                                                        <i className="bx bx-note" style={{ color: '#2196f3', marginRight: '8px' }}></i>
-                                                                        <span style={{
-                                                                            color: '#1565c0',
-                                                                            fontSize: '14px',
-                                                                            fontStyle: 'italic'
-                                                                        }}>
-                                                                            {item.note}
+                                                                        </div>
+                                                                        <span
+                                                                            className="adon-price"
+                                                                            style={{
+                                                                                fontSize: '18px',
+                                                                                fontWeight: '700',
+                                                                                color: item.status === 'REJECTED' ? '#dc3545' : '#28a745',
+                                                                                backgroundColor: item.status === 'REJECTED' ? '#f8d7da' : '#e8f5e8',
+                                                                                padding: '8px 15px',
+                                                                                borderRadius: '25px',
+                                                                                textDecoration: item.status === 'REJECTED' ? 'line-through' : 'none'
+                                                                            }}
+                                                                        >
+                                                                            {formatCurrency(item.price * (item.quantity || 1))} VND
                                                                         </span>
                                                                     </div>
                                                                 </div>
-                                                            )}
-                                                        </li>
-                                                    ))
+
+                                                                {item.note && expandedNotes[item.name] && (
+                                                                    <div
+                                                                        className="more-adon-info mt-3"
+                                                                        style={{
+                                                                            padding: '15px',
+                                                                            backgroundColor: '#e3f2fd',
+                                                                            borderRadius: '8px',
+                                                                            borderLeft: '4px solid #2196f3',
+                                                                            animation: 'fadeIn 0.3s ease'
+                                                                        }}
+                                                                    >
+                                                                        <div className='d-flex align-items-center'>
+                                                                            <i className="bx bx-note" style={{ color: '#2196f3', marginRight: '8px' }}></i>
+                                                                            <span style={{
+                                                                                color: '#1565c0',
+                                                                                fontSize: '14px',
+                                                                                fontStyle: 'italic'
+                                                                            }}>
+                                                                                {item.note}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </li>
+                                                        ))
                                                 ) : (
                                                     <p style={{ color: '#999', fontStyle: 'italic' }}>Không có</p>
                                                 )}
@@ -796,42 +809,24 @@ const CheckoutPage = () => {
                                                         <div className="adon-name" style={{ color: '#2c3e50', fontSize: '15px', fontWeight: '600' }}>
                                                             <i className="bx bx-note" style={{ color: '#ff6200', marginRight: '8px' }}></i>
                                                             Ghi Chú
-                                                            {acceptedBooking?.description && (
-                                                                <i
-                                                                    className="bx bx-info-circle"
-                                                                    style={{
-                                                                        marginLeft: '8px',
-                                                                        cursor: 'pointer',
-                                                                        color: '#17a2b8',
-                                                                        fontSize: '18px',
-                                                                        transition: 'color 0.3s ease'
-                                                                    }}
-                                                                    onClick={() => {
-                                                                        setExpandedNotes2(prev => ({
-                                                                            ...prev,
-                                                                            ['description']: !prev['description']
-                                                                        }));
-                                                                    }}
-                                                                    onMouseEnter={(e) => e.target.style.color = '#ff6200'}
-                                                                    onMouseLeave={(e) => e.target.style.color = '#17a2b8'}
-                                                                ></i>
+                                                        </div>
+                                                        <span style={{ color: '#495057', fontSize: '14px' }}>
+                                                            {isExpanded || !acceptedBooking?.description || acceptedBooking?.description.length <= maxLength
+                                                                ? acceptedBooking?.description
+                                                                : truncateText(acceptedBooking?.description, maxLength)}
+                                                            {acceptedBooking?.description && acceptedBooking?.description.length > maxLength && (
+                                                                <button
+                                                                    className="view-more-button clickable"
+                                                                    onClick={handleToggle}
+                                                                >
+                                                                    {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+                                                                </button>
                                                             )}
-                                                        </div>
+                                                        </span>
                                                     </div>
-                                                    {acceptedBooking?.description && expandedNotes2['description'] && (
-                                                        <div
-                                                            className="more-adon-info mt-3"
-                                                            style={{
-                                                                padding: '15px',
-                                                                backgroundColor: '#e3f2fd',
-                                                                borderRadius: '8px',
-                                                                borderLeft: '4px solid #2196f3',
-                                                                animation: 'fadeIn 0.3s ease'
-                                                            }}
-                                                        >
-                                                            <span style={{ color: '#1565c0', fontSize: '14px' }}>{acceptedBooking.description}</span>
-                                                        </div>
-                                                    )}
+
+
+
                                                 </li>
                                             </ul>
                                         </div>
@@ -978,7 +973,9 @@ const CheckoutPage = () => {
                                                         alignItems: 'center',
                                                         gap: '10px'
                                                     }}>
-                                                        <i className="bx bx-user" style={{ color: '#ff6200', fontSize: '20px' }}></i>
+                                                        <span style={{ display: 'flex', alignItems: 'center' }}>
+                                                            <i className="bx bx-user" style={{ color: '#ff6200', fontSize: '20px', transform: 'none' }}></i>
+                                                        </span>
                                                         Kỹ Thuật Viên
                                                     </h5>
                                                 </Accordion.Header>
@@ -1179,7 +1176,22 @@ const CheckoutPage = () => {
                                                                 </p>
                                                             </li>
                                                         )}
-                                                        
+
+                                                        <li style={{
+                                                            display: 'flex',
+                                                            justifyContent: 'space-between',
+                                                            padding: '10px 0',
+                                                            borderBottom: '1px solid #e9ecef',
+                                                            alignItems: 'center'
+                                                        }}>
+                                                            <h6 style={{ color: '#2c3e50', fontSize: '15px', fontWeight: '600', margin: '0' }}>
+                                                                <i className="bx bx-receipt" style={{ color: '#ff6200', marginRight: '8px' }}></i>
+                                                                Thuế
+                                                            </h6>
+                                                            <p style={{ color: '#495057', fontSize: '14px', fontWeight: '600', margin: '0' }}>
+                                                                {formatCurrency(subTotal * 0.08)}VND
+                                                            </p>
+                                                        </li>
                                                         <li style={{
                                                             display: 'flex',
                                                             justifyContent: 'space-between',
@@ -1189,10 +1201,16 @@ const CheckoutPage = () => {
                                                         }}>
                                                             <h6 style={{ color: '#2c3e50', fontSize: '15px', fontWeight: '600', margin: '0' }}>
                                                                 <i className="bx bx-cart" style={{ color: '#ff6200', marginRight: '8px' }}></i>
-                                                                Tổng Tiền (Bao gồm thuế) {formatCurrency(subTotal*0.08)}
+                                                                Tiền Vật liệu
                                                             </h6>
                                                             <p style={{ color: '#495057', fontSize: '14px', fontWeight: '600', margin: '0' }}>
-                                                                {formatCurrency(subTotal + subTotal*0.08)} VND
+                                                                {acceptedBooking?.quote?.items?.filter(item => item.status === 'ACCEPTED').length > 0 ? (
+                                                                   <>
+                                                                   {formatCurrency(itemsTotal)}VND
+                                                                   </>
+                                                                ) : (
+                                                                    <p style={{ color: '#999', fontStyle: 'italic' }}>Không có</p>
+                                                                )}
                                                             </p>
                                                         </li>
                                                         {appliedCoupon && (

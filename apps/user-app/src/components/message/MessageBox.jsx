@@ -424,7 +424,7 @@ const MessageBox = ({ bookingId, bookingWarrantyId }) => {
                             <input
                                 type="text"
                                 className="message-input"
-                                placeholder="Type your message..."
+                                placeholder="Nhắn tin..."
                                 value={messageContent}
                                 onChange={(e) => setMessageContent(e.target.value)}
                                 disabled={sending === 'pending'}

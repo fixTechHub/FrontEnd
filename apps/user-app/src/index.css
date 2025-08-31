@@ -1993,15 +1993,16 @@ body {
 }
 
 .nav-tabs .nav-link:hover {
-  color: #2563eb;
+  color: #ffa500;
   background: #f9fafb;
   border-color: transparent;
 }
 
 .nav-tabs .nav-link.active {
-  color: #2563eb;
+  /* color: #2563eb; */
+  color: #ffa500;
   background: #eff6ff;
-  border-color: #2563eb;
+  border-color: #ffa500;
 }
 
 .avatar-container {
@@ -2687,7 +2688,8 @@ body {
 }
 
 .booking-details-header-banner {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  background: linear-gradient(135deg, #ff6b6b, #ffa500);
   padding: 1.5rem;
   color: white;
   display: flex;
@@ -2728,7 +2730,8 @@ body {
 }
 
 .booking-details-status-dot.in_progress {
-  color: #17a2b8;
+  /* color: #17a2b8; */
+  color: #fff;
 }
 
 .booking-details-status-dot.done {
@@ -2777,16 +2780,17 @@ body {
 }
 
 .booking-details-tabs .nav-link:hover {
-  color: #667eea;
+  color: #ffa500;
   background: #f8f9fa;
   border: none;
 }
 
 .booking-details-tabs .nav-link.active {
-  color: #667eea;
+  /* color: #667eea; */
+  color: #ffa500;
   background: none;
   border: none;
-  border-bottom: 3px solid #667eea;
+  border-bottom: 3px solid #ffa500;
 }
 
 .booking-details-tab-title {
@@ -2842,7 +2846,7 @@ body {
 }
 
 .booking-details-title-icon {
-  color: #667eea;
+  color: #ffa500;
   font-size: 1rem;
 }
 
@@ -2879,7 +2883,8 @@ body {
   justify-content: center;
   width: 40px;
   height: 40px;
-  background: #667eea;
+  /* background: #ffa500; */
+  background: linear-gradient(135deg, #ff6b6b, #ffa500);
   color: white;
   border-radius: 8px;
   font-size: 1.1rem;
@@ -2947,7 +2952,8 @@ body {
 }
 
 .booking-details-total-price {
-  color: #1976d2;
+  /* color: #1976d2; */
+  color: #ffa500;
   font-size: 1.2rem;
   font-weight: 700;
 }

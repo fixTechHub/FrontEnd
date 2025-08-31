@@ -307,8 +307,8 @@ function BookingWarranty() {
                             <div className="col-lg-6">
                                 {warranty?.bookingId?._id && (warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed) ? (
                                     <MessageBox
-                                        bookingId={warranty?.bookingId._id}
-                                        bookingWarrantyId={bookingWarrantyId}
+                                        bookingId={warranty?.bookingId?._id}
+                                        bookingWarrantyId={warranty?._id}
                                     />
                                 ) : (
                                     <div className="alert alert-warning">
