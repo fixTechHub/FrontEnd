@@ -583,14 +583,22 @@ scales: {
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
                   prefix={<UserOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
                 />
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color="green" style={{ color: 'black' }}>
-                    {analyticsData.avgRevenuePerSub.toLocaleString('en-US')} VND
-                  </Tag>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    trung bình/gói
-                  </Text>
-                </div>                
+               <div style={{ marginTop: '8px' }}>
+                <Tag color="green" style={{ color: 'black' }}>
+                  {analyticsData.avgRevenuePerSub.toLocaleString('en-US', { 
+                    maximumFractionDigits: 0
+                  })} VND
+                </Tag>
+                <Text 
+                  style={{ 
+                    color: 'rgba(255, 255, 255, 0.8)', 
+                    marginLeft: '8px', 
+                    fontSize: '12px' 
+                  }}
+                >
+                  trung bình/gói
+                </Text>
+              </div>              
               </Card>
             </Col>
 
@@ -1128,7 +1136,12 @@ scales: {
                                 type: 'linear',
                                 display: true,
                                 position: 'left',
-                                title: { display: true, text: 'Doanh thu (VND)' }
+                                title: { display: true, text: 'Doanh thu (VND)' },
+                                ticks: {
+                                  callback: function(value) {
+                                    return value.toLocaleString('en-US');
+                                  }
+                                }
                               },
                               y1: {
                                 type: 'linear',
