@@ -485,6 +485,16 @@ body {
   vertical-align: middle;
 }
 
+.service-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 270px;
+  /* hoặc width phù hợp */
+  display: inline-block;
+  vertical-align: middle;
+}
+
 .two-line-ellipsis {
   /* Modern browsers - CSS Line Clamp Module Level 1 */
   display: -webkit-box;
