@@ -337,7 +337,7 @@ const CheckoutPage = () => {
 
 
 
-    const itemsTotal = acceptedBooking?.quote?.items?.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) || 0;
+    const itemsTotal = acceptedBooking?.quote?.items?.filter(item => item.status === 'ACCEPTED').reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) || 0;
     const laborPrice = acceptedBooking?.quote?.laborPrice || 0;
     const subTotal = acceptedBooking?.quote?.totalAmount || (laborPrice + itemsTotal);
 
@@ -811,7 +811,7 @@ const CheckoutPage = () => {
                                                             Ghi Chú
                                                         </div>
                                                         <span style={{ color: '#495057', fontSize: '14px' }}>
-                                                            {isExpanded || !acceptedBooking?.description ||acceptedBooking?.description.length <= maxLength
+                                                            {isExpanded || !acceptedBooking?.description || acceptedBooking?.description.length <= maxLength
                                                                 ? acceptedBooking?.description
                                                                 : truncateText(acceptedBooking?.description, maxLength)}
                                                             {acceptedBooking?.description && acceptedBooking?.description.length > maxLength && (
@@ -1201,87 +1201,13 @@ const CheckoutPage = () => {
                                                         }}>
                                                             <h6 style={{ color: '#2c3e50', fontSize: '15px', fontWeight: '600', margin: '0' }}>
                                                                 <i className="bx bx-cart" style={{ color: '#ff6200', marginRight: '8px' }}></i>
-                                                                Vật liệu
+                                                                Tiền Vật liệu
                                                             </h6>
                                                             <p style={{ color: '#495057', fontSize: '14px', fontWeight: '600', margin: '0' }}>
                                                                 {acceptedBooking?.quote?.items?.filter(item => item.status === 'ACCEPTED').length > 0 ? (
-                                                                    acceptedBooking?.quote?.items
-                                                                        ?.filter(item => item.status === 'ACCEPTED')
-                                                                        .map((item, index) => (
-                                                                            <li
-                                                                                key={item.name}
-
-                                                                                onMouseEnter={(e) => {
-                                                                                    e.currentTarget.style.backgroundColor = '#f0f8ff';
-                                                                                    e.currentTarget.style.borderColor = '#ff6200';
-                                                                                }}
-                                                                                onMouseLeave={(e) => {
-                                                                                    e.currentTarget.style.backgroundColor = index % 2 === 0 ? '#fafafa' : '#ffffff';
-                                                                                    e.currentTarget.style.borderColor = '#e9ecef';
-                                                                                }}
-                                                                            >
-                                                                                <div className="adons-types">
-                                                                                    <div className="d-flex align-items-center adon-name-info justify-content-between">
-                                                                                        <div className="adon-name" style={{ flex: 1 }}>
-                                                                                            <h6 style={{
-                                                                                                margin: '0 0 8px 0',
-                                                                                                color: '#2c3e50',
-                                                                                                fontSize: '16px',
-                                                                                                fontWeight: '600',
-                                                                                                display: 'flex',
-                                                                                                alignItems: 'center',
-                                                                                                gap: '10px'
-                                                                                            }}>
-                                                                                                <i className="bx bx-wrench" style={{ color: '#ff6200', fontSize: '18px' }}></i>
-                                                                                                {item?.name}
-                                                                                                {item?.quantity > 1 && (
-                                                                                                    <span style={{
-                                                                                                        backgroundColor: '#ff6200',
-                                                                                                        color: 'white',
-                                                                                                        padding: '2px 8px',
-                                                                                                        borderRadius: '12px',
-                                                                                                        fontSize: '12px',
-                                                                                                    }}>
-                                                                                                        x{item.quantity}
-                                                                                                    </span>
-                                                                                                )}
-
-                                                                                            </h6>
-
-                                                                                        </div>
-                                                                                        <span
-                                                                                            style={{ color: '#495057', fontSize: '14px', fontWeight: '600', margin: '0', paddingLeft: '10px' }}
-                                                                                        >
-                                                                                            {formatCurrency(item.price * (item.quantity || 1))} VND
-                                                                                        </span>
-                                                                                    </div>
-                                                                                </div>
-
-                                                                                {item.note && expandedNotes[item.name] && (
-                                                                                    <div
-                                                                                        className="more-adon-info mt-3"
-                                                                                        style={{
-                                                                                            padding: '15px',
-                                                                                            backgroundColor: '#e3f2fd',
-                                                                                            borderRadius: '8px',
-                                                                                            borderLeft: '4px solid #2196f3',
-                                                                                            animation: 'fadeIn 0.3s ease'
-                                                                                        }}
-                                                                                    >
-                                                                                        <div className='d-flex align-items-center'>
-                                                                                            <i className="bx bx-note" style={{ color: '#2196f3', marginRight: '8px' }}></i>
-                                                                                            <span style={{
-                                                                                                color: '#1565c0',
-                                                                                                fontSize: '14px',
-                                                                                                fontStyle: 'italic'
-                                                                                            }}>
-                                                                                                {item.note}
-                                                                                            </span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                )}
-                                                                            </li>
-                                                                        ))
+                                                                   <>
+                                                                   {formatCurrency(itemsTotal)}VND
+                                                                   </>
                                                                 ) : (
                                                                     <p style={{ color: '#999', fontStyle: 'italic' }}>Không có</p>
                                                                 )}
