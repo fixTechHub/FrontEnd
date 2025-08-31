@@ -1037,19 +1037,13 @@ scales: {
                             title: 'Đang hoạt động',
                             dataIndex: 'active',
                             key: 'active',
-                            render: (value) => <Badge count={value} style={{ backgroundColor: '#52c41a' }} />
+                            render: (value) => <Badge count={value} style={{ backgroundColor: '#1890ff' }} />
                           },
                           {
                             title: 'Tỷ lệ chuyển đổi',
                             dataIndex: 'conversion',
                             key: 'conversion',
-                            render: (value) => (
-                       <Progress
-                                percent={parseFloat(value)}
-                         size="small"
-                                strokeColor={parseFloat(value) > 70 ? '#52c41a' : parseFloat(value) > 40 ? '#faad14' : '#f5222d'}
-                              />
-                            )
+                            render: (value) => <Text strong style={{ color: '#52c41a' }}>{(value) + '%'}</Text>
                           }
                ]}
                pagination={false}
