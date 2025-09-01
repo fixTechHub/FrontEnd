@@ -50,7 +50,17 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
         ? warranty?.technicianId?.userId?.fullName || 'Không có dữ liệu'
         : warranty?.customerId?.fullName || 'Không có dữ liệu';
     console.log(warranty);
-    
+    const [isExpanded, setIsExpanded] = useState(false);
+    const maxLength = 100; // Maximum characters before truncation
+
+    const truncateText = (text, max) => {
+        if (!text || text.length <= max) return text;
+        return text.slice(0, max) + '...';
+    };
+
+    const handleToggle = () => {
+        setIsExpanded(!isExpanded);
+    };
     const styles = {
         modalHeader: {
             backgroundColor: '#f8f9fa',
@@ -151,7 +161,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
             if (onWarrantyUpdated) onWarrantyUpdated();
         } catch (error) {
             Swal.fire({
@@ -162,7 +172,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
         }
     };
 
@@ -181,7 +191,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
             setRejectedReason('');
             setShowRejectModal(false);
             if (onWarrantyUpdated) onWarrantyUpdated();
@@ -201,7 +211,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
             return;
         }
         if (!validateDateTime(proposedDate, proposedTime)) {
@@ -213,7 +223,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
             return;
         }
         const proposedDateTime = `${proposedDate}T${proposedTime}:00+07:00`;
@@ -227,7 +237,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
             setShowProposeModal(false);
             setProposedDate("");
             setProposedTime("");
@@ -241,7 +251,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
         }
     };
 
@@ -256,7 +266,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
             return;
         }
         if (!validateDateTime(startDate, startTime)) {
@@ -268,7 +278,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
             return;
         }
         const startDateTime = new Date(`${startDate}T${startTime}:00+07:00`);
@@ -282,7 +292,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-              });
+            });
             return;
         }
         try {
@@ -295,8 +305,8 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 showConfirmButton: false,
                 position: 'bottom-right',
                 toast: true
-            
-              });
+
+            });
             setShowConfirmModal(false);
             setStartDate("");
             setStartTime("");
@@ -311,7 +321,7 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 timer: 2000,
                 showConfirmButton: false,
                 toast: true
-              });
+            });
         }
     };
 
@@ -433,10 +443,17 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                             <div
                                                 className="booking-details-card-value description-text clickable"
                                             >
-                                                <FaEye
-                                                    className="description-icon"
-                                                    onClick={() => setShowDescriptionModal(true)}
-                                                />
+                                                {isExpanded || !warranty?.reportedIssue || warranty.reportedIssue.length <= maxLength
+                                                    ? warranty?.reportedIssue
+                                                    : truncateText(warranty?.reportedIssue, maxLength)}
+                                                {warranty?.reportedIssue && warranty.reportedIssue.length > maxLength && (
+                                                    <button
+                                                        className="view-more-button clickable"
+                                                        onClick={handleToggle}
+                                                    >
+                                                        {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -552,7 +569,17 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                                         <div className="booking-details-card-content">
                                             <div className="booking-details-card-label">Mô tả</div>
                                             <div className="booking-details-card-value">
-                                                {warranty?.bookingId?.description || 'Không có dữ liệu'}
+                                                {isExpanded || !warranty?.reportedIssue || warranty.reportedIssue.length <= maxLength
+                                                    ? warranty?.reportedIssue
+                                                    : truncateText(warranty?.reportedIssue, maxLength)}
+                                                {warranty?.reportedIssue && warranty.reportedIssue.length > maxLength && (
+                                                    <button
+                                                        className="view-more-button clickable"
+                                                        onClick={handleToggle}
+                                                    >
+                                                        {isExpanded ? 'Thu gọn' : 'Xem thêm'}
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -1035,44 +1062,44 @@ function BookingWarrantyDetails({ bookingWarrantyId, onWarrantyUpdated }) {
                 </Modal.Header>
                 <Modal.Body style={{ ...styles.modalBody, position: 'relative' }}>
                     {((imageType === 'warranty' && warranty?.images && warranty.images.length > 0) ||
-                      (imageType === 'booking' && warranty?.bookingId?.images && warranty.bookingId.images.length > 0)) && (
-                        <div
-                            style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}
-                            onWheel={(e) => {
-                                e.preventDefault();
-                                setZoomLevel((prev) => {
-                                    const newZoom = prev + (e.deltaY < 0 ? 0.1 : -0.1);
-                                    return Math.max(0.5, Math.min(newZoom, 3)); // Limit zoom between 0.5x and 3x
-                                });
-                            }}
-                        >
-                            <img
-                                src={imageType === 'warranty' ? warranty.images[selectedImageIndex] : warranty.bookingId.images[selectedImageIndex]}
-                                alt={`${imageType === 'warranty' ? 'Warranty' : 'Booking'} ${selectedImageIndex + 1}`}
-                                style={{ ...styles.imageModalImage, transform: `scale(${zoomLevel})` }}
-                            />
-                            {((imageType === 'warranty' ? warranty.images : warranty.bookingId.images).length > 1) && (
-                                <>
-                                    <button
-                                        style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnPrev, position: 'absolute', left: '10px' }}
-                                        onClick={handlePrevImage}
-                                        onMouseOver={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtnHover })}
-                                        onMouseOut={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtn, position: 'absolute', left: '10px' })}
-                                    >
-                                        &lt;
-                                    </button>
-                                    <button
-                                        style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnNext, position: 'absolute', right: '10px' }}
-                                        onClick={handleNextImage}
-                                        onMouseOver={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtnHover })}
-                                        onMouseOut={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtn, position: 'absolute', right: '10px' })}
-                                    >
-                                        &gt;
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    )}
+                        (imageType === 'booking' && warranty?.bookingId?.images && warranty.bookingId.images.length > 0)) && (
+                            <div
+                                style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}
+                                onWheel={(e) => {
+                                    e.preventDefault();
+                                    setZoomLevel((prev) => {
+                                        const newZoom = prev + (e.deltaY < 0 ? 0.1 : -0.1);
+                                        return Math.max(0.5, Math.min(newZoom, 3)); // Limit zoom between 0.5x and 3x
+                                    });
+                                }}
+                            >
+                                <img
+                                    src={imageType === 'warranty' ? warranty.images[selectedImageIndex] : warranty.bookingId.images[selectedImageIndex]}
+                                    alt={`${imageType === 'warranty' ? 'Warranty' : 'Booking'} ${selectedImageIndex + 1}`}
+                                    style={{ ...styles.imageModalImage, transform: `scale(${zoomLevel})` }}
+                                />
+                                {((imageType === 'warranty' ? warranty.images : warranty.bookingId.images).length > 1) && (
+                                    <>
+                                        <button
+                                            style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnPrev, position: 'absolute', left: '10px' }}
+                                            onClick={handlePrevImage}
+                                            onMouseOver={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtnHover })}
+                                            onMouseOut={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtn, position: 'absolute', left: '10px' })}
+                                        >
+                                            &lt;
+                                        </button>
+                                        <button
+                                            style={{ ...styles.imageModalNavBtn, ...styles.imageModalNavBtnNext, position: 'absolute', right: '10px' }}
+                                            onClick={handleNextImage}
+                                            onMouseOver={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtnHover })}
+                                            onMouseOut={(e) => Object.assign(e.target.style, { ...styles.imageModalNavBtn, position: 'absolute', right: '10px' })}
+                                        >
+                                            &gt;
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
                 </Modal.Body>
             </Modal>
         </div>
