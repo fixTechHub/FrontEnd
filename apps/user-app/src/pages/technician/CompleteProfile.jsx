@@ -653,17 +653,15 @@ const CompleteProfile = () => {
                     console.warn('⚠️ Business account missing business license image');
                 }
             } else {
-                // Individual account: CCCD identification and images
+                // Individual account: CCCD identification and images as array
                 formDataAll.append('identification', identification);
-            if (frontImage) {
-                formDataAll.append('frontIdImage', frontImage);
+                
+                // Send CCCD images as array instead of separate fields
+                if (frontImage && backImage) {
+                    formDataAll.append('cccdImages', frontImage);  // First image
+                    formDataAll.append('cccdImages', backImage);   // Second image
                 } else {
-                    console.warn('⚠️ Individual account missing front ID image');
-            }
-            if (backImage) {
-                formDataAll.append('backIdImage', backImage);
-                } else {
-                    console.warn('⚠️ Individual account missing back ID image');
+                    console.warn('⚠️ Individual account missing CCCD images');
                 }
             }
 
