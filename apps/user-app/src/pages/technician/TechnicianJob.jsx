@@ -54,22 +54,15 @@ const TechnicianJobList = () => {
     const dispatch = useDispatch();
     const { bookings, loading, error } = useSelector((state) => state.technician);
     const { technician } = useSelector((state) => state.auth);
-
     const technicianId = technician?._id;
-
-    // Pagination states
     const [currentPage, setCurrentPage] = useState(1);
     const [allBookings, setAllBookings] = useState([]);
     const itemsPerPage = 5;
-
-    // ==== FILTER & SORT STATES ====
     const [timeRange, setTimeRange] = useState("all"); // week | month | 30d | all | custom
     const [customRange, setCustomRange] = useState({ from: "", to: "" }); // yyyy-mm-dd
     const [sortBy, setSortBy] = useState("timeDesc"); // relevance | timeAsc | timeDesc | alpha
     const [statusFilter, setStatusFilter] = useState("all");
 
-    // ==== FILTER LOGIC ====
-    // ==== FILTER LOGIC (calendar range) ====
     const inRange = (dateMs) => {
         if (!dateMs) return false;
         if (timeRange === "all") return true;
@@ -127,8 +120,6 @@ const TechnicianJobList = () => {
         return dateMs >= start.getTime() && dateMs <= end.getTime();
     };
 
-
-    // ==== SORT LOGIC ====
     const sortBookings = (arr) => {
         const copy = [...arr];
         if (sortBy === "alpha") {
@@ -294,6 +285,7 @@ const TechnicianJobList = () => {
                                                 <span>Thu nhập</span>
                                             </Link>
                                         </li>
+                                        <li><Link to={`/technician/warranty`}><img style={{ height: '28px' }} src="/img/icons/service-07.svg" alt="Icon" /><span>Bảo hành</span></Link></li>
                                         {/* <li>
                                             <Link to={`/profile`}>
                                                 <img src="/img/icons/settings-icon.svg" alt="Icon" />
@@ -520,7 +512,7 @@ const TechnicianJobList = () => {
                                                                     <Link to={`/booking/booking-processing?bookingId=${id}`} className="dropdown-item">
                                                                         <i className="feather-eye"></i> Tiến trình
                                                                     </Link>
-                                                        
+
                                                                 </div>
                                                             </div>
                                                         </td>
