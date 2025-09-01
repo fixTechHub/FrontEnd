@@ -656,9 +656,9 @@ const TechnicianDeposit = () => {
                               autoComplete="off"
                             />
                             <span className="input-group-text">VND</span>
-                            {(payAmountError || transactionError) && (
+                            {(transactionError) && (
                               <div className="invalid-feedback">
-                                {payAmountError || transactionError}
+                                {transactionError}
                               </div>
                             )}
                           </div>
