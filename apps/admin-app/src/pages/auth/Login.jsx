@@ -26,17 +26,17 @@ const Login = () => {
         password: values.password,
       }, { withCredentials: true });
 
-      message.success('Logged in successfully');
+      message.success('Đăng nhập thành công');
       navigate('/admin/admin-dashboard');
     } catch (err) {
       const status = err?.response?.status;
       const msg = err?.response?.data?.message;
       if (status === 401) {
-        setFormError(msg || 'Invalid email or password');
+        setFormError(msg || 'Email hoặc mật khẩu không hợp lệ');
       } else if (status === 403) {
-        setFormError('Your account is blocked or inactive');
+        setFormError('Tài khoản của bạn đã bị khóa hoặc không hoạt động');
       } else {
-        setFormError(msg || 'Login failed');
+        setFormError(msg || 'Đăng nhập thất bại');
       }
     } finally {
       setLoading(false);
@@ -54,15 +54,15 @@ const Login = () => {
     }}>
       <Card style={{ width: 420, borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.06)' }}>
         <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <Title level={3} style={{ marginBottom: 0 }}>Admin Login</Title>
-          <Text type="secondary">Sign in to access admin dashboard</Text>
+          <Title level={3} style={{ marginBottom: 0 }}>Đăng nhập Quản trị viên</Title>
+          <Text type="secondary">Truy cập hệ thống quản lý </Text>
         </div>
         
         <Form form={form} layout="vertical" onFinish={onFinish} autoComplete="off">
-          <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Please enter your email' }]}> 
+          <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Vui lòng nhập email' }]}> 
             <Input prefix={<MailOutlined />} placeholder="you@example.com" size="large" />
           </Form.Item>
-          <Form.Item label="Password" name="password" rules={[{ required: true, message: 'Please enter your password' }]}> 
+          <Form.Item label="Mật khẩu" name="password" rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}> 
             <Input.Password prefix={<LockOutlined />} placeholder="••••••••" size="large" />
           </Form.Item>
           {formError && (
@@ -79,10 +79,10 @@ const Login = () => {
           </div>
         )}
           <Form.Item>
-            <Button type="primary" htmlType="submit" size="large" block loading={loading}>Login</Button>
+            <Button type="primary" htmlType="submit" size="large" block loading={loading}>Đăng nhập</Button>
           </Form.Item>
           <div style={{ textAlign: 'right' }}>
-            <a href="/forgot-password">Forgot password?</a>
+            <a href="/forgot-password">Quên mật khẩu?</a>
           </div>
         </Form>
         

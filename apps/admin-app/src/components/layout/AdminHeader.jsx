@@ -152,9 +152,6 @@ const AdminHeader = () => {
         <div style={{ padding: '8px 0' }}>
           <div style={{ fontWeight: 'bold' }}>{userInfo?.fullName || 'Admin'}</div>
           <div style={{ fontSize: '12px', color: '#666' }}>{userInfo?.email || ''}</div>
-          {userInfo?.role && (
-            <div style={{ fontSize: '11px', color: '#999', marginTop: '4px' }}>Role: {userInfo.role}</div>
-          )}
         </div>
       ),
       disabled: true
@@ -162,11 +159,11 @@ const AdminHeader = () => {
     { type: 'divider' },
     {
       key: 'change-password',
-      label: 'Change Password'
+      label: 'Đổi mật khẩu'
     },
     {
       key: 'logout',
-      label: 'Logout'
+      label: 'Đăng xuất'
     }
   ];
 
@@ -190,7 +187,7 @@ const AdminHeader = () => {
     <header className="admin-header" style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', padding: 16, background: '#fff', borderBottom: '1px solid #eee' }}>
       <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <button className="btn" style={{ background: '#f5f5f5', border: 'none', borderRadius: 6, padding: 8 }} onClick={handleExportExcel}>
-          <FaDownload /> Export
+          <FaDownload /> Xuất dữ liệu
         </button>
         <Notifications
         userId={userInfo?.id}
@@ -237,12 +234,12 @@ const AdminHeader = () => {
 
       {/* Export Modal */}
       <Modal
-        title="Export to Excel"
+        title="Xuất dữ liệu ra Excel"
         open={showExportModal}
         onOk={handleModalOk}
         onCancel={handleModalCancel}
-        okText="Export"
-        cancelText="Cancel"
+        okText="Xuất dữ liệu"
+        cancelText="Hủy"
         styles={{ body: { padding: '24px' } }}
       >
         <div style={{ marginBottom: 12 }}>
