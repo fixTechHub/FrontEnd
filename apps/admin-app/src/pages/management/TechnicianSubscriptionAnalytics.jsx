@@ -552,21 +552,13 @@ scales: {
                 background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)'
               }}>
                 <Statistic
-                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng doanh thu</Text>}
+                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng doanh thu của năm</Text>}
                   value={analyticsData.totalRevenue}
                   precision={0}
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
-                  prefix={<DollarOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
+                  prefix={<DollarOutlined style={{ color: 'rgba(255, 255, 255, 0.8)'}} />}
                   suffix="VND"
                 />
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color={analyticsData.revenueGrowth >= 0 ? 'green' : 'red'} style={{ color: 'black' }}>
-                    {analyticsData.revenueGrowth >= 0 ? '+' : ''}{analyticsData.revenueGrowth}%
-                  </Tag>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    so với cùng kì năm ngoái
-                  </Text>
-                </div>
               </Card>
              </Col>
 
@@ -582,23 +574,7 @@ scales: {
                   value={analyticsData.totalSubscriptions}
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
                   prefix={<UserOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
-                />
-               <div style={{ marginTop: '8px' }}>
-                <Tag color="green" style={{ color: 'black' }}>
-                  {analyticsData.avgRevenuePerSub.toLocaleString('en-US', { 
-                    maximumFractionDigits: 0
-                  })} VND
-                </Tag>
-                <Text 
-                  style={{ 
-                    color: 'rgba(255, 255, 255, 0.8)', 
-                    marginLeft: '8px', 
-                    fontSize: '12px' 
-                  }}
-                >
-                  trung bình/gói
-                </Text>
-              </div>              
+                />          
               </Card>
             </Col>
 
@@ -615,14 +591,6 @@ scales: {
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
                   prefix={<CheckCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
                 />
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color="blue" style={{ color: 'black' }}>
-                    {analyticsData.conversionRate}%
-                  </Tag>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    tỷ lệ chuyển đổi
-                  </Text>
-                </div>
               </Card>
             </Col>
 
@@ -638,17 +606,9 @@ scales: {
                   value={analyticsData.totalChurnRate}
                   precision={1}
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
-                                                prefix={<DownOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
+                  prefix={<CloseCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
                   suffix="%"
                 />
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color="orange" style={{ color: 'black' }}>
-                    {analyticsData.pendingSubscriptions}
-                  </Tag>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    đang chờ xử lý
-                  </Text>
-                </div>
               </Card>
             </Col>
           </Row>
