@@ -262,7 +262,6 @@ export default function WarrantyList() {
                                 <i className="fas fa-ellipsis-vertical"></i>
                               </button>
                               <div className="dropdown-menu dropdown-menu-end">
-                                {/* TODO: cập nhật route chi tiết bảo hành nếu bạn có */}
                                 <Link to={`/warranty?bookingWarrantyId=${w?._id || ''}`} className="dropdown-item">
                                   <i className="feather-eye"></i> Chi tiết
                                 </Link>
