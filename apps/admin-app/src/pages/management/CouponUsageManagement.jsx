@@ -354,7 +354,7 @@ const handleSortByUsedAt = () => {
              <input
                type="text"
                className="form-control"
-               placeholder="Tìm kiếm đơn hàng, mã giảm giá, khách hàng..."
+               placeholder="Tìm kiếm mã giảm giá, khách hàng..."
                value={filters.search || ''}
                onChange={handleSearchChange}
              />
