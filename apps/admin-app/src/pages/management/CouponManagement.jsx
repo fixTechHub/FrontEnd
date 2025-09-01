@@ -81,10 +81,10 @@ const [userFilterCriteria, setUserFilterCriteria] = useState({
 });
 const [filteredUsers, setFilteredUsers] = useState([]);
 const [loadingFilteredUsers, setLoadingFilteredUsers] = useState(false);
- const [selectedFilteredUserIds, setSelectedFilteredUserIds] = useState([]);
+const [selectedFilteredUserIds, setSelectedFilteredUserIds] = useState([]);
  const [selectAllSelected, setSelectAllSelected] = useState(false);
  
- const [validationErrors, setValidationErrors] = useState({});
+const [validationErrors, setValidationErrors] = useState({});
 const [activeKey, setActiveKey] = useState('active');
 
 
@@ -417,7 +417,7 @@ const handleImageUpload = () => {
    
    // Gọi API filter với criteria hiện tại, sau đó áp dụng search
    handleApplyUserFilter(userFilterCriteria);
- };
+};
 useEffect(() => {
   if (showUserFilterModal && allUsers.length === 0) {
     setLoadingUsers(true);
