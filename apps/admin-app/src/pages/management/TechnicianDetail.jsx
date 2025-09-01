@@ -13,6 +13,7 @@ import { formatCurrency } from '../../utils/formatCurrency';
 import { fetchReportCounts } from '../../features/reports/reportSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { sendNotificationsThunk } from '../../features/notifications/notificationsSlice';
+import { approveTechnicianThunk } from '../../features/admin/adminSlice';
 const { TextArea } = Input;
 
 const statusTag = (status) => {
@@ -262,11 +263,13 @@ export default function TechnicianDetail() {
         key: 'serviceName',
         render: (_, r) => serviceMap[r.serviceId] || r.serviceName || r.serviceId,
       },
-      { title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => (
-        <Tag color={getBookingStatusColor(s)}>
-          {bookingStatusMapping[s] || s?.replace(/_/g, ' ')}
-        </Tag>
-      ) },
+      {
+        title: 'Trạng thái', dataIndex: 'status', key: 'status', render: (s) => (
+          <Tag color={getBookingStatusColor(s)}>
+            {bookingStatusMapping[s] || s?.replace(/_/g, ' ')}
+          </Tag>
+        )
+      },
       { title: 'Thời gian tạo đơn hàng', dataIndex: 'createdAt', key: 'createdAt', render: (v) => formatDateTime(v) },
     ],
     [serviceMap]
@@ -274,8 +277,8 @@ export default function TechnicianDetail() {
   //Load Number of times the technician has been reported 
   useEffect(() => {
     if (technician?.userId) {
-   dispatch(fetchReportCounts(technician.userId));
-     
+      dispatch(fetchReportCounts(technician.userId));
+
     }
   }, [technician?.userId, dispatch]);
 
@@ -314,6 +317,7 @@ export default function TechnicianDetail() {
       // Reload data
       const updatedTechnician = await technicianAPI.getById(technician.id);
       setTechnician(updatedTechnician);
+      await dispatch(approveTechnicianThunk(technician.id)).unwrap();
     } catch (error) {
       console.error('Error approving technician:', error);
       message.error('Duyệt kỹ thuật viên thất bại!');
@@ -337,7 +341,7 @@ export default function TechnicianDetail() {
       message.error('Vui lòng nhập lý do từ chối!');
       return;
     }
-    
+
     try {
       setLoading(true);
       await technicianAPI.updateStatus(technician.id, 'REJECTED', rejectReason);
@@ -366,8 +370,8 @@ export default function TechnicianDetail() {
 
       return (
         (bookingCode.includes(search) ||
-         service.includes(search) ||
-         status.includes(search)) &&
+          service.includes(search) ||
+          status.includes(search)) &&
         (!filterService || b.serviceId === filterService) &&
         (!filterStatus || b.status === filterStatus)
       );
@@ -406,7 +410,7 @@ export default function TechnicianDetail() {
   // Logic filter cho financial data
   const filteredFinancialBookings = useMemo(() => {
     if (!financialData || !financialData.bookings) return [];
-    
+
     return financialData.bookings.filter(b => {
       const bookingCode = (b.bookingCode || '').toLowerCase();
       const service = (serviceMap[b.serviceId] || '').toLowerCase();
@@ -415,8 +419,8 @@ export default function TechnicianDetail() {
 
       return (
         (bookingCode.includes(search) ||
-         service.includes(search) ||
-         status.includes(search)) &&
+          service.includes(search) ||
+          status.includes(search)) &&
         (!financialFilterService || b.serviceId === financialFilterService) &&
         (!financialFilterStatus || b.paymentStatus === financialFilterStatus)
       );
@@ -484,16 +488,16 @@ export default function TechnicianDetail() {
                     <Button type="primary" onClick={() => setIsModalOpen(true)}>Gửi Cảnh Cáo</Button>
                     {technician.status === "PENDING" && (
                       <>
-                        <Button 
-                          type="primary" 
+                        <Button
+                          type="primary"
                           style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
                           onClick={() => handleApproveTechnician()}
                         >
                           <i className="ti ti-check me-1"></i>
                           Đồng ý
                         </Button>
-                        <Button 
-                          type="primary" 
+                        <Button
+                          type="primary"
                           danger
                           onClick={() => handleOpenRejectModal()}
                         >
@@ -504,122 +508,122 @@ export default function TechnicianDetail() {
                     )}
                   </div>
                 </div>
-                
-                                 {/* Financial Summary Card - Góc trên cùng bên phải */}
-                 {financialLoading ? (
-                   <div style={{ 
-                     display: 'flex', 
-                     alignItems: 'center', 
-                     justifyContent: 'center',
-                     minWidth: '280px',
-                     height: '120px',
-                     background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                     borderRadius: '16px',
-                     border: '2px dashed #d9d9d9'
-                   }}>
-                     <Spin size="large" />
-                   </div>
-                 ) : financialData ? (
-                   <div style={{
-                     minWidth: '280px',
-                     background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
-                     borderRadius: '20px',
-                     padding: '24px',
-                     color: 'white',
-                     boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
-                     position: 'relative',
-                     overflow: 'hidden'
-                   }}>
-                     {/* Background Pattern */}
-                     <div style={{
-                       position: 'absolute',
-                       top: '-20px',
-                       right: '-20px',
-                       width: '80px',
-                       height: '80px',
-                       background: 'rgba(255, 255, 255, 0.1)',
-                       borderRadius: '50%',
-                       opacity: 0.6
-                     }} />
-                     <div style={{
-                       position: 'absolute',
-                       bottom: '-30px',
-                       left: '-30px',
-                       width: '120px',
-                       height: '120px',
-                       background: 'rgba(255, 255, 255, 0.05)',
-                       borderRadius: '50%'
-                     }} />
-                     
-                     {/* Icon */}
-                     <div style={{
-                       display: 'flex',
-                       alignItems: 'center',
-                       marginBottom: '16px'
-                     }}>
-                       <div style={{
-                         width: '40px',
-                         height: '40px',
-                         background: 'rgba(255, 255, 255, 0.2)',
-                         borderRadius: '12px',
-                         display: 'flex',
-                         alignItems: 'center',
-                         justifyContent: 'center',
-                         marginRight: '12px'
-                       }}>
-                         <i className="ti ti-wallet" style={{ 
-                           fontSize: '20px', 
-                           color: 'black' 
-                         }} />
-                       </div>
-                       <div style={{ fontSize: '14px', opacity: 0.9, color: 'black' }}>
-                         Tổng Thu Nhập
-                       </div>
-                     </div>
-                     
-                     {/* Amount */}
-                     <div style={{
-                       fontSize: '28px',
-                       fontWeight: '700',
-                       marginBottom: '8px',
-                       textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                       color: 'black'
-                     }}>
-                       {formatCurrency(financialData.totalEarning || 0)}
-                     </div>
-                     
-                     {/* Subtitle */}
-                     <div style={{
-                       fontSize: '12px',
-                       opacity: 0.8,
-                       fontWeight: '500',
-                       color: 'black'
-                     }}>
-                       Từ tất cả công việc
-                     </div>
-                     
-                     {/* Trend Indicator */}
-                   </div>
-                 ) : (
-                   <div style={{
-                     minWidth: '280px',
-                     height: '120px',
-                     background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-                     borderRadius: '20px',
-                     border: '2px dashed #d9d9d9',
-                     display: 'flex',
-                     alignItems: 'center',
-                     justifyContent: 'center',
-                     color: '#666',
-                     fontSize: '14px',
-                     fontWeight: '500'
-                   }}>
-                     <div style={{ textAlign: 'center' }}>
-                       <div style={{ fontSize: '24px', marginBottom: '8px' }}>💰</div>
-                       Chưa có dữ liệu thu nhập
-                     </div>
-                   </div>
-                 )}
+
+                {/* Financial Summary Card - Góc trên cùng bên phải */}
+                {financialLoading ? (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '280px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                    borderRadius: '16px',
+                    border: '2px dashed #d9d9d9'
+                  }}>
+                    <Spin size="large" />
+                  </div>
+                ) : financialData ? (
+                  <div style={{
+                    minWidth: '280px',
+                    background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)',
+                    borderRadius: '20px',
+                    padding: '24px',
+                    color: 'white',
+                    boxShadow: '0 10px 30px rgba(102, 126, 234, 0.3)',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}>
+                    {/* Background Pattern */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '-20px',
+                      right: '-20px',
+                      width: '80px',
+                      height: '80px',
+                      background: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: '50%',
+                      opacity: 0.6
+                    }} />
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '-30px',
+                      left: '-30px',
+                      width: '120px',
+                      height: '120px',
+                      background: 'rgba(255, 255, 255, 0.05)',
+                      borderRadius: '50%'
+                    }} />
+
+                    {/* Icon */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      marginBottom: '16px'
+                    }}>
+                      <div style={{
+                        width: '40px',
+                        height: '40px',
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        borderRadius: '12px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        marginRight: '12px'
+                      }}>
+                        <i className="ti ti-wallet" style={{
+                          fontSize: '20px',
+                          color: 'black'
+                        }} />
+                      </div>
+                      <div style={{ fontSize: '14px', opacity: 0.9, color: 'black' }}>
+                        Tổng Thu Nhập
+                      </div>
+                    </div>
+
+                    {/* Amount */}
+                    <div style={{
+                      fontSize: '28px',
+                      fontWeight: '700',
+                      marginBottom: '8px',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      color: 'black'
+                    }}>
+                      {formatCurrency(financialData.totalEarning || 0)}
+                    </div>
+
+                    {/* Subtitle */}
+                    <div style={{
+                      fontSize: '12px',
+                      opacity: 0.8,
+                      fontWeight: '500',
+                      color: 'black'
+                    }}>
+                      Từ tất cả công việc
+                    </div>
+
+                    {/* Trend Indicator */}
+                  </div>
+                ) : (
+                  <div style={{
+                    minWidth: '280px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+                    borderRadius: '20px',
+                    border: '2px dashed #d9d9d9',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#666',
+                    fontSize: '14px',
+                    fontWeight: '500'
+                  }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>💰</div>
+                      Chưa có dữ liệu thu nhập
+                    </div>
+                  </div>
+                )}
               </div>
 
               <Descriptions column={2} bordered>
@@ -633,10 +637,9 @@ export default function TechnicianDetail() {
                 <Descriptions.Item label="Tình trạng">{availabilityTag(technician.availability)}</Descriptions.Item>
                 <Descriptions.Item label="Đánh giá">
                   <div className="d-flex align-items-center gap-2">
-                    <span className={`badge text-white ${
-                      (technician.ratingAverage || 0) >= 4 ? 'bg-success' : 
-                      (technician.ratingAverage || 0) >= 2 ? 'bg-warning' : 'bg-danger'
-                    }`}>
+                    <span className={`badge text-white ${(technician.ratingAverage || 0) >= 4 ? 'bg-success' :
+                        (technician.ratingAverage || 0) >= 2 ? 'bg-warning' : 'bg-danger'
+                      }`}>
                       {technician.ratingAverage?.toFixed(1) ?? '0.0'}
                     </span>
                     <div className="rating-stars">
@@ -649,7 +652,7 @@ export default function TechnicianDetail() {
                           fontSize: '14px',
                           marginRight: '2px'
                         };
-                        
+
                         if (star <= Math.floor(rating)) {
                           // Sao hoàn chỉnh (phần nguyên)
                           starColor = '#ffc107';
@@ -671,9 +674,9 @@ export default function TechnicianDetail() {
                             marginRight: '2px'
                           };
                         }
-                        
+
                         return (
-                          <i 
+                          <i
                             key={star}
                             className={starClass}
                             style={starStyle}
@@ -722,34 +725,34 @@ export default function TechnicianDetail() {
                 </div>
               </div>
             </Card>
-                         <Tabs
-               items={[
-                 {
-                   key: 'profile',
-                   label: 'Thông Tin Tài Khoản',
-                   children: (
-                     <Card variant="borderless" style={{ borderRadius: 12 }}>
-                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-                         
+            <Tabs
+              items={[
+                {
+                  key: 'profile',
+                  label: 'Thông Tin Tài Khoản',
+                  children: (
+                    <Card variant="borderless" style={{ borderRadius: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
 
-                         {/* Location Information */}
-                         <div>
-                           <h4 style={{ marginBottom: 16, color: '#333' }}>Vị Trí</h4>
-                           <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
-                             {technician.currentLocation && technician.currentLocation.coordinates && technician.currentLocation.coordinates.length >= 2 ? (
-                               <>
-                                 <div style={{ marginBottom: 12 }}>
-                                   <strong>Vĩ độ:</strong> {technician.currentLocation.coordinates[1]?.toFixed(6) || 'N/A'}
-                                 </div>
-                                 <div style={{ marginBottom: 12 }}>
-                                   <strong>Kinh độ:</strong> {technician.currentLocation.coordinates[0]?.toFixed(6) || 'N/A'}
-                                 </div>
-                                 <div style={{ marginBottom: 12 }}>
-                                   <strong>Loại vị trí:</strong> {technician.currentLocation.type || 'Point'}
-                                 </div>
-                                 <div style={{ marginBottom: 8 }}>
-                                   <strong>Google Maps: </strong>
-                                    <a 
+
+                        {/* Location Information */}
+                        <div>
+                          <h4 style={{ marginBottom: 16, color: '#333' }}>Vị Trí</h4>
+                          <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
+                            {technician.currentLocation && technician.currentLocation.coordinates && technician.currentLocation.coordinates.length >= 2 ? (
+                              <>
+                                <div style={{ marginBottom: 12 }}>
+                                  <strong>Vĩ độ:</strong> {technician.currentLocation.coordinates[1]?.toFixed(6) || 'N/A'}
+                                </div>
+                                <div style={{ marginBottom: 12 }}>
+                                  <strong>Kinh độ:</strong> {technician.currentLocation.coordinates[0]?.toFixed(6) || 'N/A'}
+                                </div>
+                                <div style={{ marginBottom: 12 }}>
+                                  <strong>Loại vị trí:</strong> {technician.currentLocation.type || 'Point'}
+                                </div>
+                                <div style={{ marginBottom: 8 }}>
+                                  <strong>Google Maps: </strong>
+                                  <a
 
                                     href={`https://www.google.com/maps?q=${technician.currentLocation.coordinates[1]},${technician.currentLocation.coordinates[0]}`}
                                     target="_blank"
@@ -765,481 +768,481 @@ export default function TechnicianDetail() {
                                     <i className="ti ti-map-pin" style={{ fontSize: '16px' }}></i>
                                     Xem trên Google Maps
                                   </a>
-                                 </div>
-                                 
-                               </>
-                             ) : (
-                               <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
-                                 Chưa cập nhật vị trí
-                               </div>
-                             )}
-                           </div>
-                         </div>
+                                </div>
 
-                         {/* Bank Information */}
-                         <div>
-                           <h4 style={{ marginBottom: 16, color: '#333' }}>Thông Tin Ngân Hàng</h4>
-                           <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
-                             {technician.bankAccount ? (
-                               <>
-                                 <div style={{ marginBottom: 12 }}>
-                                   <strong>Ngân hàng:</strong> {technician.bankAccount.bankName}
-                                 </div>
-                                 <div style={{ marginBottom: 12 }}>
-                                   <strong>Số tài khoản:</strong> {technician.bankAccount.accountNumber}
-                                 </div>
-                                 <div style={{ marginBottom: 12 }}>
-                                   <strong>Chủ tài khoản:</strong> {technician.bankAccount.accountHolder}
-                                 </div>
-                                 <div style={{ marginBottom: 12 }}>
-                                   <strong>Chi nhánh:</strong> {technician.bankAccount.branch}
-                                 </div>
-                               </>
-                             ) : (
-                               <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
-                                 Chưa cập nhật thông tin ngân hàng
-                               </div>
-                             )}
-                           </div>
-                         </div>
-                       </div>
-                     </Card>
-                   ),
-                 },
-                 {
-                   key: 'documents',
-                   label: 'Tài Liệu & Chứng Chỉ',
-                   children: (
-                     <Card variant="borderless" style={{ borderRadius: 12 }}>
-                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
-                         {/* ID Images */}
-                         <div>
-                           <h4 style={{ marginBottom: 16, color: '#333' }}>Chứng Minh Nhân Dân</h4>
-                           <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
-                             <div style={{ marginBottom: 16 }}>
-                               <div style={{ marginBottom: 8 }}>
-                                 <strong>Mặt trước CMND/CCCD:</strong>
-                               </div>
-                               {technician.frontIdImage ? (
-                                 <div style={{ textAlign: 'center' }}>
-                                   <img
-                                     src={technician.frontIdImage}
-                                     alt="Front ID"
-                                     style={{
-                                       maxWidth: '100%',
-                                       maxHeight: '200px',
-                                       borderRadius: '8px',
-                                       border: '1px solid #d9d9d9'
-                                     }}
-                                   />
-                                   <div style={{ marginTop: 8 }}>
-                                     <Button
-                                       type="link"
-                                       size="small"
-                                       onClick={() => window.open(technician.frontIdImage, '_blank')}
-                                     >
-                                       Xem ảnh gốc
-                                     </Button>
-                                   </div>
-                                 </div>
-                               ) : (
-                                 <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
-                                   Chưa cập nhật ảnh mặt trước
-                                 </div>
-                               )}
-                             </div>
-                             
-                             <div>
-                               <div style={{ marginBottom: 8 }}>
-                                 <strong>Mặt sau CMND/CCCD:</strong>
-                               </div>
-                               {technician.backIdImage ? (
-                                 <div style={{ textAlign: 'center' }}>
-                                   <img
-                                     src={technician.backIdImage}
-                                     alt="Back ID"
-                                     style={{
-                                       maxWidth: '100%',
-                                       maxHeight: '200px',
-                                       borderRadius: '8px',
-                                       border: '1px solid #d9d9d9'
-                                     }}
-                                   />
-                                   <div style={{ marginTop: 8 }}>
-                                     <Button
-                                       type="link"
-                                       size="small"
-                                       onClick={() => window.open(technician.backIdImage, '_blank')}
-                                     >
-                                       Xem ảnh gốc
-                                     </Button>
-                                   </div>
-                                 </div>
-                               ) : (
-                                 <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
-                                   Chưa cập nhật ảnh mặt sau
-                                 </div>
-                               )}
-                             </div>
-                           </div>
-                         </div>
-
-                         {/* Certificates */}
-                         <div>
-                           <h4 style={{ marginBottom: 16, color: '#333' }}>Chứng Chỉ & Bằng Cấp</h4>
-                           <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
-                             {technician.certificate && technician.certificate.length > 0 ? (
-                               <div>
-                                 {technician.certificate.map((cert, index) => (
-                                   <div key={index} style={{ marginBottom: 16, padding: '12px', background: 'white', borderRadius: '6px', border: '1px solid #e8e8e8' }}>
-                                     <div style={{ marginBottom: 8 }}>
-                                       <strong>Chứng chỉ {index + 1}:</strong>
-                                     </div>
-                                     <div style={{ textAlign: 'center' }}>
-                                       {cert.toLowerCase().includes('.pdf') ? (
-                                         <div>
-                                           <div style={{ fontSize: '48px', color: '#1890ff', marginBottom: 8 }}>📄</div>
-                                           <div style={{ marginBottom: 8, fontSize: '14px', color: '#666' }}>
-                                             {cert.split('/').pop()}
-                                           </div>
-                                           <Button
-                                             type="primary"
-                                             size="small"
-                                             onClick={() => window.open(cert, '_blank')}
-                                           >
-                                             Xem PDF
-                                           </Button>
-                                         </div>
-                                       ) : (
-                                         <div>
-                                           <img
-                                             src={cert}
-                                             alt={`Certificate ${index + 1}`}
-                                             style={{
-                                               maxWidth: '100%',
-                                               maxHeight: '150px',
-                                               borderRadius: '6px',
-                                               border: '1px solid #d9d9d9'
-                                             }}
-                                           />
-                                           <div style={{ marginTop: 8 }}>
-                                             <Button
-                                               type="link"
-                                               size="small"
-                                               onClick={() => window.open(cert, '_blank')}
-                                             >
-                                               Xem ảnh gốc
-                                             </Button>
-                                           </div>
-                                         </div>
-                                       )}
-                                     </div>
-                                   </div>
-                                 ))}
-                               </div>
-                             ) : (
-                               <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
-                                 Chưa có chứng chỉ nào được cập nhật
-                               </div>
-                             )}
-                           </div>
-                         </div>
-                       </div>
-                     </Card>
-                   ),
-                 },
-                 {
-                   key: 'bookings',
-                   label: 'Lịch Sử Công Việc',
-                   children: (
-                     <div>
-                        {/* Search và Filter Controls */}
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between', 
-                          flexWrap: 'wrap',
-                          gap: 16,
-                          marginBottom: 16,
-                          padding: '16px',
-                          background: '#f8f9fa',
-                          borderRadius: '8px'
-                        }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                            {/* Search Input */}
-                            <div className="top-search">
-                              <div className="top-search-group">
-                                <span className="input-icon">
-                                  <i className="ti ti-search"></i>
-                                </span>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  placeholder="Tìm kiếm đơn hàng..."
-                                  value={searchText}
-                                  onChange={e => setSearchText(e.target.value)}
-                                />
+                              </>
+                            ) : (
+                              <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
+                                Chưa cập nhật vị trí
                               </div>
-                            </div>
-
-                            {/* Service Filter */}
-                            <Select
-                              placeholder="Dịch vụ"
-                              value={filterService || undefined}
-                              onChange={(value) => setFilterService(value)}
-                              style={{ width: 250 }}
-                              allowClear
-                            >
-                              {allServices.map(s => (
-                                <Select.Option key={s.id} value={s.id}>
-                                  {s.serviceName || s.name}
-                                </Select.Option>
-                              ))}
-                            </Select>
-
-                            {/* Status Filter */}
-                            <Select
-                              placeholder="Trạng thái"
-                              value={filterStatus || undefined}
-                              onChange={(value) => setFilterStatus(value)}
-                              style={{ width: 250 }}
-                              allowClear
-                              options={[
-                                { value: 'PENDING', label: 'Đang chờ' },
-                                { value: 'CANCELLED', label: 'Đã hủy' },
-                                { value: 'WAITING_CONFIRM', label: 'Chờ xác nhận' },
-                                { value: 'IN_PROGRESS', label: 'Đang xử lý' },
-                                { value: 'CONFIRMED', label: 'Đã xác nhận' },
-                                { value: 'DONE', label: 'Hoàn thành' },
-                                { value: 'AWAITING_CONFIRM', label: 'Chờ xác nhận' },
-                                { value: 'CONFIRM_ADDITIONAL', label: 'Xác nhận bổ sung' },
-                                { value: 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL', label: 'Chờ khách hàng xác nhận bổ sung' },
-                                { value: 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL', label: 'Chờ kỹ thuật viên xác nhận bổ sung' },
-                                { value: 'AWAITING_DONE', label: 'Chờ hoàn thành' }
-                              ]}
-                            />
+                            )}
                           </div>
                         </div>
 
-                        {/* Filter Info */}
-                        {(searchText || filterService || filterStatus) && (
-                          <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
-                            <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
-                            {searchText && (
-                              <span className="badge bg-primary-transparent">
-                                <i className="ti ti-search me-1"></i>
-                                Tìm kiếm: "{searchText}"
-                              </span>
+                        {/* Bank Information */}
+                        <div>
+                          <h4 style={{ marginBottom: 16, color: '#333' }}>Thông Tin Ngân Hàng</h4>
+                          <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
+                            {technician.bankAccount ? (
+                              <>
+                                <div style={{ marginBottom: 12 }}>
+                                  <strong>Ngân hàng:</strong> {technician.bankAccount.bankName}
+                                </div>
+                                <div style={{ marginBottom: 12 }}>
+                                  <strong>Số tài khoản:</strong> {technician.bankAccount.accountNumber}
+                                </div>
+                                <div style={{ marginBottom: 12 }}>
+                                  <strong>Chủ tài khoản:</strong> {technician.bankAccount.accountHolder}
+                                </div>
+                                <div style={{ marginBottom: 12 }}>
+                                  <strong>Chi nhánh:</strong> {technician.bankAccount.branch}
+                                </div>
+                              </>
+                            ) : (
+                              <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
+                                Chưa cập nhật thông tin ngân hàng
+                              </div>
                             )}
-                            {filterService && (
-                              <span className="badge bg-info-transparent">
-                                <i className="ti ti-tools me-1"></i>
-                                Dịch vụ: {serviceMap[filterService] || filterService}
-                              </span>
-                            )}
-                            {filterStatus && (
-                              <span className="badge bg-warning-transparent">
-                                <i className="ti ti-filter me-1"></i>
-                                Trạng thái: {bookingStatusMapping[filterStatus] || filterStatus.replace(/_/g, ' ')}
-                              </span>
-                            )}
-                            <button 
-                              className="btn btn-sm btn-outline-secondary"
-                              onClick={() => {
-                                setSearchText('');
-                                setFilterService('');
-                                setFilterStatus('');
-                              }}
-                            >
-                              <i className="ti ti-x me-1"></i>
-                              Xóa tất cả
-                            </button>
                           </div>
-                        )}
+                        </div>
+                      </div>
+                    </Card>
+                  ),
+                },
+                {
+                  key: 'documents',
+                  label: 'Tài Liệu & Chứng Chỉ',
+                  children: (
+                    <Card variant="borderless" style={{ borderRadius: 12 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+                        {/* ID Images */}
+                        <div>
+                          <h4 style={{ marginBottom: 16, color: '#333' }}>Chứng Minh Nhân Dân</h4>
+                          <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
+                            <div style={{ marginBottom: 16 }}>
+                              <div style={{ marginBottom: 8 }}>
+                                <strong>Mặt trước CMND/CCCD:</strong>
+                              </div>
+                              {technician.frontIdImage ? (
+                                <div style={{ textAlign: 'center' }}>
+                                  <img
+                                    src={technician.frontIdImage}
+                                    alt="Front ID"
+                                    style={{
+                                      maxWidth: '100%',
+                                      maxHeight: '200px',
+                                      borderRadius: '8px',
+                                      border: '1px solid #d9d9d9'
+                                    }}
+                                  />
+                                  <div style={{ marginTop: 8 }}>
+                                    <Button
+                                      type="link"
+                                      size="small"
+                                      onClick={() => window.open(technician.frontIdImage, '_blank')}
+                                    >
+                                      Xem ảnh gốc
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
+                                  Chưa cập nhật ảnh mặt trước
+                                </div>
+                              )}
+                            </div>
+
+                            <div>
+                              <div style={{ marginBottom: 8 }}>
+                                <strong>Mặt sau CMND/CCCD:</strong>
+                              </div>
+                              {technician.backIdImage ? (
+                                <div style={{ textAlign: 'center' }}>
+                                  <img
+                                    src={technician.backIdImage}
+                                    alt="Back ID"
+                                    style={{
+                                      maxWidth: '100%',
+                                      maxHeight: '200px',
+                                      borderRadius: '8px',
+                                      border: '1px solid #d9d9d9'
+                                    }}
+                                  />
+                                  <div style={{ marginTop: 8 }}>
+                                    <Button
+                                      type="link"
+                                      size="small"
+                                      onClick={() => window.open(technician.backIdImage, '_blank')}
+                                    >
+                                      Xem ảnh gốc
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
+                                  Chưa cập nhật ảnh mặt sau
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Certificates */}
+                        <div>
+                          <h4 style={{ marginBottom: 16, color: '#333' }}>Chứng Chỉ & Bằng Cấp</h4>
+                          <div style={{ background: '#f8f9fa', padding: 16, borderRadius: 8 }}>
+                            {technician.certificate && technician.certificate.length > 0 ? (
+                              <div>
+                                {technician.certificate.map((cert, index) => (
+                                  <div key={index} style={{ marginBottom: 16, padding: '12px', background: 'white', borderRadius: '6px', border: '1px solid #e8e8e8' }}>
+                                    <div style={{ marginBottom: 8 }}>
+                                      <strong>Chứng chỉ {index + 1}:</strong>
+                                    </div>
+                                    <div style={{ textAlign: 'center' }}>
+                                      {cert.toLowerCase().includes('.pdf') ? (
+                                        <div>
+                                          <div style={{ fontSize: '48px', color: '#1890ff', marginBottom: 8 }}>📄</div>
+                                          <div style={{ marginBottom: 8, fontSize: '14px', color: '#666' }}>
+                                            {cert.split('/').pop()}
+                                          </div>
+                                          <Button
+                                            type="primary"
+                                            size="small"
+                                            onClick={() => window.open(cert, '_blank')}
+                                          >
+                                            Xem PDF
+                                          </Button>
+                                        </div>
+                                      ) : (
+                                        <div>
+                                          <img
+                                            src={cert}
+                                            alt={`Certificate ${index + 1}`}
+                                            style={{
+                                              maxWidth: '100%',
+                                              maxHeight: '150px',
+                                              borderRadius: '6px',
+                                              border: '1px solid #d9d9d9'
+                                            }}
+                                          />
+                                          <div style={{ marginTop: 8 }}>
+                                            <Button
+                                              type="link"
+                                              size="small"
+                                              onClick={() => window.open(cert, '_blank')}
+                                            >
+                                              Xem ảnh gốc
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div style={{ color: '#999', fontSize: '14px', fontStyle: 'italic' }}>
+                                Chưa có chứng chỉ nào được cập nhật
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </Card>
+                  ),
+                },
+                {
+                  key: 'bookings',
+                  label: 'Lịch Sử Công Việc',
+                  children: (
+                    <div>
+                      {/* Search và Filter Controls */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 16,
+                        marginBottom: 16,
+                        padding: '16px',
+                        background: '#f8f9fa',
+                        borderRadius: '8px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                          {/* Search Input */}
+                          <div className="top-search">
+                            <div className="top-search-group">
+                              <span className="input-icon">
+                                <i className="ti ti-search"></i>
+                              </span>
+                              <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Tìm kiếm đơn hàng..."
+                                value={searchText}
+                                onChange={e => setSearchText(e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Service Filter */}
+                          <Select
+                            placeholder="Dịch vụ"
+                            value={filterService || undefined}
+                            onChange={(value) => setFilterService(value)}
+                            style={{ width: 250 }}
+                            allowClear
+                          >
+                            {allServices.map(s => (
+                              <Select.Option key={s.id} value={s.id}>
+                                {s.serviceName || s.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+
+                          {/* Status Filter */}
+                          <Select
+                            placeholder="Trạng thái"
+                            value={filterStatus || undefined}
+                            onChange={(value) => setFilterStatus(value)}
+                            style={{ width: 250 }}
+                            allowClear
+                            options={[
+                              { value: 'PENDING', label: 'Đang chờ' },
+                              { value: 'CANCELLED', label: 'Đã hủy' },
+                              { value: 'WAITING_CONFIRM', label: 'Chờ xác nhận' },
+                              { value: 'IN_PROGRESS', label: 'Đang xử lý' },
+                              { value: 'CONFIRMED', label: 'Đã xác nhận' },
+                              { value: 'DONE', label: 'Hoàn thành' },
+                              { value: 'AWAITING_CONFIRM', label: 'Chờ xác nhận' },
+                              { value: 'CONFIRM_ADDITIONAL', label: 'Xác nhận bổ sung' },
+                              { value: 'WAITING_CUSTOMER_CONFIRM_ADDITIONAL', label: 'Chờ khách hàng xác nhận bổ sung' },
+                              { value: 'WAITING_TECHNICIAN_CONFIRM_ADDITIONAL', label: 'Chờ kỹ thuật viên xác nhận bổ sung' },
+                              { value: 'AWAITING_DONE', label: 'Chờ hoàn thành' }
+                            ]}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Filter Info */}
+                      {(searchText || filterService || filterStatus) && (
+                        <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+                          <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+                          {searchText && (
+                            <span className="badge bg-primary-transparent">
+                              <i className="ti ti-search me-1"></i>
+                              Tìm kiếm: "{searchText}"
+                            </span>
+                          )}
+                          {filterService && (
+                            <span className="badge bg-info-transparent">
+                              <i className="ti ti-tools me-1"></i>
+                              Dịch vụ: {serviceMap[filterService] || filterService}
+                            </span>
+                          )}
+                          {filterStatus && (
+                            <span className="badge bg-warning-transparent">
+                              <i className="ti ti-filter me-1"></i>
+                              Trạng thái: {bookingStatusMapping[filterStatus] || filterStatus.replace(/_/g, ' ')}
+                            </span>
+                          )}
+                          <button
+                            className="btn btn-sm btn-outline-secondary"
+                            onClick={() => {
+                              setSearchText('');
+                              setFilterService('');
+                              setFilterStatus('');
+                            }}
+                          >
+                            <i className="ti ti-x me-1"></i>
+                            Xóa tất cả
+                          </button>
+                        </div>
+                      )}
 
 
-                     <Table
-                       rowKey={(r) => r.id}
-                          dataSource={filteredBookings}
-                       columns={bookingColumns}
-                          pagination={{ 
+                      <Table
+                        rowKey={(r) => r.id}
+                        dataSource={filteredBookings}
+                        columns={bookingColumns}
+                        pagination={{
+                          pageSize: 10,
+                          showSizeChanger: false,
+                          showQuickJumper: false,
+                        }}
+                      />
+                    </div>
+                  ),
+                },
+                {
+                  key: 'financial',
+                  label: 'Tài Chính & Thu Nhập',
+                  children: (
+                    <div>
+                      {/* Search và Filter Controls */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 16,
+                        marginBottom: 16,
+                        padding: '16px',
+                        background: '#f8f9fa',
+                        borderRadius: '8px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                          {/* Search Input */}
+                          <div className="top-search">
+                            <div className="top-search-group">
+                              <span className="input-icon">
+                                <i className="ti ti-search"></i>
+                              </span>
+                              <input
+                                type="text"
+                                className="form-control"
+                                placeholder="Tìm kiếm đơn hàng tài chính..."
+                                value={financialSearchText}
+                                onChange={e => setFinancialSearchText(e.target.value)}
+                              />
+                            </div>
+                          </div>
+
+                          {/* Service Filter */}
+                          <Select
+                            placeholder="Dịch vụ"
+                            value={financialFilterService || undefined}
+                            onChange={(value) => setFinancialFilterService(value)}
+                            style={{ width: 250 }}
+                            allowClear
+                          >
+                            {allServices.map(s => (
+                              <Select.Option key={s.id} value={s.id}>
+                                {s.serviceName || s.name}
+                              </Select.Option>
+                            ))}
+                          </Select>
+
+                          {/* Payment Status Filter */}
+                          <Select
+                            placeholder="Trạng thái thanh toán"
+                            value={financialFilterStatus || undefined}
+                            onChange={(value) => setFinancialFilterStatus(value)}
+                            style={{ width: 250 }}
+                            allowClear
+                            options={[
+                              { value: 'PAID', label: 'Đã thanh toán' },
+                              { value: 'PENDING', label: 'Đang chờ' },
+                              { value: 'CANCELLED', label: 'Đã hủy' },
+                              { value: 'FAILED', label: 'Thất bại' },
+                              { value: 'REFUNDED', label: 'Đã hoàn tiền' }
+                            ]}
+                          />
+                        </div>
+                      </div>
+
+
+
+                      {/* Filter Info */}
+                      {(financialSearchText || financialFilterService || financialFilterStatus) && (
+                        <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
+                          <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
+                          {financialSearchText && (
+                            <span className="badge bg-primary-transparent">
+                              <i className="ti ti-search me-1"></i>
+                              Tìm kiếm: "{financialSearchText}"
+                            </span>
+                          )}
+                          {financialFilterService && (
+                            <span className="badge bg-info-transparent">
+                              <i className="ti ti-tools me-1"></i>
+                              Dịch vụ: {serviceMap[financialFilterService] || financialFilterService}
+                            </span>
+                          )}
+                          {financialFilterStatus && (
+                            <span className="badge bg-warning-transparent">
+                              <i className="ti ti-filter me-1"></i>
+                              Trạng thái thanh toán: {paymentStatusMapping[financialFilterStatus] || financialFilterStatus}
+                            </span>
+                          )}
+                          <button
+                            className="btn btn-sm btn-outline-secondary"
+                            onClick={() => {
+                              setFinancialSearchText('');
+                              setFinancialFilterService('');
+                              setFinancialFilterStatus('');
+                            }}
+                          >
+                            <i className="ti ti-x me-1"></i>
+                            Xóa tất cả
+                          </button>
+                        </div>
+                      )}
+
+
+
+                      {/* Financial Bookings Table */}
+                      {financialData ? (
+                        <Table
+                          rowKey={(r) => r.id}
+                          dataSource={filteredFinancialBookings}
+                          columns={[
+                            {
+                              title: 'Mã đơn hàng',
+                              dataIndex: 'bookingCode',
+                              key: 'bookingCode',
+                            },
+                            {
+                              title: 'Giá cuối',
+                              dataIndex: 'finalPrice',
+                              key: 'finalPrice',
+                              render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                            },
+                            {
+                              title: 'Thu nhập',
+                              dataIndex: 'technicianEarning',
+                              key: 'technicianEarning',
+                              render: (value) => value ? formatCurrency(value) : formatCurrency(0),
+                            },
+                            {
+                              title: 'Thanh toán',
+                              dataIndex: 'paymentStatus',
+                              key: 'paymentStatus',
+                              render: (status) => (
+                                <Tag color={getPaymentStatusColor(status)}>
+                                  {paymentStatusMapping[status] || status}
+                                </Tag>
+                              ),
+                            },
+                            {
+                              title: 'Ngày tạo',
+                              dataIndex: 'createdAt',
+                              key: 'createdAt',
+                              render: (date) => formatDateTime(date),
+                            },
+                          ]}
+                          pagination={{
                             pageSize: 10,
                             showSizeChanger: false,
-                            showQuickJumper: false,
+                            showQuickJumper: false
                           }}
                         />
-                      </div>
-                   ),
-                 },
-                 {
-                   key: 'financial',
-                   label: 'Tài Chính & Thu Nhập',
-                   children: (
-                     <div>
-                        {/* Search và Filter Controls */}
-                        <div style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          justifyContent: 'space-between', 
-                          flexWrap: 'wrap',
-                          gap: 16,
-                          marginBottom: 16,
-                          padding: '16px',
-                          background: '#f8f9fa',
-                          borderRadius: '8px'
+                      ) : (
+                        <div style={{
+                          textAlign: 'center',
+                          padding: '50px',
+                          color: '#999',
+                          background: '#fafafa',
+                          borderRadius: '8px',
+                          border: '1px dashed #d9d9d9'
                         }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-                            {/* Search Input */}
-                            <div className="top-search">
-                              <div className="top-search-group">
-                                <span className="input-icon">
-                                  <i className="ti ti-search"></i>
-                                </span>
-                                <input
-                                  type="text"
-                                  className="form-control"
-                                  placeholder="Tìm kiếm đơn hàng tài chính..."
-                                  value={financialSearchText}
-                                  onChange={e => setFinancialSearchText(e.target.value)}
-                                />
-                              </div>
-                            </div>
-
-                            {/* Service Filter */}
-                            <Select
-                              placeholder="Dịch vụ"
-                              value={financialFilterService || undefined}
-                              onChange={(value) => setFinancialFilterService(value)}
-                              style={{ width: 250 }}
-                              allowClear
-                            >
-                              {allServices.map(s => (
-                                <Select.Option key={s.id} value={s.id}>
-                                  {s.serviceName || s.name}
-                                </Select.Option>
-                              ))}
-                            </Select>
-
-                            {/* Payment Status Filter */}
-                            <Select
-                              placeholder="Trạng thái thanh toán"
-                              value={financialFilterStatus || undefined}
-                              onChange={(value) => setFinancialFilterStatus(value)}
-                              style={{ width: 250 }}
-                              allowClear
-                              options={[
-                                { value: 'PAID', label: 'Đã thanh toán' },
-                                { value: 'PENDING', label: 'Đang chờ' },
-                                { value: 'CANCELLED', label: 'Đã hủy' },
-                                { value: 'FAILED', label: 'Thất bại' },
-                                { value: 'REFUNDED', label: 'Đã hoàn tiền' }
-                              ]}
-                            />
-                          </div>
                         </div>
-
-                        
-
-                        {/* Filter Info */}
-                        {(financialSearchText || financialFilterService || financialFilterStatus) && (
-                          <div className="d-flex align-items-center gap-3 mb-3 p-2 bg-light rounded">
-                            <span className="text-muted fw-medium">Bộ lọc hiện tại:</span>
-                            {financialSearchText && (
-                              <span className="badge bg-primary-transparent">
-                                <i className="ti ti-search me-1"></i>
-                                Tìm kiếm: "{financialSearchText}"
-                              </span>
-                            )}
-                            {financialFilterService && (
-                              <span className="badge bg-info-transparent">
-                                <i className="ti ti-tools me-1"></i>
-                                Dịch vụ: {serviceMap[financialFilterService] || financialFilterService}
-                              </span>
-                            )}
-                            {financialFilterStatus && (
-                              <span className="badge bg-warning-transparent">
-                                <i className="ti ti-filter me-1"></i>
-                                Trạng thái thanh toán: {paymentStatusMapping[financialFilterStatus] || financialFilterStatus}
-                              </span>
-                            )}
-                            <button 
-                              className="btn btn-sm btn-outline-secondary"
-                              onClick={() => {
-                                setFinancialSearchText('');
-                                setFinancialFilterService('');
-                                setFinancialFilterStatus('');
-                              }}
-                            >
-                              <i className="ti ti-x me-1"></i>
-                              Xóa tất cả
-                            </button>
-                          </div>
-                        )}
-
-                       
-
-                           {/* Financial Bookings Table */}
-                        {financialData ? (
-                               <Table
-                            rowKey={(r) => r.id}
-                            dataSource={filteredFinancialBookings}
-                                 columns={[
-                                   {
-                                     title: 'Mã đơn hàng',
-                                     dataIndex: 'bookingCode',
-                                     key: 'bookingCode',
-                                   },
-                                   {
-                                     title: 'Giá cuối',
-                                     dataIndex: 'finalPrice',
-                                     key: 'finalPrice',
-                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
-                                   },
-                                   {
-                                     title: 'Thu nhập',
-                                     dataIndex: 'technicianEarning',
-                                     key: 'technicianEarning',
-                                     render: (value) => value ? formatCurrency(value) : formatCurrency(0),
-                                   },
-                                   {
-                                     title: 'Thanh toán',
-                                     dataIndex: 'paymentStatus',
-                                     key: 'paymentStatus',
-                                     render: (status) => (
-                                       <Tag color={getPaymentStatusColor(status)}>
-                                         {paymentStatusMapping[status] || status}
-                                       </Tag>
-                                     ),
-                                   },
-                                   {
-                                     title: 'Ngày tạo',
-                                     dataIndex: 'createdAt',
-                                     key: 'createdAt',
-                                     render: (date) => formatDateTime(date),
-                                   },
-                                 ]}
-                            pagination={{ 
-                              pageSize: 10,
-                              showSizeChanger: false,
-                              showQuickJumper: false
-                            }}
-                          />
-                        ) : (
-                          <div style={{ 
-                            textAlign: 'center', 
-                            padding: '50px', 
-                            color: '#999',
-                            background: '#fafafa',
-                            borderRadius: '8px',
-                            border: '1px dashed #d9d9d9'
-                          }}>
-                             </div>
-                           )}
-                         </div>
-                   ),
-                 },
-               ]}
-             />
+                      )}
+                    </div>
+                  ),
+                },
+              ]}
+            />
 
           </Space>
         </div>
@@ -1279,8 +1282,8 @@ export default function TechnicianDetail() {
       >
         <div style={{ marginBottom: '20px' }}>
           <div style={{ fontSize: '14px', fontWeight: 600, marginBottom: '10px' }}>
-            Họ và tên: {technician?.fullName && technician.fullName.length > 25 
-              ? `${technician.fullName.substring(0, 25)}...` 
+            Họ và tên: {technician?.fullName && technician.fullName.length > 25
+              ? `${technician.fullName.substring(0, 25)}...`
               : (technician?.fullName || '')}
           </div>
           <div style={{ fontSize: '14px', color: '#666' }}>
