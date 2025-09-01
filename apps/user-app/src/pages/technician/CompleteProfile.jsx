@@ -665,11 +665,11 @@ const CompleteProfile = () => {
                 }
             }
 
-            // Append certificates (only for individual accounts)
-            if (accountType === 'INDIVIDUAL') {
-            certificates.forEach((cert, index) => {
-                formDataAll.append('certificates', cert);
-            });
+            // Append certificates (only for individual accounts - ONLY if user actually uploaded certificates)
+            if (accountType === 'INDIVIDUAL' && certificates.length > 0) {
+                certificates.forEach((cert, index) => {
+                    formDataAll.append('certificates', cert);
+                });
             }
 
             const logData = {

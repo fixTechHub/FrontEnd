@@ -1637,7 +1637,7 @@ const BookingHistory = () => {
                   {warrantyLoading ? (
                     <span>
                       <span className="spinner-border spinner-border-sm me-2" role="status" />
-                      Gửi yêu cầu...
+                      Đang Xử lý...
                     </span>
                   ) : (
                     'Gửi yêu cầu'
