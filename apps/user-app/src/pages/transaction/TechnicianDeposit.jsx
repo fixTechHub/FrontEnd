@@ -19,6 +19,7 @@ import {
   getAllPackages,
 } from '../../features/package/packageSlice';
 import { Button } from 'react-bootstrap';
+import { formatCurrency } from '../../utils/formatDuration';
 
 const styles = {
   pagination: {
@@ -81,7 +82,7 @@ const TechnicianDeposit = () => {
   const pkg = sub?.package || null;
 
   // local UI state
-  const [payAmount, setPayAmount] = useState(technician?.debBalance ? technician.debBalance.toString() : '');
+  const [payAmount, setPayAmount] = useState('');
   const [payAmountError, setPayAmountError] = useState(null);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawAmountError, setWithdrawAmountError] = useState(null);
@@ -96,21 +97,46 @@ const TechnicianDeposit = () => {
       dispatch(fetchTechnicianDepositLogs({ limit, skip: page * limit }));
       dispatch(fetchCurrentSubscription(technicianId));
     }
-    // Update payAmount when technician.debBalance changes
-    setPayAmount(technician?.debBalance ? formatThousands(technician.debBalance.toString()) : '');
-  }, [dispatch, page, technicianId, technician?.debBalance]);
+  }, [dispatch, page, technicianId]);
 
   // handlers
+  const formatVND = (n) => Number(n).toLocaleString('vi-VN');
+  const digitsOnly = (s) => (s || '').replace(/[^\d]/g, '');
+
+  const onFormattedPayAmountChange = (e) => {
+    const debBalance = Number(technician?.debBalance || 0);
+    const rawDigits = digitsOnly(e.target.value);
+
+    if (!rawDigits) {
+      setPayAmount('');
+      setPayAmountError(null);
+      return;
+    }
+
+    let num = parseInt(rawDigits, 10);
+    if (Number.isNaN(num)) num = 0;
+    if (debBalance > 0 && num > debBalance) num = debBalance;
+
+    setPayAmount(formatVND(num));
+    setPayAmountError(null);
+  };
+
   const handleDepositSubmit = async (e) => {
     e.preventDefault();
-    const parsed = parseFloat(payAmount.replace(/[^\d]/g, ''));
-    if (isNaN(parsed) || parsed < 300000) {
-      setPayAmountError('Số tiền phải lớn hơn hoặc bằng 300,000 VND');
+    const rawDigits = digitsOnly(payAmount);
+    const amountNumber = parseInt(rawDigits, 10);
+
+    if (!Number.isInteger(amountNumber) || amountNumber <= 0) {
+      setPayAmountError('Số tiền phải là số nguyên lớn hơn 0 VND');
+      return;
+    }
+    if (amountNumber > Number(technician?.debBalance || 0)) {
+      setPayAmountError('Số tiền vượt quá số nợ hiện tại.');
       return;
     }
 
     try {
-      const depositURL = await dispatch(depositBalance(parsed)).unwrap();
+      const depositURL = await dispatch(depositBalance(amountNumber)).unwrap();
       if (depositURL) {
         toast.success('Đang chuyển hướng đến cổng thanh toán...');
         const modalElement = document.getElementById('new_deposit_modal');
@@ -278,8 +304,6 @@ const TechnicianDeposit = () => {
     modal.show();
   };
 
-  const digitsOnly = (s) => (s || '').replace(/[^\d]/g, '');
-  const formatVND = (n) => Number(n).toLocaleString('vi-VN');
   const formatThousands = (v) =>
     String(v).replace(/[^\d]/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 
@@ -415,7 +439,6 @@ const TechnicianDeposit = () => {
                         className="btn"
                         data-bs-toggle="modal"
                         data-bs-target="#withdraw_modal"
-                        onClick={handleDepositSubmit}
                       >
                         Rút
                       </button>
@@ -431,9 +454,7 @@ const TechnicianDeposit = () => {
                         {transactionLoading ? 'Đang xử lý...' : 'Thanh toán nợ'}
                       </Button>
                     </div>
-
                   </div>
-
                 </div>
               </div>
             </div>
@@ -606,6 +627,7 @@ const TechnicianDeposit = () => {
                         data-bs-dismiss="modal"
                         aria-label="Close"
                         onClick={() => {
+                          setPayAmount('');
                           setPayAmountError(null);
                           dispatch(clearTransactionState());
                         }}
@@ -615,7 +637,7 @@ const TechnicianDeposit = () => {
                       <div className="mb-3">
                         <div className="balance-box d-flex justify-content-between align-items-center">
                           <span>Số tiền nợ</span>
-                          <strong>{(technician?.debBalance || 0).toLocaleString('vi-VN')} VND</strong>
+                          <strong>{formatCurrency(technician?.debBalance)} VND</strong>
                         </div>
                       </div>
                       <form onSubmit={handleDepositSubmit}>
@@ -627,17 +649,21 @@ const TechnicianDeposit = () => {
                             <input
                               type="text"
                               inputMode="numeric"
-                              pattern="\d*"
                               className={`form-control ${payAmountError || transactionError ? 'is-invalid' : ''}`}
+                              placeholder="Nhập số tiền muốn trả"
                               value={payAmount}
-                              readOnly
+                              onChange={onFormattedPayAmountChange}
+                              autoComplete="off"
                             />
                             <span className="input-group-text">VND</span>
-                            {(payAmountError || transactionError) && (
+                            {(transactionError) && (
                               <div className="invalid-feedback">
-                                {payAmountError || transactionError}
+                                {transactionError}
                               </div>
                             )}
+                          </div>
+                          <div className="form-text">
+                            Tối đa: {(technician?.debBalance || 0).toLocaleString('vi-VN')} VND
                           </div>
                           {successMessage && <div className="form-text text-success">{successMessage}</div>}
                         </div>
@@ -647,6 +673,7 @@ const TechnicianDeposit = () => {
                             className="btn btn-outline-secondary"
                             data-bs-dismiss="modal"
                             onClick={() => {
+                              setPayAmount('');
                               setPayAmountError(null);
                               dispatch(clearTransactionState());
                             }}
@@ -741,7 +768,6 @@ const TechnicianDeposit = () => {
                             <input
                               type="text"
                               inputMode="numeric"
-                              // pattern="\d*"
                               className={`form-control ${withdrawAmountError || transactionError ? 'is-invalid' : ''}`}
                               placeholder="Nhập số tiền muốn rút"
                               value={withdrawAmount}
@@ -1036,7 +1062,7 @@ const TechnicianDeposit = () => {
         @media (max-width: 576px) {
           .price {
             font-size: 18px;
-          }
+          }   
         }
       `}</style>
     </div>
