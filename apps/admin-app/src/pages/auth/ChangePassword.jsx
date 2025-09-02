@@ -24,14 +24,14 @@ const ChangePassword = () => {
         currentPassword: values.currentPassword,
         newPassword: values.newPassword,
       }, { withCredentials: true });
-      message.success('Password changed successfully');
+      message.success('Thay đổi mật khẩu thành công');
       navigate('/admin/admin-dashboard', { replace: true });
     } catch (err) {
       const status = err?.response?.status;
-      const msg = err?.response?.data?.message || 'Change password failed';
+      const msg = err?.response?.data?.message || 'Thay đổi mật khẩu thất bại';
       if (status === 401 || /incorrect/i.test(msg)) {
         form.setFields([
-          { name: 'currentPassword', errors: [msg || 'Current password is incorrect'] },
+          { name: 'currentPassword', errors: [msg || 'Mật khẩu hiện tại không hợp lệ'] },
         ]);
       } else {
         message.error(msg);
@@ -52,34 +52,34 @@ const ChangePassword = () => {
     }}>
       <Card style={{ width: 480, borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.06)' }}>
         <Space align="center" style={{ justifyContent: 'space-between', width: '100%', marginBottom: 8 }}>
-          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
+          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
         </Space>
         <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <Title level={3} style={{ marginBottom: 0 }}>Change Password</Title>
-          <Text type="secondary">Update your account password</Text>
+          <Title level={3} style={{ marginBottom: 0 }}>Thay đổi mật khẩu</Title>
+          <Text type="secondary">Cập nhật mật khẩu tài khoản của bạn</Text>
         </div>
         <Form form={form} layout="vertical" onFinish={onFinish} onFinishFailed={() => { /* show field errors */ }} autoComplete="off" validateTrigger={["onChange","onBlur"]}>
-          <Form.Item label="Current Password" name="currentPassword" hasFeedback rules={[{ required: true, message: 'Please enter your current password' }]}> 
-            <Input.Password prefix={<LockOutlined />} placeholder="Current password" size="large" />
+          <Form.Item label="Mật khẩu hiện tại" name="currentPassword" hasFeedback rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}> 
+            <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu hiện tại" size="large" />
           </Form.Item>
-          <Form.Item label="New Password" name="newPassword" hasFeedback rules={[{ required: true, message: 'Please enter your new password' }]}> 
-            <Input.Password prefix={<LockOutlined />} placeholder="New password" size="large" />
+          <Form.Item label="Mật khẩu mới" name="newPassword" hasFeedback rules={[{ required: true, message: 'Vui lòng nhập mật khẩu mới' }]}> 
+            <Input.Password prefix={<LockOutlined />} placeholder="Mật khẩu mới" size="large" />
           </Form.Item>
-          <Form.Item label="Confirm New Password" name="confirmPassword" hasFeedback dependencies={["newPassword"]} rules={[
-            { required: true, message: 'Please confirm your new password' },
+          <Form.Item label="Xác nhận mật khẩu mới" name="confirmPassword" hasFeedback dependencies={["newPassword"]} rules={[
+            { required: true, message: 'Vui lòng xác nhận mật khẩu mới' },
             ({ getFieldValue }) => ({
               validator(_, value) {
                 if (!value || getFieldValue('newPassword') === value) {
                   return Promise.resolve();
                 }
-                return Promise.reject(new Error('The two passwords do not match'));
+                return Promise.reject(new Error('Hai mật khẩu không khớp'));
               },
             }),
           ]}> 
-            <Input.Password prefix={<LockOutlined />} placeholder="Confirm new password" size="large" />
+            <Input.Password prefix={<LockOutlined />} placeholder="Xác nhận mật khẩu mới" size="large" />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" onClick={() => form.submit()} size="large" block loading={loading}>Save Changes</Button>
+            <Button type="primary" htmlType="submit" onClick={() => form.submit()} size="large" block loading={loading}>Lưu thay đổi</Button>
           </Form.Item>
         </Form>
       </Card>

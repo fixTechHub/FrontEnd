@@ -129,7 +129,11 @@ const TechnicianSubscriptionAnalytics = () => {
         totalChurnRate: analytics.totalChurnRate || (analytics.cancelledSubscriptions && analytics.totalSubscriptions ? 
           (analytics.cancelledSubscriptions / analytics.totalSubscriptions * 100) : 0),
         expiredChurnRate: analytics.expiredChurnRate || 0,
-        suspendedChurnRate: analytics.suspendedChurnRate || 0
+        suspendedChurnRate: analytics.suspendedChurnRate || 0,
+        
+        // Chi tiết ExtraFromTechnicianEarning
+        technicianEarningDetails: analytics.technicianEarningDetails || [],
+        totalExtraFromTechnicianEarning: analytics.totalExtraFromTechnicianEarning || 0
       };
     }
 
@@ -151,9 +155,22 @@ const TechnicianSubscriptionAnalytics = () => {
       customerCancellationRate: 0,
       totalChurnRate: 0,
       expiredChurnRate: 0,
-      suspendedChurnRate: 0
+      suspendedChurnRate: 0,
+      
+      // Chi tiết ExtraFromTechnicianEarning
+      technicianEarningDetails: [],
+      totalExtraFromTechnicianEarning: 0
     };
   }, [analytics]);
+
+  // Debug logging cho analyticsData
+  useEffect(() => {
+    console.log('🔍 AnalyticsData:', analyticsData);
+    console.log('🔍 TechnicianEarningDetails count:', analyticsData.technicianEarningDetails?.length);
+    analyticsData.technicianEarningDetails?.forEach((detail, index) => {
+      console.log(`🔍 Detail ${index}:`, detail.timeLabel, 'Bookings:', detail.bookingDetails?.length);
+    });
+  }, [analyticsData]);
 
   // Enhanced monthly data calculation with multiple metrics
   const monthlyData = useMemo(() => {
@@ -483,6 +500,8 @@ scales: {
       console.log('📊 Analytics data received:', analytics);
       console.log('📊 QuarterlyMetrics:', analytics.quarterlyMetrics);
       console.log('📊 MonthlyMetrics:', analytics.monthlyMetrics);
+      console.log('📊 TechnicianEarningDetails:', analytics.technicianEarningDetails);
+      console.log('📊 TotalExtraFromTechnicianEarning:', analytics.totalExtraFromTechnicianEarning);
     }
   }, [analytics]);
 
@@ -552,21 +571,13 @@ scales: {
                 background: 'linear-gradient(135deg,rgb(237, 235, 121) 0%,rgb(217, 164, 4) 100%)'
               }}>
                 <Statistic
-                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng doanh thu</Text>}
+                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng doanh thu của năm</Text>}
                   value={analyticsData.totalRevenue}
                   precision={0}
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
                   prefix={<DollarOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
                   suffix="VND"
                 />
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color={analyticsData.revenueGrowth >= 0 ? 'green' : 'red'} style={{ color: 'black' }}>
-                    {analyticsData.revenueGrowth >= 0 ? '+' : ''}{analyticsData.revenueGrowth}%
-                  </Tag>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    so với cùng kì năm ngoái
-                  </Text>
-                </div>
               </Card>
              </Col>
 
@@ -578,19 +589,11 @@ scales: {
                 background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
               }}>
                 <Statistic
-                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng gói đăng ký</Text>}
+                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng gói đăng ký </Text>}
                   value={analyticsData.totalSubscriptions}
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
                   prefix={<UserOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
                 />
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color="green" style={{ color: 'black' }}>
-                    {analyticsData.avgRevenuePerSub.toLocaleString('en-US')} VND
-                  </Tag>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    trung bình/gói
-                  </Text>
-                </div>                
               </Card>
             </Col>
 
@@ -607,14 +610,6 @@ scales: {
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
                   prefix={<CheckCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
                 />
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color="blue" style={{ color: 'black' }}>
-                    {analyticsData.conversionRate}%
-                  </Tag>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    tỷ lệ chuyển đổi
-                  </Text>
-                </div>
               </Card>
             </Col>
 
@@ -627,20 +622,12 @@ scales: {
               }}>
                 <Statistic
                   title={<Text style={{ color: 'white', fontSize: '14px' }}>Tỷ lệ rời bỏ</Text>}
-                  value={analyticsData.totalChurnRate}
+                  value={Math.round(analyticsData.totalChurnRate * 10) / 10}
                   precision={1}
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
-                                                prefix={<DownOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
+                  prefix={<CloseCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
                   suffix="%"
                 />
-                <div style={{ marginTop: '8px' }}>
-                  <Tag color="orange" style={{ color: 'black' }}>
-                    {analyticsData.pendingSubscriptions}
-                  </Tag>
-                  <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
-                    đang chờ xử lý
-                  </Text>
-                </div>
               </Card>
             </Col>
           </Row>
@@ -708,7 +695,7 @@ scales: {
               }}>
                 <Statistic
                   title={<Text style={{ color: 'white', fontSize: '14px' }}>Tổng tỷ lệ rời bỏ</Text>}
-                  value={analyticsData.totalChurnRate}
+                  value={Math.round(analyticsData.totalChurnRate * 10) / 10}
                   precision={1}
                   valueStyle={{ color: 'white', fontSize: '20px', fontWeight: 600 }}
                   prefix={<ExclamationCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
@@ -716,7 +703,7 @@ scales: {
                 />
                 <div style={{ marginTop: '8px' }}>
                   <Tag color="purple" style={{ color: 'white' }}>
-                    {analyticsData.totalChurnRate.toFixed(1)}%
+                    {(Math.round(analyticsData.totalChurnRate * 10) / 10).toFixed(1)}%
                   </Tag>
                   <Text style={{ color: 'rgba(255, 255, 255, 0.8)', marginLeft: '8px', fontSize: '12px' }}>
                     tổng hợp
@@ -1029,19 +1016,13 @@ scales: {
                             title: 'Đang hoạt động',
                             dataIndex: 'active',
                             key: 'active',
-                            render: (value) => <Badge count={value} style={{ backgroundColor: '#52c41a' }} />
+                            render: (value) => <Badge count={value} style={{ backgroundColor: '#1890ff' }} />
                           },
                           {
                             title: 'Tỷ lệ chuyển đổi',
                             dataIndex: 'conversion',
                             key: 'conversion',
-                            render: (value) => (
-                       <Progress
-                                percent={parseFloat(value)}
-                         size="small"
-                                strokeColor={parseFloat(value) > 70 ? '#52c41a' : parseFloat(value) > 40 ? '#faad14' : '#f5222d'}
-                              />
-                            )
+                            render: (value) => <Text strong style={{ color: '#52c41a' }}>{(value) + '%'}</Text>
                           }
                ]}
                pagination={false}
@@ -1128,7 +1109,12 @@ scales: {
                                 type: 'linear',
                                 display: true,
                                 position: 'left',
-                                title: { display: true, text: 'Doanh thu (VND)' }
+                                title: { display: true, text: 'Doanh thu (VND)' },
+                                ticks: {
+                                  callback: function(value) {
+                                    return value.toLocaleString('en-US');
+                                  }
+                                }
                               },
                               y1: {
                                 type: 'linear',
@@ -1198,8 +1184,202 @@ scales: {
                   </Col>
                 </Row>
               )
+            },
+            {
+              key: 'bookings',
+              label: (
+                <span>
+                  <UserOutlined />
+                  Đơn hàng
+                </span>
+              ),
+              children: (
+                <Row gutter={[24, 24]}>
+                  {/* Booking Details Tables */}
+                  <Col span={24}>
+                    <Card
+                      title="Chi tiết từng đơn hàng"
+                      style={{ borderRadius: '16px' }}
+                    >
+                      {analyticsData.technicianEarningDetails?.map((detail, index) => {
+                        console.log(`🔍 Rendering detail ${index}:`, detail.timeLabel, 'BookingDetails:', detail.bookingDetails?.length);
+                        return (
+                          <div key={detail.timeLabel} style={{ 
+                            marginBottom: '40px',
+                            padding: '20px',
+                            backgroundColor: '#fafbfc',
+                            borderRadius: '12px',
+                            border: '2px solid #e8f4f8',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.06)'
+                          }}>
+                            {/* Header tháng nổi bật */}
+                            <div style={{
+                              background: detail.bookingCount > 0 
+                                ? 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)'
+                                : 'linear-gradient(135deg, #8c8c8c 0%, #bfbfbf 100%)',
+                              padding: '16px 20px',
+                              borderRadius: '10px',
+                              marginBottom: '20px',
+                              color: 'white',
+                              boxShadow: '0 4px 12px rgba(24, 144, 255, 0.3)'
+                            }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                  <div style={{ 
+                                    fontSize: '20px', 
+                                    fontWeight: 'bold',
+                                    marginBottom: '4px'
+                                  }}>
+                                    📅 {detail.timeLabel} {timeRange === 'year' ? currentYear : ''}
+                                  </div>
+                                  <div style={{ fontSize: '14px', opacity: 0.9 }}>
+                                    {detail.bookingCount} đơn hàng • {Math.floor(detail.extraFromTechnicianEarning).toLocaleString('en-US')} VND
+                                  </div>
+                                </div>
+                                <div style={{ textAlign: 'right' }}>
+                                  <div style={{ 
+                                    background: 'rgba(255,255,255,0.2)', 
+                                    padding: '8px 12px', 
+                                    borderRadius: '6px',
+                                    fontSize: '12px',
+                                    fontWeight: '500'
+                                  }}>
+                                    {detail.bookingCount > 0 
+                                      ? `Trung bình: ${Math.floor(detail.averagePerBooking).toLocaleString('en-US')} VND/đơn`
+                                      : 'Không có đơn hàng'
+                                    }
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <Table
+                              dataSource={detail.bookingDetails ? [...detail.bookingDetails].sort((a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)) : []}
+                              rowKey="bookingId"
+                              size="small"
+                              bordered
+                              style={{ 
+                                background: 'white',
+                                borderRadius: '8px',
+                                overflow: 'hidden',
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                              }}
+                              locale={{
+                                emptyText: detail.bookingDetails?.length === 0 
+                                  ? `Không có đơn hàng trong ${detail.timeLabel}` 
+                                  : 'Đang tải dữ liệu...'
+                              }}
+                              columns={[
+                                {
+                                  title: 'Đơn hàng',
+                                  dataIndex: 'bookingCode',
+                                  key: 'bookingCode',
+                                  width: '15%',
+                                  render: (text, record) => (
+                                    <div>
+                                      <Text code style={{ fontSize: '11px', display: 'block' }}>
+                                        {text || '#' + record.bookingId.slice(-6)}
+                                      </Text>
+                                      <Text type="secondary" style={{ fontSize: '10px' }}>
+                                        {new Date(record.bookingDate).toLocaleDateString('vi-VN')}
+                                      </Text>
+                                    </div>
+                                  )
+                                },
+                                {
+                                  title: 'Technician & Dịch vụ',
+                                  dataIndex: 'technicianName',
+                                  key: 'technicianService',
+                                  width: '25%',
+                                  render: (text, record) => (
+                                    <div>
+                                      <Text strong style={{ fontSize: '11px', display: 'block' }}>
+                                        {text}
+                                      </Text>
+                                      <Text type="secondary" style={{ fontSize: '10px' }}>
+                                        {record.serviceName}
+                                      </Text>
+                                    </div>
+                                  )
+                                },
+                                {
+                                  title: 'Thu nhập',
+                                  dataIndex: 'technicianEarning',
+                                  key: 'technicianEarning',
+                                  width: '20%',
+                                  align: 'right',
+                                  render: (value) => (
+                                    <Text style={{ fontSize: '11px', color: '#1890ff', fontWeight: '500' }}>
+                                      {Math.floor(value).toLocaleString('en-US')}
+                                    </Text>
+                                  ),
+                                  sorter: (a, b) => a.technicianEarning - b.technicianEarning
+                                },
+                                {
+                                  title: 'Hoa hồng (8%)',
+                                  dataIndex: 'extraFromBooking',
+                                  key: 'extraFromBooking',
+                                  width: '20%',
+                                  align: 'right',
+                                  render: (value) => (
+                                    <Text strong style={{ fontSize: '11px', color: '#52c41a' }}>
+                                      {Math.floor(value).toLocaleString('en-US')}
+                                    </Text>
+                                  ),
+                                  sorter: (a, b) => a.extraFromBooking - b.extraFromBooking
+                                },
+                                {
+                                  title: 'Trạng thái',
+                                  dataIndex: 'paymentStatus',
+                                  key: 'paymentStatus',
+                                  width: '20%',
+                                  align: 'center',
+                                  render: (status) => {
+                                    const color = status === 'PAID' ? 'success' : 
+                                                 status === 'PENDING' ? 'warning' : 'error';
+                                    return (
+                                      <Tag color={color} style={{ fontSize: '10px', margin: 0 }}>
+                                        {status}
+                                      </Tag>
+                                    );
+                                  }
+                                }
+                              ]}
+                              summary={() => (
+                                <Table.Summary.Row style={{ background: '#f0f7ff', fontWeight: 'bold' }}>
+                                  <Table.Summary.Cell index={0} colSpan={2}>
+                                    <Text strong style={{ fontSize: '12px' }}>
+                                      Tổng: {detail.bookingCount} đơn hàng
+                                    </Text>
+                                  </Table.Summary.Cell>
+                                  <Table.Summary.Cell index={2} align="right">
+                                    <Text strong style={{ color: '#1890ff', fontSize: '12px' }}>
+                                      {Math.floor(detail.totalTechnicianEarning).toLocaleString('en-US')}
+                                    </Text>
+                                  </Table.Summary.Cell>
+                                  <Table.Summary.Cell index={3} align="right">
+                                    <Text strong style={{ color: '#52c41a', fontSize: '12px' }}>
+                                      {Math.floor(detail.extraFromTechnicianEarning).toLocaleString('en-US')}
+                                    </Text>
+                                  </Table.Summary.Cell>
+                                  <Table.Summary.Cell index={4} align="center">
+                                  </Table.Summary.Cell>
+                                </Table.Summary.Row>
+                              )}
+                            />
+                          </div>
+                        );
+                      }) || (
+                        <div style={{ textAlign: 'center', padding: '40px' }}>
+                          <Text type="secondary">Không có dữ liệu đơn hàng</Text>
+                        </div>
+                      )}
+                    </Card>
+                  </Col>
+                </Row>
+              )
             }
-                      ]}
+                ]}
                 />
               </Col>
             </Row>

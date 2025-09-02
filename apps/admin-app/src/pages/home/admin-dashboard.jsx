@@ -220,7 +220,8 @@ const AdminDashboard = () => {
           color: '#6B7280',
           padding: 8,
           callback: function(value) {
-            return value >= 1000 ? (value/1000).toFixed(1) + 'K' : value.toLocaleString('en-US');
+            // return value >= 1000 ? (value/1000).toFixed(1) + 'K' : value.toLocaleString('en-US');
+            return value.toLocaleString('en-US') + ' VND'                                                                                       ;
           }
         },
         border: {
@@ -698,11 +699,11 @@ const AdminDashboard = () => {
         {/* Header */}
         <div className="d-md-flex d-block align-items-center justify-content-between page-breadcrumb mb-4">
           <div className="my-auto mb-2">
-            <h3 className="mb-1 fw-bold" style={{color: '#1a1a1a'}}>Dashboard Overview</h3>
+            <h3 className="mb-1 fw-bold" style={{color: '#1a1a1a'}}>Bảng điều khiển</h3>
             <nav>
               <ol className="breadcrumb mb-0">
-                <li className="breadcrumb-item"><a href="/admin">Home</a></li>
-                <li className="breadcrumb-item active">Dashboard</li>
+                <li className="breadcrumb-item"><a href="/admin">Trang chủ</a></li>
+                <li className="breadcrumb-item active">Bảng điều khiển</li>
               </ol>
             </nav>
           </div>
