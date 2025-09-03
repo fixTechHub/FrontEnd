@@ -384,9 +384,9 @@ function NewHomePage() {
               <span>DỊCH VỤ CHUYÊN NGHIỆP</span>
               <Medal size={20} />
             </div>
-            <h2 className="nhp-section-title-enhanced">Kết nối với thợ chuyên nghiệp</h2>
+            <h2 className="nhp-section-title-enhanced">Dịch vụ sửa chữa đa dạng</h2>
             <p className="nhp-section-description-enhanced">
-              Tìm kiếm và kết nối với các thợ sửa chữa thiết bị gia dụng có kinh nghiệm tại Đà Nẵng
+              Giải quyết mọi sự cố thiết bị gia dụng với cam kết chất lượng và thời gian phản hồi tối ưu.
             </p>
           </div>
 
