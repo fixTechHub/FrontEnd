@@ -23,7 +23,7 @@ const BreadcrumbSection = () => (
     <div className="container">
       <div className="row align-items-center text-center">
         <div className="col-md-12 col-12">
-          <h2 className="breadcrumb-title">Technician Dashboard</h2>
+          <h2 className="breadcrumb-title">Bảng điều khiển</h2>
           <nav aria-label="breadcrumb" className="page-breadcrumb">
             <ol className="breadcrumb" />
           </nav>
@@ -64,11 +64,8 @@ const WidgetItem = ({ icon, title, value, color, link }) => (
 
 // ---------- Widgets Row ----------
 const WidgetsRow = () => {
-   const {  earnings = [], loading, error } = useSelector((s) => s.technician);
-   const technician = useSelector((state) => state.auth);
-   console.log("tech", technician);
-   
-
+  const { earnings = [], loading, error } = useSelector((s) => s.technician);
+  const technician = useSelector((state) => state.auth);
   const bookingCount = Array.isArray(earnings) ? earnings.length : 0;
 
   const feedbackItems = useSelector((s) => s.feedback?.items) || [];
@@ -88,28 +85,17 @@ const WidgetsRow = () => {
 
   // tính thu nhập hôm nay từ earnings
   const todayIncomeNumber = useMemo(() => {
-  const today = new Date();
-  if (!Array.isArray(earnings)) return 0;
+    const today = new Date();
+    if (!Array.isArray(earnings)) return 0;
 
-  const result = earnings.reduce((sum, e) => {
-    const when = e?.schedule?.expectedEnd || e?.createdAt;
-    const amount = Number(e?.technicianEarning || 0);
-
-    console.log({
-      bookingCode: e?.bookingCode,
-      when,
-      isToday: isSameDate(when, today),
-      rawEarning: e?.technicianEarning,
-      amount,
-    });
-
-    if (!when || !isSameDate(when, today)) return sum;
-    return sum + (Number.isFinite(amount) ? amount : 0);
-  }, 0);
-
-  console.log('👉 todayIncomeNumber:', result);
-  return result;
-}, [earnings]);
+    const result = earnings.reduce((sum, e) => {
+      const when = e?.schedule?.expectedEnd || e?.createdAt;
+      const amount = Number(e?.technicianEarning || 0);
+      if (!when || !isSameDate(when, today)) return sum;
+      return sum + (Number.isFinite(amount) ? amount : 0);
+    }, 0);
+    return result;
+  }, [earnings]);
 
   // format
   const walletBalanceNum = Number(technician?.technician?.balance || 0);
@@ -158,11 +144,7 @@ function ViewEarningAndCommission() {
   useEffect(() => {
     if (techId) dispatch(fetchEarningAndCommission(techId));
   }, [dispatch, techId]);
-
-  // console.log(JSON.stringify(earnings, null, 2));
-
   if (loading) return <p>Đang tải...</p>;
-  // ✅ chỉ show lỗi khi đã có techId
   if (error && techId) return <p>Lỗi: {error}</p>;
 
   return (
@@ -219,9 +201,6 @@ function ViewEarningAndCommission() {
   );
 }
 
-// ===== AvailabilitySwitch giữ nguyên như bạn đang dùng =====
-// (đã đúng logic BUSY chỉ khi tất cả đơn DONE & dùng toast)
-// ----------------------------------------------------------
 
 const TechnicianJobList = () => {
   const dispatch = useDispatch();
@@ -604,6 +583,7 @@ function TechnicianDashboard() {
                     <li><Link to="/technician/schedule"><img src="/img/icons/booking-icon.svg" alt="Icon" /><span>Lịch trình</span></Link></li>
                     <li><Link to="/technician/deposit"><img src="/img/icons/wallet-icon.svg" alt="Icon" /><span>Ví của tôi</span></Link></li>
                     <li><Link to={`/technician/earning`}><img src="/img/icons/payment-icon.svg" alt="Icon" /><span>Thu nhập</span></Link></li>
+                    <li><Link to={`/technician/warranty`}><img style={{ height: '28px' }} src="/img/icons/service-07.svg" alt="Icon" /><span>Bảo hành</span></Link></li>
                   </ul>
                 </div>
               </div>

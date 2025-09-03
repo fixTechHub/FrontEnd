@@ -623,7 +623,7 @@ function ChooseTechnician() {
                                                         </div>
                                                         {technician?.subscriptionStatus === 'PREMIUM' && (
                                                             <div className="feature-text">
-                                                                <span className="bg-warning">ƯU TIÊN</span>
+                                                                <span className="bg-warning">ĐỀ XUẤT</span>
                                                             </div>
                                                         )}
                                                         {technician?.isFavorite === true && technician?.subscriptionStatus !== 'PREMIUM' && (

@@ -187,6 +187,7 @@ const CertificateList = () => {
                       <span>Thu nhập</span>
                     </Link>
                   </li>
+                   <li><Link to={`/technician/warranty`}><img style={{ height: '28px' }} src="/img/icons/service-07.svg" alt="Icon" /><span>Bảo hành</span></Link></li>
                   {/* <li>
                     <Link to={`/profile`}>
                       <img src="/img/icons/settings-icon.svg" alt="Icon" />

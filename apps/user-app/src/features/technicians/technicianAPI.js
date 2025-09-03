@@ -2,29 +2,23 @@ import apiClient from '../../services/apiClient';
 export const FETCH_AVAILABILITY_SUCCESS = 'FETCH_AVAILABILITY_SUCCESS';
 export const FETCH_AVAILABILITY_ERROR = 'FETCH_AVAILABILITY_ERROR';
 
-// export const fetchTechnicians = async () => {
-//   return apiClient.get('/technicians');
 export const getTechnicianProfile = async (technicianId) => {
   const response = await apiClient.get(`/technicians/${technicianId}`);
-  console.log('GET TECHNICIAN PROFILE RESPONSE:', response.data);
   return response.data;
 }
 
 export const getEarningAndCommission = async (technicianId) => {
   const response = await apiClient.get(`/technicians/${technicianId}/earnings`);
-  console.log("📦 Dữ liệu trả về:", response.data);
   return response.data;
 };
 
 export const getJobDetails = async (technicianId, bookingId) => {
   const response = await apiClient.get(`/technicians/${technicianId}/bookings/${bookingId}`);
-  console.log("📦 Dữ liệu trả về:", response.data);
   return response.data;
 };
 
 export const getTechnicianJob = async (technicianId) => {
   const response = await apiClient.get(`/technicians/${technicianId}/bookings`);
-  console.log("📦 Dữ liệu trả về bookings:", response.data);
   return response.data;
 };
 
@@ -67,18 +61,14 @@ export const getTechnicianDepositLogs = async ({ limit, skip }) => {
     const response = await apiClient.get('/technicians/technician-deposit', {
       params: { limit, skip }
     });
-    console.log('API Response:', response.data);
     return response;
   } catch (error) {
-    console.error('API Error:', error.response?.data || error.message);
     throw error;
   }
 };
 
 export const getListFeedback = async (technicianData,technicianId) => {
   const response = await apiClient.get(`/feedbacks/${technicianId}`, technicianData);
-  console.log(response);
-  
   return response.data.data;
 };
 
