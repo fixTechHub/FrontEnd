@@ -621,11 +621,11 @@ scales: {
                 background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)'
               }}>
                 <Statistic
-                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tỷ lệ rời bỏ</Text>}
-                  value={Math.round(analyticsData.totalChurnRate * 10) / 10}
+                  title={<Text style={{ color: 'white', fontSize: '14px' }}>Tỷ lệ chuyển đổi </Text>}
+                  value={Math.round(analyticsData.conversionRate * 10) / 10}
                   precision={1}
                   valueStyle={{ color: 'white', fontSize: '24px', fontWeight: 600 }}
-                  prefix={<CloseCircleOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
+                  prefix={<LineChartOutlined style={{ color: 'rgba(255, 255, 255, 0.8)' }} />}
                   suffix="%"
                 />
               </Card>
