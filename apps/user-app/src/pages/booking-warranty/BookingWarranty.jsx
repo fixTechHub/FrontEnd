@@ -201,7 +201,7 @@ function BookingWarranty() {
             return;
         }
         try {
-            const formData = { status: 'DONE' };
+            const formData = { status: 'RESOLVED' };
             await dispatch(confirmWarrantyThunk({ bookingWarrantyId, formData })).unwrap();
             Swal.fire({
                 icon: 'success',
@@ -246,7 +246,7 @@ function BookingWarranty() {
         }
 
         try {
-            const formData = { status: 'RESOLVED' };
+            const formData = { status: 'DONE' };
             await dispatch(confirmWarrantyThunk({ bookingWarrantyId, formData })).unwrap();
             Swal.fire({
                 icon: 'success',
@@ -319,7 +319,7 @@ function BookingWarranty() {
                         </div>
                     </div>
                     <div className="text-end my-4">
-                        {user?.role?.name === 'CUSTOMER'&& warranty  && warranty?.proposedSchedule && warranty?.confirmedSchedule && warranty?.status === 'CONFIRMED' && (
+                        {user?.role?.name === 'CUSTOMER'&& warranty  && warranty?.proposedSchedule && warranty?.confirmedSchedule && warranty?.status === 'DONE' && (
                             <button
                                 className="btn btn-primary me-2"
                                 onClick={handleConfirm}
@@ -327,7 +327,7 @@ function BookingWarranty() {
                                 Xác nhận bảo hành thành công
                             </button>
                         )}
-                        {user?.role?.name === 'TECHNICIAN' && warranty  && warranty?.status === 'DONE' && (
+                        {user?.role?.name === 'TECHNICIAN' && warranty  && warranty?.status === 'CONFIRMED' && (
                             <button
                                 className="btn btn-primary"
                                 onClick={() => handleResolveWarranty()}
