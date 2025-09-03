@@ -229,13 +229,13 @@ function BookingWarranty() {
 
     };
 
-    const handleResolveWarranty = async (e) => {
-        e.preventDefault();
-        if (!bookingWarrantyId || !solutionNote.trim()) {
+    const handleResolveWarranty = async () => {
+     
+        if (!bookingWarrantyId) {
             Swal.fire({
                 icon: 'error',
                 title: 'Lỗi',
-                text: 'Vui lòng cung cấp ghi chú giải pháp!',
+                text: 'Thiếu Id!',
                 timer: 5000,
                 showConfirmButton: false,
                 position: 'bottom-right',
@@ -246,7 +246,7 @@ function BookingWarranty() {
         }
 
         try {
-            const formData = { status: 'RESOLVED', solutionNote };
+            const formData = { status: 'RESOLVED' };
             await dispatch(confirmWarrantyThunk({ bookingWarrantyId, formData })).unwrap();
             Swal.fire({
                 icon: 'success',
@@ -330,7 +330,7 @@ function BookingWarranty() {
                         {user?.role?.name === 'TECHNICIAN' && warranty  && warranty?.status === 'DONE' && (
                             <button
                                 className="btn btn-primary"
-                                onClick={() => setShowResolveModal(true)}
+                                onClick={() => handleResolveWarranty()}
                             >
                                 Đánh dấu bảo hành hoàn tất
                             </button>
@@ -365,21 +365,7 @@ function BookingWarranty() {
                 </Modal.Header>
                 <Modal.Body style={styles.modalBody}>
                     <form onSubmit={handleResolveWarranty}>
-                        <div style={styles.modalFormGroup}>
-                            <label style={styles.formLabel}>
-                                Ghi chú giải pháp <span style={{ color: '#dc3545' }}>*</span>
-                            </label>
-                            <textarea
-                                style={styles.textarea}
-                                value={solutionNote}
-                                onChange={(e) => setSolutionNote(e.target.value)}
-                                placeholder="Mô tả giải pháp đã thực hiện..."
-                                rows="4"
-
-                                onFocus={(e) => Object.assign(e.target.style, styles.textareaFocus)}
-                                onBlur={(e) => Object.assign(e.target.style, styles.textarea)}
-                            />
-                        </div>
+                       
                         <div style={styles.modalBtnGroup}>
                             <Button
                                 style={{ ...styles.btn, ...styles.btnSecondary }}
