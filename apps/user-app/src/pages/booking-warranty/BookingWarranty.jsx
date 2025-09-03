@@ -292,7 +292,7 @@ function BookingWarranty() {
                     <BookingWizard steps={stepsForCurrentUser} activeStep={4} />
                     <div className="booking-detail-info">
                         <div className={`row ${!warranty?.bookingId?._id || !(warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed) ? 'equal-height-row' : ''}`}>
-                            <div className="col-lg-6">
+                            <div className="col-lg-8">
                                 <BookingWarrantyDetails
                                     bookingWarrantyId={bookingWarrantyId}
                                     onWarrantyUpdated={handleWarrantyUpdated}
@@ -304,7 +304,7 @@ function BookingWarranty() {
                                     />
                                 )} */}
                             </div>
-                            <div className="col-lg-6">
+                            <div className="col-lg-4">
                                 {warranty?.bookingId?._id && (warranty?.bookingId?.isChatAllowed && warranty?.bookingId?.isVideoCallAllowed) ? (
                                     <MessageBox
                                         bookingId={warranty?.bookingId?._id}
