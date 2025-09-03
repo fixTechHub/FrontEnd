@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import {
     requestWarranty, getWarrantyInformation, acceptWarranty, rejectWarranty, confirmWarranty, proposeWarrantySchedule,
-    confirmWarrantySchedule
+    confirmWarrantySchedule, fetchWarrantiesOfTechApi
 } from './warrantyAPI'; // Assuming the requestWarranty function is in a service file
 
 // Async thunk for requesting a warranty
@@ -92,6 +92,27 @@ export const confirmWarrantyScheduleThunk = createAsyncThunk(
         }
     }
 );
+
+export const getWarrantiesOfTechThunk = createAsyncThunk(
+    'warranty/fetchTechWarranties',
+    async ({ technicianId, page = 1, limit = 10 } = {}, { getState, signal, rejectWithValue }) => {
+        try {
+            let id = technicianId;
+            if (!id) {
+                const s = getState();
+                id =
+                    s?.auth?.technician?._id ||      // phổ biến
+                    s?.auth?.user?.technicianId ||   // tuỳ bạn lưu
+                    null;
+            }
+            const data = await fetchWarrantiesOfTechApi({ technicianId: id, page, limit, signal });
+            return data;
+        } catch (e) {
+            return rejectWithValue(e?.response?.data?.message || e.message || 'Fetch failed');
+        }
+    }
+);
+
 const warrantySlice = createSlice({
     name: 'warranty',
     initialState: {
@@ -103,11 +124,24 @@ const warrantySlice = createSlice({
             confirm: false,
         },
     },
+    items: [],
+    page: 1,
+    limit: 10,
+    total: 0,
+    totalPages: 1,
     reducers: {
         resetWarrantyState: (state) => {
             state.warranty = null;
             state.loading = false;
             state.error = null;
+        },
+        setWarrantyListPaging: (state, action) => {
+            const { page, limit } = action.payload || {};
+            if (Number.isFinite(page)) state.list.page = Number(page);
+            if (Number.isFinite(limit)) state.list.limit = Number(limit);
+        },
+        setWarrantyListTech: (state, action) => {
+            state.list.technicianId = action.payload || null;
         },
     },
     extraReducers: (builder) => {
@@ -208,8 +242,28 @@ const warrantySlice = createSlice({
                 state.loadingSchedule.confirm = false;
                 state.error = action.payload || "Không thể xác nhận lịch bảo hành";
             })
+
+            // Technician warrantyList
+            .addCase(getWarrantiesOfTechThunk.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(getWarrantiesOfTechThunk.fulfilled, (state, action) => {
+                state.loading = false;
+                state.error = null;
+                const { items, page, limit, total, totalPages } = action.payload || {};
+                state.items = Array.isArray(items) ? items : [];
+                state.page = Number(page) || 1;
+                state.limit = Number(limit) || 10;
+                state.total = Number(total) || 0;
+                state.totalPages = Number(totalPages) || 1;
+            })
+            .addCase(getWarrantiesOfTechThunk.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload || 'Không thể tải danh sách bảo hành';
+            })
     },
 });
 
-export const { resetWarrantyState } = warrantySlice.actions;
+export const { resetWarrantyState, setWarrantyListPaging, setWarrantyListTech } = warrantySlice.actions;
 export default warrantySlice.reducer;

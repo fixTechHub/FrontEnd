@@ -41,18 +41,18 @@ const ForgotPassword = () => {
     }}>
       <Card style={{ width: 420, borderRadius: 12, boxShadow: '0 10px 30px rgba(0,0,0,0.06)' }}>
         <Space align="center" style={{ justifyContent: 'space-between', width: '100%', marginBottom: 8 }}>
-          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Back</Button>
+          <Button type="link" onClick={() => navigate(-1)} icon={<ArrowLeftOutlined />}>Quay lại</Button>
         </Space>
         <div style={{ textAlign: 'center', marginBottom: 16 }}>
-          <Title level={3} style={{ marginBottom: 0 }}>Forgot Password</Title>
-          <Text type="secondary">Enter your email to receive reset instructions</Text>
+          <Title level={3} style={{ marginBottom: 0 }}>Quên mật khẩu</Title>
+          <Text type="secondary">Nhập email để nhận hướng dẫn đặt lại mật khẩu</Text>
         </div>
         <Form layout="vertical" onFinish={onFinish} autoComplete="off">
-          <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Please enter your email' }, { type: 'email', message: 'Invalid email' }]}> 
+          <Form.Item label="Email" name="email" rules={[{ required: true, message: 'Vui lòng nhập email' }, { type: 'email', message: 'Email không hợp lệ' }]}> 
             <Input prefix={<MailOutlined />} placeholder="you@example.com" size="large" disabled={sent} />
           </Form.Item>
           <Form.Item>
-            <Button type="primary" htmlType="submit" size="large" block loading={loading} disabled={sent}>Send</Button>
+            <Button type="primary" htmlType="submit" size="large" block loading={loading} disabled={sent}>Xác nhận</Button>
           </Form.Item>
           {sent && (
             <div style={{ color: '#389e0d', fontSize: 13, textAlign: 'center' }}>

@@ -316,7 +316,7 @@ const handleSortByTechnician = () => {
                <input
                  type="text"
                  className="form-control"
-                 placeholder="Tìm kiếm bảo hành..."
+                 placeholder="Tìm kiếm Kỹ thuật viên..."
                  value={searchText}
                  onChange={e => setSearchText(e.target.value)}
                />
